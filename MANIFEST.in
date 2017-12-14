@@ -3,3 +3,7 @@ include LICENSE.txt
 
 # Include the data files
 recursive-include data *
+recursive-include docs *
+recursive-include manual *
+recursive-include examples *
+recursive-include tutorials *
