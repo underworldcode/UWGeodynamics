@@ -6,10 +6,65 @@ import underworld as uw
 u = UnitRegistry = sca.UnitRegistry
 
 class VelocityBCs(object):
+    """ Class to define the mechanical boundary conditions """
+
 
     def __init__(self, Model, left=None, right=None, top=None, bottom=None,
                  front=None, back=None, indexSets=[]):
+        """ Defines mechanical boundary conditions
 
+        The type of conditions is determined through the units used do define
+        the parameters:
+            * Units of velocity ([length] / [time]) represent a kinematic
+            condition (Dirichlet)
+            * Units of stress / pressure ([force] / [area]) are set as
+            stress condition (Neumann).
+        
+        parameters
+        ----------
+
+        Model: (UWGeodynamics.Model)
+            An UWGeodynamics Model (See UWGeodynamics.Model)
+        left:(tuple) with length 2 in 2D, and length 3 in 3D.
+            Define mechanical conditions on the left side of the Model.
+            Conditions are defined for each Model direction (x, y, [z])
+        right:(tuple) with length 2 in 2D, and length 3 in 3D.
+            Define mechanical conditions on the right side of the Model.
+            Conditions are defined for each Model direction (x, y, [z])
+        top:(tuple) with length 2 in 2D, and length 3 in 3D.
+            Define mechanical conditions on the top side of the Model.
+            Conditions are defined for each Model direction (x, y, [z])
+        bottom:(tuple) with length 2 in 2D, and length 3 in 3D.
+            Define mechanical conditions on the bottom side of the Model.
+            Conditions are defined for each Model direction (x, y, [z])
+        indexSets: (list)
+            List of node where to apply predefined velocities.
+
+        Only valid for 3D Models:
+        
+        front:(tuple) with length 2 in 2D, and length 3 in 3D.
+            Define mechanical conditions on the front side of the Model.
+            Conditions are defined for each Model direction (x, y, [z])
+        back:(tuple) with length 2 in 2D, and length 3 in 3D.
+            Define mechanical conditions on the front side of the Model.
+            Conditions are defined for each Model direction (x, y, [z])
+
+
+        examples:
+        ---------
+
+        The following example defines a (2x1) meter Underworld model with
+        freeslip conditions on all the sides.
+
+        >>> import UWGeodynamics as GEO
+        >>> u = GEO.u
+        >>> Model = GEO.Model(elementRes=(64, 64), 
+                              minCoord=(-1. * u.meter, -50. * u.centimeter), 
+                              maxCoord=(1. * u.meter, 50. * u.centimeter))
+        >>> Model.set_velocityBCs(left=[0, None], right=[0,None], top=[None,0],
+                                  bottom=[None, 0])
+
+        """
 
         self.Model = Model
         self.left = left
@@ -20,14 +75,27 @@ class VelocityBCs(object):
         self.front = front
         self.indexSets = indexSets
 
-    @staticmethod
-    def isNeumann(x):
+    def _isNeumann(self, x):
+        """ Returns true if x as units of stress """
+
         if not isinstance(x, u.Quantity):
             return False
         val = x.to_base_units()
         return val.units == u.kilogram / (u.meter * u.second**2)
     
     def get_conditions(self):
+        """ Get the mechanical boundary conditions
+
+        Returns
+        -------
+
+        List of conditions as:
+            [<underworld.conditions._conditions.DirichletCondition,
+             <underworld.conditions._conditions.NeumannCondition]
+        or
+            [<underworld.conditions._conditions.DirichletCondition]
+
+        """
 
         # A lot of that code is redundant...
         # Could be cleaned up a bit...
@@ -43,7 +111,7 @@ class VelocityBCs(object):
         if self.left is not None:
             for dim in range(Model.mesh.dim):
                 if self.left[dim] is not None:
-                    if VelocityBCs.isNeumann(self.left[dim]):
+                    if self._isNeumann(self.left[dim]):
                         Model.tractionField.data[Model.leftWall.data, dim] = nd(self.left[dim])
                         neumannIndices[dim] += Model.leftWall
                     else:
@@ -52,7 +120,7 @@ class VelocityBCs(object):
         if self.right is not None:
             for dim in range(Model.mesh.dim):
                 if self.right[dim] is not None:
-                    if VelocityBCs.isNeumann(self.right[dim]):
+                    if self._isNeumann(self.right[dim]):
                         Model.tractionField.data[Model.rightWall.data, dim] = nd(self.right[dim])
                         neumannIndices[dim] += Model.rightWall
                     else:
@@ -62,7 +130,7 @@ class VelocityBCs(object):
         if self.top is not None:
             for dim in range(Model.mesh.dim):
                 if self.top[dim] is not None:
-                    if VelocityBCs.isNeumann(self.top[dim]):
+                    if self._isNeumann(self.top[dim]):
                         Model.tractionField.data[Model.topWall.data, dim] = nd(self.top[dim])
                         neumannIndices[dim] += Model.topWall
                     else:
@@ -82,7 +150,7 @@ class VelocityBCs(object):
                 Model.Isostasy = None
                 for dim in range(Model.mesh.dim):
                     if self.bottom[dim] is not None:
-                        if VelocityBCs.isNeumann(self.bottom[dim]):
+                        if self._isNeumann(self.bottom[dim]):
                             Model.tractionField.data[Model.bottomWall.data, dim] = nd(self.bottom[dim])
                             neumannIndices[dim] += Model.bottomWall
                         else:
@@ -92,7 +160,7 @@ class VelocityBCs(object):
         if self.front is not None and Model.mesh.dim > 2:
             for dim in range(Model.mesh.dim):
                 if self.front[dim] is not None:
-                    if VelocityBCs.isNeumann(self.front[dim]):
+                    if self._isNeumann(self.front[dim]):
                         Model.tractionField.data[Model.frontWall.data, dim] = nd(self.front[dim])
                         neumannIndices[dim] += Model.frontWall
                     else:
@@ -102,7 +170,7 @@ class VelocityBCs(object):
         if self.back is not None and Model.mesh.dim > 2:
             for dim in range(Model.mesh.dim):
                 if self.back[dim] is not None:
-                    if VelocityBCs.isNeumann(self.back[dim]):
+                    if self._isNeumann(self.back[dim]):
                         Model.tractionField.data[Model.backWall.data, dim] = nd(self.back[dim])
                         neumannIndices[dim] += Model.backWall
                     else:

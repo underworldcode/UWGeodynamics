@@ -12,8 +12,8 @@ from rheology import ViscosityLimiter
 from Material import Material
 from Plots import Plots
 from visugrid import Visugrid
-from kinematicBCs import VelocityBCs
-from temperatureBCs import TemperatureBCs
+from VelocityBoundaries import VelocityBCs
+from ThermalBoundaries import TemperatureBCs
 import surfaceProcesses
 import shapes
 import sys
@@ -21,14 +21,59 @@ import sys
 u = UnitRegistry = sca.UnitRegistry
 
 class Model(Material):
+    """ This class provides the main UWGeodynamics Model
+   
+    Attributes
+    ----------
+
+    materialField:
+    pressureField:
+    velocityField:
+    temperature:
+    tractionField:
+    
+    """
+
     def __init__(self, elementRes, minCoord, maxCoord,
                  gravity=(0.0, -9.81 * u.meter / u.second**2),
                  periodic=None, elementType="Q1/dQ0",
                  swarmLayout=None, Tref=273.15 * u.degK, name="undefined",
-                 outputDir="outputs", populationControl=True, scaling=None,
+                 outputDir="outputs",
                  minViscosity=1e19*u.pascal*u.second,
                  maxViscosity=1e25*u.pascal*u.second,
                  strainRate_default=1e-30 / u.second):
+    
+        """
+        Parameters
+        ----------
+        elementRes:
+        minCoord:
+        maxCoord:
+
+        gravity:
+        periodic:
+        elementType:
+        swarmLayout:
+        Tref:
+        name:
+        outputDir:
+        populationControl:
+        minViscosity:
+        maxViscosity:
+
+        Returns
+        --------
+        Model Class Object
+
+        Examples
+        --------
+        >>> import UWGeodynamics as GEO
+        >>> u = GEO.UnitRegistry
+        >>> Model = Model = GEO.Model(elementRes=(64, 64), 
+                                      minCoord=(-1. * u.meter, -50. * u.centimeter), 
+                                      maxCoord=(1. * u.meter, 50. * u.centimeter))
+
+        """
 
         super(Model, self).__init__()
 
@@ -85,7 +130,7 @@ class Model(Material):
         # Create the material swarm
         self.swarm = uw.swarm.Swarm(mesh=self.mesh, particleEscape=True)
         self.swarmLayout = swarmLayout
-        self.population_control = populationControl
+        self.population_control = True
 
         self.materials = []
         self._defaultMaterial = 0

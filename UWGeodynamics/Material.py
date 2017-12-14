@@ -107,7 +107,6 @@ class Material(object):
     @plasticity.setter
     def plasticity(self, value):
         self._plasticity = value
-
     
     def add_melt_modifier(self, solidus, liquidus, latentHeatFusion, 
                           meltExpansion,
