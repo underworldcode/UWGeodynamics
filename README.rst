@@ -29,10 +29,9 @@ Installation
 
 UWGeodynamics is available via pip:
 
-.. code::none
-
+```
    pip install UWGeodynamics
-
+```
 
 
 
