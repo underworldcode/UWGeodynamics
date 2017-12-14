@@ -1,0 +1,382 @@
+{
+    "Brace et al., 1980": {
+        "Mineral": "Wet Dunite", 
+        "Type": "Strain Rate and Temperature Dependent Rheology", 
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole", 
+                "value": 520.0
+            }, 
+            "activationVolume": {
+                "units": "meter ** 3 / mole", 
+                "value": 0.0
+            }, 
+            "defaultStrainRateInvariant": {
+                "units": "1 / second", 
+                "value": 1e-15
+            }, 
+            "preExponentialFactor": {
+                "units": "1 / megapascal ** 3 / second", 
+                "value": 70000.0
+            }, 
+            "stressExponent": {
+                "units": "None", 
+                "value": 3.0
+            }
+        }
+    }, 
+    "Gleason and Tullis, 1995": {
+        "Mineral": "Wet Quartz", 
+        "Type": "Strain Rate and Temperature Dependent Rheology", 
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole", 
+                "value": 223.0
+            }, 
+            "activationVolume": {
+                "units": "meter ** 3 / mole", 
+                "value": 0.0
+            }, 
+            "defaultStrainRateInvariant": {
+                "units": "1 / second", 
+                "value": 1e-15
+            }, 
+            "preExponentialFactor": {
+                "units": "1 / pascal ** 4 / second", 
+                "value": 1.1e-28
+            }, 
+            "stressExponent": {
+                "units": "None", 
+                "value": 4.0
+            }
+        }
+    }, 
+    "Goetze et al., 1978": {
+        "Mineral": "Wet Quartz", 
+        "Type": "Strain Rate and Temperature Dependent Rheology", 
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole", 
+                "value": 190.0
+            }, 
+            "activationVolume": {
+                "units": "meter ** 3 / mole", 
+                "value": 0.0
+            }, 
+            "defaultStrainRateInvariant": {
+                "units": "1 / second", 
+                "value": 1e-15
+            }, 
+            "preExponentialFactor": {
+                "units": "1 / megapascal ** 3 / second", 
+                "value": 5e-06
+            }, 
+            "stressExponent": {
+                "units": "None", 
+                "value": 3.0
+            }
+        }
+    }, 
+    "Hirth et al., 2003": {
+        "Mineral": "Wet Olivine", 
+        "Type": "Strain Rate and Temperature Dependent Rheology", 
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole", 
+                "value": 520.0
+            }, 
+            "activationVolume": {
+                "units": "meter ** 3 / mole", 
+                "value": 2.3e-05
+            }, 
+            "defaultStrainRateInvariant": {
+                "units": "1 / second", 
+                "value": 1e-15
+            }, 
+            "grainSize": {
+                "units": "micrometer", 
+                "value": 10000
+            }, 
+            "grainSizeExponent": {
+                "units": "None", 
+                "value": 0.0
+            }, 
+            "preExponentialFactor": {
+                "units": "1 / megapascal ** 3.5 / second", 
+                "value": 1600.0
+            }, 
+            "stressExponent": {
+                "units": "None", 
+                "value": 3.5
+            }, 
+            "waterFugacity": {
+                "units": "None", 
+                "value": 1000
+            }, 
+            "waterFugacityExponent": {
+                "units": "None", 
+                "value": 1.2
+            }
+        }
+    }, 
+    "Karato and Wu, 1990": {
+        "Mineral": "Dry Olivine", 
+        "Type": "Strain Rate and Temperature Dependent Rheology", 
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole", 
+                "value": 540.0
+            }, 
+            "activationVolume": {
+                "units": "meter ** 3 / mole", 
+                "value": 2.5e-05
+            }, 
+            "defaultStrainRateInvariant": {
+                "units": "1 / second", 
+                "value": 1e-15
+            }, 
+            "preExponentialFactor": {
+                "units": "1 / pascal ** 3.5 / second", 
+                "value": 2.4168e-15
+            }, 
+            "stressExponent": {
+                "units": "None", 
+                "value": 3.5
+            }
+        }
+    }, 
+    "Kirby et al., 1987": {
+        "Mineral": "Olivine", 
+        "Type": "Strain Rate and Temperature Dependent Rheology", 
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole", 
+                "value": 500.0
+            }, 
+            "activationVolume": {
+                "units": "meter ** 3 / mole", 
+                "value": 0.0
+            }, 
+            "defaultStrainRateInvariant": {
+                "units": "1 / second", 
+                "value": 1e-15
+            }, 
+            "preExponentialFactor": {
+                "units": "1 / pascal ** 3 / second", 
+                "value": 1e-15
+            }, 
+            "stressExponent": {
+                "units": "None", 
+                "value": 3.0
+            }
+        }
+    }, 
+    "Koch et al., 1983": {
+        "Mineral": "Dry Quartz", 
+        "Type": "Strain Rate and Temperature Dependent Rheology", 
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole", 
+                "value": 149.0
+            }, 
+            "activationVolume": {
+                "units": "meter ** 3 / mole", 
+                "value": 0.0
+            }, 
+            "defaultStrainRateInvariant": {
+                "units": "1 / second", 
+                "value": 1e-15
+            }, 
+            "preExponentialFactor": {
+                "units": "1 / pascal ** 3 / second", 
+                "value": 5e-25
+            }, 
+            "stressExponent": {
+                "units": "None", 
+                "value": 3.0
+            }
+        }
+    }, 
+    "Korenaga et al., 2008": {
+        "Mineral": "Dry Olivine", 
+        "Type": "Strain Rate and Temperature Dependent Rheology", 
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole", 
+                "value": 610.0
+            }, 
+            "activationVolume": {
+                "units": "meter ** 3 / mole", 
+                "value": 0.0
+            }, 
+            "defaultStrainRateInvariant": {
+                "units": "1 / second", 
+                "value": 1e-15
+            }, 
+            "preExponentialFactor": {
+                "units": "1 / megapascal ** 4.94 / second", 
+                "value": 10000000.0
+            }, 
+            "stressExponent": {
+                "units": "None", 
+                "value": 4.94
+            }
+        }
+    }, 
+    "Kronenberg et al., 1984": {
+        "Mineral": "Wet Quartz", 
+        "Type": "Strain Rate and Temperature Dependent Rheology", 
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole", 
+                "value": 134.0
+            }, 
+            "activationVolume": {
+                "units": "meter ** 3 / mole", 
+                "value": 0.0
+            }, 
+            "defaultStrainRateInvariant": {
+                "units": "1 / second", 
+                "value": 1e-15
+            }, 
+            "preExponentialFactor": {
+                "units": "1 / pascal ** 2.4 / second", 
+                "value": 1.3e-20
+            }, 
+            "stressExponent": {
+                "units": "None", 
+                "value": 2.4
+            }
+        }
+    }, 
+    "Mackwell et al., 1998": {
+        "Mineral": "Dry Diabase", 
+        "Type": "Strain Rate and Temperature Dependent Rheology", 
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole", 
+                "value": 485.0
+            }, 
+            "activationVolume": {
+                "units": "meter ** 3 / mole", 
+                "value": 0.0
+            }, 
+            "defaultStrainRateInvariant": {
+                "units": "1 / second", 
+                "value": 1e-15
+            }, 
+            "preExponentialFactor": {
+                "units": "1 / megapascal ** 4.7 / second", 
+                "value": 8.0
+            }, 
+            "stressExponent": {
+                "units": "None", 
+                "value": 4.7
+            }
+        }
+    }, 
+    "Patterson et al., 1990": {
+        "Mineral": "Wet Quartz", 
+        "Type": "Strain Rate and Temperature Dependent Rheology", 
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole", 
+                "value": 135.0
+            }, 
+            "activationVolume": {
+                "units": "meter ** 3 / mole", 
+                "value": 0.0
+            }, 
+            "defaultStrainRateInvariant": {
+                "units": "1 / second", 
+                "value": 1e-15
+            }, 
+            "preExponentialFactor": {
+                "units": "1 / megapascal ** 3.1 / second", 
+                "value": 6.60693448e-08
+            }, 
+            "stressExponent": {
+                "units": "None", 
+                "value": 3.1
+            }
+        }
+    }, 
+    "Ribacki et al., 2000": {
+        "Mineral": "Wet Anorthite", 
+        "Type": "Strain Rate and Temperature Dependent Rheology", 
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole", 
+                "value": 356.0
+            }, 
+            "activationVolume": {
+                "units": "meter ** 3 / mole", 
+                "value": 0.0
+            }, 
+            "defaultStrainRateInvariant": {
+                "units": "1 / second", 
+                "value": 1e-15
+            }, 
+            "preExponentialFactor": {
+                "units": "1 / pascal ** 3 / second", 
+                "value": 3.9810717e-16
+            }, 
+            "stressExponent": {
+                "units": "None", 
+                "value": 3.0
+            }
+        }
+    }, 
+    "Tullis et al, 2002": {
+        "Mineral": "Wet Quartz", 
+        "Type": "Strain Rate and Temperature Dependent Rheology", 
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole", 
+                "value": 223.0
+            }, 
+            "activationVolume": {
+                "units": "meter ** 3 / mole", 
+                "value": 0.0
+            }, 
+            "defaultStrainRateInvariant": {
+                "units": "1 / second", 
+                "value": 1e-15
+            }, 
+            "preExponentialFactor": {
+                "units": "1 / pascal ** 4 / second", 
+                "value": 1.1e-28
+            }, 
+            "stressExponent": {
+                "units": "None", 
+                "value": 4.0
+            }
+        }
+    }, 
+    "Wang et al., 2012": {
+        "Mineral": "Wet Quartz", 
+        "Type": "Strain Rate and Temperature Dependent Rheology", 
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole", 
+                "value": 244.0
+            }, 
+            "activationVolume": {
+                "units": "meter ** 3 / mole", 
+                "value": 0.0
+            }, 
+            "defaultStrainRateInvariant": {
+                "units": "1 / second", 
+                "value": 1e-15
+            }, 
+            "preExponentialFactor": {
+                "units": "1 / megapascal ** 3.2 / second", 
+                "value": 0.1
+            }, 
+            "stressExponent": {
+                "units": "None", 
+                "value": 3.2
+            }
+        }
+    }
+}

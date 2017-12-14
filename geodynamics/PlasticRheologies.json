@@ -1,0 +1,130 @@
+{
+    "Huismans and Beaumont, 2007 (WeakCrust)": {
+        "coefficients": {
+            "cohesion": {
+                "units": "megapascal", 
+                "value": 20.0
+            }, 
+            "cohesionAfterSoftening": {
+                "units": "megapascal", 
+                "value": 20.0
+            }, 
+            "frictionAfterSoftening": {
+                "units": "None", 
+                "value": 0.017
+            }, 
+            "frictionCoefficient": {
+                "units": "None", 
+                "value": 0.123
+            }, 
+            "minimumViscosity": {
+                "units": "pascal * second", 
+                "value": 1e+19
+            }
+        }
+    }, 
+    "Huismans et al. 2011, (Crust)": {
+        "coefficients": {
+            "cohesion": {
+                "units": "megapascal", 
+                "value": 20.0
+            }, 
+            "cohesionAfterSoftening": {
+                "units": "megapascal", 
+                "value": 20.0
+            }, 
+            "epsilon1": {
+                "units": "None", 
+                "value": 0.5
+            }, 
+            "epsilon2": {
+                "units": "None", 
+                "value": 1.5
+            }, 
+            "frictionAfterSoftening": {
+                "units": "None", 
+                "value": 0.02
+            }, 
+            "frictionCoefficient": {
+                "units": "None", 
+                "value": 0.12
+            }, 
+            "minimumViscosity": {
+                "units": "pascal * second", 
+                "value": 1e+19
+            }
+        }
+    }, 
+    "Rey et al., 2010 (LowerCrust)": {
+        "coefficients": {
+            "cohesion": {
+                "units": "megapascal", 
+                "value": 20.0
+            }, 
+            "cohesionAfterSoftening": {
+                "units": "megapascal", 
+                "value": 4.0
+            }, 
+            "frictionAfterSoftening": {
+                "units": "None", 
+                "value": 0.1154
+            }, 
+            "frictionCoefficient": {
+                "units": "None", 
+                "value": 0.577
+            }, 
+            "minimumViscosity": {
+                "units": "pascal * second", 
+                "value": 1e+19
+            }
+        }
+    }, 
+    "Rey et al., 2010 (Mantle)": {
+        "coefficients": {
+            "cohesion": {
+                "units": "megapascal", 
+                "value": 10.0
+            }, 
+            "cohesionAfterSoftening": {
+                "units": "megapascal", 
+                "value": 2.0
+            }, 
+            "frictionAfterSoftening": {
+                "units": "None", 
+                "value": 0.1154
+            }, 
+            "frictionCoefficient": {
+                "units": "None", 
+                "value": 0.577
+            }, 
+            "minimumViscosity": {
+                "units": "pascal * second", 
+                "value": 1e+19
+            }
+        }
+    }, 
+    "Rey et al., 2010 (UpperCrust)": {
+        "coefficients": {
+            "cohesion": {
+                "units": "megapascal", 
+                "value": 10.0
+            }, 
+            "cohesionAfterSoftening": {
+                "units": "megapascal", 
+                "value": 2.0
+            }, 
+            "frictionAfterSoftening": {
+                "units": "None", 
+                "value": 0.1154
+            }, 
+            "frictionCoefficient": {
+                "units": "None", 
+                "value": 0.577
+            }, 
+            "minimumViscosity": {
+                "units": "pascal * second", 
+                "value": 1e+19
+            }
+        }
+    }
+}
