@@ -100,7 +100,7 @@ class Material(object):
 
     @viscosity.setter
     def viscosity(self, value):
-        if isinstance(value, u.Quantity):
+        if isinstance(value, u.Quantity) or isinstance(value, float):
             self._viscosity = ConstantViscosity(value)
         else:
             self._viscosity = value

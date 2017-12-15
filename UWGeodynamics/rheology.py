@@ -23,6 +23,7 @@ def linearFrictionWeakening(cumulativeTotalStrain, FrictionCoef, FrictionCoefSw,
  
     return fn.math.atan(frictionVal)
 
+
 class ViscosityLimiter(object):
 
     def __init__(self, minViscosity, maxViscosity):
@@ -34,6 +35,7 @@ class ViscosityLimiter(object):
         maxBound = fn.misc.min(viscosityField, nd(self.maxViscosity))
         minMaxBound = fn.misc.max(maxBound, nd(self.minViscosity))
         return minMaxBound 
+
 
 class Rheology(object):
 
@@ -53,6 +55,7 @@ class Rheology(object):
         self.friction = None
         
         return
+
 
 class DruckerPrager(object):
 
@@ -113,6 +116,7 @@ class DruckerPrager(object):
         self.yieldStress /= (fn.math.sqrt(3.0) * (3.0 + fn.math.sin(f)))
         return self.yieldStress
 
+
 class ConstantViscosity(Rheology):
 
     def __init__(self, viscosity):
@@ -134,6 +138,7 @@ class ConstantViscosity(Rheology):
 
     def _effectiveViscosity(self):
         return fn.misc.constant(nd(self._viscosity))
+
 
 class ViscousCreep(Rheology):
 
@@ -249,6 +254,23 @@ class ViscousCreep(Rheology):
                               (True, self.strainRateInvariantField)]
         return fn.branching.conditional(FirstIterCondition)
 
+
+class TemperatureAndDepthDependentViscosity(Rheology):
+
+    def __init__(self, eta0, beta,  gamma, reference, temperatureField=None):
+        
+        self._eta0 = nd(eta0)
+        self._gamma = gamma
+        self._beta = gamma
+        self._reference = nd(reference)
+
+    @property
+    def muEff(self):
+        coord = fn.input()
+        return self._eta0 * fn.math.exp(gamma * (coord[-1] - reference))
+
+
+
 class ViscousCreepRegistry(object):
     def __init__(self, filename=None):
 
@@ -274,13 +296,16 @@ class ViscousCreepRegistry(object):
             name = key.replace(" ","_").replace(",","").replace(".","")
             self._dir[name] = ViscousCreep(**_viscousLaws[key]["coefficients"])
 
+
     def __dir__(self):
         # Make all the rheology available through autocompletion
         return list(self._dir.keys())
 
+
     def __getattr__(self, item):
         # Make sure to return a new instance of ViscousCreep
         return copy(self._dir[item])
+
 
 class PlasticityRegistry(object):
     def __init__(self, filename=None):

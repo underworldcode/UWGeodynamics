@@ -13,7 +13,7 @@ class Plots(object):
 
         self.Model = Model
 
-    def material(self, figsize=(1200, 400), projected=False,
+    def material(self, figsize=None, projected=False,
             script=None, cullface=False, mask=None, show=True, store=None,
             visugrid=None, tracers=[], quality=3, fn_size=5.0, **kwargs):
 
@@ -59,7 +59,7 @@ class Plots(object):
             Fig.show()
         return Fig
 
-    def viscosity(self, figsize=(1200, 400), units=u.pascal*u.second,
+    def viscosity(self, figsize=None, units=u.pascal*u.second,
                        projected=False, cullface=False, show=True, store=None,
                        script=None, pointSize=3.0, quality=3,**kwargs):
 
@@ -94,7 +94,7 @@ class Plots(object):
             Fig.show()
         return Fig
     
-    def strainRate(self, figsize=(1200, 400), units=1.0/u.second, show=True,
+    def strainRate(self, figsize=None, units=1.0/u.second, show=True,
                    store=None, cullface=False, quality=3, **kwargs):
         Fig = glucifer.Figure(figsize=figsize, store=store, title="Strain Rate",
                               quality=quality)
@@ -107,7 +107,7 @@ class Plots(object):
             Fig.show()
         return Fig
 
-    def density(self, projected=False, figsize=(1200, 400), units=u.kilogram/u.metre**3,
+    def density(self, projected=False, figsize=None, units=u.kilogram/u.metre**3,
                 store=None, show=True, cullface=False, quality=3, **kwargs):
         Fig = glucifer.Figure(figsize=figsize, store=store,
                               title="Density Field", quality=quality)
@@ -126,7 +126,7 @@ class Plots(object):
             Fig.show()
         return Fig
 
-    def temperature(self, figsize=(1200, 400), units=u.degK,
+    def temperature(self, figsize=None, units=u.degK,
                          cullface=False, script=None, show=True, store=None, 
                          colourScale="coolwarm", quality=3, isotherms=[], **args):
         Fig = glucifer.Figure(figsize=figsize, store=store,
@@ -149,7 +149,7 @@ class Plots(object):
             Fig.show()
         return Fig
     
-    def pressureField(self, figsize=(1200, 400), units=u.pascal,
+    def pressureField(self, figsize=None, units=u.pascal,
                            cullface=False, show=True, store=None,
                            script=None, quality=3, **kwargs):
         Fig = glucifer.Figure(figsize=figsize, store=store,
@@ -167,7 +167,7 @@ class Plots(object):
             Fig.show()
         return Fig
 
-    def velocityField(self, figsize=(1200, 400), store=None, show=True,
+    def velocityField(self, figsize=None, store=None, show=True,
                       units=u.centimeter/u.year, script=None, cullface=False, 
                       quality=3, scaling=0.03, arrowHead=10.,
                       resolution=[25,10,10], **args):
@@ -187,7 +187,7 @@ class Plots(object):
             Fig.show()
         return Fig
     
-    def strain(self, figsize=(1200, 400), projected=False, cullface=False,
+    def strain(self, figsize=None, projected=False, cullface=False,
                script=None, store=None, show=True, quality=3, **kwargs):
 
         Fig = glucifer.Figure(figsize=figsize, store=store, title="Strain", 
@@ -212,7 +212,7 @@ class Plots(object):
             Fig.show()
         return Fig
     
-    def melt(self, figsize=(1200, 400), projected=False, cullface=False,
+    def melt(self, figsize=None, projected=False, cullface=False,
                script=None, store=None, show=True, quality=3, **kwargs):
 
         Fig = glucifer.Figure(figsize=figsize, store=store, title="Melt", 
