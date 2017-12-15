@@ -5,7 +5,7 @@ from rheology import ConstantViscosity
 class Material(object):
     _ids = count(0)
 
-    def __init__(self, name="Undefined", vertices=None, density=None,
+    def __init__(self, name="Undefined", vertices=None, density=0.0,
                  diffusivity=None, capacity=None, thermalExpansivity=None,
                  radiogenicHeatProd=0.0, shape=None, viscosity=None,
                  plasticity=None, solidus=None, liquidus=None,

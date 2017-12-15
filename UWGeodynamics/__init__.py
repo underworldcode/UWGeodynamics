@@ -8,6 +8,7 @@ from scaling import Dimensionalize
 from LecodeIsostasy import LecodeIsostasy
 from lithopress import LithostaticPressure
 from rheology import Rheology, ConstantViscosity, ViscousCreep, DruckerPrager
+from rheology import VonMises
 from rheology import ViscousCreepRegistry, PlasticityRegistry
 from Material import Material
 from Model import Model

@@ -481,8 +481,6 @@ class Model(Material):
     def _densityFn(self):
         densityMap = {}
         for material in self.materials:
-            if not material.density:
-                raise ValueError("Please set %s density" % material.name)
 
             if self.temperature:
                 densityMap[material.index] = nd(material.density) * (1.0 -
