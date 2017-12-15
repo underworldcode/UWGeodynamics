@@ -117,6 +117,39 @@ class DruckerPrager(object):
         return self.yieldStress
 
 
+class VonMises(object):
+
+    def __init__(self, cohesion=None,
+                 cohesionAfterSoftening = None,
+                 minimumViscosity=None, plasticStrain=None,
+                 epsilon1=0.5, epsilon2=1.0):
+
+        self.cohesion = cohesion
+        self.cohesionAfterSoftening = cohesionAfterSoftening
+        self.minimumViscosity = minimumViscosity
+        self.plasticStrain = plasticStrain
+        self.pressureField = pressureField
+        self.epsilon1 = epsilon1
+        self.epsilon2 = epsilon2
+        self.cohesionWeakeningFn = linearCohesionWeakening
+
+    @property
+    def _cohesion(self):
+        if self.plasticStrain:
+            cohesion = self.cohesionWeakeningFn(
+                self.plasticStrain,
+                Cohesion=nd(self.cohesion),
+                CohesionSw=nd(self.cohesionAfterSoftening))
+        else:
+            cohesion = fn.misc.constant(self.cohesion)
+        return cohesion
+        
+    def _get_yieldStress2D(self):
+        return self._cohesion
+
+    def _get_yieldStress3D(self):
+        return self._cohesion
+
 class ConstantViscosity(Rheology):
 
     def __init__(self, viscosity):
@@ -268,7 +301,6 @@ class TemperatureAndDepthDependentViscosity(Rheology):
     def muEff(self):
         coord = fn.input()
         return self._eta0 * fn.math.exp(gamma * (coord[-1] - reference))
-
 
 
 class ViscousCreepRegistry(object):
