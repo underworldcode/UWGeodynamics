@@ -128,7 +128,7 @@ class VonMises(object):
         self.cohesionAfterSoftening = cohesionAfterSoftening
         self.minimumViscosity = minimumViscosity
         self.plasticStrain = plasticStrain
-        self.pressureField = pressureField
+        self.pressureField = None
         self.epsilon1 = epsilon1
         self.epsilon2 = epsilon2
         self.cohesionWeakeningFn = linearCohesionWeakening
@@ -149,6 +149,7 @@ class VonMises(object):
 
     def _get_yieldStress3D(self):
         return self._cohesion
+
 
 class ConstantViscosity(Rheology):
 
