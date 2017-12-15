@@ -13,7 +13,7 @@ class Plots(object):
 
         self.Model = Model
 
-    def material(self, figsize=None, projected=False,
+    def material(self, figsize=None, projected=False, colours=None,
             script=None, cullface=False, mask=None, show=True, store=None,
             visugrid=None, tracers=[], quality=3, fn_size=5.0, **kwargs):
 
@@ -47,10 +47,12 @@ class Plots(object):
         if projected:
             Fig.append(glucifer.objects.Surface(self.Model.mesh,
                                                self.Model.projMaterialField,
-                                               cullface=cullface, onMesh=True))
+                                               cullface=cullface, colours=colours,
+                                               onMesh=True))
         else:
             Fig.append(glucifer.objects.Points(self.Model.swarm,
                                                fn_colour=self.Model.materialField,
+                                               colours=colours,
                                                fn_size=fn_size))
         if script:
             Fig.script(script)
