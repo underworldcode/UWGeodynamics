@@ -90,12 +90,13 @@ class Model(Material):
         self.maxViscosity = maxViscosity
         self.viscosityLimiter = ViscosityLimiter(minViscosity, maxViscosity)
 
-        self.gravity = tuple([nd(val) for val in gravity])
+        self.gravity = gravity
         self.Tref = Tref
         self.elementType = elementType
         self.elementRes = elementRes
         self.minCoord = minCoord
         self.maxCoord = maxCoord
+        self.height = maxCoord[-1] - minCoord[-1]
 
         if not periodic:
             self.periodic = tuple([False for val in range(len(self.elementRes))])
@@ -132,7 +133,7 @@ class Model(Material):
         self.swarmLayout = swarmLayout
         self.population_control = True
 
-        self.materials = []
+        self.materials = [self]
         self._defaultMaterial = 0
 
         if self.mesh.dim == 2:
@@ -187,10 +188,13 @@ class Model(Material):
         self.viscosityField = self.swarm.add_variable(dataType="double", count=1)
         self.densityField = self.swarm.add_variable(dataType="double", count=1)
         self.meltField = self.swarm.add_variable(dataType="double", count=1)
-        self.plasticStrain.data[...] = 0.0
-        self.viscosityField.data[...] = 0.
-        self.densityField.data[...] = 0.
-        self.meltField.data[...] = 0.
+        # Initialise materialField to Model material
+        self.materialField.data[:] = self.index
+        # Initialise remaininf fields to 0.
+        self.plasticStrain.data[:] = 0.0
+        self.viscosityField.data[:] = 0.
+        self.densityField.data[:] = 0.
+        self.meltField.data[:] = 0.
  
 
         # Create a bunch of tools to project swarmVariable onto the mesh
@@ -349,9 +353,13 @@ class Model(Material):
        
         HeatProdMap = {}
         for material in self.materials:
-            HeatProdMap[material.index] = (nd(material.radiogenicHeatProd) /
-                                           (nd(material.density) *
-                                            nd(material.capacity)))
+            if all([material.density, material.capacity, material.radiogenicHeatProd]):
+                HeatProdMap[material.index] = (nd(material.radiogenicHeatProd) /
+                                               (nd(material.density) *
+                                                nd(material.capacity)))
+            else:
+                HeatProdMap[material.index] = 0.
+
             # Melt heating
             if material.latentHeatFusion and self._dt:
                 dynamicHeating = self._get_dynamic_heating(material)
@@ -370,7 +378,8 @@ class Model(Material):
             )
 
     def init_stokes_system(self):
-        self.buoyancyFn = self.densityFn * self.gravity
+        gravity = tuple([nd(val) for val in self.gravity])
+        self.buoyancyFn = self.densityFn * gravity
 
         if any([material.viscosity for material in self.materials]): 
             
@@ -414,7 +423,7 @@ class Model(Material):
                      shape=None):
 
         if reset:
-            self.materials = []
+            self.materials = [self]
 
         if vertices:
             vertices = [(nd(x), nd(y)) for x, y in vertices]
@@ -603,7 +612,12 @@ class Model(Material):
        
             HeatProdMap = {}
             for material in self.materials:
-                HeatProdMap[material.index] = nd(material.radiogenicHeatProd)/(nd(material.density)*nd(material.capacity))
+                if all([material.density, material.capacity, material.radiogenicHeatProd]):
+                    HeatProdMap[material.index] = (nd(material.radiogenicHeatProd) /
+                                                   (nd(material.density) *
+                                                    nd(material.capacity)))
+                else:
+                    HeatProdMap[material.index] = 0.
             
             self.HeatProdFn = fn.branching.map(fn_key = self.materialField, mapping = HeatProdMap)
         else:
@@ -619,7 +633,7 @@ class Model(Material):
         heatsolver.solve(nonLinearIterate=True)
 
     def solve_lithostatic_pressureField(self):
-        gravity = np.abs(self.gravity[-1])  # Ugly!!!!!
+        gravity = np.abs(nd(self.gravity[-1]))  # Ugly!!!!!
         lithoPress = LithostaticPressure(self.mesh, self.densityFn, gravity)
         self.pressureField.data[:], LPresBot = lithoPress.solve()
         self.pressSmoother.smooth()

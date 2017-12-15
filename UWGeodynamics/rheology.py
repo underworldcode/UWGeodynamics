@@ -118,11 +118,20 @@ class ConstantViscosity(Rheology):
     def __init__(self, viscosity):
         super(ConstantViscosity, self).__init__()
         self._viscosity = nd(viscosity)
+        self._Quantity = viscosity
 
     @property
     def muEff(self):
         return self._effectiveViscosity()
-       
+
+    @property
+    def Quantity(self):
+        return self._Quantity
+
+    @Quantity.setter
+    def Quantity(self, value):
+        self._Quantity = value
+
     def _effectiveViscosity(self):
         return fn.misc.constant(nd(self._viscosity))
 

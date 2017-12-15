@@ -1,11 +1,13 @@
 from itertools import count
+from scaling import u
+from rheology import ConstantViscosity
 
 class Material(object):
     _ids = count(0)
 
     def __init__(self, name="Undefined", vertices=None, density=None,
                  diffusivity=None, capacity=None, thermalExpansivity=None,
-                 radiogenicHeatProd=None, shape=None, viscosity=None,
+                 radiogenicHeatProd=0.0, shape=None, viscosity=None,
                  plasticity=None, solidus=None, liquidus=None,
                  latentHeatFusion=0.0, meltExpansion=0.0, meltFraction=0.0,
                  meltFractionLimit=1.0, viscosityChangeX1=0.15, 
@@ -98,7 +100,10 @@ class Material(object):
 
     @viscosity.setter
     def viscosity(self, value):
-        self._viscosity = value
+        if isinstance(value, u.Quantity):
+            self._viscosity = ConstantViscosity(value)
+        else:
+            self._viscosity = value
 
     @property
     def plasticity(self):
