@@ -17,3 +17,7 @@ from Melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry
 nd = nonDimensionalize
 sca = scaling
 u = UnitRegistry
+
+rheologies = ViscousCreepRegistry()
+yieldCriteria = PlasticityRegistry()
+
