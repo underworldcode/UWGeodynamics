@@ -31,6 +31,40 @@ class Polygon(Shape):
 
 class Layer(Shape):
 
+    def __init__(self, top, bottom):
+        self.top = top
+        self.bottom = bottom
+        self.minX = None
+        self.maxX = None
+        self.minY = None
+        self.maxY = None
+
+    def _init_shape(self):
+        coord = fn.input()
+        if (self.minY is not None) and (self.maxY is not None):
+            self._fn = ((coord[2] <= nd(self.top)) & (coord[2] >= nd(self.bottom)))
+        else:
+            self._fn = ((coord[1] <= nd(self.top)) & (coord[1] >= nd(self.bottom)))
+
+    @property
+    def top(self):
+        return self._top
+    
+    @top.setter
+    def top(self, value):
+        self._top = value
+    
+    @property
+    def bottom(self):
+        return self._bottom
+    
+    @bottom.setter
+    def bottom(self, value):
+        self._bottom = value
+
+
+class Box(Shape):
+
     def __init__(self, top, bottom, minX=0., maxX=0., minY=None, maxY=None):
         self.top = top
         self.bottom = bottom
@@ -42,9 +76,12 @@ class Layer(Shape):
     def _init_shape(self):
         coord = fn.input()
         if (self.minY is not None) and (self.maxY is not None):
-            self._fn = ((coord[2] <= nd(self.top)) & (coord[2] >= nd(self.bottom)))
+            self._fn = ((coord[1] <= nd(self.maxY)) & (coord[1] >= nd(self.minY))
+                      & (coord[0] <= nd(self.maxX)) & (coord[0] >= nd(self.minX))
+                      & (coord[2] <= nd(self.top))  & (coord[2] >= nd(self.bottom)))
         else:
-            self._fn = ((coord[1] <= nd(self.top)) & (coord[1] >= nd(self.bottom)))
+            self._fn = ((coord[1] <= nd(self.top)) & (coord[1] >=  nd(self.bottom))
+                      & (coord[0] <= nd(self.maxX)) & (coord[0] >= nd(self.minX)))
 
     @property
     def minX(self):

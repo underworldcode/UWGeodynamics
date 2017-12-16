@@ -630,11 +630,12 @@ class Model(Material):
         heatsolver = uw.systems.Solver(heatequation)
         heatsolver.solve(nonLinearIterate=True)
 
-    def solve_lithostatic_pressureField(self):
+    def get_lithostatic_pressureField(self):
         gravity = np.abs(nd(self.gravity[-1]))  # Ugly!!!!!
         lithoPress = LithostaticPressure(self.mesh, self.densityFn, gravity)
-        self.pressureField.data[:], LPresBot = lithoPress.solve()
+        self.pressureField.data[:], LPressBot = lithoPress.solve()
         self.pressSmoother.smooth()
+        return self.pressureField, LPressBot
 
     def _calibrate_pressureField(self):
         surfaceArea = uw.utils.Integral(fn=1.0, mesh=self.mesh,
@@ -675,7 +676,7 @@ class Model(Material):
 
         # Init pressureField Field
         if self.pressureField and pressureField:
-            self.solve_lithostatic_pressureField()
+            self.get_lithostatic_pressureField()
         
         self.init_stokes_system()
     
