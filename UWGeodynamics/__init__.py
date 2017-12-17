@@ -13,6 +13,7 @@ from rheology import ViscousCreepRegistry, PlasticityRegistry
 from Material import Material
 from Model import Model
 from Melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry
+from rcParams import rcParams as config
 
 nd = nonDimensionalize
 sca = scaling

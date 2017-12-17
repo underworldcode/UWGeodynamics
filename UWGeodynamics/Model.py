@@ -17,8 +17,10 @@ from ThermalBoundaries import TemperatureBCs
 import surfaceProcesses
 import shapes
 import sys
+from rcParams import rcParams
 
 u = UnitRegistry = sca.UnitRegistry
+
 
 class Model(Material):
     """ This class provides the main UWGeodynamics Model
@@ -84,7 +86,6 @@ class Model(Material):
         self.outputDir = outputDir
         self.checkpointID = 0
         self._checkpoint = None
-        self.checkpoint = None
 
         self.minViscosity = minViscosity
         self.maxViscosity = maxViscosity
@@ -117,7 +118,7 @@ class Model(Material):
         self.pressureField = uw.mesh.MeshVariable(mesh=self.mesh.subMesh, nodeDofCount=1)
         self.velocityField = uw.mesh.MeshVariable(mesh=self.mesh, nodeDofCount=self.mesh.dim)
         self.tractionField = uw.mesh.MeshVariable(mesh=self.mesh, nodeDofCount=self.mesh.dim)
-        self.strainRateField = uw.mesh.MeshVariable(mesh=self.mesh, nodeDofCount=1)
+        self._strainRateField = uw.mesh.MeshVariable(mesh=self.mesh, nodeDofCount=1)
         self.pressureField.data[...] = 0.
         self.velocityField.data[...] = 0.
         self.tractionField.data[...] = 0.
@@ -185,15 +186,15 @@ class Model(Material):
         # Add Common Swarm Variables
         self.materialField = self.swarm.add_variable(dataType="int", count=1)
         self.plasticStrain = self.swarm.add_variable(dataType="double", count=1)
-        self.viscosityField = self.swarm.add_variable(dataType="double", count=1)
-        self.densityField = self.swarm.add_variable(dataType="double", count=1)
+        self._viscosityField = self.swarm.add_variable(dataType="double", count=1)
+        self._densityField = self.swarm.add_variable(dataType="double", count=1)
         self.meltField = self.swarm.add_variable(dataType="double", count=1)
         # Initialise materialField to Model material
         self.materialField.data[:] = self.index
         # Initialise remaininf fields to 0.
         self.plasticStrain.data[:] = 0.0
-        self.viscosityField.data[:] = 0.
-        self.densityField.data[:] = 0.
+        self._viscosityField.data[:] = 0.
+        self._densityField.data[:] = 0.
         self.meltField.data[:] = 0.
  
 
@@ -202,18 +203,14 @@ class Model(Material):
         self._materialFieldProjector = uw.utils.MeshVariable_Projection(self._projMaterialField, self.materialField, type=0)
 
         self._projViscosityField = uw.mesh.MeshVariable(mesh=self.mesh, nodeDofCount=1)
-        self._viscosityFieldProjector = uw.utils.MeshVariable_Projection(self._projViscosityField, self.viscosityField, type=0)
+        self._viscosityFieldProjector = uw.utils.MeshVariable_Projection(self._projViscosityField, self._viscosityField, type=0)
 
         self._projPlasticStrain = uw.mesh.MeshVariable(mesh=self.mesh, nodeDofCount=1)
         self._plasticStrainProjector = uw.utils.MeshVariable_Projection(self._projPlasticStrain,
                                                                      self.plasticStrain, type=0)
         
-        self._projStrainRate = uw.mesh.MeshVariable(mesh=self.mesh, nodeDofCount=1)
-        self._strainRateProjector = uw.utils.MeshVariable_Projection(self._projStrainRate,
-                                                     self.strainRate_2ndInvariant, type=0)
-        
         self._projDensityField = uw.mesh.MeshVariable(mesh=self.mesh, nodeDofCount=1)
-        self._densityFieldProjector = uw.utils.MeshVariable_Projection(self._projDensityField, self.densityField, type=0)
+        self._densityFieldProjector = uw.utils.MeshVariable_Projection(self._projDensityField, self._densityField, type=0)
 
     @property
     def outputDir(self):
@@ -232,7 +229,7 @@ class Model(Material):
         self.swarm = uw.swarm.Swarm(mesh=self.mesh, particleEscape=True)
         self.swarm.load(os.path.join(restartDir, 'swarm-%s.h5' % step))
         self._initialize()
-        self.materialField.load(os.path.join(restartDir, "material-%s.h5" % step))
+        sel.materialField.load(os.path.join(restartDir, "material-%s.h5" % step))
         self.temperature.load(os.path.join(restartDir, 'temperature-%s.h5' % step))
         self.pressureField.load(os.path.join(restartDir, 'pressureField-%s.h5' % step))
         self.plasticStrain.load(os.path.join(restartDir, 'pstrain-%s.h5' % step))
@@ -253,21 +250,31 @@ class Model(Material):
         return self._projPlasticStrain
     
     @property
-    def projStrainRate(self):
-        self._strainRateProjector.solve()
-        return self._projStrainRate
+    def strainRateField(self):
+        self._strainRateField.data[:] = self.strainRate_2ndInvariant.evaluate(self.mesh)
+        return self._strainRateField
     
     @property
     def projViscosityField(self):
         self.viscosityField.data[...] = self.viscosityFn.evaluate(self.swarm)
         self._viscosityFieldProjector.solve()
         return self._projViscosityField
+
+    @property
+    def viscosityField(self):
+        self._viscosityField.data[:] = self.viscosityFn.evaluate(self.swarm)
+        return self._viscosityField
     
     @property
     def projDensityField(self):
         self.densityField.data[...] = self.densityFn.evaluate(self.swarm)
         self._densityFieldProjector.solve()
         return self._projDensityField
+
+    @property
+    def densityField(self):
+        self._densityField.data[:] = self.densityFn.evaluate(self.swarm)
+        return self._densityField
 
     @surfaceProcesses.setter
     def surfaceProcesses(self, value):
@@ -770,14 +777,6 @@ class Model(Material):
         if self._visugrid:
             self._visugrid.advect(dt)
 
-    def _default_checkpoint_function(self):
-        self.save_velocityField(self.checkpointID)
-        self.save_pressureField(self.checkpointID)
-        if self.temperature:
-            self.save_temperature(self.checkpointID)
-        self.save_material(self.checkpointID)
-        self.save_plasticStrain(self.checkpointID)
-
     def add_passive_tracers(self, name=None, vertices=None, particleEscape=True):
         self.passiveTracers.append(PassiveTracers(self.mesh,
                                                   self.velocityField,
@@ -821,16 +820,17 @@ class Model(Material):
                    mapping=materialMap, fn_default=0.0)
         return None
 
-    @property
-    def checkpoint(self):
-        return self._checkpoint
+    def checkpoint(self, variables=None, checkpointID=None):
+        if not variables:
+            variables = rcParams["default.outputs"]
 
-    @checkpoint.setter
-    def checkpoint(self, func=None):
-        if func:
-            self._checkpoint = types.MethodType(func, self)
-        else:
-            self._checkpoint = self._default_checkpoint_function
+        if not checkpointID:
+            checkpointID = self.checkpointID
+
+        for variable in variables:
+            if variable == "temperature" and not self.temperature:
+                continue
+            self._save_field(variable, checkpointID)
 
     def output_glucifer_figures(self, step):
         import glucifer
@@ -870,72 +870,25 @@ class Model(Material):
 
         self._visugrid = Visugrid(self, elementRes, minCoord, maxCoord, self.velocityField)
 
-    def save_velocityField(self, checkpointID, units=u.centimeter/u.year):
-        mH = self.mesh.save(os.path.join(self.outputDir, "mesh.h5"), units=u.kilometers)
-        file_prefix = os.path.join(self.outputDir, 'velocityField-%s' % checkpointID)
-        handle = self.velocityField.save('%s.h5' % file_prefix, units=units)
-        self.velocityField.xdmf('%s.xdmf' % file_prefix, handle,'velocityField', mH, 'mesh', modeltime=self.time.magnitude)
-    
-    def save_pressureField(self, checkpointID, units=u.pascal):
-        mH = self.mesh.save(os.path.join(self.outputDir, "mesh.h5"), units=u.kilometers)
-        file_prefix = os.path.join(self.outputDir, 'pressureField-%s' % checkpointID)
-        handle = self.pressureField.save('%s.h5' % file_prefix, units=units)
-        self.pressureField.xdmf('%s.xdmf' % file_prefix, handle, 'pressureField', mH, 'mesh', modeltime=self.time.magnitude)
-   
-    def save_temperature(self, checkpointID, units=u.degK):
-        mH = self.mesh.save(os.path.join(self.outputDir, "mesh.h5"), units=u.kilometers)
-        file_prefix = os.path.join(self.outputDir, 'temperature-%s' % checkpointID)
-        handle = self.temperature.save('%s.h5' % file_prefix, units=units)
-        self.temperature.xdmf('%s.xdmf' % file_prefix, handle, 'temperature', mH, 'mesh', modeltime=self.time.magnitude)
-    
-    def save_strainRate(self, checkpointID, units=1.0/u.seconds):
-        mH = self.mesh.save(os.path.join(self.outputDir, "mesh.h5"), units=u.kilometers)
-        self.strainRateField.data[:] = self.strainRate_2ndInvariant.evaluate(self.mesh)
-        file_prefix = os.path.join(self.outputDir, 'strainRate-%s' % checkpointID)
-        handle = self.strainRateField.save('%s.h5' % file_prefix, units=units)            
-        self.strainRateField.xdmf('%s.xdmf' % file_prefix, handle,
-                                          'strainRate', mH, 'mesh',
-                                          modeltime=self.time.magnitude)
+    def _save_field(self, field, checkpointID, units=None):
 
-    def save_material(self, checkpointID, onMesh=False):
-        if onMesh:
+        if field in rcParams["mesh.variables"]:
+            if not units:
+                units = rcParams[field+".SIunits"]
             mH = self.mesh.save(os.path.join(self.outputDir, "mesh.h5"), units=u.kilometers)
-            file_prefix = os.path.join(self.outputDir, 'material2-%s' % checkpointID)
-            handle = self.projMaterialField.save('%s.h5' % file_prefix)
-            self.projMaterialField.xdmf('%s.xdmf' % file_prefix, handle, 'material2', mH,
-                                        'mesh', modeltime=self.time.magnitude)
-        else:
-            sH = self.swarm.save(os.path.join(self.outputDir, 'swarm-%s.h5' % checkpointID), units=u.kilometers)
-            file_prefix = os.path.join(self.outputDir, 'material-%s' % checkpointID)
-            handle = self.materialField.save('%s.h5' % file_prefix)
-            self.materialField.xdmf('%s.xdmf' % file_prefix, handle, 'material', sH,
-                               'swarm', modeltime=self.time.magnitude)
+            file_prefix = os.path.join(self.outputDir, field+'-%s' % checkpointID)
+            obj = getattr(self, field)
+            handle = obj.save('%s.h5' % file_prefix, units=units)
+            obj.xdmf('%s.xdmf' % file_prefix, handle, field, mH, 'mesh', modeltime=self.time.magnitude)
 
-    def save_plasticStrain(self, checkpointID, onMesh=False):
-        if onMesh:
-            pass
-        else:
+        elif field in rcParams["swarm.variables"]:
+            if not units:
+                units = rcParams[field+".SIunits"]
             sH = self.swarm.save(os.path.join(self.outputDir, 'swarm-%s.h5' % checkpointID), units=u.kilometers)
-            file_prefix = os.path.join(self.outputDir, 'pstrain-%s' % checkpointID)
-            handle = self.plasticStrain.save('%s.h5' % file_prefix)
-            self.plasticStrain.xdmf('%s.xdmf' % file_prefix, handle, 'pstrain', sH, 'swarm', modeltime=self.time.magnitude)
+            file_prefix = os.path.join(self.outputDir, field+'-%s' % checkpointID)
+            obj = getattr(self, field)
+            handle = obj.save('%s.h5' % file_prefix)
+            obj.xdmf('%s.xdmf' % file_prefix, handle, field, sH, 'swarm', modeltime=self.time.magnitude)
+        else:
+            raise ValueError(field , ' is not a valid variable name \n')
 
-    def save_viscosityField(self, checkpointID, onMesh=False):
-        if onMesh:
-            pass
-        else:
-            sH = self.swarm.save(os.path.join(self.outputDir, 'swarm-%s.h5' % checkpointID), units=u.kilometers)
-            file_prefix = os.path.join(self.outputDir, 'viscosity-%s' % checkpointID)
-            self.viscosityField.data[:] = self.viscosityFn.evaluate(self.swarm)
-            handle = self.viscosityField.save('%s.h5' % file_prefix)
-            self.viscosityField.xdmf('%s.xdmf' % file_prefix, handle, 'viscosity', sH, 'swarm', modeltime=self.time.magnitude)
-    
-    def save_densityField(self, checkpointID, onMesh=False):
-        if onMesh:
-            pass
-        else:
-            sH = self.swarm.save(os.path.join(self.outputDir, 'swarm-%s.h5' % checkpointID), units=u.kilometers)
-            file_prefix = os.path.join(self.outputDir, 'density-%s' % checkpointID)
-            self.densityField.data[:] = self.densityFn.evaluate(self.swarm)
-            handle = self.densityField.save('%s.h5' % file_prefix)
-            self.densityField.xdmf('%s.xdmf' % file_prefix, handle, 'density', sH, 'swarm', modeltime=self.time.magnitude)
