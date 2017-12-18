@@ -1,3 +1,9 @@
+try:
+    import underworld as uw
+except ImportError:
+    raise ImportError("Can not find Underworld, please check your installation")
+
+
 import scaling
 import shapes
 import utils
