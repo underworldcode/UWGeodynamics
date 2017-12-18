@@ -223,16 +223,15 @@ class Model(Material):
             step = max([int(os.path.splitext(file)[0].split("-")[-1]) 
                         for file in os.listdir(restartDir) if "-" in file])
 
-
         self.checkpointID = step
         self.mesh.load(os.path.join(restartDir, "mesh.h5"))
         self.swarm = uw.swarm.Swarm(mesh=self.mesh, particleEscape=True)
         self.swarm.load(os.path.join(restartDir, 'swarm-%s.h5' % step))
         self._initialize()
-        sel.materialField.load(os.path.join(restartDir, "material-%s.h5" % step))
+        sel.materialField.load(os.path.join(restartDir, "materialField-%s.h5" % step))
         self.temperature.load(os.path.join(restartDir, 'temperature-%s.h5' % step))
         self.pressureField.load(os.path.join(restartDir, 'pressureField-%s.h5' % step))
-        self.plasticStrain.load(os.path.join(restartDir, 'pstrain-%s.h5' % step))
+        self.plasticStrain.load(os.path.join(restartDir, 'plasticStrain-%s.h5' % step))
         self.velocityField.load(os.path.join(restartDir, 'velocityField-%s.h5' % step))
 
     @property
@@ -831,6 +830,13 @@ class Model(Material):
             if variable == "temperature" and not self.temperature:
                 continue
             self._save_field(variable, checkpointID)
+
+        if checkpointID > 2:
+            for field in rcParams["swarm.variables"]:
+                try:
+                    os.remove(os.path.join(self.outputDir, field+"-%s" %  checkpointID - 2))
+                except:
+                    pass
 
     def output_glucifer_figures(self, step):
         import glucifer
