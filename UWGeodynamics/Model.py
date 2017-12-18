@@ -18,9 +18,22 @@ import surfaceProcesses
 import shapes
 import sys
 from rcParams import rcParams
+from _mesh_advector import _mesh_advector
 
 u = UnitRegistry = sca.UnitRegistry
 
+
+class Coord(uw.function._function.input):
+
+    def __init__(self, *args, **kwargs):
+        super(Coord, self).__init__(*args, **kwargs)
+
+    def __add__(self, other):
+        if isinstance(other, u.Quantity):
+            other = fn.Function.convert(nd(other))
+        return fn._function.add(self, other)
+
+    __radd__ = __add__
 
 class Model(Material):
     """ This class provides the main UWGeodynamics Model
@@ -174,8 +187,23 @@ class Model(Material):
 
         # Visugrid
         self._visugrid = None
+
+        # Mesh advector
+        self._advector = None
         
         self._initialize()
+
+    @property
+    def x(self):
+        return fn.input()[0]
+    
+    @property
+    def y(self):
+        return fn.input()[1]
+    
+    @property
+    def z(self):
+        return fn.input()[2]
 
     def _initialize(self):
         
@@ -763,7 +791,10 @@ class Model(Material):
         if self.passiveTracers:
             for tracers in self.passiveTracers:
                 tracers.integrate(dt)
-        
+       
+        if self.advector:
+            self._advector.advect_along_axis(dt, axis=0)
+
         # Do pop control
         self.population_control.repopulate()
 
@@ -775,6 +806,9 @@ class Model(Material):
 
         if self._visugrid:
             self._visugrid.advect(dt)
+
+    def set_meshAdvector(self, axis):
+        self._advector = _mesh_advector(self, axis)
 
     def add_passive_tracers(self, name=None, vertices=None, particleEscape=True):
         self.passiveTracers.append(PassiveTracers(self.mesh,
