@@ -19,21 +19,9 @@ import shapes
 import sys
 from rcParams import rcParams
 from _mesh_advector import _mesh_advector
+from _frictional_boundary import FrictionBoundaries
 
 u = UnitRegistry = sca.UnitRegistry
-
-
-class Coord(uw.function._function.input):
-
-    def __init__(self, *args, **kwargs):
-        super(Coord, self).__init__(*args, **kwargs)
-
-    def __add__(self, other):
-        if isinstance(other, u.Quantity):
-            other = fn.Function.convert(nd(other))
-        return fn._function.add(self, other)
-
-    __radd__ = __add__
 
 class Model(Material):
     """ This class provides the main UWGeodynamics Model
@@ -217,6 +205,7 @@ class Model(Material):
         self._viscosityField = self.swarm.add_variable(dataType="double", count=1)
         self._densityField = self.swarm.add_variable(dataType="double", count=1)
         self.meltField = self.swarm.add_variable(dataType="double", count=1)
+
         # Initialise materialField to Model material
         self.materialField.data[:] = self.index
         # Initialise remaininf fields to 0.
@@ -224,6 +213,7 @@ class Model(Material):
         self._viscosityField.data[:] = 0.
         self._densityField.data[:] = 0.
         self.meltField.data[:] = 0.
+        
  
 
         # Create a bunch of tools to project swarmVariable onto the mesh
@@ -529,17 +519,18 @@ class Model(Material):
 
         return fn.branching.map(fn_key=self.materialField, mapping=densityMap)
 
-    def _frictionFn(self):
-
-        friction = {}
-
-        for material in self.materials:
-            if material.plasticity:
-                friction[material.index] = material.plasticity._friction
-            else:
-                friction[material.index] = 0.
-
-        return fn.branching.map(self.materialField, mapping=friction)
+    def frictional_boundary(self, right=False, left=False,
+                                  top=False, bottom=False,
+                                  thickness=2, friction=0.0):
+        
+        self.frictionalBCs = FrictionBoundaries(self, right=right,
+                                                      left=left,
+                                                      top=top,
+                                                      bottom=bottom,
+                                                      thickness=thickness,
+                                                      friction=friction)
+        
+        return self.frictionalBCs
 
     @property
     def viscosityFn(self):
