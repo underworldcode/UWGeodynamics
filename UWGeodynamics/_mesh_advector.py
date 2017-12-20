@@ -2,6 +2,11 @@ from copy import copy
 import underworld as uw
 import numpy as np
 import sys
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+size = comm.Get_size()
+rank = comm.Get_rank()
 
 
 class _mesh_advector(object):
@@ -16,23 +21,30 @@ class _mesh_advector(object):
             raise ValueError("Axis not supported yet")
 
         # Get minimum and maximum coordinates for the current mesh
-        minx, maxx = _get_minmax_coordinates_mesh(axis)
+        minX, maxX = self._get_minmax_coordinates_mesh(axis)
 
-        minVxLeftWall, maxVxLeftWall   = self._get_minmax_velocity_wall(self.Model.leftWall, axis)
-        minVxrightWall, maxVxrightWall = self._get_minmax_velocity_wall(self.Model.rightWall, axis)
+        minvxLeftWall, maxvxLeftWall   = self._get_minmax_velocity_wall(self.Model.leftWall, axis)
+        minvxRightWall, maxvxRightWall = self._get_minmax_velocity_wall(self.Model.rightWall, axis)
 
-        vxright = maxVxrightWall if (np.abs(maxVxrightWall) > np.abs(minVxrightWall)) else minVxrightWall
-        vxleft  = maxVxleftWall  if (np.abs(maxVxleftWall)  > np.abs(minVxleftWall))  else minVxleftWall
+        if np.abs(maxvxRightWall) > np.abs(minvxRightWall):
+            vxRight = maxvxRightWall   
+        else:
+            vxRight = minvxRightWall
+        
+        if (np.abs(maxvxLeftWall)  > np.abs(minvxLeftWall)):
+            vxLeft = maxvxLeftWall  
+        else:
+            vxLeft = minvxLeftWall
 
-        newMinx = minx + vxleft * dt
-        newMaxX = maxx + vxright * dt
-        newLength = np.abs(newMinx - newMaxx)
+        minX += vxLeft * dt
+        maxX += vxRight * dt
+        length = np.abs(minX - maxX)
 
-        newValues = np.linspace(newMinx, newMaxx, self.Model.mesh.elementRes[axis]+1)
+        newValues = np.linspace(minX, maxX, self.Model.mesh.elementRes[axis]+1)
+        newValues = np.repeat(newValues[np.newaxis,:], self.Model.mesh.elementRes[1] + 1, axis)
 
         with self._mesh2nd.deform_mesh():
-            indices = self._mesh2nd.data_nodegId % self.Model.mesh.elementRes[axis]+1
-            self._mesh2nd.data[:, axis] = newValues[indices.flatten()]
+            self._mesh2nd.data[:, axis] = newValues.flatten()
         
         uw.barrier
 
@@ -40,16 +52,16 @@ class _mesh_advector(object):
             self.Model.mesh.data[:, axis] = self._mesh2nd.data[:, axis]
 
         self.Model.velocityField.data[...] = np.copy(self.Model.velocityField.evaluate(self.Model.mesh))
-        self.Model.pressureField.data[...] = np.copy(self.Model.pressureField.evaluate(self.Model.subMesh))
+        self.Model.pressureField.data[...] = np.copy(self.Model.pressureField.evaluate(self.Model.mesh.subMesh))
        
         if self.Model.rightWall:
-            self.Model.velocityField.data[self.Model.rightWall.data,:] = vxright
+            self.Model.velocityField.data[self.Model.rightWall.data,:] = vxRight
         
         if self.Model.leftWall:
-            self.Model.velocityField.data[self.Model.leftWall.data,:]  = vxleft
+            self.Model.velocityField.data[self.Model.leftWall.data,:]  = vxLeft
 
     def advect_mesh(self, dt):
-        self.advect_along_axis(dt)
+        self._advect_along_axis(dt)
 
     def _get_minmax_velocity_wall(self, wall, axis=0):
         """ Return the minimum and maximum velocity component on the wall 
@@ -69,7 +81,7 @@ class _mesh_advector(object):
 
         # if local domain has wall, get velocities
         if wall:
-            velocities  = self.velocityField.data[wall.data, axis]
+            velocities  = self.Model.velocityField.data[wall.data, axis]
        
         # get local min and max
         maxV[0] = velocities.max()
@@ -106,5 +118,5 @@ class _mesh_advector(object):
         comm.Allreduce(MPI.IN_PLACE, minVal, op=MPI.MIN)
         uw.barrier
         
-        return minx, maxx
+        return minVal, maxVal
 
