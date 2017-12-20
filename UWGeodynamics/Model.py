@@ -178,6 +178,9 @@ class Model(Material):
 
         # Mesh advector
         self._advector = None
+
+        # Frictional boundaries
+        self.frictionalBCs = None
         
         self._initialize()
 
@@ -566,7 +569,9 @@ class Model(Material):
         # Plasticity
         PlasticityMap = {}
         for material in self.materials:
+            
             if material.plasticity:
+            
                 YieldHandler = material.plasticity
                 YieldHandler.pressureField = self.pressureField
                 YieldHandler.plasticStrain = self.plasticStrain
@@ -580,6 +585,32 @@ class Model(Material):
                 muEff = 0.5 * yieldStress / eij
                 muEff = self.viscosityLimiter.apply(muEff)
                 PlasticityMap[material.index] = muEff
+
+            if self.frictionalBCs is not None:
+                from copy import copy
+
+                # Only affect plastic materials
+                if material.plasticity:
+                    
+                    YieldHandler = copy(material.plasticity)
+                    YieldHandler.frictionCoefficient = self.frictionalBCs.friction 
+                    YieldHandler.pressureField = self.pressureField
+                    YieldHandler.plasticStrain = self.plasticStrain
+                    if self.mesh.dim == 2:
+                        yieldStress = YieldHandler._get_yieldStress2D()
+                    if self.mesh.dim == 3:
+                        yieldStress = YieldHandler._get_yieldStress3D()
+                    eijdef =  nd(self.strainRate_default)
+                    eij = fn.branching.conditional([(self.strainRate_2ndInvariant < sys.float_info.epsilon, eijdef),
+                                                  (True, self.strainRate_2ndInvariant)])
+                    muEff = 0.5 * yieldStress / eij
+                    muEff = self.viscosityLimiter.apply(muEff)
+
+                    conditions = [(self.frictionalBCs._mask == 1, muEff),
+                                  (True, PlasticityMap[material.index])]
+
+                    PlasticityMap[material.index] = fn.branching.conditional(conditions)
+
 
         # Combine rheologies
         EffViscosityMap = {}
@@ -598,6 +629,8 @@ class Model(Material):
                 EffViscosityMap[idx] = PlasticityMap[idx]
                 BGViscosityMap[idx] = PlasticityMap[idx]
                 PlasticMap[idx] = 1.0
+
+
 
         viscosityFn = fn.branching.map(fn_key=self.materialField, mapping=EffViscosityMap)
         backgroundViscosityFn = fn.branching.map(fn_key=self.materialField,mapping=BGViscosityMap)
@@ -783,8 +816,8 @@ class Model(Material):
             for tracers in self.passiveTracers:
                 tracers.integrate(dt)
        
-        if self.advector:
-            self._advector.advect_along_axis(dt, axis=0)
+        if self._advector:
+            self._advector.advect_mesh(dt)
 
         # Do pop control
         self.population_control.repopulate()
