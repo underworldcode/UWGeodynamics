@@ -6,6 +6,7 @@ from scaling import Dimensionalize
 import json
 from copy import copy
 
+
 class _Polynom(object):
 
     def __init__(self, A1, A2=0., A3=0., A4=0.):
@@ -16,8 +17,8 @@ class _Polynom(object):
         self.A4 = A4
 
     def temperature(self, pressure, units=None):
-        return nd(self.A1) + nd(self.A2) * pressure + nd(self.A3) * pressure**2 + nd(self.A4) * pressure**3 
-    
+        return nd(self.A1) + nd(self.A2) * pressure + nd(self.A3) * pressure**2 + nd(self.A4) * pressure**3
+
     def plot(self, pressure):
         import pylab as plt
         temperature = Dimensionalize(self.temperature(pressure), u.kelvin)
@@ -27,20 +28,20 @@ class _Polynom(object):
         plt.show()
 
 class Solidus(_Polynom):
-    """ This class defines a solidus using the 
+    """ This class defines a solidus using the
     form suggested by Hirshmann, 2000"""
 
     pass
 
 class Liquidus(_Polynom):
-    """ This class defines a liquidus using the 
+    """ This class defines a liquidus using the
     form suggested by Hirshmann, 2000"""
 
     pass
 
 class SolidusRegistry(object):
     def __init__(self, filename=None):
-        
+
         if not filename:
             import pkg_resources
             filename = pkg_resources.resource_filename(__name__, "ressources/Solidus.json")
@@ -74,7 +75,7 @@ class SolidusRegistry(object):
 
 class LiquidusRegistry(object):
     def __init__(self, filename=None):
-        
+
         if not filename:
             import pkg_resources
             filename = pkg_resources.resource_filename(__name__, "ressources/Liquidus.json")
