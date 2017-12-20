@@ -164,7 +164,8 @@ class Model(Material):
 
         self.pressSmoother = PressureSmoother(self.mesh, self.pressureField)
         self.surfaceProcesses = None
-        
+       
+        self.solver = rcParams["default.solver"]
         self.nonLinearTolerance = 1.0e-2
 
         # Passive Tracers
@@ -183,18 +184,6 @@ class Model(Material):
         self.frictionalBCs = None
         
         self._initialize()
-
-    @property
-    def x(self):
-        return fn.input()[0]
-    
-    @property
-    def y(self):
-        return fn.input()[1]
-    
-    @property
-    def z(self):
-        return fn.input()[2]
 
     def _initialize(self):
         
@@ -232,6 +221,31 @@ class Model(Material):
         
         self._projDensityField = uw.mesh.MeshVariable(mesh=self.mesh, nodeDofCount=1)
         self._densityFieldProjector = uw.utils.MeshVariable_Projection(self._projDensityField, self._densityField, type=0)
+    
+    @property
+    def x(self):
+        return fn.input()[0]
+    
+    @property
+    def y(self):
+        return fn.input()[1]
+    
+    @property
+    def z(self):
+        return fn.input()[2]
+
+    @property
+    def solver(self):
+        return self._solver
+
+    @solver.setter
+    def solver(self, value):
+        solvers = ["mumps", "lu", "mg", "superlu", "superludist", "nomg"]
+       
+        if value not in solvers:
+            raise ValueError("Invalid Solver")
+
+        self._solver = value 
 
     @property
     def outputDir(self):
@@ -404,7 +418,9 @@ class Model(Material):
                 conditions=[self._temperatureBCs]
             )
 
-    def init_stokes_system(self):
+    @property
+    def stokes(self):
+        
         gravity = tuple([nd(val) for val in self.gravity])
         self.buoyancyFn = self.densityFn * gravity
 
@@ -417,7 +433,10 @@ class Model(Material):
                                        fn_bodyforce=self.buoyancyFn,
                                        fn_one_on_lambda = None)
 
-            self.solver = uw.systems.Solver(stokes)
+            self._stokes = uw.systems.Solver(stokes)
+            self._stokes.set_inner_method(self.solver)
+
+        return self._stokes
     
     def _init_melt_fraction(self):
 
@@ -720,7 +739,7 @@ class Model(Material):
         return uw.mesh.FeMesh_IndexSet(self.mesh, topologicalIndex=0, size=self.mesh.nodesGlobal, fromObject=nodes)
 
     def solve(self):
-        self.solver.solve(nonLinearIterate=True,
+        self.stokes.solve(nonLinearIterate=True,
                           callback_post_solve=self._calibrate_pressureField,
                           nonLinearTolerance=self.nonLinearTolerance)
         self.solutionExist = True
@@ -736,7 +755,7 @@ class Model(Material):
         if self.pressureField and pressureField:
             self.get_lithostatic_pressureField()
         
-        self.init_stokes_system()
+        return
     
     def run_for(self, endTime=None, checkpoint=None, timeCheckpoints=[]):
         step = self.step
@@ -754,8 +773,6 @@ class Model(Material):
        
         if self.temperature:
             self.init_advection_diffusion()
-        
-        self.init_stokes_system()
         
         while time < endTime:
             self.solve()

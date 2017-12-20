@@ -4,6 +4,8 @@ from scaling import u
 
 rcParams = {
 
+"default.solver" : "mg",
+
 "default.outputs" : ["materialField", "temperature", "pressureField", "plasticStrain", "velocityField"], 
 "swarm.variables" : ["materialField", "plasticStrain", "viscosityField", "densityField"],
 "mesh.variables" :  ["velocityField", "temperature", "pressureField",
