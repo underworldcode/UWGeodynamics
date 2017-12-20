@@ -1,8 +1,8 @@
-from LecodeIsostasy import LecodeIsostasy
-from scaling import nonDimensionalize as nd
-import scaling as sca
+import UWGeodynamics.scaling as sca
 import underworld as uw
 import underworld.function as fn
+from .LecodeIsostasy import LecodeIsostasy
+from .scaling import nonDimensionalize as nd
 
 u = UnitRegistry = sca.UnitRegistry
 
@@ -11,7 +11,7 @@ class VelocityBCs(object):
 
 
     def __init__(self, Model, left=None, right=None, top=None, bottom=None,
-                 front=None, back=None, indexSets=[]):
+                 front=None, back=None, indexSets=None):
         """ Defines mechanical boundary conditions
 
         The type of conditions is determined through the units used do define
@@ -20,7 +20,7 @@ class VelocityBCs(object):
             condition (Dirichlet)
             * Units of stress / pressure ([force] / [area]) are set as
             stress condition (Neumann).
-        
+
         parameters
         ----------
 
@@ -42,7 +42,7 @@ class VelocityBCs(object):
             List of node where to apply predefined velocities.
 
         Only valid for 3D Models:
-        
+
         front:(tuple) with length 2 in 2D, and length 3 in 3D.
             Define mechanical conditions on the front side of the Model.
             Conditions are defined for each Model direction (x, y, [z])
@@ -59,8 +59,8 @@ class VelocityBCs(object):
 
         >>> import UWGeodynamics as GEO
         >>> u = GEO.u
-        >>> Model = GEO.Model(elementRes=(64, 64), 
-                              minCoord=(-1. * u.meter, -50. * u.centimeter), 
+        >>> Model = GEO.Model(elementRes=(64, 64),
+                              minCoord=(-1. * u.meter, -50. * u.centimeter),
                               maxCoord=(1. * u.meter, 50. * u.centimeter))
         >>> Model.set_velocityBCs(left=[0, None], right=[0,None], top=[None,0],
                                   bottom=[None, 0])
@@ -83,7 +83,7 @@ class VelocityBCs(object):
             return False
         val = x.to_base_units()
         return val.units == u.kilogram / (u.meter * u.second**2)
-    
+
     def get_conditions(self):
         """ Get the mechanical boundary conditions
 
@@ -139,7 +139,7 @@ class VelocityBCs(object):
                     else:
                         Model.velocityField.data[Model.rightWall.data, dim] = nd(self.right[dim])
                         dirichletIndices[dim] += Model.rightWall
-   
+
         if self.top is not None:
             for dim in range(Model.mesh.dim):
                 if isinstance(self.top[dim], (list, tuple)):
@@ -179,7 +179,7 @@ class VelocityBCs(object):
                         else:
                             Model.velocityField.data[Model.bottomWall.data, dim] = nd(self.bottom[dim])
                             dirichletIndices[dim] += Model.bottomWall
-        
+
         if self.front is not None and Model.mesh.dim > 2:
             for dim in range(Model.mesh.dim):
                 if isinstance(self.front[dim], (list, tuple)):
@@ -194,7 +194,7 @@ class VelocityBCs(object):
                     else:
                         Model.velocityField.data[Model.frontWall.data, dim] = nd(self.front[dim])
                         dirichletIndices[dim] += Model.frontWall
-        
+
         if self.back is not None and Model.mesh.dim > 2:
             for dim in range(Model.mesh.dim):
                 if isinstance(self.back[dim], (list, tuple)):
@@ -209,20 +209,21 @@ class VelocityBCs(object):
                     else:
                         Model.velocityField.data[Model.backWall.data, dim] = nd(self.back[dim])
                         dirichletIndices[dim] += Model.backWall
+        
+        if self.indexSets:
+            for indexSet in self.indexSets:
+                for dim in range(Model.mesh.dim):
+                    if indexSet[dim] is not None:
+                        Model.velocityField.data[indexSet.data, dim] = nd(indexSet[dim])
+                        dirichletIndices[dim] += indexSet
 
-        for indexSet, temp in self.indexSets:
-            for dim in range(Model.mesh.dim):
-                if indexSet[dim] is not None:
-                    Model.velocityField.data[indexSet.data, dim] = nd(indexSet[dim])
-                    dirichletIndices[dim] += indexSet
-
-        conditions = []            
+        conditions = []
 
         conditions.append(uw.conditions.DirichletCondition(variable=Model.velocityField,
                                                            indexSetsPerDof=dirichletIndices))
 
         neumannIndices = tuple([val if val.data.size > 0 else None for val in neumannIndices])
-       
+
         if neumannIndices != (None, None):
             conditions.append(uw.conditions.NeumannCondition(fn_flux=Model.tractionField,
                                                              variable=Model.velocityField,

@@ -4,6 +4,7 @@ from scaling import u
 
 rcParams = {
 
+"output.directory": "outputs",
 "default.solver" : "mg",
 
 "default.outputs" : ["materialField", "temperature", "pressureField", "plasticStrain", "velocityField"], 

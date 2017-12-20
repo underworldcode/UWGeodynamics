@@ -1,5 +1,5 @@
 import underworld as uw
-from scaling import nonDimensionalize as nd
+from .scaling import nonDimensionalize as nd
 import numpy as np
 
 class FrictionBoundaries(object):

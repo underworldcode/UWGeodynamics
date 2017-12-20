@@ -10,11 +10,11 @@ class Material(object):
                  radiogenicHeatProd=0.0, shape=None, viscosity=None,
                  plasticity=None, solidus=None, liquidus=None,
                  latentHeatFusion=0.0, meltExpansion=0.0, meltFraction=0.0,
-                 meltFractionLimit=1.0, viscosityChangeX1=0.15, 
+                 meltFractionLimit=1.0, viscosityChangeX1=0.15,
                  viscosityChangeX2=0.3, viscosityChange=1.0):
 
         self.index = self._ids.next()
-        
+
         self.name = name
         self.top = None
         self.bottom = None
@@ -26,7 +26,7 @@ class Material(object):
         self.thermalExpansivity = thermalExpansivity
         self.radiogenicHeatProd = radiogenicHeatProd
         self.compressibility = None
-        
+
         self.solidus = solidus
         self.liquidus = liquidus
         self.latentHeatFusion = latentHeatFusion
@@ -85,7 +85,7 @@ class Material(object):
     @radiogenicHeatProd.setter
     def radiogenicHeatProd(self, value):
         self._radiogenicHeatProd = value
-    
+
     @property
     def thermalExpansivity(self):
         return self._thermalExpansivity
@@ -93,7 +93,7 @@ class Material(object):
     @thermalExpansivity.setter
     def thermalExpansivity(self, value):
         self._thermalExpansivity = value
-    
+
     @property
     def viscosity(self):
         return self._viscosity
@@ -112,15 +112,15 @@ class Material(object):
     @plasticity.setter
     def plasticity(self, value):
         self._plasticity = value
-    
-    def add_melt_modifier(self, solidus, liquidus, latentHeatFusion, 
+
+    def add_melt_modifier(self, solidus, liquidus, latentHeatFusion,
                           meltExpansion,
                           meltFraction=0.0,
                           meltFractionLimit=1.0,
-                          viscosityChangeX1=0.15, 
+                          viscosityChangeX1=0.15,
                           viscosityChangeX2=0.3,
                           viscosityChange=1e3):
-        
+
         self.solidus = solidus
         self.liquidus = liquidus
         self.latentHeatFusion = latentHeatFusion
