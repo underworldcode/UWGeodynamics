@@ -37,31 +37,29 @@ class Model(Material):
     """
 
     def __init__(self, elementRes, minCoord, maxCoord,
+                 name = "undefined",
                  gravity=(0.0, -9.81 * u.meter / u.second**2),
                  periodic=None, elementType="Q1/dQ0",
-                 swarmLayout=None, Tref=273.15 * u.degK, name="undefined",
-                 outputDir=rcParams["output.directory"],
-                 minViscosity=1e19*u.pascal*u.second,
-                 maxViscosity=1e25*u.pascal*u.second,
-                 strainRate_default=1e-30 / u.second):
+                 Tref=273.15 * u.degK):
 
         """
         Parameters
         ----------
         elementRes:
+            Resolution of the mesh in number of elements for each axis (degree
+            of freedom)
         minCoord:
+            Minimum coordinates for each axis.
         maxCoord:
-
-        gravity:
-        periodic:
-        elementType:
-        swarmLayout:
-        Tref:
+            Maximum coordinates for each axis.
         name:
-        outputDir:
-        populationControl:
-        minViscosity:
-        maxViscosity:
+            The Model name.
+        gravity:
+            Acceleration due to gravity vector.
+        periodic:
+            Mesh periodicity.
+        elementType:
+            Type of finite element used (Only Q1/dQ0 are currently supported
 
         Returns
         --------
@@ -83,13 +81,14 @@ class Model(Material):
         self.top = maxCoord[-1]
         self.bottom = minCoord[-1]
 
-        self.outputDir = outputDir
+        self.outputDir = rcParams["output.directory"]
         self.checkpointID = 0
         self._checkpoint = None
 
-        self.minViscosity = minViscosity
-        self.maxViscosity = maxViscosity
-        self.viscosityLimiter = ViscosityLimiter(minViscosity, maxViscosity)
+        self.minViscosity = 1e19*u.pascal*u.second
+        self.maxViscosity = 1e25*u.pascal*u.second
+        self.viscosityLimiter = ViscosityLimiter(self.minViscosity,
+                                                 self.maxViscosity)
 
         self.gravity = gravity
         self.Tref = Tref
@@ -124,14 +123,14 @@ class Model(Material):
         self.tractionField.data[...] = 0.
 
         # symmetric component of the gradient of the flow velocityField.
-        self.strainRate_default = strainRate_default
+        self.strainRate_default = 1e-30 / u.second
         self.solutionExist = False
         self.strainRate = fn.tensor.symmetric(self.velocityField.fn_gradient)
         self.strainRate_2ndInvariant = fn.tensor.second_invariant(self.strainRate)
 
         # Create the material swarm
         self.swarm = uw.swarm.Swarm(mesh=self.mesh, particleEscape=True)
-        self.swarmLayout = swarmLayout
+        self.swarmLayout = None
         self.population_control = None
 
         self.materials = [self]
@@ -207,8 +206,6 @@ class Model(Material):
         self._densityField.data[:] = 0.
         self.meltField.data[:] = 0.
 
-
-
         # Create a bunch of tools to project swarmVariable onto the mesh
         self._projMaterialField  = uw.mesh.MeshVariable(mesh=self.mesh, nodeDofCount=1)
         self._materialFieldProjector = uw.utils.MeshVariable_Projection(self._projMaterialField, self.materialField, type=0)
@@ -250,9 +247,28 @@ class Model(Material):
 
     @property
     def outputDir(self):
+        """ Output Directory """
         return self._outputDir
+    
+    @outputDir.setter
+    def outputDir(self, value):
+        if uw.rank() == 0:
+            if not os.path.exists(value):
+                os.makedirs(value)
+        self._outputDir = value
 
     def restart(self, restartDir=None, step=None):
+        """ Restart a Model
+        
+        parameters:
+        -----------
+            restartDir: (string)
+                Directory that contains the outputs of the model
+                you want to restart
+            step: (int)
+                Step from which you want to restart the model.
+        
+        """
         if not restartDir:
             restartDir = self._outputDir
         if not step:
@@ -272,45 +288,53 @@ class Model(Material):
         self.velocityField.load(os.path.join(restartDir, 'velocityField-%s.h5' % step))
 
     @property
-    def surfaceProcesses(self):
-        return self._surfaceProcesses
-
-    @property
     def projMaterialField(self):
+        """ Material field projected on the mesh """
         self._materialFieldProjector.solve()
         return self._projMaterialField
 
     @property
     def projPlasticStrain(self):
+        """ Plastic Strain Field projected on the mesh """
         self._plasticStrainProjector.solve()
         return self._projPlasticStrain
 
     @property
     def strainRateField(self):
+        """ Strain Rate Field """
         self._strainRateField.data[:] = self.strainRate_2ndInvariant.evaluate(self.mesh)
         return self._strainRateField
 
     @property
     def projViscosityField(self):
+        """ Viscosity Field projected on the mesh """
         self.viscosityField.data[...] = self.viscosityFn.evaluate(self.swarm)
         self._viscosityFieldProjector.solve()
         return self._projViscosityField
 
     @property
     def viscosityField(self):
+        """ Viscosity Field on particles """
         self._viscosityField.data[:] = self.viscosityFn.evaluate(self.swarm)
         return self._viscosityField
 
     @property
     def projDensityField(self):
+        """ Density Field projected on the mesh """
         self.densityField.data[...] = self.densityFn.evaluate(self.swarm)
         self._densityFieldProjector.solve()
         return self._projDensityField
 
     @property
     def densityField(self):
+        """ Density Field on particles """
         self._densityField.data[:] = self.densityFn.evaluate(self.swarm)
         return self._densityField
+    
+    @property
+    def surfaceProcesses(self):
+        """ Surface processes handler """ 
+        return self._surfaceProcesses
 
     @surfaceProcesses.setter
     def surfaceProcesses(self, value):
@@ -318,15 +342,9 @@ class Model(Material):
         if isinstance(value, surfaceProcesses.Badlands):
             self._surfaceProcesses.Model = self
 
-    @outputDir.setter
-    def outputDir(self, value):
-        if uw.rank() == 0:
-            if not os.path.exists(value):
-                os.makedirs(value)
-        self._outputDir = value
-
     @property
     def swarmLayout(self):
+        """ Swarm Layout underworld object """
         return self._swarmLayout
 
     @swarmLayout.setter
@@ -343,6 +361,7 @@ class Model(Material):
 
     @property
     def population_control(self):
+        """ Population control underworld object """
         return self._population_control
 
     @population_control.setter
@@ -360,6 +379,35 @@ class Model(Material):
     def set_temperatureBCs(self, left=None, right=None, top=None, bottom=None,
                            front=None, back=None,
                            indexSets=None, materials=None):
+        """ Set Model thermal conditions
+         
+        Parameters:
+            left:
+                Temperature or flux along the left wall.
+                Default is 'None' 
+            right:
+                Temperature or flux along the right wall.
+                Default is 'None' 
+            top:
+                Temperature or flux along the top wall.
+                Default is 'None' 
+            bottom:
+                Temperature or flux along the bottom wall.
+                Default is 'None' 
+            front:
+                Temperature or flux along the front wall.
+                Default is 'None' 
+            back:
+                Temperature or flux along the back wall.
+                Default is 'None' 
+            indexSets: (set, temperature)
+                underworld mesh index set and associate temperature
+            materials:
+                list of materials for which temperature need to be
+                fixed. [(material, temperature)]
+        
+        """
+
 
         if not self.temperature:
             self.temperature = uw.mesh.MeshVariable(mesh=self.mesh,
@@ -378,6 +426,7 @@ class Model(Material):
 
     @property
     def temperature(self):
+        """ Temperature Field """
         return self._temperature
 
     @temperature.setter
@@ -390,7 +439,10 @@ class Model(Material):
             raise ValueError("Set Boundary Conditions")
         return self.temperatureBCs.get_conditions()
 
-    def init_advection_diffusion(self):
+    @property
+    def advdiffSystem(self):
+        """ Advection Diffusion System """
+
         DiffusivityMap = {}
         for material in self.materials:
             DiffusivityMap[material.index] = nd(material.diffusivity)
@@ -415,7 +467,7 @@ class Model(Material):
         self.HeatProdFn = fn.branching.map(fn_key=self.materialField,
                                            mapping=HeatProdMap)
 
-        self.advdiffSystem = uw.systems.AdvectionDiffusion(
+        self._advdiffSystem = uw.systems.AdvectionDiffusion(
                 self.temperature,
                 self._temperatureDot,
                 velocityField=self.velocityField,
@@ -423,9 +475,11 @@ class Model(Material):
                 fn_sourceTerm=self.HeatProdFn,
                 conditions=[self._temperatureBCs]
             )
+        return self._advdiffSystem
 
     @property
     def stokes(self):
+        """ Stokes solver """
 
         gravity = tuple([nd(val) for val in self.gravity])
         self.buoyancyFn = self.densityFn * gravity
@@ -445,6 +499,7 @@ class Model(Material):
         return self._stokes
 
     def _init_melt_fraction(self):
+        """ Initialize the Melt Fraction Field """
 
         # Initialize Melt Fraction to material property
         meltFractionMap = {}
@@ -458,6 +513,30 @@ class Model(Material):
 
     def set_velocityBCs(self, left=None, right=None, top=None, bottom=None,
                         front=None, back=None, indexSets=None):
+        """ Set Model kinematic conditions
+         
+        Parameters:
+            left:
+                Velocity along the left wall.
+                Default is 'None' 
+            right:
+                Velocity along the right wall.
+                Default is 'None' 
+            top:
+                Velocity along the top wall.
+                Default is 'None' 
+            bottom:
+                Velocity along the bottom wall.
+                Default is 'None' 
+            front:
+                Velocity along the front wall.
+                Default is 'None' 
+            back:
+                Velocity along the back wall.
+                Default is 'None' 
+            indexSets: (set, velocity)
+                underworld mesh index set and associate velocity
+        """
 
         self.velocityBCs = VelocityBCs(self, left=left,
                                        right=right, top=top,
@@ -467,31 +546,40 @@ class Model(Material):
 
     @property
     def _velocityBCs(self):
+        """ Retrieve kinematic boundary conditions """
         if not self.velocityBCs:
             raise ValueError("Set Boundary Conditions")
         return self.velocityBCs.get_conditions()
 
-    def add_material(self, vertices=None, reset=False, name="unknown",
-                     shape=None):
+    def add_material(self, shape, name="unknown", reset=False):
+        """ Add Material to the Model
+
+        Parameters:
+        -----------
+            shape:
+                Shape of the material. See UWGeodynamics.shape
+            name:
+                Material name
+            reset: (bool)
+                Reset the material Field before adding the new
+                material. Default is False.
+        """
 
         if reset:
+            self.materialField.data[...] = 0
             self.materials = [self]
-
-        if vertices:
-            vertices = [(nd(x), nd(y)) for x, y in vertices]
 
         mat = Material()
 
         mat.name = name
-        mat.vertices           = vertices
+
+        ### Initialize some properties to Model property
         mat.diffusivity        = self.diffusivity
         mat.capacity           = self.capacity
         mat.thermalExpansivity = self.thermalExpansivity
         mat.radiogenicHeatProd = self.radiogenicHeatProd
 
         if isinstance(shape, shapes.Layer):
-            shape.minX = self.minCoord[0]
-            shape.maxX = self.maxCoord[0]
             mat.top = shape.top
             mat.bottom = shape.bottom
 
@@ -509,6 +597,7 @@ class Model(Material):
         return mat
 
     def _fill_model(self):
+        """ Initialize the Material Field from the list of materials"""
 
         conditions = [(obj.shape.fn, obj.index)
                       for obj in self.materials if obj.shape is not None]
@@ -518,6 +607,7 @@ class Model(Material):
 
     @property
     def material_drawing_order(self):
+        """ Order of material drawing. Overlapping shapes reset the material"""
         return self._material_drawing_order
 
     @material_drawing_order.setter
@@ -529,6 +619,7 @@ class Model(Material):
 
     @property
     def densityFn(self):
+        """ Density function """
         return self._densityFn()
 
     def _densityFn(self):
@@ -548,9 +639,37 @@ class Model(Material):
 
         return fn.branching.map(fn_key=self.materialField, mapping=densityMap)
 
-    def frictional_boundary(self, right=False, left=False,
+    def set_frictional_boundary(self, right=False, left=False,
                                   top=False, bottom=False,
                                   thickness=2, friction=0.0):
+        """ Set Frictional Boundary conditions 
+        
+        Frictional boundaries are implemented as a thin layer of frictional
+        material along the chosen boundaries.
+
+        Parameters:
+        -----------
+
+            right: (bool)
+                if True create a frictional boundary.
+            left: (bool)
+                if True create a frictional boundary.
+            top: (bool)
+                if True create a frictional boundary.
+            bottom: (bool)
+                if True create a frictional boundary.
+            thickness: (int)
+                thickness of the boundaries (in number of
+                elements)
+            friction: (float)
+                Friction coefficient at the boundaries.
+
+        Returns:
+        --------
+            Underworld mesh variable that maps the boundaries.
+            (Values are set to 1 if the mesh element applies
+            a frictional condition, 0 otherwise).
+        """
 
         self.frictionalBCs = FrictionBoundaries(self, right=right,
                                                       left=left,
@@ -563,9 +682,11 @@ class Model(Material):
 
     @property
     def viscosityFn(self):
+        """ Effective Viscosity Function """
         return self._viscosityFn()
 
     def _viscosityFn(self):
+        """ Create the Viscosity Function """
 
         ViscosityMap = {}
         BGViscosityMap = {}
@@ -657,7 +778,6 @@ class Model(Material):
                 PlasticMap[idx] = 1.0
 
 
-
         viscosityFn = fn.branching.map(fn_key=self.materialField, mapping=EffViscosityMap)
         backgroundViscosityFn = fn.branching.map(fn_key=self.materialField, mapping=BGViscosityMap)
 
@@ -676,14 +796,22 @@ class Model(Material):
 
     @property
     def yieldStressFn(self):
+        """ Yield Stress function """
         return self._yieldStressFn()
 
     def _yieldStressFn(self):
+        """ Calculate Yield stress function from viscosity and strain rate"""
         eij = self.strainRate_2ndInvariant
         eijdef =  nd(self.strainRate_default)
         return 2.0 * self.viscosityFn * fn.misc.max(eij, eijdef)
 
     def solve_temperature_steady_state(self):
+        """ Solve for steady state temperature 
+        
+        Returns:
+        --------
+            Updated temperature Field
+        """
 
         if self.materials:
             DiffusivityMap = {}
@@ -714,14 +842,27 @@ class Model(Material):
         heatsolver = uw.systems.Solver(heatequation)
         heatsolver.solve(nonLinearIterate=True)
 
+        return self.temperature
+
     def get_lithostatic_pressureField(self):
+        """ Calculate the lithostatic Pressure Field
+
+        Returns:
+        --------
+            Pressure Field, array containing the pressures
+            at the bottom of the Model
+        """
+
         gravity = np.abs(nd(self.gravity[-1]))  # Ugly!!!!!
         lithoPress = LithostaticPressure(self.mesh, self.densityFn, gravity)
         self.pressureField.data[:], LPressBot = lithoPress.solve()
         self.pressSmoother.smooth()
+
         return self.pressureField, LPressBot
 
     def _calibrate_pressureField(self):
+        """ Pressure Calibration callback function """
+
         surfaceArea = uw.utils.Integral(fn=1.0, mesh=self.mesh,
                                         integrationType='surface',
                                         surfaceIndexSet=self.topWall)
@@ -742,33 +883,61 @@ class Model(Material):
                 material.viscosity.firstIter = False
 
     def _get_material_indices(self, material):
+        """ Get mesh indices of a Material 
+        
+        Parameter:
+        ----------
+            material:
+                    The Material of interest
+        Returns;
+        --------
+            underworld IndexSet
+        
+        """
         nodes = np.arange(0, self.mesh.nodesLocal)[self.projMaterialField.evaluate(self.mesh.data[0:self.mesh.nodesLocal])[:, 0] == material.index]
         return uw.mesh.FeMesh_IndexSet(self.mesh, topologicalIndex=0, size=self.mesh.nodesGlobal, fromObject=nodes)
 
     def solve(self):
+        """ Solve Stokes """
         self.stokes.solve(nonLinearIterate=True,
                           callback_post_solve=self._calibrate_pressureField,
                           nonLinearTolerance=self.nonLinearTolerance)
         self.solutionExist = True
 
     def init_model(self, temperature=True, pressureField=True):
+        """ Initialize the Temperature Field as steady state,
+            Initialize the Pressure Field as Lithostatic
+
+        Parameters:
+        -----------
+            temperature: (bool) default to True
+            pressure: (bool) default to True
+        """
 
         # Init Temperature Field
         if self.temperature and temperature:
             self.solve_temperature_steady_state()
-            self.init_advection_diffusion()
 
         # Init pressureField Field
         if self.pressureField and pressureField:
             self.get_lithostatic_pressureField()
-
         return
 
-    def run_for(self, endTime=None, checkpoint=None, timeCheckpoints=None):
+    def run_for(self, duration=None, checkpoint=None, timeCheckpoints=None):
+        """ Run the Model
+
+        Parameters:
+        -----------
+        
+            duration: duration of the Model in Time units or nb of steps
+            checkpoint: checkpoint interval
+            timeCheckpoints: Additional checkpoints
+        """
+
         step = self.step
         time = nd(self.time)
-        units = endTime.units
-        endTime = time + nd(endTime)
+        units = duration.units
+        duration = time + nd(duration)
 
         next_checkpoint = None
 
@@ -778,10 +947,7 @@ class Model(Material):
         if checkpoint:
             next_checkpoint = time + nd(checkpoint)
 
-        if self.temperature:
-            self.init_advection_diffusion()
-
-        while time < endTime:
+        while time < duration:
             self.solve()
 
             # Whats the longest we can run before reaching the end of the model
@@ -795,7 +961,7 @@ class Model(Material):
             if checkpoint:
                 dt = min(dt, next_checkpoint - time)
 
-            self._dt = min(dt, endTime - time)
+            self._dt = min(dt, duration - time)
 
             uw.barrier()
 
@@ -815,8 +981,16 @@ class Model(Material):
                 if uw.rank() == 0:
                     print("Time: ", str(self.time.to(units)),
                           'dt:', str(sca.Dimensionalize(self._dt, units)))
+        return 1
 
     def update(self):
+        """ Update Function 
+        
+        The following function processes the mesh and swarm variables
+        between two solves. It takes care of mesh, swarm advection and
+        update the fields according to the Model state.
+
+        """
 
         dt = self._dt
         # Increment plastic strain
@@ -824,8 +998,6 @@ class Model(Material):
         self.plasticStrain.data[:] += plasticStrainIncrement
 
         if any([material.melt for material in self.materials]):
-            # rebuild advectionDiffusion System
-            self.init_advection_diffusion()
             # Calculate New meltField
             meltFraction = self._get_melt_fraction()
             self.meltField.data[:] = meltFraction.evaluate(self.swarm)
@@ -857,16 +1029,48 @@ class Model(Material):
             self._visugrid.advect(dt)
 
     def set_meshAdvector(self, axis):
+        """ Initialize the mesh advector 
+        
+        Parameters:
+        -----------
+            axis:
+                list of axis (or degree of freedom) along which the
+                mesh is allowed to deform
+        """
         self._advector = _mesh_advector(self, axis)
 
     def add_passive_tracers(self, name=None, vertices=None, particleEscape=True):
-        self.passiveTracers.append(PassiveTracers(self.mesh,
-                                                  self.velocityField,
-                                                  name=name,
-                                                  vertices=vertices,
-                                                  particleEscape=particleEscape))
+        """ Add a swarm of passive tracers to the Model
+
+        Parameters:
+        -----------
+            name:
+                Name of the swarm of tracers.
+            vertices:
+                Numpy array that contains the coordinates of the tracers.
+            particleEscape: (bool)
+                Allow or prevent tracers from escaping the boundaries of the
+                Model (default to True)
+        """
+        tracers = PassiveTracers(self.mesh,
+                                 self.velocityField,
+                                 name=name,
+                                 vertices=vertices,
+                                 particleEscape=particleEscape)
+
+        self.passiveTracers.append(tracers)
+
+        return tracers
 
     def _get_melt_fraction(self):
+        """ Melt Fraction function 
+        
+        Returns:
+        -------
+            Underworld function that calculates the Melt fraction on the 
+            particles.
+        
+        """
         meltMap = {}
         for material in self.materials:
             if material.melt:
@@ -881,6 +1085,14 @@ class Model(Material):
         return fn.branching.map(fn_key=self.materialField, mapping=meltMap, fn_default=0.0)
 
     def _get_dynamic_heating(self, material):
+        """ Calculate additional heating source due to melt 
+        
+        Returns:
+        --------
+            Underworld function
+
+        """
+
         ratio = material.latentHeatFusion / material.capacity
 
         if not ratio.dimensionless:
@@ -892,6 +1104,8 @@ class Model(Material):
 
     @property
     def lambdaFn(self):
+        """ Initialize compressibility """
+
         materialMap = {}
         if any([material.compressibility for material in self.materials]):
             for material in self.materials:
@@ -900,9 +1114,19 @@ class Model(Material):
 
             return uw.function.branching.map(fn_key=self.materialField,
                    mapping=materialMap, fn_default=0.0)
-        return None
+        return
 
     def checkpoint(self, variables=None, checkpointID=None):
+        """ Do a checkpoint (Save fields)
+        
+        Parameters:
+        -----------
+            variables:
+                list of fields/variables to save
+            checkpointID:
+                checkpoint ID.
+
+        """
         if not variables:
             variables = rcParams["default.outputs"]
 
@@ -922,6 +1146,8 @@ class Model(Material):
                     pass
 
     def output_glucifer_figures(self, step):
+        """ Output glucifer Figures to the gldb store """
+
         import glucifer
         GluciferStore = glucifer.Store(os.path.join(self.outputDir, "glucifer"))
         GluciferStore.step = step
@@ -951,6 +1177,23 @@ class Model(Material):
         viscosity.save()
 
     def add_visugrid(self, elementRes, minCoord=None, maxCoord=None):
+        """ Add a tracking grid to the Model 
+        
+        This is essentially a lagrangian grid that deforms with the materials.
+
+        Parameters:
+        -----------
+            elementRes:
+                Grid resolution in number of elements along each axis (x, y, z).
+            minCoord:
+                Minimum coordinate for each axis.
+                Used to define the extent of the grid,
+            maxCoord:
+                Maximum coordinate for each axis.
+                Used to define the extent of the grid,
+        """
+
+
         if not maxCoord:
             maxCoord = self.maxCoord
 
@@ -960,6 +1203,7 @@ class Model(Material):
         self._visugrid = Visugrid(self, elementRes, minCoord, maxCoord, self.velocityField)
 
     def _save_field(self, field, checkpointID, units=None):
+        """ Save Field """
 
         if field in rcParams["mesh.variables"]:
             if not units:

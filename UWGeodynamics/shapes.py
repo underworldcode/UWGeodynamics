@@ -34,8 +34,6 @@ class Layer(Shape):
     def __init__(self, top, bottom):
         self.top = top
         self.bottom = bottom
-        self.minX = None
-        self.maxX = None
         self.minY = None
         self.maxY = None
 
