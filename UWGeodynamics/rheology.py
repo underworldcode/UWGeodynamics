@@ -65,20 +65,60 @@ class DruckerPrager(object):
                  minimumViscosity=None, plasticStrain=None, pressureField=None,
                  epsilon1=0.5, epsilon2=1.0):
 
-        self.cohesion = cohesion
-        self.frictionCoefficient = frictionCoefficient
+        self._cohesion = cohesion
+        self._frictionCoefficient = frictionCoefficient
         self.cohesionAfterSoftening = cohesionAfterSoftening
         self.frictionAfterSoftening = frictionAfterSoftening
+        
         self.minimumViscosity = minimumViscosity
+        
         self.plasticStrain = plasticStrain
         self.pressureField = pressureField
         self.epsilon1 = epsilon1
         self.epsilon2 = epsilon2
+        
         self.cohesionWeakeningFn = linearCohesionWeakening
         self.frictionWeakeningFn = linearFrictionWeakening
+
+    @property
+    def cohesion(self):
+        return self._cohesion
+
+    @cohesion.setter
+    def cohesion(self, value):
+        self._cohesion = value
+
+    @property
+    def cohesionAfterSoftening(self):
+        return self._cohesionAfterSoftening
+
+    @cohesionAfterSoftening.setter
+    def cohesionAfterSoftening(self, value):
+        if value:
+            self._cohesionAfterSoftening = value
+        else:
+            self._cohesionAfterSoftening = self.cohesion
+
+    @property
+    def frictionCoefficient(self):
+        return self._frictionCoefficient
+    
+    @frictionCoefficient.setter
+    def frictionCoefficient(self, value):
+        self._frictionCoefficient = value
     
     @property
-    def _friction(self):
+    def frictionAfterSoftening(self):
+        return self._frictionAfterSoftening
+
+    @frictionAfterSoftening.setter
+    def frictionAfterSoftening(self, value):
+        if value:
+            self._frictionAfterSoftening = value
+        else:
+            self._frictionAfterSoftening = self.frictionCoefficient
+    
+    def _frictionFn(self):
         if self.plasticStrain:
             friction = self.frictionWeakeningFn(
                 self.plasticStrain,
@@ -90,8 +130,7 @@ class DruckerPrager(object):
             friction = fn.misc.constant(nd(self.frictionCoefficient))
         return friction
 
-    @property
-    def _cohesion(self):
+    def _cohesionFn(self):
         if self.plasticStrain:
             cohesion = self.cohesionWeakeningFn(
                 self.plasticStrain,
@@ -102,15 +141,15 @@ class DruckerPrager(object):
         return cohesion
         
     def _get_yieldStress2D(self):
-        f = self._friction
-        C = self._cohesion
+        f = self._frictionFn()
+        C = self._cohesionFn()
         P = self.pressureField
         self.yieldStress = (C * fn.math.cos(f) + P * fn.math.sin(f))
         return self.yieldStress
 
     def _get_yieldStress3D(self):
-        f = self._friction
-        C = self._cohesion
+        f = self._frictionFn()
+        C = self._cohesionFn()
         P = self.pressureField
         self.yieldStress = 6.0*C*fn.math.cos(f) + 2.0*fn.math.sin(f)*fn.misc.max(P, 0.0) 
         self.yieldStress /= (fn.math.sqrt(3.0) * (3.0 + fn.math.sin(f)))
