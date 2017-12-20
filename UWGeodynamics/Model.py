@@ -1028,7 +1028,7 @@ class Model(Material):
 
             uw.barrier()
 
-            self.update()
+            self._update()
 
             step += 1
             self.time += sca.Dimensionalize(self._dt, units)
@@ -1046,7 +1046,7 @@ class Model(Material):
                           'dt:', str(sca.Dimensionalize(self._dt, units)))
         return 1
 
-    def update(self):
+    def _update(self):
         """ Update Function
 
         The following function processes the mesh and swarm variables
@@ -1091,7 +1091,7 @@ class Model(Material):
         if self._visugrid:
             self._visugrid.advect(dt)
 
-    def set_meshAdvector(self, axis):
+    def mesh_advector(self, axis):
         """ Initialize the mesh advector
 
         Parameters:
