@@ -467,7 +467,7 @@ class Model(Material):
         return self.temperatureBCs.get_conditions()
 
     @property
-    def advdiffSystem(self):
+    def _advdiffSystem(self):
         """ Advection Diffusion System """
 
         DiffusivityMap = {}
@@ -497,7 +497,7 @@ class Model(Material):
         self.HeatProdFn = fn.branching.map(fn_key=self.materialField,
                                            mapping=HeatProdMap)
 
-        self._advdiffSystem = uw.systems.AdvectionDiffusion(
+        obj = uw.systems.AdvectionDiffusion(
             self.temperature,
             self._temperatureDot,
             velocityField=self.velocityField,
@@ -505,10 +505,10 @@ class Model(Material):
             fn_sourceTerm=self.HeatProdFn,
             conditions=[self._temperatureBCs]
         )
-        return self._advdiffSystem
+        return obj
 
     @property
-    def stokes(self):
+    def _stokes(self):
         """ Stokes solver """
 
         gravity = tuple([nd(val) for val in self.gravity])
@@ -516,17 +516,17 @@ class Model(Material):
 
         if any([material.viscosity for material in self.materials]):
 
-            stokes = uw.systems.Stokes(velocityField=self.velocityField,
-                                       pressureField=self.pressureField,
-                                       conditions=self._velocityBCs,
-                                       fn_viscosity=self.viscosityFn,
-                                       fn_bodyforce=self.buoyancyFn,
-                                       fn_one_on_lambda=None)
+            stokes_object = uw.systems.Stokes(velocityField=self.velocityField,
+                                              pressureField=self.pressureField,
+                                              conditions=self._velocityBCs,
+                                              fn_viscosity=self.viscosityFn,
+                                              fn_bodyforce=self.buoyancyFn,
+                                              fn_one_on_lambda=None)
 
-            self._stokes = uw.systems.Solver(stokes)
-            self._stokes.set_inner_method(self.solver)
+            solver = uw.systems.Solver(stokes_object)
+            solver.set_inner_method(self.solver)
 
-        return self._stokes
+        return solver
 
     def _init_melt_fraction(self):
         """ Initialize the Melt Fraction Field """
@@ -962,7 +962,7 @@ class Model(Material):
 
     def solve(self):
         """ Solve Stokes """
-        self.stokes.solve(nonLinearIterate=True,
+        self._stokes.solve(nonLinearIterate=True,
                           callback_post_solve=self._calibrate_pressureField,
                           nonLinearTolerance=self.nonLinearTolerance)
         self.solutionExist = True
@@ -1019,7 +1019,7 @@ class Model(Material):
             dt = self.swarm_advector.get_max_dt()
 
             if self.temperature:
-                dt = min(dt, self.advdiffSystem.get_max_dt())
+                dt = min(dt, self._advdiffSystem.get_max_dt())
 
             if checkpoint:
                 dt = min(dt, next_checkpoint - time)
@@ -1067,7 +1067,7 @@ class Model(Material):
 
         # Solve for temperature
         if self.temperature:
-            self.advdiffSystem.integrate(dt)
+            self._advdiffSystem.integrate(dt)
 
         # Integrate Swarms in time
         self.swarm_advector.integrate(dt, update_owners=True)
