@@ -97,13 +97,14 @@ class Plots(object):
         return Fig
     
     def strainRate(self, figsize=None, units=1.0/u.second, show=True,
-                   store=None, cullface=False, quality=3, **kwargs):
+                   store=None, cullface=False, quality=3, logScale=True, **kwargs):
         Fig = glucifer.Figure(figsize=figsize, store=store, title="Strain Rate",
                               quality=quality)
         fact = sca.Dimensionalize(1.0, units).magnitude
         Fig.append(glucifer.objects.Surface(self.Model.mesh, self.Model.strainRate_2ndInvariant*fact,
                                            cullface=cullface,
-                                           colours="coolwarm", logScale=True,
+                                           colours="coolwarm",
+                                           logScale=logScale,
                                            onMesh=True, **kwargs))
         if show:
             Fig.show()
