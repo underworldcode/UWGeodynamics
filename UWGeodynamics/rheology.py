@@ -348,7 +348,7 @@ class ViscousCreepRegistry(object):
 
         if not filename:
             import pkg_resources
-            filename = pkg_resources.resource_filename(__name__, "ViscousRheologies.json")
+            filename = pkg_resources.resource_filename(__name__, "ressources/ViscousRheologies.json")
 
         with open(filename, "r") as infile:
             _viscousLaws = json.load(infile)
@@ -384,7 +384,7 @@ class PlasticityRegistry(object):
         
         if not filename:
             import pkg_resources
-            filename = pkg_resources.resource_filename(__name__, "PlasticRheologies.json")
+            filename = pkg_resources.resource_filename(__name__, "ressources/PlasticRheologies.json")
 
         with open(filename, "r") as infile:
             _plasticLaws = json.load(infile)
