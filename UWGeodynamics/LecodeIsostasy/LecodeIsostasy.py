@@ -15,7 +15,7 @@ class LecodeIsostasy(object):
         self.mesh = mesh
         self.swarm = swarm
         self.velocityField = velocityField
-        self.densityFn = densityFn
+        self._densityFn = densityFn
         self.materialIndexField = materialIndexField
         self.reference_mat = reference_mat
         self.average = average
@@ -45,7 +45,7 @@ class LecodeIsostasy(object):
             raise ValueError("Please link a Material Field to the Isostasy solver")
         if not self.materialIndexField:
             raise ValueError("Please link a Material Field to the Isostasy solver")
-        if not self.densityFn:
+        if not self._densityFn:
             raise ValueError("Please link a Density Field to the Isostasy solver")
         if not self.reference_mat:
             raise ValueError("Please define a reference Material for the Isostasy solver")
@@ -55,7 +55,7 @@ class LecodeIsostasy(object):
         self.DensityVar = uw.mesh.MeshVariable(self.mesh, nodeDofCount=1)
         self.MaterialVar = uw.mesh.MeshVariable(self.mesh, nodeDofCount=1)
         self.projectorDensity = uw.utils.MeshVariable_Projection(self.DensityVar,
-                                                                 self.densityFn,
+                                                                 self._densityFn,
                                                                  type=0 )
         self.projectorMaterial = uw.utils.MeshVariable_Projection(self.MaterialVar,
                                          self.MaterialIndexFieldFloat, type=0 )

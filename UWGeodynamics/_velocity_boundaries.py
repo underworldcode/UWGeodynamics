@@ -113,102 +113,102 @@ class VelocityBCs(object):
             for dim in range(Model.mesh.dim):
                 if isinstance(self.left[dim], (list, tuple)):
                     func = fn.branching.conditional(self.left[dim])
-                    Model.velocityField.data[Model.leftWall.data, dim] = func.evaluate(Model.mesh.data[Model.leftWall.data])[:,dim]
-                    dirichletIndices[dim] += Model.leftWall
+                    Model.velocityField.data[Model._left_wall.data, dim] = func.evaluate(Model.mesh.data[Model._left_wall.data])[:,dim]
+                    dirichletIndices[dim] += Model._left_wall
                     continue
                 if self.left[dim] is not None:
                     if self._isNeumann(self.left[dim]):
-                        Model.tractionField.data[Model.leftWall.data, dim] = nd(self.left[dim])
-                        neumannIndices[dim] += Model.leftWall
+                        Model.tractionField.data[Model._left_wall.data, dim] = nd(self.left[dim])
+                        neumannIndices[dim] += Model._left_wall
                     else:
-                        Model.velocityField.data[Model.leftWall.data, dim] = nd(self.left[dim])
-                        dirichletIndices[dim] += Model.leftWall
+                        Model.velocityField.data[Model._left_wall.data, dim] = nd(self.left[dim])
+                        dirichletIndices[dim] += Model._left_wall
 
 
         if self.right is not None:
             for dim in range(Model.mesh.dim):
                 if isinstance(self.right[dim], (list, tuple)):
                     func = fn.branching.conditional(self.right[dim])
-                    Model.velocityField.data[Model.rightWall.data, dim] = func.evaluate(Model.mesh.data[Model.rightWall.data])[:,dim]
-                    dirichletIndices[dim] += Model.rightWall
+                    Model.velocityField.data[Model._right_wall.data, dim] = func.evaluate(Model.mesh.data[Model._right_wall.data])[:,dim]
+                    dirichletIndices[dim] += Model._right_wall
                     continue
                 if self.right[dim] is not None:
                     if self._isNeumann(self.right[dim]):
-                        Model.tractionField.data[Model.rightWall.data, dim] = nd(self.right[dim])
-                        neumannIndices[dim] += Model.rightWall
+                        Model.tractionField.data[Model._right_wall.data, dim] = nd(self.right[dim])
+                        neumannIndices[dim] += Model._right_wall
                     else:
-                        Model.velocityField.data[Model.rightWall.data, dim] = nd(self.right[dim])
-                        dirichletIndices[dim] += Model.rightWall
+                        Model.velocityField.data[Model._right_wall.data, dim] = nd(self.right[dim])
+                        dirichletIndices[dim] += Model._right_wall
 
         if self.top is not None:
             for dim in range(Model.mesh.dim):
                 if isinstance(self.top[dim], (list, tuple)):
                     func = fn.branching.conditional(self.top[dim])
-                    Model.velocityField.data[Model.topWall.data, dim] = func.evaluate(Model.mesh.data[Model.topWall.data])[:,dim]
-                    dirichletIndices[dim] += Model.topWall
+                    Model.velocityField.data[Model._top_wall.data, dim] = func.evaluate(Model.mesh.data[Model._top_wall.data])[:,dim]
+                    dirichletIndices[dim] += Model._top_wall
                     continue
                 if self.top[dim] is not None:
                     if self._isNeumann(self.top[dim]):
-                        Model.tractionField.data[Model.topWall.data, dim] = nd(self.top[dim])
-                        neumannIndices[dim] += Model.topWall
+                        Model.tractionField.data[Model._top_wall.data, dim] = nd(self.top[dim])
+                        neumannIndices[dim] += Model._top_wall
                     else:
-                        Model.velocityField.data[Model.topWall.data, dim] = nd(self.top[dim])
-                        dirichletIndices[dim] += Model.topWall
+                        Model.velocityField.data[Model._top_wall.data, dim] = nd(self.top[dim])
+                        dirichletIndices[dim] += Model._top_wall
 
         if self.bottom is not None:
             if isinstance(self.bottom, LecodeIsostasy):
-                Model.Isostasy = self.bottom
-                Model.Isostasy.mesh = Model.mesh
-                Model.Isostasy.swarm = Model.swarm
-                Model.Isostasy.velocityField = Model.velocityField
-                Model.Isostasy.materialIndexField = Model.materialField
-                Model.Isostasy.densityFn = Model.densityFn
-                dirichletIndices[-1] += Model.bottomWall
+                Model._isostasy = self.bottom
+                Model._isostasy.mesh = Model.mesh
+                Model._isostasy.swarm = Model.swarm
+                Model._isostasy.velocityField = Model.velocityField
+                Model._isostasy.materialIndexField = Model.materialField
+                Model._isostasy._densityFn = Model._densityFn
+                dirichletIndices[-1] += Model._bottom_wall
             else:
-                Model.Isostasy = None
+                Model._isostasy = None
                 for dim in range(Model.mesh.dim):
                     if isinstance(self.bottom[dim], (list, tuple)):
                         func = fn.branching.conditional(self.bottom[dim])
-                        Model.velocityField.data[Model.bottomWall.data, dim] = func.evaluate(Model.mesh.data[Model.bottomWall.data])[:,dim]
-                        dirichletIndices[dim] += Model.bottomWall
+                        Model.velocityField.data[Model._bottom_wall.data, dim] = func.evaluate(Model.mesh.data[Model._bottom_wall.data])[:,dim]
+                        dirichletIndices[dim] += Model._bottom_wall
                         continue
                     if self.bottom[dim] is not None:
                         if self._isNeumann(self.bottom[dim]):
-                            Model.tractionField.data[Model.bottomWall.data, dim] = nd(self.bottom[dim])
-                            neumannIndices[dim] += Model.bottomWall
+                            Model.tractionField.data[Model._bottom_wall.data, dim] = nd(self.bottom[dim])
+                            neumannIndices[dim] += Model._bottom_wall
                         else:
-                            Model.velocityField.data[Model.bottomWall.data, dim] = nd(self.bottom[dim])
-                            dirichletIndices[dim] += Model.bottomWall
+                            Model.velocityField.data[Model._bottom_wall.data, dim] = nd(self.bottom[dim])
+                            dirichletIndices[dim] += Model._bottom_wall
 
         if self.front is not None and Model.mesh.dim > 2:
             for dim in range(Model.mesh.dim):
                 if isinstance(self.front[dim], (list, tuple)):
                     func = fn.branching.conditional(self.front[dim])
-                    Model.velocityField.data[Model.frontWall.data, dim] = func.evaluate(Model.mesh.data[Model.frontWall.data])[:,dim]
-                    dirichletIndices[dim] += Model.frontWall
+                    Model.velocityField.data[Model._front_wall.data, dim] = func.evaluate(Model.mesh.data[Model._front_wall.data])[:,dim]
+                    dirichletIndices[dim] += Model._front_wall
                     continue
                 if self.front[dim] is not None:
                     if self._isNeumann(self.front[dim]):
-                        Model.tractionField.data[Model.frontWall.data, dim] = nd(self.front[dim])
-                        neumannIndices[dim] += Model.frontWall
+                        Model.tractionField.data[Model._front_wall.data, dim] = nd(self.front[dim])
+                        neumannIndices[dim] += Model._front_wall
                     else:
-                        Model.velocityField.data[Model.frontWall.data, dim] = nd(self.front[dim])
-                        dirichletIndices[dim] += Model.frontWall
+                        Model.velocityField.data[Model._front_wall.data, dim] = nd(self.front[dim])
+                        dirichletIndices[dim] += Model._front_wall
 
         if self.back is not None and Model.mesh.dim > 2:
             for dim in range(Model.mesh.dim):
                 if isinstance(self.back[dim], (list, tuple)):
                     func = fn.branching.conditional(self.back[dim])
-                    Model.velocityField.data[Model.backWall.data, dim] = func.evaluate(Model.mesh.data[Model.backWall.data])[:,dim]
-                    dirichletIndices[dim] += Model.backWall
+                    Model.velocityField.data[Model._back_wall.data, dim] = func.evaluate(Model.mesh.data[Model._back_wall.data])[:,dim]
+                    dirichletIndices[dim] += Model._back_wall
                     continue
                 if self.back[dim] is not None:
                     if self._isNeumann(self.back[dim]):
-                        Model.tractionField.data[Model.backWall.data, dim] = nd(self.back[dim])
-                        neumannIndices[dim] += Model.backWall
+                        Model.tractionField.data[Model._back_wall.data, dim] = nd(self.back[dim])
+                        neumannIndices[dim] += Model._back_wall
                     else:
-                        Model.velocityField.data[Model.backWall.data, dim] = nd(self.back[dim])
-                        dirichletIndices[dim] += Model.backWall
+                        Model.velocityField.data[Model._back_wall.data, dim] = nd(self.back[dim])
+                        dirichletIndices[dim] += Model._back_wall
         
         if self.indexSets:
             for indexSet in self.indexSets:

@@ -45,7 +45,7 @@ class Rheology(object):
         self.pressureField = pressureField
         self.strainRateInvariantField = strainRateInvariantField
         self.temperatureField = temperatureField
-        self.viscosityLimiter = viscosityLimiter
+        self._viscosity_limiter = viscosityLimiter
         self.stressLimiter = stressLimiter
         self.firstIter = True
         
@@ -317,8 +317,8 @@ class ViscousCreep(Rheology):
         if T:
             mu_eff *= fn.math.exp((Q + P * Va) / (R*T*n))
 
-        if self.viscosityLimiter:
-            mu_eff = self.viscosityLimiter.apply(mu_eff)
+        if self._viscosity_limiter:
+            mu_eff = self._viscosity_limiter.apply(mu_eff)
         
         return mu_eff
 

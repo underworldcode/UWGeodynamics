@@ -22,8 +22,8 @@ class Visugrid(object):
                                              minCoord=minCoord,
                                              maxCoord=maxCoord)
 
-        boundaryNodes = (Model.leftWall + Model.rightWall +
-                         Model.topWall + Model.bottomWall)
+        boundaryNodes = (Model._left_wall + Model._right_wall +
+                         Model._top_wall + Model._bottom_wall)
        
         self.Model = Model
         # Build a KDTree to handle boundaries

@@ -23,8 +23,8 @@ class _mesh_advector(object):
         # Get minimum and maximum coordinates for the current mesh
         minX, maxX = self._get_minmax_coordinates_mesh(axis)
 
-        minvxLeftWall, maxvxLeftWall   = self._get_minmax_velocity_wall(self.Model.leftWall, axis)
-        minvxRightWall, maxvxRightWall = self._get_minmax_velocity_wall(self.Model.rightWall, axis)
+        minvxLeftWall, maxvxLeftWall   = self._get_minmax_velocity_wall(self.Model._left_wall, axis)
+        minvxRightWall, maxvxRightWall = self._get_minmax_velocity_wall(self.Model._right_wall, axis)
 
         if np.abs(maxvxRightWall) > np.abs(minvxRightWall):
             vxRight = maxvxRightWall
@@ -54,11 +54,11 @@ class _mesh_advector(object):
         self.Model.velocityField.data[...] = np.copy(self.Model.velocityField.evaluate(self.Model.mesh))
         self.Model.pressureField.data[...] = np.copy(self.Model.pressureField.evaluate(self.Model.mesh.subMesh))
 
-        if self.Model.rightWall:
-            self.Model.velocityField.data[self.Model.rightWall.data,:] = vxRight
+        if self.Model._right_wall:
+            self.Model.velocityField.data[self.Model._right_wall.data,:] = vxRight
 
-        if self.Model.leftWall:
-            self.Model.velocityField.data[self.Model.leftWall.data,:]  = vxLeft
+        if self.Model._left_wall:
+            self.Model.velocityField.data[self.Model._left_wall.data,:]  = vxLeft
 
     def advect_mesh(self, dt):
         self._advect_along_axis(dt)

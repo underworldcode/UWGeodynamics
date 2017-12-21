@@ -1,6 +1,6 @@
 from itertools import count
-from scaling import u
-from rheology import ConstantViscosity
+from .scaling import u
+from ._rheology import ConstantViscosity
 
 class Material(object):
     _ids = count(0)

@@ -9,14 +9,14 @@ import UWGeodynamics.shapes as shapes
 import UWGeodynamics.surfaceProcesses as surfaceProcesses
 from .scaling import nonDimensionalize as nd
 from .lithopress import LithostaticPressure
-from .utils import PressureSmoother, PassiveTracers
-from .rheology import ViscosityLimiter
-from .Material import Material
-from .Plots import Plots
-from .visugrid import Visugrid
-from .VelocityBoundaries import VelocityBCs
-from .ThermalBoundaries import TemperatureBCs
-from .rcParams import rcParams
+from ._utils import PressureSmoother, PassiveTracers
+from ._rheology import ViscosityLimiter
+from ._material import Material
+from ._plots import Plots
+from ._visugrid import Visugrid
+from ._velocity_boundaries import VelocityBCs
+from ._thermal_boundaries import TemperatureBCs
+from ._rcParams import rcParams
 from ._mesh_advector import _mesh_advector
 from ._frictional_boundary import FrictionBoundaries
 
@@ -84,12 +84,11 @@ class Model(Material):
 
         self.outputDir = rcParams["output.directory"]
         self.checkpointID = 0
-        self._checkpoint = None
 
         self.minViscosity = 1e19 * u.pascal * u.second
         self.maxViscosity = 1e25 * u.pascal * u.second
-        self.viscosityLimiter = ViscosityLimiter(self.minViscosity,
-                                                 self.maxViscosity)
+        self._viscosity_limiter = ViscosityLimiter(self.minViscosity,
+                                                   self.maxViscosity)
 
         self.gravity = gravity
         self.Tref = Tref
@@ -129,10 +128,10 @@ class Model(Material):
         self.tractionField.data[...] = 0.
 
         # symmetric component of the gradient of the flow velocityField.
-        self.strainRate_default = 1e-30 / u.second
-        self.solutionExist = False
+        self._default_strain_rate = 1e-30 / u.second
+        self._solution_exist = False
         self.strainRate = fn.tensor.symmetric(self.velocityField.fn_gradient)
-        self.strainRate_2ndInvariant = fn.tensor.second_invariant(
+        self._strainRate_2ndInvariant = fn.tensor.second_invariant(
             self.strainRate
         )
 
@@ -141,23 +140,23 @@ class Model(Material):
         self.swarmLayout = None
         self.population_control = None
 
-        self.materials = [self]
         self._defaultMaterial = 0
+        self.materials = [self]
 
         if self.mesh.dim == 2:
             # Create a series of aliases for the boundary sets
-            self.leftWall = self.mesh.specialSets["MinI_VertexSet"]
-            self.topWall = self.mesh.specialSets["MaxJ_VertexSet"]
-            self.bottomWall = self.mesh.specialSets["MinJ_VertexSet"]
-            self.rightWall = self.mesh.specialSets["MaxI_VertexSet"]
+            self._left_wall = self.mesh.specialSets["MinI_VertexSet"]
+            self._top_wall = self.mesh.specialSets["MaxJ_VertexSet"]
+            self._bottom_wall = self.mesh.specialSets["MinJ_VertexSet"]
+            self._right_wall = self.mesh.specialSets["MaxI_VertexSet"]
 
         if self.mesh.dim == 3:
-            self.leftWall = self.mesh.specialSets["MinI_VertexSet"]
-            self.rightWall = self.mesh.specialSets["MaxI_VertexSet"]
-            self.frontWall = self.mesh.specialSets["MinJ_VertexSet"]
-            self.backWall = self.mesh.specialSets["MaxJ_VertexSet"]
-            self.topWall = self.mesh.specialSets["MaxK_VertexSet"]
-            self.bottomWall = self.mesh.specialSets["MinK_VertexSet"]
+            self._left_wall = self.mesh.specialSets["MinI_VertexSet"]
+            self._right_wall = self.mesh.specialSets["MaxI_VertexSet"]
+            self._front_wall = self.mesh.specialSets["MinJ_VertexSet"]
+            self._back_wall = self.mesh.specialSets["MaxJ_VertexSet"]
+            self._top_wall = self.mesh.specialSets["MaxK_VertexSet"]
+            self._bottom_wall = self.mesh.specialSets["MinK_VertexSet"]
 
         # Boundary Conditions
         self.velocityBCs = None
@@ -166,12 +165,13 @@ class Model(Material):
         self.time = 0.0 * u.megayears
         self.step = 0
         self._dt = None
-        self.Isostasy = None
+        self._isostasy = None
 
         self.pressSmoother = PressureSmoother(self.mesh, self.pressureField)
         self.surfaceProcesses = None
 
-        self._solver = rcParams["default.solver"]
+        self._solver_inner_method = rcParams["default.solver"]
+        self._solver_penalty = None
         self.nonLinearTolerance = 1.0e-2
 
         # Passive Tracers
@@ -255,17 +255,25 @@ class Model(Material):
         return fn.input()[2]
 
     @property
-    def solver(self):
-        return self._solver
+    def solver_inner_method(self):
+        return self._solver_inner_method
 
-    @solver.setter
-    def solver(self, value):
+    @solver_inner_method.setter
+    def solver_inner_method(self, value):
         solvers = ["mumps", "lu", "mg", "superlu", "superludist", "nomg"]
 
         if value not in solvers:
             raise ValueError("Invalid Solver")
 
-        self._solver = value
+        self._solver_inner_method = value
+    
+    @property
+    def solver_penalty(self):
+        return self._solver_penalty
+
+    @solver_penalty.setter
+    def solver_penalty(self, value):
+        self._solver_penalty = value
 
     @property
     def outputDir(self):
@@ -329,34 +337,34 @@ class Model(Material):
     @property
     def strainRateField(self):
         """ Strain Rate Field """
-        self._strainRateField.data[:] = self.strainRate_2ndInvariant.evaluate(
+        self._strainRateField.data[:] = self._strainRate_2ndInvariant.evaluate(
             self.mesh)
         return self._strainRateField
 
     @property
     def projViscosityField(self):
         """ Viscosity Field projected on the mesh """
-        self.viscosityField.data[...] = self.viscosityFn.evaluate(self.swarm)
+        self.viscosityField.data[...] = self._viscosityFn.evaluate(self.swarm)
         self._viscosityFieldProjector.solve()
         return self._projViscosityField
 
     @property
     def viscosityField(self):
         """ Viscosity Field on particles """
-        self._viscosityField.data[:] = self.viscosityFn.evaluate(self.swarm)
+        self._viscosityField.data[:] = self._viscosityFn.evaluate(self.swarm)
         return self._viscosityField
 
     @property
     def projDensityField(self):
         """ Density Field projected on the mesh """
-        self.densityField.data[...] = self.densityFn.evaluate(self.swarm)
+        self.densityField.data[...] = self._densityFn.evaluate(self.swarm)
         self._densityFieldProjector.solve()
         return self._projDensityField
 
     @property
     def densityField(self):
         """ Density Field on particles """
-        self._densityField.data[:] = self.densityFn.evaluate(self.swarm)
+        self._densityField.data[:] = self._densityFn.evaluate(self.swarm)
         return self._densityField
 
     @property
@@ -512,19 +520,20 @@ class Model(Material):
         """ Stokes solver """
 
         gravity = tuple([nd(val) for val in self.gravity])
-        self.buoyancyFn = self.densityFn * gravity
+        self._buoyancyFn = self._densityFn * gravity
 
         if any([material.viscosity for material in self.materials]):
 
             stokes_object = uw.systems.Stokes(velocityField=self.velocityField,
                                               pressureField=self.pressureField,
                                               conditions=self._velocityBCs,
-                                              fn_viscosity=self.viscosityFn,
-                                              fn_bodyforce=self.buoyancyFn,
+                                              fn_viscosity=self._viscosityFn,
+                                              fn_bodyforce=self._buoyancyFn,
                                               fn_one_on_lambda=None)
 
             solver = uw.systems.Solver(stokes_object)
-            solver.set_inner_method(self.solver)
+            solver.set_inner_method(self.solver_inner_method)
+            solver.set_penalty(self.solver_penalty)
 
         return solver
 
@@ -582,7 +591,7 @@ class Model(Material):
             raise ValueError("Set Boundary Conditions")
         return self.velocityBCs.get_conditions()
 
-    def add_material(self, shape, name="unknown", reset=False):
+    def add_material(self, shape=None, name="unknown", reset=False):
         """ Add Material to the Model
 
         Parameters:
@@ -650,10 +659,6 @@ class Model(Material):
             self._fill_model()
 
     @property
-    def densityFn(self):
-        """ Density function """
-        return self._densityFn()
-
     def _densityFn(self):
         densityMap = {}
         for material in self.materials:
@@ -714,10 +719,6 @@ class Model(Material):
         return self.frictionalBCs
 
     @property
-    def viscosityFn(self):
-        """ Effective Viscosity Function """
-        return self._viscosityFn()
-
     def _viscosityFn(self):
         """ Create the Viscosity Function """
 
@@ -730,9 +731,9 @@ class Model(Material):
                 ViscosityHandler = material.viscosity
                 ViscosityHandler.pressureField = self.pressureField
                 ViscosityHandler.strainRateInvariantField = (
-                    self.strainRate_2ndInvariant)
+                    self._strainRate_2ndInvariant)
                 ViscosityHandler.temperatureField = self.temperature
-                ViscosityHandler.viscosityLimiter = self.viscosityLimiter
+                ViscosityHandler.viscosityLimiter = self._viscosity_limiter
                 ViscosityMap[material.index] = ViscosityHandler.muEff
 
         # Melt Modifier
@@ -761,13 +762,13 @@ class Model(Material):
                     yieldStress = YieldHandler._get_yieldStress2D()
                 if self.mesh.dim == 3:
                     yieldStress = YieldHandler._get_yieldStress3D()
-                eijdef = nd(self.strainRate_default)
+                eijdef = nd(self._default_strain_rate)
                 eij = fn.branching.conditional(
-                    [(self.strainRate_2ndInvariant < sys.float_info.epsilon,
+                    [(self._strainRate_2ndInvariant < sys.float_info.epsilon,
                       eijdef),
-                     (True, self.strainRate_2ndInvariant)])
+                     (True, self._strainRate_2ndInvariant)])
                 muEff = 0.5 * yieldStress / eij
-                muEff = self.viscosityLimiter.apply(muEff)
+                muEff = self._viscosity_limiter.apply(muEff)
                 PlasticityMap[material.index] = muEff
 
             if self.frictionalBCs is not None:
@@ -785,14 +786,14 @@ class Model(Material):
                         yieldStress = YieldHandler._get_yieldStress2D()
                     if self.mesh.dim == 3:
                         yieldStress = YieldHandler._get_yieldStress3D()
-                    eijdef = nd(self.strainRate_default)
+                    eijdef = nd(self._default_strain_rate)
                     eij = fn.branching.conditional(
-                        [(self.strainRate_2ndInvariant <
+                        [(self._strainRate_2ndInvariant <
                           sys.float_info.epsilon,
                           eijdef),
-                         (True, self.strainRate_2ndInvariant)])
+                         (True, self._strainRate_2ndInvariant)])
                     muEff = 0.5 * yieldStress / eij
-                    muEff = self.viscosityLimiter.apply(muEff)
+                    muEff = self._viscosity_limiter.apply(muEff)
 
                     conditions = [(self.frictionalBCs._mask == 1, muEff),
                                   (True, PlasticityMap[material.index])]
@@ -833,24 +834,20 @@ class Model(Material):
                            (True, 0.0)]
 
         # Do not yield at the very first solve
-        if self.solutionExist:
-            self.isYielding = (fn.branching.conditional(yieldConditions) *
-                               self.strainRate_2ndInvariant)
+        if self._solution_exist:
+            self._isYielding = (fn.branching.conditional(yieldConditions) *
+                               self._strainRate_2ndInvariant)
         else:
-            self.isYielding = fn.misc.constant(0.0)
+            self._isYielding = fn.misc.constant(0.0)
 
         return viscosityFn
 
     @property
-    def yieldStressFn(self):
-        """ Yield Stress function """
-        return self._yieldStressFn()
-
     def _yieldStressFn(self):
         """ Calculate Yield stress function from viscosity and strain rate"""
-        eij = self.strainRate_2ndInvariant
-        eijdef = nd(self.strainRate_default)
-        return 2.0 * self.viscosityFn * fn.misc.max(eij, eijdef)
+        eij = self._strainRate_2ndInvariant
+        eijdef = nd(self._default_strain_rate)
+        return 2.0 * self._viscosityFn * fn.misc.max(eij, eijdef)
 
     def solve_temperature_steady_state(self):
         """ Solve for steady state temperature
@@ -915,7 +912,7 @@ class Model(Material):
         """
 
         gravity = np.abs(nd(self.gravity[-1]))  # Ugly!!!!!
-        lithoPress = LithostaticPressure(self.mesh, self.densityFn, gravity)
+        lithoPress = LithostaticPressure(self.mesh, self._densityFn, gravity)
         self.pressureField.data[:], LPressBot = lithoPress.solve()
         self.pressSmoother.smooth()
 
@@ -926,13 +923,13 @@ class Model(Material):
 
         surfaceArea = uw.utils.Integral(fn=1.0, mesh=self.mesh,
                                         integrationType='surface',
-                                        surfaceIndexSet=self.topWall)
+                                        surfaceIndexSet=self._top_wall)
 
         surfacepressureFieldIntegral = uw.utils.Integral(
             fn=self.pressureField,
             mesh=self.mesh,
             integrationType='surface',
-            surfaceIndexSet=self.topWall
+            surfaceIndexSet=self._top_wall
         )
 
         area, _ = surfaceArea.evaluate()
@@ -965,7 +962,7 @@ class Model(Material):
         self._stokes.solve(nonLinearIterate=True,
                           callback_post_solve=self._calibrate_pressureField,
                           nonLinearTolerance=self.nonLinearTolerance)
-        self.solutionExist = True
+        self._solution_exist = True
 
     def init_model(self, temperature=True, pressureField=True):
         """ Initialize the Temperature Field as steady state,
@@ -1057,7 +1054,7 @@ class Model(Material):
 
         dt = self._dt
         # Increment plastic strain
-        plasticStrainIncrement = dt * self.isYielding.evaluate(self.swarm)
+        plasticStrainIncrement = dt * self._isYielding.evaluate(self.swarm)
         self.plasticStrain.data[:] += plasticStrainIncrement
 
         if any([material.melt for material in self.materials]):
@@ -1085,8 +1082,8 @@ class Model(Material):
         if self.surfaceProcesses:
             self.surfaceProcesses.solve(dt)
 
-        if self.Isostasy:
-            self.Isostasy.solve()
+        if self._isostasy:
+            self._isostasy.solve()
 
         if self._visugrid:
             self._visugrid.advect(dt)
@@ -1170,7 +1167,7 @@ class Model(Material):
         return (ratio * dF) * self.temperature
 
     @property
-    def lambdaFn(self):
+    def _lambdaFn(self):
         """ Initialize compressibility """
 
         materialMap = {}

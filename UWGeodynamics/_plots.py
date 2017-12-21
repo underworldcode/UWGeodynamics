@@ -84,7 +84,7 @@ class Plots(object):
             Fig.append(viscosity)
         else:
             Fig.append(glucifer.objects.Points(self.Model.swarm,
-                                               fn_colour=self.Model.viscosityFn*fact,
+                                               fn_colour=self.Model._viscosityFn*fact,
                                                logScale=True,
                                                valueRange=valueRange,
                                                pointSize=pointSize,
@@ -101,7 +101,7 @@ class Plots(object):
         Fig = glucifer.Figure(figsize=figsize, store=store, title="Strain Rate",
                               quality=quality)
         fact = sca.Dimensionalize(1.0, units).magnitude
-        Fig.append(glucifer.objects.Surface(self.Model.mesh, self.Model.strainRate_2ndInvariant*fact,
+        Fig.append(glucifer.objects.Surface(self.Model.mesh, self.Model._strainRate_2ndInvariant*fact,
                                            cullface=cullface,
                                            colours="coolwarm",
                                            logScale=logScale,
@@ -123,7 +123,7 @@ class Plots(object):
 
         else:
             Fig.append(glucifer.objects.Points(self.Model.swarm,
-                                               fn_colour=self.Model.densityFn*fact,
+                                               fn_colour=self.Model._densityFn*fact,
                                                fn_size=2.0))
         if show:
             Fig.show()
@@ -236,7 +236,7 @@ class Plots(object):
         return Fig
 
     def stress_enveloppe(self):
-        A = self.Model.yieldStressFn.evaluate(self.Model.swarm).flatten()
+        A = self.Model._yieldStressFn.evaluate(self.Model.swarm).flatten()
         B = self.Model.swarm.particleCoordinates.data[:,1]
 
         A = sca.Dimensionalize(A, u.megapascal)
