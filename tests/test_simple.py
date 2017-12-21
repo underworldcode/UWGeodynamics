@@ -58,3 +58,34 @@ def test_adding_materials():
                                bottom=Model.bottom)
     )
     return air
+
+def test_set_velocity_boundary_conditions():
+    import UWGeodynamics as GEO
+    u = GEO.u
+    Model = GEO.Model(elementRes=(10, 10),
+                      minCoord=(0. * u.kilometer, 0. * u.kilometer),
+                      maxCoord=(10. * u.kilometer, 10. * u.kilometer))
+    conditions = Model.set_velocityBCs(left=[1.0*u.centimetre/u.year, None],
+                                       right=[-1.0*u.centimetre/u.year, None],
+                                       bottom=[None, 0.],
+                                       top=[None,0.])
+    assert(len(conditions) == 1)
+
+def test_set_velocity_boundary_conditions_in_3D():
+    import UWGeodynamics as GEO
+    u = GEO.u
+    Model = GEO.Model(elementRes=(10, 10),
+                      minCoord=(0. * u.kilometer,
+                                0. * u.kilometer, 
+                                0. *u.kilometer),
+                      maxCoord=(10. * u.kilometer,
+                                10. * u.kilometer,
+                                10. * u.kiloneter))
+
+    conditions = Model2.set_velocityBCs(left=[1.0*u.centimetre/u.year, None, 0.],
+                                        right=[-1.0*u.centimetre/u.year, None, 0.],
+                                        bottom=[None, None, 0.],
+                                        top=[None, None, 0.],
+                                        front=[None, 0., None],
+                                        back=[None, 0., None])
+    assert(len(conditions) == 1)
