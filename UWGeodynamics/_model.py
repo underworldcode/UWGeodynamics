@@ -38,7 +38,7 @@ class Model(Material):
     """
 
     def __init__(self, elementRes, minCoord, maxCoord,
-                 name="undefined",
+                 name="Model",
                  gravity=(0.0, -9.81 * u.meter / u.second**2),
                  periodic=None, elementType="Q1/dQ0",
                  Tref=273.15 * u.degK):
