@@ -80,7 +80,7 @@ def test_set_velocity_boundary_conditions_in_3D():
                                 0. *u.kilometer),
                       maxCoord=(10. * u.kilometer,
                                 10. * u.kilometer,
-                                10. * u.kiloneter))
+                                10. * u.kilometer))
 
     conditions = Model2.set_velocityBCs(left=[1.0*u.centimetre/u.year, None, 0.],
                                         right=[-1.0*u.centimetre/u.year, None, 0.],

@@ -38,6 +38,10 @@
 {{ output.data['text/latex'] }}
 {% endblock data_latex %}
 
+{% block data_html scoped %}
+{{ output.data['text/html'] }}
+{% endblock data_html %}
+
 {% block data_markdown scoped %}
 {{ output.data['text/markdown'] }}
 {% endblock data_markdown %}
