@@ -1,4 +1,5 @@
 from itertools import chain
+from collections import OrderedDict
 
 try:              # Python 2
     str_base = basestring
@@ -48,5 +49,17 @@ class TransformedDict(dict):  # dicts take a mapping or iterable as their option
     @classmethod
     def fromkeys(cls, keys, v=None):
         return super(TransformedDict, cls).fromkeys((ensure_lower(k) for k in keys), v)
-    def __repr__(self):
-        return '{0}({1})'.format(type(self).__name__, super(TransformedDict, self).__repr__())
+    def _repr_html_(self):
+        attributes  = OrderedDict()
+        attributes["[mass]"] = self["[mass]"]
+        attributes["[length]"] = self["[length]"]
+        attributes["[temperature]"] = self["[temperature]"]
+        attributes["[time]"] = self["[time]"]
+        attributes["[substance]"] = self["[substance]"]
+        header = "<table>"
+        footer = "</table>"
+        html = ""
+        for key, val in attributes.iteritems():
+            html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
+
+        return header + html + footer      

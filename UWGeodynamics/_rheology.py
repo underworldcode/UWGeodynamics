@@ -3,6 +3,7 @@ import numpy as np
 from scaling import UnitRegistry as u
 from scaling import nonDimensionalize as nd
 from copy import copy
+from collections import OrderedDict
 import json
 
 def linearCohesionWeakening(cumulativeTotalStrain, Cohesion, CohesionSw, epsilon1=0.5, epsilon2=1.5, **kwargs):
@@ -79,6 +80,23 @@ class DruckerPrager(object):
         
         self.cohesionWeakeningFn = linearCohesionWeakening
         self.frictionWeakeningFn = linearFrictionWeakening
+    
+    def _repr_html_(self):
+        attributes  = OrderedDict()
+        attributes["Cohesion"] = self.cohesion
+        attributes["Cohesion After Softening"] = self.cohesionAfterSoftening
+        attributes["Friction Coefficient"] = self.frictionCoefficient
+        attributes["Friction Coefficient after Sotening"] = (
+            self.frictionAfterSoftening)
+        attributes["Epsilon 1"] = self.epsilon1
+        attributes["Epsilon 2"] = self.epsilon2
+        header = "<table>"
+        footer = "</table>"
+        html = ""
+        for key, val in attributes.iteritems():
+            html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
+
+        return header + html + footer      
 
     @property
     def cohesion(self):
@@ -258,6 +276,29 @@ class ViscousCreep(Rheology):
     def __rmul__(self, other):
         self.f = other
         return self
+
+    def _repr_html_(self):
+        attributes  = OrderedDict()
+        attributes["Pre-exponential factor"] = self.preExponentialFactor
+        attributes["Stress Exponent"] = self.stressExponent
+        attributes["Activation Volume"] = self.activationVolume
+        attributes["Activation Energy"] = self.activationEnergy
+        attributes["Factor"] = self.f
+        attributes["Default Strain Rate"] = self.defaultStrainRateInvariant
+        attributes["Grain Size"] = self.grainSize
+        attributes["Grain Size Exponent"] = self.grainSizeExponent
+        attributes["Water Fugacity"] = self.waterFugacity
+        attributes["Water Fugacity Exponent"] = self.waterFugacityExponent
+        attributes["Melt Fraction"] = self.meltFraction
+        attributes["Melt Fraction Factor"] = self.meltFractionFactor
+        header = "<table>"
+        footer = "</table>"
+        html = ""
+        for key, val in attributes.iteritems():
+            html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
+
+        return header + html + footer      
+
 
     @property
     def muEff(self):
