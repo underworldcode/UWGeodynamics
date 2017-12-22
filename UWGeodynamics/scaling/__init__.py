@@ -1,3 +1,8 @@
 __version__ = "0.1"
 
-from scaling import *
+from ._scaling import nonDimensionalize
+from ._scaling import Dimensionalize
+from ._coefficients import COEFFICIENTS
+from ._coefficients import UnitRegistry
+
+u = UnitRegistry

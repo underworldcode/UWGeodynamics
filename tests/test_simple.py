@@ -21,9 +21,9 @@ def test_scaling():
     Kt = KL / velocity
     KM = bodyforce * KL**2 * Kt**2
 
-    GEO.scaling.scaling["[length]"] = KL
-    GEO.scaling.scaling["[time]"] = Kt
-    GEO.scaling.scaling["[mass]"]= KM
+    GEO.scaling_coefficients["[length]"] = KL
+    GEO.scaling_coefficients["[time]"] = Kt
+    GEO.scaling_coefficients["[mass]"]= KM
 
 def test_model_creation():
     import UWGeodynamics as GEO
@@ -39,9 +39,9 @@ def test_model_creation():
     Kt = KL / velocity
     KM = bodyforce * KL**2 * Kt**2
 
-    GEO.scaling.scaling["[length]"] = KL
-    GEO.scaling.scaling["[time]"] = Kt
-    GEO.scaling.scaling["[mass]"]= KM
+    GEO.scaling_coefficients["[length]"] = KL
+    GEO.scaling_coefficients["[time]"] = Kt
+    GEO.scaling_coefficients["[mass]"]= KM
 
     Model = GEO.Model(elementRes=(64, 64), 
                       minCoord=(-1. * u.meter, -50. * u.centimeter), 

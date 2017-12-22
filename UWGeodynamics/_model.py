@@ -7,6 +7,7 @@ import underworld.function as fn
 import UWGeodynamics.scaling as sca
 import UWGeodynamics.shapes as shapes
 import UWGeodynamics.surfaceProcesses as surfaceProcesses
+from tqdm import tqdm
 from .scaling import nonDimensionalize as nd
 from .lithopress import LithostaticPressure
 from ._utils import PressureSmoother, PassiveTracers
@@ -19,6 +20,7 @@ from ._thermal_boundaries import TemperatureBCs
 from ._rcParams import rcParams
 from ._mesh_advector import _mesh_advector
 from ._frictional_boundary import FrictionBoundaries
+from collections import OrderedDict
 
 u = UnitRegistry = sca.UnitRegistry
 
@@ -77,43 +79,46 @@ class Model(Material):
         """
 
         super(Model, self).__init__()
-
+        
+        # Process __init__ arguments
         self.name = name
         self.top = maxCoord[-1]
         self.bottom = minCoord[-1]
-
-        self.outputDir = rcParams["output.directory"]
-        self.checkpointID = 0
-
-        self.minViscosity = 1e19 * u.pascal * u.second
-        self.maxViscosity = 1e25 * u.pascal * u.second
-        self._viscosity_limiter = ViscosityLimiter(self.minViscosity,
-                                                   self.maxViscosity)
-
+        self.dimension = dim = len(maxCoord)
         self.gravity = gravity
         self.Tref = Tref
         self.elementType = elementType
         self.elementRes = elementRes
         self.minCoord = minCoord
         self.maxCoord = maxCoord
+        self.outputDir = rcParams["output.directory"]
+        
+        # Compute model dimensions
+        self.length = maxCoord[0] - minCoord[0]
         self.height = maxCoord[-1] - minCoord[-1]
 
-        if not periodic:
-            periodic = tuple([False for val in range(len(self.elementRes))])
+        if dim == 3:
+            self.width = maxCoord[1] - minCoord[1]
+
+        if periodic:
             self.periodic = periodic
         else:
+            periodic = tuple([False for val in range(dim)])
             self.periodic = periodic
 
+        # Get non-dimensional extents along each axis
         minCoord = tuple([nd(val) for val in self.minCoord])
         maxCoord = tuple([nd(val) for val in self.maxCoord])
 
+        # Initialize model mesh
         self.mesh = uw.mesh.FeMesh_Cartesian(elementType=self.elementType,
                                              elementRes=self.elementRes,
                                              minCoord=minCoord,
                                              maxCoord=maxCoord,
                                              periodic=self.periodic)
 
-        # Add common fields
+        # Add common mesh variables
+        # Temperature Field is initialised to None
         self.temperature = None
         self.pressureField = uw.mesh.MeshVariable(mesh=self.mesh.subMesh,
                                                   nodeDofCount=1)
@@ -123,13 +128,13 @@ class Model(Material):
                                                   nodeDofCount=self.mesh.dim)
         self._strainRateField = uw.mesh.MeshVariable(mesh=self.mesh,
                                                      nodeDofCount=1)
+
+        # Initialise fields to 0.
         self.pressureField.data[...] = 0.
         self.velocityField.data[...] = 0.
         self.tractionField.data[...] = 0.
 
         # symmetric component of the gradient of the flow velocityField.
-        self._default_strain_rate = 1e-30 / u.second
-        self._solution_exist = False
         self.strainRate = fn.tensor.symmetric(self.velocityField.fn_gradient)
         self._strainRate_2ndInvariant = fn.tensor.second_invariant(
             self.strainRate
@@ -140,19 +145,30 @@ class Model(Material):
         self.swarmLayout = None
         self.population_control = None
 
-        self._defaultMaterial = 0
-        self.materials = [self]
+        # timing and checkpointing
+        self.checkpointID = 0
+        self.time = 0.0 * u.megayears
+        self.step = 0
+        self._dt = None
 
+        # viscosity limiter
+        self.minViscosity = 1e19 * u.pascal * u.second
+        self.maxViscosity = 1e25 * u.pascal * u.second
+        self._viscosity_limiter = ViscosityLimiter(self.minViscosity,
+                                                   self.maxViscosity)
+
+        self._defaultMaterial = self.index
+        self.materials = [self]
+        self._material_drawing_order = None
+
+        # Create a series of aliases for the boundary sets
+        self._left_wall = self.mesh.specialSets["MinI_VertexSet"]
+        self._right_wall = self.mesh.specialSets["MaxI_VertexSet"]
+        
         if self.mesh.dim == 2:
-            # Create a series of aliases for the boundary sets
-            self._left_wall = self.mesh.specialSets["MinI_VertexSet"]
             self._top_wall = self.mesh.specialSets["MaxJ_VertexSet"]
             self._bottom_wall = self.mesh.specialSets["MinJ_VertexSet"]
-            self._right_wall = self.mesh.specialSets["MaxI_VertexSet"]
-
-        if self.mesh.dim == 3:
-            self._left_wall = self.mesh.specialSets["MinI_VertexSet"]
-            self._right_wall = self.mesh.specialSets["MaxI_VertexSet"]
+        else:
             self._front_wall = self.mesh.specialSets["MinJ_VertexSet"]
             self._back_wall = self.mesh.specialSets["MaxJ_VertexSet"]
             self._top_wall = self.mesh.specialSets["MaxK_VertexSet"]
@@ -161,37 +177,35 @@ class Model(Material):
         # Boundary Conditions
         self.velocityBCs = None
         self.temperatureBCs = None
-
-        self.time = 0.0 * u.megayears
-        self.step = 0
-        self._dt = None
+        self.frictionalBCs = None
         self._isostasy = None
-
-        self.pressSmoother = PressureSmoother(self.mesh, self.pressureField)
         self.surfaceProcesses = None
 
+        self.pressSmoother = PressureSmoother(self.mesh, self.pressureField)
+
+        # Solver defaults
         self._solver_inner_method = rcParams["default.solver"]
         self._solver_penalty = None
-        self.nonLinearTolerance = 1.0e-2
+        self.nonLinearTolerance = rcParams["nonlinear.tolerance"]
 
         # Passive Tracers
         self.passive_tracers = []
 
-        # Plots
+        # Visualisation
         self.plot = Plots(self)
-
-        # Visugrid
         self._visugrid = None
 
         # Mesh advector
         self._advector = None
-
-        # Frictional boundaries
-        self.frictionalBCs = None
-
-        self._material_drawing_order = None
+        
+        # Initialise remaining attributes
+        self._default_strain_rate = 1e-30 / u.second
+        self._solution_exist = False
 
         self._initialize()
+
+    def _repr_html_(self):
+        return _model_html_repr(self) 
 
     def _initialize(self):
 
@@ -213,7 +227,8 @@ class Model(Material):
 
         # Initialise materialField to Model material
         self.materialField.data[:] = self.index
-        # Initialise remaininf fields to 0.
+        
+        # Initialise remaining fields to 0.
         self.plasticStrain.data[:] = 0.0
         self._viscosityField.data[:] = 0.
         self._densityField.data[:] = 0.
@@ -1006,7 +1021,8 @@ class Model(Material):
 
         if checkpoint:
             next_checkpoint = time + nd(checkpoint)
-
+        
+        #pbar = tqdm(total=duration-time)
         while time < duration:
             self.solve()
 
@@ -1037,6 +1053,7 @@ class Model(Material):
                 self.output_glucifer_figures(self.checkpointID)
                 next_checkpoint += nd(checkpoint)
 
+            #pbar.update(self._dt)
             if checkpoint or step % 1 == 0:
                 if uw.rank() == 0:
                     print("Time: ", str(self.time.to(units)),
@@ -1302,3 +1319,22 @@ class Model(Material):
                      modeltime=self.time.magnitude)
         else:
             raise ValueError(field, ' is not a valid variable name \n')
+
+
+_html_global = OrderedDict()
+_html_global["Number of Elements"] = "elementRes"
+_html_global["length"] = "length"
+_html_global["width"] = "width"
+_html_global["height"] = "height"
+
+
+def _model_html_repr(Model):
+    header = "<table>"
+    footer = "</table>"
+    html = ""
+    for key, val in _html_global.iteritems():
+        value = Model.__dict__.get(val)
+        html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, value)
+
+    return header + html + footer      
+

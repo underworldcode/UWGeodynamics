@@ -1,26 +1,13 @@
 # Utilities to convert between dimensional and non-dimensional values.
 # Romain BEUCHER, December 2016
 
-import pint
 import underworld as uw
 import h5py
 import numpy as np
 import os
-
+from _coefficients import COEFFICIENTS as scaling
+from _coefficients import u
 from mpi4py import MPI
-from ._utils import TransformedDict
-
-u = pint.UnitRegistry()
-UnitRegistry = u
-
-scaling = TransformedDict()
-
-scaling["[time]"]   = 1.0 * u.second
-scaling["[length]"] = 1.0 * u.meter 
-scaling["[mass]"] = 1.0 * u.kilogram 
-scaling["[temperature]"] = 1.0 * u.degK
-scaling["[substance]"] =1. * u.mole
-
 
 def nonDimensionalize(dimValue):
     """
@@ -149,8 +136,7 @@ def Dimensionalize(Value, units):
     else:
         return (Value * factor).to(units)
 
-
-## Following functions are temporary, far from ideal...
+# Following functions are temporary, far from ideal...
 
 def _save_mesh( self, filename, units=None):
     """

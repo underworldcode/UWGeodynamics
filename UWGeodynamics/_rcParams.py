@@ -6,6 +6,7 @@ rcParams = {
 
 "output.directory": "outputs",
 "default.solver" : "mg",
+"nonlinear.tolerance": 1e-2,
 
 "default.outputs" : ["materialField", "temperature", "pressureField", "plasticStrain", "velocityField"], 
 "swarm.variables" : ["materialField", "plasticStrain", "viscosityField", "densityField"],

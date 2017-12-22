@@ -3,9 +3,9 @@ try:
 except ImportError:
     raise ImportError("Can not find Underworld, please check your installation")
 
-import scaling
 import shapes
 import surfaceProcesses
+from .scaling import COEFFICIENTS as scaling_coefficients
 from .scaling import UnitRegistry
 from .scaling import nonDimensionalize
 from .scaling import Dimensionalize
@@ -24,4 +24,5 @@ u = UnitRegistry
 
 rheologies = ViscousCreepRegistry()
 yieldCriteria = PlasticityRegistry()
+scaling = scaling_coefficients
 
