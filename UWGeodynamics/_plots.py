@@ -22,7 +22,7 @@ def _clean_local(locals_):
         locals_[key] = val
     return locals_
 
-def visugrid_drawing_object(Model): 
+def visugrid_drawing_object(Model):
     # TODO Use a class based on glucifer.objects
     visugrid = Model.visugrid.mesh
 
@@ -36,7 +36,7 @@ def visugrid_drawing_object(Model):
     ymax = (Model.mesh.maxCoord[1] - Model.mesh.minCoord[1] + dy) / yrange
     xmin += 0.007
     xmax -= 0.007
-    
+
     return glucifer.objects.Mesh(visugrid.mesh, xmin=xmin,
                                  xmax=xmax, ymin=ymin, ymax=ymax)
 
@@ -47,148 +47,188 @@ class Plots(object):
         self.Model = Model
 
     @property
-    def _get_bounding_box(self):
+    def _boundingBox(self):
         minCoord = tuple([nd(val) for val in self.Model.minCoord])
         maxCoord = tuple([nd(val) for val in self.Model.maxCoord])
         boundingBox =(minCoord, maxCoord)
         return boundingBox
 
-    def material(self, figsize=None,
+    def material(self, figsize=None, title="Material Field",
                  colours=None, script=None, cullface=False,
-                 mask=None, visugrid=None, projected=False,
+                 mask=None, visugrid=None, onMesh=False,
                  tracers=[], **kwargs):
-        
+
         saved_args = _clean_local(locals())
         Fig = glucifer.Figure(**saved_args)
+        Fig["title"] = title
+        Fig["boundingBox"] = self._boundingBox
 
-        if projected:
-            pass
+        if onMesh:
+            Fig.Surface(self.Model.mesh, self.Model.projMaterialField)
         else:
-            Fig.Points(self.Model.swarm, fn_colour=self.Model.materialField,
-                       **saved_args)
-        
+            pts = Fig.Points(self.Model.swarm, fn_colour=self.Model.materialField,
+                             **saved_args)
+            #pts.colourBar["binlabels"] = True
+            #pts.colourBar["align"] = "right"
+            #pts.colourBar["vertical"] = True
+            pts.colourBar.colourMap["discrete"] = True
+
         Fig.script(script)
         Fig.show()
 
         return Fig
 
-    def viscosity(self, figsize=None, units=u.pascal*u.second,
-                       projected=False, cullface=False,
-                       script=None, **kwargs):
+    def viscosity(self, figsize=None, title="Viscosity Field",
+                  units=u.pascal*u.second, logScale=True,
+                  projected=False, cullface=False,
+                  script=None, **kwargs):
 
         saved_args = _clean_local(locals())
         units = saved_args.pop("units")
         Fig = glucifer.Figure(**saved_args)
-       
+        Fig["title"] = title + " " + str(units)
+        Fig["boundingBox"] = self._boundingBox
+
         fact = sca.Dimensionalize(1.0, units).magnitude
         Fig.Points(self.Model.swarm, self.Model._viscosityFn*fact,
                    **saved_args)
-        
+
         Fig.script(script)
         Fig.show()
 
         return Fig
-    
-    def strainRate(self, figsize=None, units=1.0/u.second,
+
+    def strainRate(self, figsize=None, title="Strain Rate Field",
+                   units=1.0/u.second,
                    cullface=False, onMesh=True,
                    logScale=True, colours="coolwarm",
                    script=None, **kwargs):
-        
+
         saved_args = _clean_local(locals())
         units = saved_args.pop("units")
         Fig = glucifer.Figure(**saved_args)
-        
+        Fig["title"] = title + " " + str(units)
+        Fig["boundingBox"] = self._boundingBox
+
         fact = sca.Dimensionalize(1.0, units).magnitude
-        Fig.Surface(self.Model.mesh, self.Model._strainRate_2ndInvariant*fact,
+        Fig.Surface(self.Model.mesh, 
+                    self.Model._strainRate_2ndInvariant*fact,
                     **saved_args)
+        
         Fig.script(script)
         Fig.show()
+
         return Fig
 
-    def density(self, figsize=None, units=u.kilogram/u.metre**3,
+    def density(self, figsize=None, title="Density Field",
+                units=u.kilogram/u.metre**3,
                 script=None, cullface=False, **kwargs):
-        
+
         saved_args = _clean_local(locals())
         units = saved_args.pop("units")
         Fig = glucifer.Figure(**saved_args)
+        Fig["title"] = title + " " + str(units)
+        Fig["boundingBox"] = self._boundingBox
 
         fact = sca.Dimensionalize(1.0, units).magnitude
-        Fig.Points(self.Model.swarm, fn_colour=self.Model._densityFn*fact,
+        Fig.Points(self.Model.swarm, 
+                   fn_colour=self.Model._densityFn*fact,
                    **saved_args)
+        
         Fig.script(script)
         Fig.show()
+
         return Fig
 
-    def temperature(self, figsize=None, units=u.degK, script=None,
-                    cullface=False, colourScale="coolwarm", **kwargs):
-        
+    def temperature(self, figsize=None, title="Temperature Field",
+                    units=u.degK, script=None, cullface=False,
+                    colourScale="coolwarm", **kwargs):
+
         saved_args = _clean_local(locals())
         units = saved_args.pop("units")
         Fig = glucifer.Figure(**saved_args)
-       
+        Fig["title"] = title + " " + str(units)
+        Fig["boundingBox"] = self._boundingBox
+
         fact = sca.Dimensionalize(1.0, units).magnitude
         Fig.Surface(self.Model.mesh, self.Model.temperature*fact,
                     **saved_args)
 
         Fig.script(script)
         Fig.show()
+
         return Fig
-    
-    def pressureField(self, figsize=None, units=u.pascal,
-                      cullface=False, script=None, **kwargs):
-        
+
+    def pressureField(self, figsize=None, title="Pressure Field",
+                      units=u.pascal, cullface=False,
+                      script=None, **kwargs):
+
         saved_args = _clean_local(locals())
         units = saved_args.pop("units")
         Fig = glucifer.Figure(**saved_args)
+        Fig["title"] = title + " " + str(units)
+        Fig["boundingBox"] = self._boundingBox
+
         fact = sca.Dimensionalize(1.0, units).magnitude
         Fig.Surface(self.Model.mesh, self.Model.pressureField*fact,
                     **saved_args)
-        
-        Fig.script()
+
+        Fig.script(script)
         Fig.show()
+
         return Fig
 
-    def velocityField(self, figsize=None, units=u.centimeter/u.year,
-                      cullface=False, script=None, **kwargs):
-        
+    def velocityField(self, figsize=None, title="Velocity Field",
+                      units=u.centimeter/u.year, cullface=False,
+                      script=None, **kwargs):
+
         saved_args = _clean_local(locals())
         units = saved_args.pop("units")
         Fig = glucifer.Figure(**saved_args)
+        Fig["title"] = title + " " + str(units)
+        Fig["boundingBox"] = self._boundingBox
 
         fact = sca.Dimensionalize(1.0, units).magnitude
         Fig.Surface(self.Model.mesh,self.Model.velocityField[0]*fact,
                    **saved_args)
         Fig.VectorArrows(self.Model.mesh, self.Model.velocityField,
                          **saved_args)
-        
+
         Fig.script(script)
         Fig.show()
+
         return Fig
-    
-    def strain(self, figsize=None, cullface=False,
-               script=None, **kwargs):
+
+    def plastic_strain(self, figsize=None, title="Plastic Strain",
+                       cullface=False, script=None, **kwargs):
 
         saved_args = _clean_local(locals())
         units = saved_args.pop("units")
         Fig = glucifer.Figure(**saved_args)
-        
+        Fig["title"] = title
+        Fig["boundingBox"] = self._boundingBox
+
         Fig.Points(self.Model.swarm, fn_colour=self.Model.plasticStrain,
                    **saved_args)
-        
+
         Fig.script(script)
         Fig.show()
+
         return Fig
-    
-    def melt(self, figsize=None, cullface=False,
-             script=None, **kwargs):
+
+    def melt_fraction(self, figsize=None, title="Melt fraction",
+                      cullface=False, script=None, **kwargs):
 
         saved_args = _clean_local(locals())
         units = saved_args.pop("units")
         Fig = glucifer.Figure(**saved_args)
-        
+        Fig["title"] = title
+        Fig["boundingBox"] = self._boundingBox
+
         Fig.Points(self.Model.swarm, fn_colour=self.Model.meltField,
                    **saved_args)
 
         Fig.script(script)
         Fig.show()
+
         return Fig
