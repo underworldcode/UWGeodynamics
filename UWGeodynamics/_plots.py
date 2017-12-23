@@ -7,242 +7,188 @@ import numpy as np
 
 u = UnitRegistry = sca.UnitRegistry
 
+default_parameters = {
+        "figsize": (1200,400),
+        "title": "",
+        "store": None,
+        "axis": True,
+        "quality": 1
+        }
+
+def _clean_local(locals_):
+    del(locals_["self"])
+    kwargs = locals_.pop("kwargs")
+    for key, val in kwargs.iteritems():
+        locals_[key] = val
+    return locals_
+
+def visugrid_drawing_object(Model): 
+    # TODO Use a class based on glucifer.objects
+    visugrid = Model.visugrid.mesh
+
+    xrange = visugrid.maxCoord[0] - visugrid.minCoord[0]
+    yrange = visugrid.maxCoord[1] - visugrid.minCoord[1]
+    dx = np.abs(nd(Model.minCoord[0]) - visugrid.minCoord[0])
+    dy = np.abs(nd(Model.minCoord[1]) - visugrid.minCoord[1])
+    xmin = (Model.mesh.minCoord[0] - Model.mesh.minCoord[0] + dx) / xrange
+    xmax = (Model.mesh.maxCoord[0] - Model.mesh.minCoord[0] + dx) / xrange
+    ymin = (Model.mesh.minCoord[1] - Model.mesh.minCoord[1] + dy) / yrange
+    ymax = (Model.mesh.maxCoord[1] - Model.mesh.minCoord[1] + dy) / yrange
+    xmin += 0.007
+    xmax -= 0.007
+    
+    return glucifer.objects.Mesh(visugrid.mesh, xmin=xmin,
+                                 xmax=xmax, ymin=ymin, ymax=ymax)
+
 class Plots(object):
 
     def __init__(self, Model):
 
         self.Model = Model
 
-    def material(self, figsize=None, projected=False, colours=None,
-            script=None, cullface=False, mask=None, show=True, store=None,
-            visugrid=None, tracers=[], quality=3, fn_size=5.0, **kwargs):
-
+    @property
+    def _get_bounding_box(self):
         minCoord = tuple([nd(val) for val in self.Model.minCoord])
         maxCoord = tuple([nd(val) for val in self.Model.maxCoord])
         boundingBox =(minCoord, maxCoord)
+        return boundingBox
 
-        Fig = glucifer.Figure(figsize=figsize, store=store, title="Materials",
-                              axis=True, quality=quality, boundingBox=boundingBox)
-
-        if visugrid:
-            xrange = visugrid.mesh.maxCoord[0] - visugrid.mesh.minCoord[0]
-            yrange = visugrid.mesh.maxCoord[1] - visugrid.mesh.minCoord[1]
-            dx = np.abs(nd(self.Model.minCoord[0]) - visugrid.mesh.minCoord[0])
-            dy = np.abs(nd(self.Model.minCoord[1]) - visugrid.mesh.minCoord[1])
-            xmin = (self.Model.mesh.minCoord[0] - self.Model.mesh.minCoord[0] + dx) / xrange
-            xmax = (self.Model.mesh.maxCoord[0] - self.Model.mesh.minCoord[0] + dx) / xrange
-            ymin = (self.Model.mesh.minCoord[1] - self.Model.mesh.minCoord[1] + dy) / yrange
-            ymax = (self.Model.mesh.maxCoord[1] - self.Model.mesh.minCoord[1] + dy) / yrange
-            xmin += 0.007
-            xmax -= 0.007
-
-            Fig.append(glucifer.objects.Mesh(visugrid.mesh, xmin=xmin,
-                       xmax=xmax, ymin=ymin, ymax=ymax))
-
-
-        if tracers:
-            for tracer in tracers:
-                Fig.append(glucifer.objects.Points(tracer.swarm, pointSize=3.0))
+    def material(self, figsize=None,
+                 colours=None, script=None, cullface=False,
+                 mask=None, visugrid=None, projected=False,
+                 tracers=[], **kwargs):
         
-        if projected:
-            Fig.append(glucifer.objects.Surface(self.Model.mesh,
-                                               self.Model.projMaterialField,
-                                               cullface=cullface, colours=colours,
-                                               onMesh=True))
-        else:
-            Fig.append(glucifer.objects.Points(self.Model.swarm,
-                                               fn_colour=self.Model.materialField,
-                                               colours=colours,
-                                               fn_size=fn_size))
-        if script:
-            Fig.script(script)
-       
-        if show:
-            Fig.show()
-        return Fig
+        saved_args = _clean_local(locals())
+        Fig = glucifer.Figure(**saved_args)
 
-    def viscosity(self, figsize=None, units=u.pascal*u.second,
-                       projected=False, cullface=False, show=True, store=None,
-                       script=None, pointSize=3.0, quality=3,**kwargs):
-
-        minVal = nd(self.Model.minViscosity)
-        maxVal = nd(self.Model.maxViscosity)
-        
-        Fig = glucifer.Figure(figsize=figsize, store=store, 
-                              title="Viscosity Field ("+str(units)+")",axis=True,
-                              quality=quality)
-        fact = sca.Dimensionalize(1.0, units).magnitude
-        valueRange=(minVal*fact, maxVal*fact)
-        
-        if projected:
-            viscosity = glucifer.objects.Surface(self.Model.mesh,
-                                               self.Model.projViscosityField*fact,
-                                               cullface=cullface,
-                                               logScale=True,
-                                               valueRange=valueRange,
-                                               onMesh=True, **kwargs)
-            Fig.append(viscosity)
-        else:
-            Fig.append(glucifer.objects.Points(self.Model.swarm,
-                                               fn_colour=self.Model._viscosityFn*fact,
-                                               logScale=True,
-                                               valueRange=valueRange,
-                                               pointSize=pointSize,
-                                               **kwargs))
-        if script:
-            Fig.script(script)
-
-        if show:
-            Fig.show()
-        return Fig
-    
-    def strainRate(self, figsize=None, units=1.0/u.second, show=True,
-                   store=None, cullface=False, quality=3, logScale=True, **kwargs):
-        Fig = glucifer.Figure(figsize=figsize, store=store, title="Strain Rate",
-                              quality=quality)
-        fact = sca.Dimensionalize(1.0, units).magnitude
-        Fig.append(glucifer.objects.Surface(self.Model.mesh, self.Model._strainRate_2ndInvariant*fact,
-                                           cullface=cullface,
-                                           colours="coolwarm",
-                                           logScale=logScale,
-                                           onMesh=True, **kwargs))
-        if show:
-            Fig.show()
-        return Fig
-
-    def density(self, projected=False, figsize=None, units=u.kilogram/u.metre**3,
-                store=None, show=True, cullface=False, quality=3, **kwargs):
-        Fig = glucifer.Figure(figsize=figsize, store=store,
-                              title="Density Field", quality=quality)
-        fact = sca.Dimensionalize(1.0, units).magnitude
-
-        if projected:
-            Fig.append(glucifer.objects.Surface(self.Model.mesh,
-                                               self.Model.projDensityField*fact,
-                                               cullface=cullface, onMesh=True, **kwargs))
-
-        else:
-            Fig.append(glucifer.objects.Points(self.Model.swarm,
-                                               fn_colour=self.Model._densityFn*fact,
-                                               fn_size=2.0))
-        if show:
-            Fig.show()
-        return Fig
-
-    def temperature(self, figsize=None, units=u.degK,
-                         cullface=False, script=None, show=True, store=None, 
-                         colourScale="coolwarm", quality=3, isotherms=[], **args):
-        Fig = glucifer.Figure(figsize=figsize, store=store,
-                              title="Temperature Field", quality=quality)
-        fact = sca.Dimensionalize(1.0, units).magnitude
-        Fig.append(glucifer.objects.Surface(self.Model.mesh, self.Model.temperature*fact,
-                   cullface=cullface, colours=colourScale))
-
-        for isotherm in isotherms:
-            # Kind of a hack but it works...
-            Fig.append(glucifer.objects.Contours(self.Model.mesh, self.Model.temperature,
-                      interval=nd(1 * isotherm.units),
-                      limits=(nd(isotherm),nd(isotherm+1.0*isotherm.units)),
-                      colourBar=False, colours="black"))
-
-        if script:
-            Fig.script(script)
-
-        if show:
-            Fig.show()
-        return Fig
-    
-    def pressureField(self, figsize=None, units=u.pascal,
-                           cullface=False, show=True, store=None,
-                           script=None, quality=3, **kwargs):
-        Fig = glucifer.Figure(figsize=figsize, store=store,
-                              title="Pressure Field", quality=quality)
-        fact = sca.Dimensionalize(1.0, units).magnitude
-        Fig.append(glucifer.objects.Surface(self.Model.mesh, 
-                                            self.Model.pressureField*fact,
-                                            cullface=cullface, onMesh=True,
-                                            **kwargs))
-        
-        if script:
-            Fig.script(script)
-        
-        if show:
-            Fig.show()
-        return Fig
-
-    def velocityField(self, figsize=None, store=None, show=True,
-                      units=u.centimeter/u.year, script=None, cullface=False, 
-                      quality=3, scaling=0.03, arrowHead=10.,
-                      resolution=[25,10,10], **args):
-        Fig = glucifer.Figure(figsize=figsize, store=store, quality=quality)
-        fact = sca.Dimensionalize(1.0, units).magnitude
-        Fig.append(glucifer.objects.Surface(self.Model.mesh,self.Model.velocityField[0]*fact,
-                                            cullface=cullface))
-        Fig.append(glucifer.objects.VectorArrows(self.Model.mesh, self.Model.velocityField,
-                                                 scaling=scaling,
-                                                 arrowHead=arrowHead,
-                                                 resolution=resolution)) 
-        
-        if script:
-            Fig.script(script)
-        
-        if show:
-            Fig.show()
-        return Fig
-    
-    def strain(self, figsize=None, projected=False, cullface=False,
-               script=None, store=None, show=True, quality=3, **kwargs):
-
-        Fig = glucifer.Figure(figsize=figsize, store=store, title="Strain", 
-                              quality=quality, axis=True)
-        
-        if projected:
-            Fig.append(glucifer.objects.Surface(self.Model.mesh,
-                                               self.Model.projPlasticStrain,
-                                               cullface=cullface,
-                                               colours="#FF6600:0.5, #555555:0.25, Blue:0.5",
-                                               name="Strain",onMesh=True,
-                                               **kwargs))
-        else:
-            Fig.append(glucifer.objects.Points(self.Model.swarm,
-                                               fn_colour=self.Model.plasticStrain,
-                                               colours="#FF6600:0.5, #555555:0.25, Blue:0.5",
-                                               name="Strain", **kwargs))
-        if script:
-            Fig.script(script)
-
-        if show:
-            Fig.show()
-        return Fig
-    
-    def melt(self, figsize=None, projected=False, cullface=False,
-               script=None, store=None, show=True, quality=3, **kwargs):
-
-        Fig = glucifer.Figure(figsize=figsize, store=store, title="Melt", 
-                              quality=quality, axis=True)
-        
         if projected:
             pass
         else:
-            Fig.append(glucifer.objects.Points(self.Model.swarm,
-                                               fn_colour=self.Model.meltField,
-                                               colours="coolwarm",
-                                               name="Melt", **kwargs))
-        if script:
-            Fig.script(script)
+            Fig.Points(self.Model.swarm, fn_colour=self.Model.materialField,
+                       **saved_args)
+        
+        Fig.script(script)
+        Fig.show()
 
-        if show:
-            Fig.show()
         return Fig
 
-    def stress_enveloppe(self):
-        A = self.Model._yieldStressFn.evaluate(self.Model.swarm).flatten()
-        B = self.Model.swarm.particleCoordinates.data[:,1]
+    def viscosity(self, figsize=None, units=u.pascal*u.second,
+                       projected=False, cullface=False,
+                       script=None, **kwargs):
 
-        A = sca.Dimensionalize(A, u.megapascal)
-        B = sca.Dimensionalize(B, u.kilometer)
+        saved_args = _clean_local(locals())
+        units = saved_args.pop("units")
+        Fig = glucifer.Figure(**saved_args)
+       
+        fact = sca.Dimensionalize(1.0, units).magnitude
+        Fig.Points(self.Model.swarm, self.Model._viscosityFn*fact,
+                   **saved_args)
+        
+        Fig.script(script)
+        Fig.show()
 
-        plt.plot(A, B, "+")
-        plt.xlabel("Stress (MPa)")
-        plt.ylabel("Depth (Km)")
-        plt.show()
+        return Fig
+    
+    def strainRate(self, figsize=None, units=1.0/u.second,
+                   cullface=False, onMesh=True,
+                   logScale=True, colours="coolwarm",
+                   script=None, **kwargs):
+        
+        saved_args = _clean_local(locals())
+        units = saved_args.pop("units")
+        Fig = glucifer.Figure(**saved_args)
+        
+        fact = sca.Dimensionalize(1.0, units).magnitude
+        Fig.Surface(self.Model.mesh, self.Model._strainRate_2ndInvariant*fact,
+                    **saved_args)
+        Fig.script(script)
+        Fig.show()
+        return Fig
+
+    def density(self, figsize=None, units=u.kilogram/u.metre**3,
+                script=None, cullface=False, **kwargs):
+        
+        saved_args = _clean_local(locals())
+        units = saved_args.pop("units")
+        Fig = glucifer.Figure(**saved_args)
+
+        fact = sca.Dimensionalize(1.0, units).magnitude
+        Fig.Points(self.Model.swarm, fn_colour=self.Model._densityFn*fact,
+                   **saved_args)
+        Fig.script(script)
+        Fig.show()
+        return Fig
+
+    def temperature(self, figsize=None, units=u.degK, script=None,
+                    cullface=False, colourScale="coolwarm", **kwargs):
+        
+        saved_args = _clean_local(locals())
+        units = saved_args.pop("units")
+        Fig = glucifer.Figure(**saved_args)
+       
+        fact = sca.Dimensionalize(1.0, units).magnitude
+        Fig.Surface(self.Model.mesh, self.Model.temperature*fact,
+                    **saved_args)
+
+        Fig.script(script)
+        Fig.show()
+        return Fig
+    
+    def pressureField(self, figsize=None, units=u.pascal,
+                      cullface=False, script=None, **kwargs):
+        
+        saved_args = _clean_local(locals())
+        units = saved_args.pop("units")
+        Fig = glucifer.Figure(**saved_args)
+        fact = sca.Dimensionalize(1.0, units).magnitude
+        Fig.Surface(self.Model.mesh, self.Model.pressureField*fact,
+                    **saved_args)
+        
+        Fig.script()
+        Fig.show()
+        return Fig
+
+    def velocityField(self, figsize=None, units=u.centimeter/u.year,
+                      cullface=False, script=None, **kwargs):
+        
+        saved_args = _clean_local(locals())
+        units = saved_args.pop("units")
+        Fig = glucifer.Figure(**saved_args)
+
+        fact = sca.Dimensionalize(1.0, units).magnitude
+        Fig.Surface(self.Model.mesh,self.Model.velocityField[0]*fact,
+                   **saved_args)
+        Fig.VectorArrows(self.Model.mesh, self.Model.velocityField,
+                         **saved_args)
+        
+        Fig.script(script)
+        Fig.show()
+        return Fig
+    
+    def strain(self, figsize=None, cullface=False,
+               script=None, **kwargs):
+
+        saved_args = _clean_local(locals())
+        units = saved_args.pop("units")
+        Fig = glucifer.Figure(**saved_args)
+        
+        Fig.Points(self.Model.swarm, fn_colour=self.Model.plasticStrain,
+                   **saved_args)
+        
+        Fig.script(script)
+        Fig.show()
+        return Fig
+    
+    def melt(self, figsize=None, cullface=False,
+             script=None, **kwargs):
+
+        saved_args = _clean_local(locals())
+        units = saved_args.pop("units")
+        Fig = glucifer.Figure(**saved_args)
+        
+        Fig.Points(self.Model.swarm, fn_colour=self.Model.meltField,
+                   **saved_args)
+
+        Fig.script(script)
+        Fig.show()
+        return Fig
