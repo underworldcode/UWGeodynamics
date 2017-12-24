@@ -1,5 +1,6 @@
 import os
 import glucifer
+import underworld as uw
 import scaling as sca
 from scaling import nonDimensionalize as nd
 import matplotlib.pyplot as plt
@@ -215,7 +216,10 @@ class Plots(object):
         Fig["boundingBox"] = self._boundingBox
 
         fact = sca.Dimensionalize(1.0, units).magnitude
-        Fig.Surface(self.Model.mesh,self.Model.velocityField[0]*fact,
+        velmagfield = uw.function.math.sqrt(
+                uw.function.math.dot(self.Model.velocityField,
+                                     self.Model.velocityField))
+        Fig.Surface(self.Model.mesh, velmagfield*fact,
                    **saved_args)
         Fig.VectorArrows(self.Model.mesh, self.Model.velocityField,
                          **saved_args)
