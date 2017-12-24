@@ -7,14 +7,6 @@ import numpy as np
 
 u = UnitRegistry = sca.UnitRegistry
 
-default_parameters = {
-        "figsize": (1200,400),
-        "title": "",
-        "store": None,
-        "axis": True,
-        "quality": 1
-        }
-
 def _clean_local(locals_):
     del(locals_["self"])
     kwargs = locals_.pop("kwargs")
@@ -22,23 +14,56 @@ def _clean_local(locals_):
         locals_[key] = val
     return locals_
 
-def visugrid_drawing_object(Model):
-    # TODO Use a class based on glucifer.objects
+
+def visugrid_drawing_object2(Model):
+
     visugrid = Model.visugrid.mesh
 
-    xrange = visugrid.maxCoord[0] - visugrid.minCoord[0]
-    yrange = visugrid.maxCoord[1] - visugrid.minCoord[1]
-    dx = np.abs(nd(Model.minCoord[0]) - visugrid.minCoord[0])
-    dy = np.abs(nd(Model.minCoord[1]) - visugrid.minCoord[1])
-    xmin = (Model.mesh.minCoord[0] - Model.mesh.minCoord[0] + dx) / xrange
-    xmax = (Model.mesh.maxCoord[0] - Model.mesh.minCoord[0] + dx) / xrange
-    ymin = (Model.mesh.minCoord[1] - Model.mesh.minCoord[1] + dy) / yrange
-    ymax = (Model.mesh.maxCoord[1] - Model.mesh.minCoord[1] + dy) / yrange
-    xmin += 0.007
-    xmax -= 0.007
+    m_minx, m_maxx = _get_minmax_coordinates_mesh(visugrid, 0)
+    m_miny, m_maxy = _get_minmax_coordinates_mesh(visugrid, 1)
 
-    return glucifer.objects.Mesh(visugrid.mesh, xmin=xmin,
-                                 xmax=xmax, ymin=ymin, ymax=ymax)
+    v_minx, v_maxx = _get_minmax_coordinates_mesh(Model.mesh, 0)
+    v_miny, v_maxy = _get_minmax_coordinates_mesh(Model.mesh, 1)
+
+    minx = min(m_minx, v_minx)
+    miny = min(m_miny, v_miny)
+    maxx = max(m_maxx, v_maxx)
+    maxy = max(m_maxy, v_maxy)
+
+    norm_x1 = (m_minx - minx) / (maxx - minx)
+    norm_x2 = (m_maxx - minx) / (maxx - minx)
+
+    norm_y1 = (m_miny - miny) / (maxy - miny)
+    norm_y2 = (m_maxy - miny) / (maxy - miny)
+
+    return norm_x1, norm_x2, norm_y1, norm_y2
+
+
+def _get_minmax_coordinates_mesh(mesh, axis=0):
+    """ Return the minimum and maximum coordinates along axis
+
+    parameter:
+    ----------
+        axis:
+            axis
+
+    returns:
+    -------
+        tuple: minV, maxV
+
+    """
+    maxVal = np.zeros((1))
+    minVal = np.zeros((1))
+    maxVal[0] = mesh.data[:, axis].max()
+    minVal[0] = mesh.data[:, axis].min()
+
+    uw.barrier
+    comm.Allreduce(MPI.IN_PLACE, maxVal, op=MPI.MAX)
+    comm.Allreduce(MPI.IN_PLACE, minVal, op=MPI.MIN)
+    uw.barrier
+
+    return minVal, maxVal
+
 
 class Plots(object):
 
@@ -66,7 +91,8 @@ class Plots(object):
         if onMesh:
             Fig.Surface(self.Model.mesh, self.Model.projMaterialField)
         else:
-            pts = Fig.Points(self.Model.swarm, fn_colour=self.Model.materialField,
+            pts = Fig.Points(self.Model.swarm,
+                             fn_colour=self.Model.materialField,
                              **saved_args)
             #pts.colourBar["binlabels"] = True
             #pts.colourBar["align"] = "right"
@@ -111,10 +137,10 @@ class Plots(object):
         Fig["boundingBox"] = self._boundingBox
 
         fact = sca.Dimensionalize(1.0, units).magnitude
-        Fig.Surface(self.Model.mesh, 
+        Fig.Surface(self.Model.mesh,
                     self.Model._strainRate_2ndInvariant*fact,
                     **saved_args)
-        
+
         Fig.script(script)
         Fig.show()
 
@@ -131,10 +157,10 @@ class Plots(object):
         Fig["boundingBox"] = self._boundingBox
 
         fact = sca.Dimensionalize(1.0, units).magnitude
-        Fig.Points(self.Model.swarm, 
+        Fig.Points(self.Model.swarm,
                    fn_colour=self.Model._densityFn*fact,
                    **saved_args)
-        
+
         Fig.script(script)
         Fig.show()
 
