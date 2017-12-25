@@ -14,7 +14,7 @@ from .lithopress import LithostaticPressure
 from ._rheology import Rheology, ConstantViscosity, ViscousCreep, DruckerPrager
 from ._rheology import VonMises
 from ._rheology import ViscousCreepRegistry, PlasticityRegistry
-from ._material import Material
+from ._material import Material, MaterialRegistry
 from ._model import Model
 from ._melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry
 from ._rcParams import rcParams as config
@@ -24,5 +24,6 @@ u = UnitRegistry
 
 rheologies = ViscousCreepRegistry()
 yieldCriteria = PlasticityRegistry()
+materials = MaterialRegistry()
 scaling = scaling_coefficients
 

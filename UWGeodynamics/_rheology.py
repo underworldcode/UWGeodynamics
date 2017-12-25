@@ -60,12 +60,13 @@ class Rheology(object):
 
 class DruckerPrager(object):
 
-    def __init__(self, cohesion=None, frictionCoefficient=None,
+    def __init__(self, name=None, cohesion=None, frictionCoefficient=None,
                  cohesionAfterSoftening = None,
                  frictionAfterSoftening = None,
                  minimumViscosity=None, plasticStrain=None, pressureField=None,
                  epsilon1=0.5, epsilon2=1.0):
 
+        self.name = name
         self._cohesion = cohesion
         self._frictionCoefficient = frictionCoefficient
         self.cohesionAfterSoftening = cohesionAfterSoftening
@@ -214,6 +215,7 @@ class ConstantViscosity(Rheology):
         super(ConstantViscosity, self).__init__()
         self._viscosity = nd(viscosity)
         self._Quantity = viscosity
+        self.name = "Constant ({0})".format(str(viscosity))
 
     @property
     def muEff(self):
@@ -234,6 +236,7 @@ class ConstantViscosity(Rheology):
 class ViscousCreep(Rheology):
 
     def __init__(self,
+                 name=None,
                  strainRateInvariantField=None,
                  temperatureField=None,
                  pressureField=None,
@@ -251,7 +254,8 @@ class ViscousCreep(Rheology):
                  f=1.0):
         
         super(ViscousCreep, self).__init__()
-                 
+        
+        self.name = name
         self.strainRateInvariantField = strainRateInvariantField
         self.temperatureField = temperatureField
         self.pressureField = pressureField
@@ -407,7 +411,7 @@ class ViscousCreepRegistry(object):
         self._dir = {}
         for key in _viscousLaws.keys():
             name = key.replace(" ","_").replace(",","").replace(".","")
-            self._dir[name] = ViscousCreep(**_viscousLaws[key]["coefficients"])
+            self._dir[name] = ViscousCreep(name=key, **_viscousLaws[key]["coefficients"])
 
 
     def __dir__(self):
@@ -444,7 +448,7 @@ class PlasticityRegistry(object):
         for key in _plasticLaws.keys():
             name = key.replace(" ","_").replace(",","").replace(".","")
             name = name.replace(")","").replace("(","")
-            self._dir[name] = DruckerPrager(**_plasticLaws[key]["coefficients"])
+            self._dir[name] = DruckerPrager(name=key, **_plasticLaws[key]["coefficients"])
 
     def __dir__(self):
         # Make all the rheology available through autocompletion
