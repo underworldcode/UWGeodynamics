@@ -606,11 +606,14 @@ class Model(Material):
             raise ValueError("Set Boundary Conditions")
         return self.velocityBCs.get_conditions()
 
-    def add_material(self, shape=None, name="unknown", reset=False):
+    def add_material(self, material=None, shape=None, name="unknown", reset=False):
         """ Add Material to the Model
 
         Parameters:
         -----------
+            material:
+                An UWGeodynamics material. If None the material is
+                initialized to the global properties.
             shape:
                 Shape of the material. See UWGeodynamics.shape
             name:
@@ -624,15 +627,19 @@ class Model(Material):
             self.materialField.data[...] = 0
             self.materials = [self]
 
-        mat = Material()
+        if material is not None:
+            mat = material
+            mat.name = name
+        else:
+            mat = Material()
 
-        mat.name = name
+            mat.name = name
 
-        # Initialize some properties to Model property
-        mat.diffusivity = self.diffusivity
-        mat.capacity = self.capacity
-        mat.thermalExpansivity = self.thermalExpansivity
-        mat.radiogenicHeatProd = self.radiogenicHeatProd
+            # Initialize some properties to Model property
+            mat.diffusivity = self.diffusivity
+            mat.capacity = self.capacity
+            mat.thermalExpansivity = self.thermalExpansivity
+            mat.radiogenicHeatProd = self.radiogenicHeatProd
 
         if isinstance(shape, shapes.Layer):
             mat.top = shape.top
