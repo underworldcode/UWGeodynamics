@@ -5,7 +5,7 @@ from ._rheology import ConstantViscosity
 class Material(object):
     _ids = count(0)
 
-    def __init__(self, name="Undefined", vertices=None, density=0.0,
+    def __init__(self, name="Undefined", density=0.0,
                  diffusivity=None, capacity=None, thermalExpansivity=None,
                  radiogenicHeatProd=0.0, shape=None, viscosity=None,
                  plasticity=None, solidus=None, liquidus=None,
@@ -100,7 +100,7 @@ class Material(object):
 
     @viscosity.setter
     def viscosity(self, value):
-        if isinstance(value, u.Quantity) or isinstance(value, float):
+        if isinstance(value, (u.Quantity, float)):
             self._viscosity = ConstantViscosity(value)
         else:
             self._viscosity = value

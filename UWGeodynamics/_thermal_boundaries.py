@@ -5,7 +5,7 @@ class TemperatureBCs(object):
 
     def __init__(self, Model, left=None, right=None, top=None, bottom=None,
                  front=None, back=None,
-                 indexSets=[], materials=None):
+                 indexSets=None, materials=None):
 
 
         self.Model = Model
@@ -53,4 +53,4 @@ class TemperatureBCs(object):
                     indices[0] += indexSet
 
         return uw.conditions.DirichletCondition(variable=Model.temperature,
-                                                 indexSetsPerDof=indices)
+                                                indexSetsPerDof=indices)

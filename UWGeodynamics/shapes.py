@@ -1,14 +1,19 @@
 import numpy as np
 import underworld as uw
 import underworld.function as fn
-from scaling import nonDimensionalize as nd
+from .scaling import nonDimensionalize as nd
 
 
 class Shape(object):
 
     def __init__(self):
+
+        self._fn = None
         return
-    
+
+    def _init_shape(self):
+        return self._fn
+
     @property
     def fn(self):
         self._init_shape()
@@ -40,22 +45,24 @@ class Layer(Shape):
     def _init_shape(self):
         coord = fn.input()
         if (self.minY is not None) and (self.maxY is not None):
-            self._fn = ((coord[2] <= nd(self.top)) & (coord[2] >= nd(self.bottom)))
+            self._fn = ((coord[2] <= nd(self.top)) &
+                        (coord[2] >= nd(self.bottom)))
         else:
-            self._fn = ((coord[1] <= nd(self.top)) & (coord[1] >= nd(self.bottom)))
+            self._fn = ((coord[1] <= nd(self.top)) &
+                        (coord[1] >= nd(self.bottom)))
 
     @property
     def top(self):
         return self._top
-    
+
     @top.setter
     def top(self, value):
         self._top = value
-    
+
     @property
     def bottom(self):
         return self._bottom
-    
+
     @bottom.setter
     def bottom(self, value):
         self._bottom = value
@@ -74,17 +81,22 @@ class Box(Shape):
     def _init_shape(self):
         coord = fn.input()
         if (self.minY is not None) and (self.maxY is not None):
-            self._fn = ((coord[1] <= nd(self.maxY)) & (coord[1] >= nd(self.minY))
-                      & (coord[0] <= nd(self.maxX)) & (coord[0] >= nd(self.minX))
-                      & (coord[2] <= nd(self.top))  & (coord[2] >= nd(self.bottom)))
+            self._fn = ((coord[1] <= nd(self.maxY)) &
+                        (coord[1] >= nd(self.minY)) &
+                        (coord[0] <= nd(self.maxX)) &
+                        (coord[0] >= nd(self.minX)) &
+                        (coord[2] <= nd(self.top))  &
+                        (coord[2] >= nd(self.bottom)))
         else:
-            self._fn = ((coord[1] <= nd(self.top)) & (coord[1] >=  nd(self.bottom))
-                      & (coord[0] <= nd(self.maxX)) & (coord[0] >= nd(self.minX)))
+            self._fn = ((coord[1] <= nd(self.top)) &
+                        (coord[1] >= nd(self.bottom)) &
+                        (coord[0] <= nd(self.maxX)) &
+                        (coord[0] >= nd(self.minX)))
 
     @property
     def minX(self):
         return self._minX
-    
+
     @minX.setter
     def minX(self, value):
         self._minX = value
@@ -92,23 +104,23 @@ class Box(Shape):
     @property
     def maxX(self):
         return self._maxX
-    
+
     @maxX.setter
     def maxX(self, value):
         self._maxX = value
-   
+
     @property
     def top(self):
         return self._top
-    
+
     @top.setter
     def top(self, value):
         self._top = value
-    
+
     @property
     def bottom(self):
         return self._bottom
-    
+
     @bottom.setter
     def bottom(self, value):
         self._bottom = value
@@ -128,7 +140,7 @@ class Disk(Shape):
 
 
 class Annulus(Shape):
-    
+
     def __init__(self, center, r1, r2):
         self.center = center
         self.r1 = r1
