@@ -177,8 +177,12 @@ def _material_html_repr(Material):
             __name__, "images/viscoplastic.svg")
     elif Material.viscosity:
         type_ = "(Viscous)"
+        filename = pkg_resources.resource_filename(
+            __name__, "images/viscous.svg")
     elif Material.plasticity:
         type_ = "(Plastic)"
+        filename = pkg_resources.resource_filename(
+            __name__, "images/frictional.svg")
     else:
         type_ = ""
 
