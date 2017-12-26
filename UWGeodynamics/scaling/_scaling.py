@@ -16,9 +16,9 @@ def nonDimensionalize(dimValue):
 
     example:
 
-    import unsupported.scaling as sca
+    import UWGeodynamics as GEO
 
-    u = sca.UnitRegistry
+    u = GEO.u
 
     # Characteristic values of the system
     half_rate = 0.5 * u.centimeter / u.year

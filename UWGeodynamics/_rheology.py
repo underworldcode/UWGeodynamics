@@ -1,7 +1,7 @@
 import underworld.function as fn
 import numpy as np
-from scaling import UnitRegistry as u
-from scaling import nonDimensionalize as nd
+from .scaling import UnitRegistry as u
+from .scaling import nonDimensionalize as nd
 from copy import copy
 from collections import OrderedDict
 import json

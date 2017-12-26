@@ -4,11 +4,11 @@ import sys
 import numpy as np
 import underworld as uw
 import underworld.function as fn
-import UWGeodynamics.scaling as sca
 import UWGeodynamics.shapes as shapes
 import UWGeodynamics.surfaceProcesses as surfaceProcesses
-from tqdm import tqdm
+from .scaling import Dimensionalize
 from .scaling import nonDimensionalize as nd
+from .scaling import UnitRegistry as u
 from .lithopress import LithostaticPressure
 from ._utils import PressureSmoother, PassiveTracers
 from ._rheology import ViscosityLimiter
@@ -21,8 +21,6 @@ from ._rcParams import rcParams
 from ._mesh_advector import _mesh_advector
 from ._frictional_boundary import FrictionBoundaries
 from collections import OrderedDict
-
-u = UnitRegistry = sca.UnitRegistry
 
 
 class Model(Material):
@@ -1051,7 +1049,7 @@ class Model(Material):
             self._update()
 
             step += 1
-            self.time += sca.Dimensionalize(self._dt, units)
+            self.time += Dimensionalize(self._dt, units)
             time += self._dt
 
             if time == next_checkpoint:
@@ -1064,7 +1062,7 @@ class Model(Material):
             if checkpoint or step % 1 == 0:
                 if uw.rank() == 0:
                     print("Time: ", str(self.time.to(units)),
-                          'dt:', str(sca.Dimensionalize(self._dt, units)))
+                          'dt:', str(Dimensionalize(self._dt, units)))
         return 1
 
     def _update(self):

@@ -1,12 +1,12 @@
 import os
 import glucifer
 import underworld as uw
-import scaling as sca
-from scaling import nonDimensionalize as nd
+from .scaling import nonDimensionalize as nd
+from .scaling import Dimensionalize
+from .scaling import UnitRegistry as u
 import matplotlib.pyplot as plt
 import numpy as np
 
-u = UnitRegistry = sca.UnitRegistry
 
 def _clean_local(locals_):
     del(locals_["self"])
@@ -116,7 +116,7 @@ class Plots(object):
         Fig["title"] = title + " " + str(units)
         Fig["boundingBox"] = self._boundingBox
 
-        fact = sca.Dimensionalize(1.0, units).magnitude
+        fact = Dimensionalize(1.0, units).magnitude
         Fig.Points(self.Model.swarm, self.Model._viscosityFn*fact,
                    **saved_args)
 
@@ -137,7 +137,7 @@ class Plots(object):
         Fig["title"] = title + " " + str(units)
         Fig["boundingBox"] = self._boundingBox
 
-        fact = sca.Dimensionalize(1.0, units).magnitude
+        fact = Dimensionalize(1.0, units).magnitude
         Fig.Surface(self.Model.mesh,
                     self.Model._strainRate_2ndInvariant*fact,
                     **saved_args)
@@ -157,7 +157,7 @@ class Plots(object):
         Fig["title"] = title + " " + str(units)
         Fig["boundingBox"] = self._boundingBox
 
-        fact = sca.Dimensionalize(1.0, units).magnitude
+        fact = Dimensionalize(1.0, units).magnitude
         Fig.Points(self.Model.swarm,
                    fn_colour=self.Model._densityFn*fact,
                    **saved_args)
@@ -177,7 +177,7 @@ class Plots(object):
         Fig["title"] = title + " " + str(units)
         Fig["boundingBox"] = self._boundingBox
 
-        fact = sca.Dimensionalize(1.0, units).magnitude
+        fact = Dimensionalize(1.0, units).magnitude
         Fig.Surface(self.Model.mesh, self.Model.temperature*fact,
                     **saved_args)
 
@@ -196,7 +196,7 @@ class Plots(object):
         Fig["title"] = title + " " + str(units)
         Fig["boundingBox"] = self._boundingBox
 
-        fact = sca.Dimensionalize(1.0, units).magnitude
+        fact = Dimensionalize(1.0, units).magnitude
         Fig.Surface(self.Model.mesh, self.Model.pressureField*fact,
                     **saved_args)
 
@@ -215,7 +215,7 @@ class Plots(object):
         Fig["title"] = title + " " + str(units)
         Fig["boundingBox"] = self._boundingBox
 
-        fact = sca.Dimensionalize(1.0, units).magnitude
+        fact = Dimensionalize(1.0, units).magnitude
         velmagfield = uw.function.math.sqrt(
                 uw.function.math.dot(self.Model.velocityField,
                                      self.Model.velocityField))
