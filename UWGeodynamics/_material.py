@@ -4,6 +4,7 @@ from ._rheology import ConstantViscosity
 from copy import copy
 from collections import OrderedDict
 import json
+import pkg_resources
 
 class Material(object):
     _ids = count(0)
@@ -168,8 +169,12 @@ def _material_html_repr(Material):
             value = Material.__dict__.get("_"+val)
         html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, value)
 
+    filename = None
+
     if Material.viscosity and Material.plasticity:
         type_ = "(Visco-plastic)"
+        filename = pkg_resources.resource_filename(
+            __name__, "images/viscoplastic.svg")
     elif Material.viscosity:
         type_ = "(Viscous)"
     elif Material.plasticity:
@@ -188,6 +193,11 @@ def _material_html_repr(Material):
     if Material.plasticity:
         html += "<tr><td>{0}</td><td>{1}</td></tr>".format(
             "Plasticity", Material.plasticity.name)
+
+    if filename:
+        with open(filename, "r") as f:
+            image = f.read()
+        html += "<th align='center', colspan='2'>" + image + "</th>"
 
 #    html += """
 #    <tr>
