@@ -9,6 +9,8 @@ rcParams = {
 "courant.factor": "unused",
 "maximum.time.step": 30000 * u.years,
 
+"default.upper.crust.viscosity": None,
+"default.lower.crust.viscosity":None,
 
 
 "output.directory": "outputs",

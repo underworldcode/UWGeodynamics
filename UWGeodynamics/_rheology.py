@@ -251,11 +251,13 @@ class ViscousCreep(Rheology):
                  grainSizeExponent=0.0,
                  waterFugacityExponent=0.0,
                  meltFractionFactor=0.0,
-                 f=1.0):
+                 f=1.0,
+                 mineral="unspecified"):
         
         super(ViscousCreep, self).__init__()
         
         self.name = name
+        self.mineral = mineral
         self.strainRateInvariantField = strainRateInvariantField
         self.temperatureField = temperatureField
         self.pressureField = pressureField
@@ -283,6 +285,7 @@ class ViscousCreep(Rheology):
 
     def _repr_html_(self):
         attributes  = OrderedDict()
+        attributes["Mineral"] = self.mineral
         attributes["Pre-exponential factor"] = self.preExponentialFactor
         attributes["Stress Exponent"] = self.stressExponent
         attributes["Activation Volume"] = self.activationVolume
@@ -297,12 +300,15 @@ class ViscousCreep(Rheology):
         attributes["Melt Fraction Factor"] = self.meltFractionFactor
         header = "<table>"
         footer = "</table>"
-        html = ""
+        html = """
+        <tr>
+          <th colspan="2">Viscous Creep Rheology: {0}</th>
+        </tr>""".format(self.name)
         for key, val in attributes.iteritems():
-            html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
+            if val:
+                html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
 
         return header + html + footer      
-
 
     @property
     def muEff(self):
@@ -410,8 +416,9 @@ class ViscousCreepRegistry(object):
 
         self._dir = {}
         for key in _viscousLaws.keys():
+            mineral = _viscousLaws[key]["Mineral"]
             name = key.replace(" ","_").replace(",","").replace(".","")
-            self._dir[name] = ViscousCreep(name=key, **_viscousLaws[key]["coefficients"])
+            self._dir[name] = ViscousCreep(name=key, mineral=mineral, **_viscousLaws[key]["coefficients"])
 
 
     def __dir__(self):
