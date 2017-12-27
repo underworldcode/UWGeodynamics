@@ -17,6 +17,13 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+
+# Write the default uwgeodynamics file
+with open('uwgeodynamicsrc.template') as fd:
+    template = fd.read()
+with open('UWGeodynamics/uwgeo-data/uwgeodynamicsrc', 'w') as fd:
+    fd.write(template)
+
 # Arguments marked as "Required" below must be included for upload to PyPI.
 # Fields marked as "Optional" may be commented out.
 

@@ -4,7 +4,6 @@ import underworld as uw
 from .scaling import nonDimensionalize as nd
 from .scaling import Dimensionalize
 from .scaling import UnitRegistry as u
-import matplotlib.pyplot as plt
 import numpy as np
 
 
