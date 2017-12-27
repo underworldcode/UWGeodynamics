@@ -6,6 +6,7 @@ import underworld as uw
 import underworld.function as fn
 import UWGeodynamics.shapes as shapes
 import UWGeodynamics.surfaceProcesses as surfaceProcesses
+from UWGeodynamics import rcParams
 from .scaling import Dimensionalize
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
@@ -17,7 +18,6 @@ from ._plots import Plots
 from ._visugrid import Visugrid
 from ._velocity_boundaries import VelocityBCs
 from ._thermal_boundaries import TemperatureBCs
-from ._rcParams import rcParams
 from ._mesh_advector import _mesh_advector
 from ._frictional_boundary import FrictionBoundaries
 from collections import OrderedDict
@@ -182,7 +182,7 @@ class Model(Material):
         self.pressSmoother = PressureSmoother(self.mesh, self.pressureField)
 
         # Solver defaults
-        self._solver_inner_method = rcParams["default.solver"]
+        self._solver_inner_method = rcParams["solver"]
         self._solver_penalty = None
         self.nonLinearTolerance = rcParams["nonlinear.tolerance"]
 

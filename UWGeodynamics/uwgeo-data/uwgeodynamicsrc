@@ -14,5 +14,5 @@
 
 #### CONFIGURATION BEGINS HERE
 
-gravity : 10.0 * u.meter / u.second**2
-linear.tolerance : 0.3
+#gravity : 10.0 * u.meter / u.second**2
+#linear.tolerance : 0.3

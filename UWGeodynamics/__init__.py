@@ -12,27 +12,7 @@ import warnings
 import errno
 import tempfile
 from itertools import chain
-from .scaling import COEFFICIENTS as scaling_coefficients
-from .scaling import UnitRegistry
-from .scaling import nonDimensionalize
-from .scaling import Dimensionalize
-from .LecodeIsostasy import LecodeIsostasy
-from .lithopress import LithostaticPressure
-from ._rheology import Rheology, ConstantViscosity, ViscousCreep, DruckerPrager
-from ._rheology import VonMises
-from ._rheology import ViscousCreepRegistry, PlasticityRegistry
-from ._material import Material, MaterialRegistry
-from ._model import Model
-from ._melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry
-from ._rcParams import rcParamsNew as defaultParams
-
-nd = nonDimensionalize
-u = UnitRegistry
-
-rheologies = ViscousCreepRegistry()
-yieldCriteria = PlasticityRegistry()
-materials = MaterialRegistry()
-scaling = scaling_coefficients
+from ._rcParams import rcParams as defaultParams
 
 def mkdirs(newdir, mode=0o777):
     """
@@ -521,16 +501,36 @@ def rc_params_from_file(fname, fail_on_error=False, use_default_template=True):
     return config
 
 
-# this is the instance used by the matplotlib classes
 rcParams = rc_params()
 
 rcParamsOrig = rcParams.copy()
 
 rcParamsDefault = defaultParams
 
+
+from .scaling import COEFFICIENTS as scaling_coefficients
+from .scaling import UnitRegistry
+from .scaling import nonDimensionalize
+from .scaling import Dimensionalize
+from .LecodeIsostasy import LecodeIsostasy
+from .lithopress import LithostaticPressure
+from ._rheology import Rheology, ConstantViscosity, ViscousCreep, DruckerPrager
+from ._rheology import VonMises
+from ._rheology import ViscousCreepRegistry, PlasticityRegistry
+from ._material import Material, MaterialRegistry
+from ._melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry
+from ._model import Model
+
+nd = nonDimensionalize
+u = UnitRegistry
+
+rheologies = ViscousCreepRegistry()
+yieldCriteria = PlasticityRegistry()
+materials = MaterialRegistry()
+scaling = scaling_coefficients
+
 scaling["[length]"] = rcParams["scaling.length"]
 scaling["[mass]"] = rcParams["scaling.mass"]
 scaling["[time]"] = rcParams["scaling.time"]
 scaling["[substance]"] = rcParams["scaling.substance"]
 scaling["[temperature]"] = rcParams["scaling.temperature"]
-
