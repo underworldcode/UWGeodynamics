@@ -69,11 +69,25 @@ def validate_int(s):
 def validate_path(s):
     return s
 
+def validate_bool(b):
+    """Convert b to a boolean or raise"""
+    if isinstance(b, six.string_types):
+        b = b.lower()
+    if b in ('t', 'y', 'yes', 'on', 'true', '1', 1, True):
+        return True
+    elif b in ('f', 'n', 'no', 'off', 'false', '0', 0, False):
+        return False
+    else:
+        raise ValueError('Could not convert "%s" to boolean' % b)
+
 validate_stringlist = _listify_validator(six.text_type)
 validate_stringlist.__doc__ = 'return a list'
 
 rcParams = {
 "output.directory": ["outputs", validate_path],
+
+"minimum.viscosity": [1e19 * u.pascal * u.second, validate_quantity],
+"maximum.viscosity": [1e25 * u.pascal * u.second, validate_quantity],
 
 "swarm.variables" : [["materialField", "plasticStrain", "viscosityField", "densityField"], validate_stringlist],
 "mesh.variables" :  [["velocityField", "temperature", "pressureField",
@@ -84,10 +98,15 @@ rcParams = {
 "default.outputs" : [["materialField", "temperature", "pressureField", "plasticStrain", "velocityField"], validate_stringlist], 
 
 "gravity": [9.81 * u.meter / u.second**2, validate_quantity],
-"particles.per.cell": [20, validate_int],
+"swarm.particles.per.cell": [50, validate_int],
 
+"popcontrol.aggressive" : [True, validate_bool],
+"popcontrol.split.threshold" : [0.15, validate_float],
+"popcontrol.max.splits" : [10, validate_int],
+"popcontrol.particles.per.cell" : [50, validate_int],
 
 "solver" : ["mg", validate_solver],
+"penalty" : [0.0, validate_float],
 "nonlinear.tolerance": [1e-2, validate_float],
 "maximum.timestep" : [200000, validate_int],
 "nonlinear.min.iterations": [3, validate_int],

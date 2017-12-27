@@ -150,8 +150,8 @@ class Model(Material):
         self._dt = None
 
         # viscosity limiter
-        self.minViscosity = 1e19 * u.pascal * u.second
-        self.maxViscosity = 1e25 * u.pascal * u.second
+        self.minViscosity = rcParams["minimum.viscosity"]
+        self.maxViscosity = rcParams["maximum.viscosity"]
         self._viscosity_limiter = ViscosityLimiter(self.minViscosity,
                                                    self.maxViscosity)
 
@@ -183,7 +183,7 @@ class Model(Material):
 
         # Solver defaults
         self._solver_inner_method = rcParams["solver"]
-        self._solver_penalty = None
+        self._solver_penalty = rcParams["penalty"]
         self.nonLinearTolerance = rcParams["nonlinear.tolerance"]
 
         # Passive Tracers
@@ -404,7 +404,7 @@ class Model(Material):
         else:
             self._swarmLayout = uw.swarm.layouts.GlobalSpaceFillerLayout(
                 swarm=self.swarm,
-                particlesPerCell=50)
+                particlesPerCell=rcParams["swarm.particle.per.cell"])
 
         self.swarm.populate_using_layout(layout=self._swarmLayout)
 
@@ -420,9 +420,10 @@ class Model(Material):
         else:
             self._population_control = uw.swarm.PopulationControl(
                 self.swarm,
-                aggressive=True, splitThreshold=0.15,
-                maxSplits=10,
-                particlesPerCell=50
+                aggressive=rcParams["popcontrol.aggressive"],
+                splitThreshold=["popcontrol.split.threshold"],
+                maxSplits=["popcontrol.max.splits"],
+                particlesPerCell=["popcontrol.particles.per.cell"]
             )
 
     def set_temperatureBCs(self, left=None, right=None, top=None, bottom=None,
