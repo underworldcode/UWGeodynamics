@@ -38,8 +38,7 @@ class Model(Material):
     """
 
     def __init__(self, elementRes, minCoord, maxCoord,
-                 name="Model",
-                 gravity=(0.0, -9.81 * u.meter / u.second**2),
+                 name="Model", gravity=None,
                  periodic=None, elementType="Q1/dQ0",
                  Tref=273.15 * u.degK):
 
@@ -79,16 +78,32 @@ class Model(Material):
         super(Model, self).__init__()
         
         # Process __init__ arguments
-        self.name = name
+        if not name:
+            self.name = rcParams["model.name"]
+        else:
+            self.name = name
+
+        self.minCoord = minCoord
+        self.maxCoord = maxCoord
         self.top = maxCoord[-1]
         self.bottom = minCoord[-1]
         self.dimension = dim = len(maxCoord)
-        self.gravity = gravity
+        
+        if not gravity:
+            self.gravity = [0.0 for val in range(self.dimension)]
+            self.gravity[-1] = -1.0 * rcParams["gravity"]
+            self.gravity = tuple(self.gravity)
+        else:
+            self.gravity = gravity
+        
         self.Tref = Tref
-        self.elementType = elementType
+
+        if not elementType:
+            self.elementType = rcParams["element.type"]
+        else:
+            self.elementType = elementType
+
         self.elementRes = elementRes
-        self.minCoord = minCoord
-        self.maxCoord = maxCoord
         self.outputDir = rcParams["output.directory"]
         
         # Compute model dimensions
@@ -140,8 +155,18 @@ class Model(Material):
 
         # Create the material swarm
         self.swarm = uw.swarm.Swarm(mesh=self.mesh, particleEscape=True)
-        self.swarmLayout = None
-        self.population_control = None
+        self._swarmLayout = uw.swarm.layouts.GlobalSpaceFillerLayout(
+            swarm=self.swarm,
+            particlesPerCell=rcParams["swarm.particles.per.cell"])
+
+        self.swarm.populate_using_layout(layout=self._swarmLayout)
+
+        self.population_control = uw.swarm.PopulationControl(
+            self.swarm,
+            aggressive=rcParams["popcontrol.aggressive"],
+            splitThreshold=rcParams["popcontrol.split.threshold"],
+            maxSplits=rcParams["popcontrol.max.splits"],
+            particlesPerCell=rcParams["popcontrol.particles.per.cell"])
 
         # timing and checkpointing
         self.checkpointID = 0
@@ -180,11 +205,6 @@ class Model(Material):
         self.surfaceProcesses = None
 
         self.pressSmoother = PressureSmoother(self.mesh, self.pressureField)
-
-        # Solver defaults
-        self._solver_inner_method = rcParams["solver"]
-        self._solver_penalty = rcParams["penalty"]
-        self.nonLinearTolerance = rcParams["nonlinear.tolerance"]
 
         # Passive Tracers
         self.passive_tracers = []
@@ -266,27 +286,6 @@ class Model(Material):
     @property
     def z(self):
         return fn.input()[2]
-
-    @property
-    def solver_inner_method(self):
-        return self._solver_inner_method
-
-    @solver_inner_method.setter
-    def solver_inner_method(self, value):
-        solvers = ["mumps", "lu", "mg", "superlu", "superludist", "nomg"]
-
-        if value not in solvers:
-            raise ValueError("Invalid Solver")
-
-        self._solver_inner_method = value
-    
-    @property
-    def solver_penalty(self):
-        return self._solver_penalty
-
-    @solver_penalty.setter
-    def solver_penalty(self, value):
-        self._solver_penalty = value
 
     @property
     def outputDir(self):
@@ -390,41 +389,6 @@ class Model(Material):
         self._surfaceProcesses = value
         if isinstance(value, surfaceProcesses.Badlands):
             self._surfaceProcesses.Model = self
-
-    @property
-    def swarmLayout(self):
-        """ Swarm Layout underworld object """
-        return self._swarmLayout
-
-    @swarmLayout.setter
-    def swarmLayout(self, value):
-
-        if value is not None:
-            self._swarmLayout = value
-        else:
-            self._swarmLayout = uw.swarm.layouts.GlobalSpaceFillerLayout(
-                swarm=self.swarm,
-                particlesPerCell=rcParams["swarm.particle.per.cell"])
-
-        self.swarm.populate_using_layout(layout=self._swarmLayout)
-
-    @property
-    def population_control(self):
-        """ Population control underworld object """
-        return self._population_control
-
-    @population_control.setter
-    def population_control(self, value):
-        if isinstance(value, uw.swarm.PopulationControl):
-            self._population_control = value
-        else:
-            self._population_control = uw.swarm.PopulationControl(
-                self.swarm,
-                aggressive=rcParams["popcontrol.aggressive"],
-                splitThreshold=["popcontrol.split.threshold"],
-                maxSplits=["popcontrol.max.splits"],
-                particlesPerCell=["popcontrol.particles.per.cell"]
-            )
 
     def set_temperatureBCs(self, left=None, right=None, top=None, bottom=None,
                            front=None, back=None,
@@ -546,8 +510,8 @@ class Model(Material):
                                               fn_one_on_lambda=None)
 
             solver = uw.systems.Solver(stokes_object)
-            solver.set_inner_method(self.solver_inner_method)
-            solver.set_penalty(self.solver_penalty)
+            solver.set_inner_method(rcParams["solver"])
+            solver.set_penalty(rcParams["penalty"])
 
         return solver
 
@@ -982,7 +946,7 @@ class Model(Material):
         """ Solve Stokes """
         self._stokes.solve(nonLinearIterate=True,
                           callback_post_solve=self._calibrate_pressureField,
-                          nonLinearTolerance=self.nonLinearTolerance)
+                          nonLinearTolerance=rcParams["nonlinear.tolerance"])
         self._solution_exist = True
 
     def init_model(self, temperature=True, pressureField=True):
