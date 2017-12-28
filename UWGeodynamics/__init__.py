@@ -526,7 +526,7 @@ rcParamsOrig = rcParams.copy()
 
 rcParamsDefault = defaultParams
 
-from ._model import Model
+from ._model import Model, load_model
 
 scaling["[length]"] = rcParams["scaling.length"]
 scaling["[mass]"] = rcParams["scaling.mass"]

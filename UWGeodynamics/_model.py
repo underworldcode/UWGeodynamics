@@ -1316,12 +1316,19 @@ class Model(Material):
         for attribute in _attributes_to_save:
             val = self[attribute]
             if isinstance(val, (list, tuple)):
-                model[attribute] = str([str(v) for v in val])
+                model[attribute] = ", ".join([str(v) for v in val]) 
             else:
-                model[attribute] = str(self[attribute])
+                model[attribute] = str(val)
 
         with open("Model.json", "w") as f:
             json.dump(model, f, sort_keys=True, indent=4)
+
+
+def load_model(filename):
+    with open(filename, "r") as f:
+        model = json.load(f)
+
+    return model
 
 
 _html_global = OrderedDict()
