@@ -83,6 +83,25 @@ def validate_bool(b):
 def validate_string(s):
     return s
 
+def validate_any(s):
+    return s
+
+def validate_viscosity(s):
+    try:
+        s = u.Quantity(s)
+    except:
+        try:
+            from UWGeodynamics import rheologies
+            s = s.replace(" ", "_")
+            s = s.replace(",", "")
+            s = s.replace(".", "")
+            
+            if s in rheologies._dir:
+                return rheologies._dir[s]
+        except:
+            raise ValueError("Can not find {0} rheology in databases".format(s))
+
+
 validate_stringlist = _listify_validator(six.text_type)
 validate_stringlist.__doc__ = 'return a list'
 
@@ -117,6 +136,12 @@ rcParams = {
 "maximum.timestep" : [200000, validate_int],
 "nonlinear.min.iterations": [3, validate_int],
 "nonlinear.max.iterations": [500, validate_int],
+
+"rheology.default.uppercrust": ["Patterson et al., 1990", validate_viscosity],
+"rheology.default.midcrust": ["Patterson et al., 1990", validate_viscosity],
+"rheology.default.lowercrust": ["Wang et al., 2012", validate_viscosity],
+"rheology.default.mantlelithosphere": ["Hirth et al., 2003", validate_viscosity],
+"rheology.default.mantle": ["Karato and Wu, 1990", validate_viscosity],
 
 "scaling.length": [1.0 * u.meter, validate_quantity],
 "scaling.mass": [1.0 * u.kilogram, validate_quantity],

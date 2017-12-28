@@ -13,6 +13,25 @@ import errno
 import tempfile
 from itertools import chain
 from ._rcParams import rcParams as defaultParams
+from .scaling import COEFFICIENTS as scaling_coefficients
+from .scaling import UnitRegistry
+from .scaling import nonDimensionalize
+from .scaling import Dimensionalize
+from .LecodeIsostasy import LecodeIsostasy
+from .lithopress import LithostaticPressure
+from ._rheology import Rheology, ConstantViscosity, ViscousCreep, DruckerPrager
+from ._rheology import VonMises
+from ._rheology import ViscousCreepRegistry, PlasticityRegistry
+from ._material import Material, MaterialRegistry
+from ._melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry
+
+nd = nonDimensionalize
+u = UnitRegistry
+
+rheologies = ViscousCreepRegistry()
+yieldCriteria = PlasticityRegistry()
+materials = MaterialRegistry()
+scaling = scaling_coefficients
 
 def mkdirs(newdir, mode=0o777):
     """
@@ -507,30 +526,17 @@ rcParamsOrig = rcParams.copy()
 
 rcParamsDefault = defaultParams
 
-
-from .scaling import COEFFICIENTS as scaling_coefficients
-from .scaling import UnitRegistry
-from .scaling import nonDimensionalize
-from .scaling import Dimensionalize
-from .LecodeIsostasy import LecodeIsostasy
-from .lithopress import LithostaticPressure
-from ._rheology import Rheology, ConstantViscosity, ViscousCreep, DruckerPrager
-from ._rheology import VonMises
-from ._rheology import ViscousCreepRegistry, PlasticityRegistry
-from ._material import Material, MaterialRegistry
-from ._melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry
 from ._model import Model
-
-nd = nonDimensionalize
-u = UnitRegistry
-
-rheologies = ViscousCreepRegistry()
-yieldCriteria = PlasticityRegistry()
-materials = MaterialRegistry()
-scaling = scaling_coefficients
 
 scaling["[length]"] = rcParams["scaling.length"]
 scaling["[mass]"] = rcParams["scaling.mass"]
 scaling["[time]"] = rcParams["scaling.time"]
 scaling["[substance]"] = rcParams["scaling.substance"]
 scaling["[temperature]"] = rcParams["scaling.temperature"]
+
+UpperCrust_default = rcParams["rheology.default.uppercrust"]
+MidCrust_default = rcParams["rheology.default.midcrust"]
+LowerCrust_default = rcParams["rheology.default.lowercrust"]
+MantleLithosphere_default = rcParams["rheology.default.mantlelithosphere"]
+Mantle_default = rcParams["rheology.default.mantle"]
+
