@@ -6,6 +6,7 @@ import underworld as uw
 import underworld.function as fn
 import UWGeodynamics.shapes as shapes
 import UWGeodynamics.surfaceProcesses as surfaceProcesses
+import json
 from UWGeodynamics import rcParams
 from .scaling import Dimensionalize
 from .scaling import nonDimensionalize as nd
@@ -23,6 +24,15 @@ from ._frictional_boundary import FrictionBoundaries
 from collections import OrderedDict
 
 
+_attributes_to_save = ["elementRes",
+                       "minCoord",
+                       "maxCoord",
+                       "name",
+                       "gravity",
+                       "periodic",
+                       "elementType",
+                       "Tref"]
+
 class Model(Material):
     """ This class provides the main UWGeodynamics Model
 
@@ -38,8 +48,8 @@ class Model(Material):
     """
 
     def __init__(self, elementRes, minCoord, maxCoord,
-                 name="Model", gravity=None,
-                 periodic=None, elementType="Q1/dQ0",
+                 name=None, gravity=None,
+                 periodic=None, elementType=None,
                  Tref=273.15 * u.degK):
 
         """
@@ -203,6 +213,7 @@ class Model(Material):
         self.frictionalBCs = None
         self._isostasy = None
         self.surfaceProcesses = None
+        self._surfaceProcesses = None
 
         self.pressSmoother = PressureSmoother(self.mesh, self.pressureField)
 
@@ -219,11 +230,15 @@ class Model(Material):
         # Initialise remaining attributes
         self._default_strain_rate = 1e-30 / u.second
         self._solution_exist = False
+        self._isYielding = None
+        self._temperatureDot = None
+        self._temperature = None
+        self._outputDir = None
+        self.DiffusivityFn = None
+        self.HeatProdFn = None
+        self._buoyancyFn = None
 
         self._initialize()
-
-    def _repr_html_(self):
-        return _model_html_repr(self) 
 
     def _initialize(self):
 
@@ -275,6 +290,12 @@ class Model(Material):
         self._densityFieldProjector = uw.utils.MeshVariable_Projection(
             self._projDensityField, self._densityField, type=0)
 
+    def __getitem__(self, name):
+        return self.__dict__[name]
+
+    def _repr_html_(self):
+        return _model_html_repr(self) 
+    
     @property
     def x(self):
         return fn.input()[0]
@@ -312,7 +333,7 @@ class Model(Material):
 
         """
         if not restartDir:
-            restartDir = self._outputDir
+            restartDir = self.outputDir
         if not step:
             step = max([int(os.path.splitext(filename)[0].split("-")[-1])
                         for filename in os.listdir(restartDir) if "-" in
@@ -1222,8 +1243,8 @@ class Model(Material):
                                       show=False)
         material.save()
 
-        strain = self.plot.strain(projected=True, store=GluciferStore,
-                                  show=False)
+        strain = self.plot.plastic_strain(projected=True, store=GluciferStore,
+                                          show=False)
         strain.save()
 
         density = self.plot.density(projected=True, store=GluciferStore,
@@ -1289,6 +1310,18 @@ class Model(Material):
                      modeltime=self.time.magnitude)
         else:
             raise ValueError(field, ' is not a valid variable name \n')
+
+    def save(self):
+        model = {}
+        for attribute in _attributes_to_save:
+            val = self[attribute]
+            if isinstance(val, (list, tuple)):
+                model[attribute] = str([str(v) for v in val])
+            else:
+                model[attribute] = str(self[attribute])
+
+        with open("Model.json", "w") as f:
+            json.dump(model, f, sort_keys=True, indent=4)
 
 
 _html_global = OrderedDict()
