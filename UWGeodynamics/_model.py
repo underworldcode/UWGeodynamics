@@ -7,6 +7,7 @@ import underworld.function as fn
 import UWGeodynamics.shapes as shapes
 import UWGeodynamics.surfaceProcesses as surfaceProcesses
 import json
+from json import JSONEncoder
 from UWGeodynamics import rcParams
 from .scaling import Dimensionalize
 from .scaling import nonDimensionalize as nd
@@ -34,6 +35,26 @@ _attributes_to_save = {
     "elementType": lambda x: str(x),
     "Tref": lambda x: x if u.Quantity(x).dimensionless else u.Quantity(x)
     }
+
+class _ModelEncoder(JSONEncoder):
+
+    def default(self, obj):
+        model = {}
+        for attribute in _attributes_to_save:
+            val = obj[attribute]
+            if isinstance(val, (list, tuple)):
+                model[attribute] = ", ".join([str(v) for v in val]) 
+            else:
+                model[attribute] = str(val)
+        
+        materials = []
+        for material in obj["materials"]:
+            string = material._json_()
+            materials.append(eval(string))
+
+        model["materials"] = materials
+
+        return model
 
 
 class Model(Material):
@@ -579,6 +600,8 @@ class Model(Material):
             indexSets: (set, velocity)
                 underworld mesh index set and associate velocity
         """
+        self._velocityBCs_saved_args = locals()
+        del(self._velocityBCs_saved_args["self"])
 
         self.velocityBCs = VelocityBCs(self, left=left,
                                        right=right, top=top,
@@ -1315,16 +1338,8 @@ class Model(Material):
             raise ValueError(field, ' is not a valid variable name \n')
 
     def save(self):
-        model = {}
-        for attribute in _attributes_to_save:
-            val = self[attribute]
-            if isinstance(val, (list, tuple)):
-                model[attribute] = ", ".join([str(v) for v in val]) 
-            else:
-                model[attribute] = str(val)
-
         with open("Model.json", "w") as f:
-            json.dump(model, f, sort_keys=True, indent=4)
+            json.dump(self, f, sort_keys=True, indent=4, cls=_ModelEncoder)
 
 
 def load_model(filename):
