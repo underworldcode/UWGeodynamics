@@ -24,14 +24,17 @@ from ._frictional_boundary import FrictionBoundaries
 from collections import OrderedDict
 
 
-_attributes_to_save = ["elementRes",
-                       "minCoord",
-                       "maxCoord",
-                       "name",
-                       "gravity",
-                       "periodic",
-                       "elementType",
-                       "Tref"]
+_attributes_to_save = {
+    "elementRes": lambda x: tuple(int(val) for val in x.split(",")) ,
+    "minCoord": lambda x: tuple([val if u.Quantity(val).dimensionless else u.Quantity(val) for val in x.split(",")]),
+    "maxCoord": lambda x: tuple([val if u.Quantity(val).dimensionless else u.Quantity(val) for val in x.split(",")]),
+    "name": lambda x: str(x),
+    "gravity": lambda x: tuple([val if u.Quantity(val).dimensionless else u.Quantity(val) for val in x.split(",")]),
+    "periodic": lambda x: tuple(bool(val) for val in x.split(",")),
+    "elementType": lambda x: str(x),
+    "Tref": lambda x: x if u.Quantity(x).dimensionless else u.Quantity(x)
+    }
+
 
 class Model(Material):
     """ This class provides the main UWGeodynamics Model
@@ -1328,7 +1331,10 @@ def load_model(filename):
     with open(filename, "r") as f:
         model = json.load(f)
 
-    return model
+    for key, val in _attributes_to_save.iteritems():
+        model[key] = _attributes_to_save[key](model[key])
+
+    return Model(**model)
 
 
 _html_global = OrderedDict()
