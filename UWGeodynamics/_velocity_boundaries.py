@@ -3,6 +3,29 @@ import underworld.function as fn
 from .LecodeIsostasy import LecodeIsostasy
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
+import json
+from json import JSONEncoder
+
+
+class _VelocityBCsEncoder(JSONEncoder):
+
+    attributes = [
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "back",
+        "front",
+        "indexSets"]
+
+    def default(self, obj):
+
+        d = {}
+        for attribute in self.attributes:
+            if obj.__dict__[attribute]:
+                d[attribute] = str(obj.__dict__[attribute])
+
+        return d
 
 
 def _is_neumann(val):
@@ -198,3 +221,6 @@ class VelocityBCs(object):
             raise ValueError("Undefined conditions")
 
         return conditions
+
+    def _json_(self):
+        return json.dumps(self, cls=_VelocityBCsEncoder)

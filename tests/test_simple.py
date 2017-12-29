@@ -43,17 +43,17 @@ def test_model_creation():
     GEO.scaling_coefficients["[time]"] = Kt
     GEO.scaling_coefficients["[mass]"]= KM
 
-    Model = GEO.Model(elementRes=(64, 64), 
-                      minCoord=(-1. * u.meter, -50. * u.centimeter), 
+    Model = GEO.Model(elementRes=(64, 64),
+                      minCoord=(-1. * u.meter, -50. * u.centimeter),
                       maxCoord=(1. * u.meter, 50. *
                       u.centimeter))
     return Model
-    
+
 def test_adding_materials():
     import UWGeodynamics as GEO
     Model = test_model_creation()
     air = Model.add_material(
-        name="Air", 
+        name="Air",
         shape=GEO.shapes.Layer(top=Model.top,
                                bottom=Model.bottom)
     )
@@ -74,18 +74,19 @@ def test_set_velocity_boundary_conditions():
 def test_set_velocity_boundary_conditions_in_3D():
     import UWGeodynamics as GEO
     u = GEO.u
-    Model = GEO.Model(elementRes=(10, 10),
+    Model = GEO.Model(elementRes=(10, 10, 10),
                       minCoord=(0. * u.kilometer,
-                                0. * u.kilometer, 
+                                0. * u.kilometer,
                                 0. *u.kilometer),
                       maxCoord=(10. * u.kilometer,
                                 10. * u.kilometer,
                                 10. * u.kilometer))
 
-    conditions = Model2.set_velocityBCs(left=[1.0*u.centimetre/u.year, None, 0.],
-                                        right=[-1.0*u.centimetre/u.year, None, 0.],
-                                        bottom=[None, None, 0.],
-                                        top=[None, None, 0.],
-                                        front=[None, 0., None],
-                                        back=[None, 0., None])
-    assert(len(conditions) == 1)
+    conditions = Model.set_velocityBCs(
+        left=[1.0*u.centimetre/u.year, None, 0.],
+        right=[-1.0*u.centimetre/u.year, None, 0.],
+        bottom=[None, None, 0.],
+        top=[None, None, 0.],
+        front=[None, 0., None],
+        back=[None, 0., None])
+    assert len(conditions) == 1

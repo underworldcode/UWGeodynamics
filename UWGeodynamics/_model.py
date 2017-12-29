@@ -49,10 +49,17 @@ class _ModelEncoder(JSONEncoder):
         
         materials = []
         for material in obj["materials"]:
-            string = material._json_()
-            materials.append(eval(string))
+            if material is not obj:
+                string = material._json_()
+                materials.append(eval(string))
 
         model["materials"] = materials
+        
+        if obj.velocityBCs:
+            model["velocityBCs"] = eval(obj["velocityBCs"]._json_())
+        
+        if obj.temperatureBCs:
+            model["temperatureBCs"] = eval(obj["temperatureBCs"]._json_())
 
         return model
 
