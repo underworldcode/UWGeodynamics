@@ -1,0 +1,18 @@
+### MATPLOTLIBRC FORMAT
+
+# This is a sample UWGeodynamics configuration file - you can find a copy
+# of it on your system in
+# site-packages/uwgeodynamics/uwgeo-data/uwgeodynamicsrc.  If you edit it
+# there, please note that it will be overwritten in your next install.
+# If you want to keep a permanent local copy that will not be
+# overwritten, place it in the following location:
+# unix/linux:
+#     $HOME/.config/uwgeodynamics/uwgeodynamicsrc or
+#     $XDG_CONFIG_HOME/uwgeodynamics/uwgeodynamicsrc (if $XDG_CONFIG_HOME is set)
+# other platforms:
+#     $HOME/.uwgeodynamics/uwgeodynamicsrc
+
+#### CONFIGURATION BEGINS HERE
+
+#gravity : 10.0 * u.meter / u.second**2
+#linear.tolerance : 0.3

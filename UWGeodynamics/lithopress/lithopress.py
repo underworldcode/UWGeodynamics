@@ -27,12 +27,12 @@ class LithostaticPressure(object):
     def __init__(self, mesh, densityFn, gravity):
 
         self.mesh = mesh
-        self.densityFn = densityFn
+        self._densityFn = densityFn
         self.gravity = gravity
 
         # Create Utilities
         self.DensityVar = uw.mesh.MeshVariable(self.mesh, nodeDofCount=1)
-        self.projectorDensity = uw.utils.MeshVariable_Projection(self.DensityVar, self.densityFn, type=0 )
+        self.projectorDensity = uw.utils.MeshVariable_Projection(self.DensityVar, self._densityFn, type=0 )
 
     def solve(self):
     
