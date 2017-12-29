@@ -21,12 +21,12 @@ rcParams = {
 "default.outputs" : [["materialField", "temperature", "pressureField", "plasticStrain", "velocityField"], validate_stringlist], 
 
 "gravity": [9.81 * u.meter / u.second**2, validate_quantity],
-"swarm.particles.per.cell": [50, validate_int],
+"swarm.particles.per.cell": [20, validate_int],
 
 "popcontrol.aggressive" : [True, validate_bool],
 "popcontrol.split.threshold" : [0.15, validate_float],
 "popcontrol.max.splits" : [10, validate_int],
-"popcontrol.particles.per.cell" : [50, validate_int],
+"popcontrol.particles.per.cell" : [20, validate_int],
 
 "solver" : ["mg", validate_solver],
 "penalty" : [0.0, validate_float],
