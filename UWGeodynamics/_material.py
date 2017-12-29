@@ -9,15 +9,39 @@ import pkg_resources
 
 
 class _MaterialEncoder(JSONEncoder):
+
+    attributes = [
+        "index",
+        "name",
+        "top",
+        "bottom",
+        "density",
+        "diffusivity",
+        "capacity",
+        "thermalExpansivity",
+        "radiogenicHeatProd",
+        "compressibility",
+        "solidus",
+        "liquidus",
+        "latentHeatFusion",
+        "meltFraction",
+        "meltFractionLimit",
+        "meltExpansion",
+        "viscosityChangeX1",
+        "viscosityChangeX2",
+        "viscosityChange",
+        "melt",
+        ]
+
+
     def default(self, obj):
-        attributes = copy(obj.__dict__)
 
         d = {}
-        for key, val in attributes.iteritems():
-            if val:
-                d[key] = str(attributes[key])
+        for attribute in self.attributes:
+            if obj.__dict__[attribute]:
+                d[attribute] = str(obj.__dict__[attribute])
 
-        return d 
+        return d
 
 
 class Material(object):
@@ -56,8 +80,7 @@ class Material(object):
         self.viscosityChange = viscosityChange
         self.melt = False
 
-        self.rheology = None  # For backward compatibility
-
+        self._viscosity = None
         self.viscosity = viscosity
         self.plasticity = plasticity
 
@@ -66,6 +89,17 @@ class Material(object):
 
     def _json_(self):
         return json.dumps(self, cls=_MaterialEncoder)
+    
+    @property
+    def viscosity(self):
+        return self._viscosity
+
+    @viscosity.setter
+    def viscosity(self, value):
+        if isinstance(value, (u.Quantity, float)):
+            self._viscosity = ConstantViscosity(value)
+        else:
+            self._viscosity = value
 
     def add_melt_modifier(self, solidus, liquidus, latentHeatFusion,
                           meltExpansion,
