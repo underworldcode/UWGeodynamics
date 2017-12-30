@@ -1,14 +1,16 @@
 from __future__ import print_function
 import os
 import sys
+import json
+from json import JSONEncoder
+from collections import OrderedDict
 import numpy as np
 import underworld as uw
 import underworld.function as fn
 import UWGeodynamics.shapes as shapes
 import UWGeodynamics.surfaceProcesses as surfaceProcesses
-import json
-from json import JSONEncoder
-from UWGeodynamics import rcParams
+from . import scaling_coefficients
+from UWGeodynamics import rcParams, uwgeodynamics_fname
 from .scaling import Dimensionalize
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
@@ -22,7 +24,6 @@ from ._velocity_boundaries import VelocityBCs
 from ._thermal_boundaries import TemperatureBCs
 from ._mesh_advector import _mesh_advector
 from ._frictional_boundary import FrictionBoundaries
-from collections import OrderedDict
 
 
 _attributes_to_save = {
@@ -39,7 +40,24 @@ _attributes_to_save = {
 class _ModelEncoder(JSONEncoder):
 
     def default(self, obj):
+
         model = {}
+
+        # Save rcparams (use file)
+        with open(uwgeodynamics_fname(), "r") as f:
+            rcParams = f.read()
+
+        model["rcParams"] = rcParams
+
+        # Encode Scaling
+        scaling = {}
+
+        for key, val in scaling_coefficients.iteritems():
+            scaling[key] = str(val)
+
+        model["scaling"] = scaling
+        
+        # Encode Model attributes
         for attribute in _attributes_to_save:
             val = obj[attribute]
             if isinstance(val, (list, tuple)):
@@ -47,17 +65,19 @@ class _ModelEncoder(JSONEncoder):
             else:
                 model[attribute] = str(val)
         
+        # Encode materials
         materials = []
         for material in obj["materials"]:
-            if material is not obj:
-                string = material._json_()
-                materials.append(eval(string))
+            string = material._json_()
+            materials.append(eval(string))
 
         model["materials"] = materials
         
+        # Encode velocity boundary conditions
         if obj.velocityBCs:
             model["velocityBCs"] = eval(obj["velocityBCs"]._json_())
         
+        # Encode temperature boundary conditions
         if obj.temperatureBCs:
             model["temperatureBCs"] = eval(obj["temperatureBCs"]._json_())
 

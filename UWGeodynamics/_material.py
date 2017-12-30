@@ -1,11 +1,11 @@
 from itertools import count
-from .scaling import u
-from ._rheology import ConstantViscosity
 from copy import copy
 from collections import OrderedDict
 import json
 from json import JSONEncoder
 import pkg_resources
+from .scaling import u
+from ._rheology import ConstantViscosity
 
 
 class _MaterialEncoder(JSONEncoder):
@@ -40,6 +40,12 @@ class _MaterialEncoder(JSONEncoder):
         for attribute in self.attributes:
             if obj.__dict__[attribute]:
                 d[attribute] = str(obj.__dict__[attribute])
+
+        if obj.viscosity:
+            d["viscosity"] = eval(obj.viscosity._json_())
+        
+        if obj.plasticity:
+            d["plasticity"] = eval(obj.plasticity._json_())
 
         return d
 
@@ -89,7 +95,7 @@ class Material(object):
 
     def _json_(self):
         return json.dumps(self, cls=_MaterialEncoder)
-    
+
     @property
     def viscosity(self):
         return self._viscosity
@@ -204,7 +210,6 @@ class MaterialRegistry(object):
     def __init__(self, filename=None):
 
         if not filename:
-            import pkg_resources
             filename = pkg_resources.resource_filename(__name__, "ressources/Materials.json")
 
         with open(filename, "r") as infile:
@@ -233,4 +238,3 @@ class MaterialRegistry(object):
     def __getattr__(self, item):
         # Make sure to return a new instance of ViscousCreep
         return copy(self._dir[item])
-
