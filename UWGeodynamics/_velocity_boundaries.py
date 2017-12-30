@@ -5,6 +5,7 @@ from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
 import json
 from json import JSONEncoder
+from json_encoder import ObjectEncoder
 
 
 class _VelocityBCsEncoder(JSONEncoder):
@@ -108,6 +109,9 @@ class VelocityBCs(object):
 
         self.dirichlet_indices = []
         self.neumann_indices = []
+
+    def __getitem__(self, name):
+        return self.__dict__[name]
 
     def apply_condition_nodes(self, condition, nodes):
         """ Apply condition to a set of nodes 
@@ -224,3 +228,21 @@ class VelocityBCs(object):
 
     def _json_(self):
         return json.dumps(self, cls=_VelocityBCsEncoder)
+
+    def to_json(self):
+        attributes = [
+            "left",
+            "right",
+            "top",
+            "bottom",
+            "back",
+            "front",
+            "indexSets"]
+
+        d = {}
+        for attribute in attributes:
+            if self[attribute]:
+                d[attribute] = json.dumps(self[attribute], cls=ObjectEncoder)
+
+        return d
+

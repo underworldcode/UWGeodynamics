@@ -3,6 +3,7 @@ import os
 import sys
 import json
 from json import JSONEncoder
+from json_encoder import ObjectEncoder
 from collections import OrderedDict
 import numpy as np
 import underworld as uw
@@ -41,7 +42,7 @@ class _ModelEncoder(JSONEncoder):
 
     def default(self, obj):
 
-        model = {}
+        model = OrderedDict()
 
         # Save rcparams (use file)
         with open(uwgeodynamics_fname(), "r") as f:
@@ -346,7 +347,53 @@ class Model(Material):
 
     def _repr_html_(self):
         return _model_html_repr(self) 
-    
+
+    def to_json(self):
+        model = OrderedDict()
+
+        # Save rcparams (use file)
+        with open(uwgeodynamics_fname(), "r") as f:
+            rcParams = f.read()
+
+        model["rcParams"] = rcParams
+
+        # Encode Scaling
+        scaling = {}
+
+        for key, val in scaling_coefficients.iteritems():
+            scaling[key] = str(val)
+
+        model["scaling"] = scaling
+        
+        # Encode Model attributes
+        for attribute in _attributes_to_save:
+            val = self[attribute]
+            if isinstance(val, (list, tuple)):
+                model[attribute] = ", ".join([str(v) for v in val]) 
+            else:
+                model[attribute] = str(val)
+        
+        # Encode materials
+        materials = []
+        for material in self.materials:
+            val = json.dumps(material, cls=ObjectEncoder)
+            print("new: ", val)
+            materials.append(val)
+
+        #model["materials"] = materials
+        #
+        ## Encode velocity boundary conditions
+        #if self.velocityBCs:
+        #    model["velocityBCs"] = json.dumps(self.velocityBCs, cls=ObjectEncoder)
+        #
+        ## Encode temperature boundary conditions
+        #if self.temperatureBCs:
+        #    model["temperatureBCs"] = json.dumps(self.temperatureBCs, cls=ObjectEncoder)
+
+        return model
+
+
+
     @property
     def x(self):
         return fn.input()[0]
@@ -1370,13 +1417,61 @@ class Model(Material):
 
 
 def load_model(filename):
+
+    def convert(obj):
+        try:
+            conv = u.Quantity(obj)
+            if conv.dimensionless:
+                return val.magnitude
+            else:
+                return val
+        except:
+            return obj
+
     with open(filename, "r") as f:
         model = json.load(f)
 
+    # Set scaling
+    for elem in scaling_coefficients:
+        if model["scaling"][elem]:
+            scaling_coefficients[elem] = model["scaling"][elem]
+
+    # Set constructors attributes
     for key, val in _attributes_to_save.iteritems():
         model[key] = _attributes_to_save[key](model[key])
+    
+    # Initialize the model
+    Model = Model(**model)
 
-    return Model(**model)
+    # Process materials
+    if model["materials"]:
+        for material in model["materials"]:
+            for elem in material:
+                material[elem] = convert(material[elem])
+            if material["viscosity"]:
+                for elem in material["viscosity"]:
+                    material["viscosity"][elem] = convert(material["viscosity"][elem]) 
+            if material["plasticity"]:
+                for elem in material["plasticity"]:
+                    material["plasticity"][elem] = convert(material["plasticity"][elem]) 
+
+            material = Material(**material)
+            Model.add_material(material)
+
+    # Process Velocity BCs
+    if model["velocityBCs"]:
+        for elem in model["velocityBCs"]:
+            model["velocityBCs"][elem] = convert(model["velocityBCs"][elem])
+        Model.set_velocityBCs(**model["velocityBCs"])
+
+    # Process Temperature BCs
+    if model["temperatureBCs"]:
+        for elem in model["temperatureBCs"]:
+            model["temperatureBCs"][elem] = convert(model["temperatureBCs"][elem])
+        Model.set_temperatureBCs(**model["temperatureBCs"])
+    
+            
+    return model
 
 
 _html_global = OrderedDict()

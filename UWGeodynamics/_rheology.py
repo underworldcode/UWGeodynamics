@@ -103,8 +103,29 @@ class DruckerPrager(object):
         self.cohesionWeakeningFn = linearCohesionWeakening
         self.frictionWeakeningFn = linearFrictionWeakening
 
+    def __getitem__(self, name):
+        return self.__dict__[name]
+
     def _json_(self):
         return json.dumps(self, cls=_DruckerPragerEncoder)
+
+    def to_json(self):
+        attributes = [
+            "name",
+            "cohesion",
+            "frictionCoefficient",
+            "cohesionAfterSoftening",
+            "frictionAfterSoftening",
+            "minimumViscosity",
+            "epsilon1",
+            "epsilon2"]
+        
+        d = {}
+
+        for attribute in attributes:
+            d[attribute] = str(self[attribute])
+
+        return d
 
     def _repr_html_(self):
         attributes  = OrderedDict()
@@ -259,6 +280,12 @@ class ConstantViscosity(Rheology):
     def _json_(self):
         return json.dumps(str(self.Quantity))
 
+    def to_json(self):
+        if isinstance(self.Quantity, u.Quantity):
+            return str(self.Quantity)
+        else:
+            return self.Quantity
+
 class _ViscousCreepEncoder(JSONEncoder):
 
     attributes = [
@@ -336,7 +363,7 @@ class ViscousCreep(Rheology):
         self.f = other
         return self
 
-    def __getattr__(self, name):
+    def __getitem__(self, name):
         return self.__dict__[name]
 
     def _repr_html_(self):
@@ -368,6 +395,34 @@ class ViscousCreep(Rheology):
 
     def _json_(self):
         return json.dumps(self, cls=_ViscousCreepEncoder)
+
+    def to_json(self):
+        attributes = [
+            "name",
+            "preExponentialFactor",
+            "stressExponent",
+            "defaultStrainRateInvariant",
+            "activationVolume",
+            "activationEnergy",
+            "waterFugacity",
+            "grainSize",
+            "meltFraction",
+            "grainSizeExponent",
+            "waterFugacityExponent",
+            "meltFractionFactor",
+            "f",
+            "mineral"]
+
+        d = {}
+
+        for attribute in attributes:
+            if isinstance(attributes[attribute], u.Quantity):
+                d[attribute] = str(self[attribute])
+            else:
+                d[attribute] = self[attribute]
+
+        return d
+
 
     @property
     def muEff(self):

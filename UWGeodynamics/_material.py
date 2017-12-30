@@ -6,15 +6,13 @@ from json import JSONEncoder
 import pkg_resources
 from .scaling import u
 from ._rheology import ConstantViscosity
+from json_encoder import ObjectEncoder
 
 
 class _MaterialEncoder(JSONEncoder):
 
     attributes = [
-        "index",
         "name",
-        "top",
-        "bottom",
         "density",
         "diffusivity",
         "capacity",
@@ -30,7 +28,6 @@ class _MaterialEncoder(JSONEncoder):
         "viscosityChangeX1",
         "viscosityChangeX2",
         "viscosityChange",
-        "melt",
         ]
 
 
@@ -96,6 +93,44 @@ class Material(object):
     def _json_(self):
         return json.dumps(self, cls=_MaterialEncoder)
 
+    def __getitem__(self, name):
+        return self.__dict__[name]
+
+    def to_json(self):
+        attributes = [
+            "name",
+            "density",
+            "diffusivity",
+            "capacity",
+            "thermalExpansivity",
+            "radiogenicHeatProd",
+            "compressibility",
+            "solidus",
+            "liquidus",
+            "latentHeatFusion",
+            "meltFraction",
+            "meltFractionLimit",
+            "meltExpansion",
+            "viscosityChangeX1",
+            "viscosityChangeX2",
+            "viscosityChange"
+            ]
+
+        d = {}
+        for attribute in attributes:
+            val = self.__dict__[attribute]
+            if val:
+                if isinstance(val, u.Quantity):
+                    val = str(val)
+                d[attribute] = val
+        
+        if self.viscosity:
+            d["viscosity"] = json.dumps(self.viscosity, cls=ObjectEncoder)
+        if self.plasticity:
+            d["plasticity"] = json.dumps(self.plasticity, cls=ObjectEncoder)
+
+        return d
+
     @property
     def viscosity(self):
         return self._viscosity
@@ -125,7 +160,6 @@ class Material(object):
         self.viscosityChangeX2 = viscosityChangeX2
         self.viscosityChange = viscosityChange
         self.melt = True
-
 
 _default = OrderedDict()
 _default["Density"] = "density"
