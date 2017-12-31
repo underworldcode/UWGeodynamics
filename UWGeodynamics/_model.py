@@ -2,7 +2,6 @@ from __future__ import print_function
 import os
 import sys
 import json
-from json import JSONEncoder
 from json_encoder import ObjectEncoder
 from collections import OrderedDict
 import numpy as np
@@ -37,53 +36,6 @@ _attributes_to_save = {
     "elementType": lambda x: str(x),
     "Tref": lambda x: x if u.Quantity(x).dimensionless else u.Quantity(x)
     }
-
-class _ModelEncoder(JSONEncoder):
-
-    def default(self, obj):
-
-        model = OrderedDict()
-
-        # Save rcparams (use file)
-        with open(uwgeodynamics_fname(), "r") as f:
-            rcParams = f.read()
-
-        model["rcParams"] = rcParams
-
-        # Encode Scaling
-        scaling = {}
-
-        for key, val in scaling_coefficients.iteritems():
-            scaling[key] = str(val)
-
-        model["scaling"] = scaling
-        
-        # Encode Model attributes
-        for attribute in _attributes_to_save:
-            val = obj[attribute]
-            if isinstance(val, (list, tuple)):
-                model[attribute] = ", ".join([str(v) for v in val]) 
-            else:
-                model[attribute] = str(val)
-        
-        # Encode materials
-        materials = []
-        for material in obj["materials"]:
-            string = material._json_()
-            materials.append(eval(string))
-
-        model["materials"] = materials
-        
-        # Encode velocity boundary conditions
-        if obj.velocityBCs:
-            model["velocityBCs"] = eval(obj["velocityBCs"]._json_())
-        
-        # Encode temperature boundary conditions
-        if obj.temperatureBCs:
-            model["temperatureBCs"] = eval(obj["temperatureBCs"]._json_())
-
-        return model
-
 
 class Model(Material):
     """ This class provides the main UWGeodynamics Model
@@ -372,27 +324,22 @@ class Model(Material):
                 model[attribute] = ", ".join([str(v) for v in val]) 
             else:
                 model[attribute] = str(val)
-        
+       
+        model["materials"] = []
         # Encode materials
-        materials = []
         for material in self.materials:
-            val = json.dumps(material, cls=ObjectEncoder)
-            print("new: ", val)
-            materials.append(val)
-
-        #model["materials"] = materials
-        #
-        ## Encode velocity boundary conditions
-        #if self.velocityBCs:
-        #    model["velocityBCs"] = json.dumps(self.velocityBCs, cls=ObjectEncoder)
-        #
-        ## Encode temperature boundary conditions
-        #if self.temperatureBCs:
-        #    model["temperatureBCs"] = json.dumps(self.temperatureBCs, cls=ObjectEncoder)
+            if material is not self:
+                model["materials"].append(material)
+        
+        # Encode velocity boundary conditions
+        if self.velocityBCs:
+            model["velocityBCs"] = self.velocityBCs
+        
+        # Encode temperature boundary conditions
+        if self.temperatureBCs:
+            model["temperatureBCs"] = self.temperatureBCs
 
         return model
-
-
 
     @property
     def x(self):
@@ -1411,9 +1358,9 @@ class Model(Material):
         else:
             raise ValueError(field, ' is not a valid variable name \n')
 
-    def save(self):
-        with open("Model.json", "w") as f:
-            json.dump(self, f, sort_keys=True, indent=4, cls=_ModelEncoder)
+    def save(self, filename):
+        with open(filename, "w") as f:
+            json.dump(self, f, sort_keys=True, indent=4, cls=ObjectEncoder)
 
 
 def load_model(filename):

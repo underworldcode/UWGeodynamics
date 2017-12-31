@@ -2,49 +2,10 @@ from itertools import count
 from copy import copy
 from collections import OrderedDict
 import json
-from json import JSONEncoder
 import pkg_resources
 from .scaling import u
 from ._rheology import ConstantViscosity
 from json_encoder import ObjectEncoder
-
-
-class _MaterialEncoder(JSONEncoder):
-
-    attributes = [
-        "name",
-        "density",
-        "diffusivity",
-        "capacity",
-        "thermalExpansivity",
-        "radiogenicHeatProd",
-        "compressibility",
-        "solidus",
-        "liquidus",
-        "latentHeatFusion",
-        "meltFraction",
-        "meltFractionLimit",
-        "meltExpansion",
-        "viscosityChangeX1",
-        "viscosityChangeX2",
-        "viscosityChange",
-        ]
-
-
-    def default(self, obj):
-
-        d = {}
-        for attribute in self.attributes:
-            if obj.__dict__[attribute]:
-                d[attribute] = str(obj.__dict__[attribute])
-
-        if obj.viscosity:
-            d["viscosity"] = eval(obj.viscosity._json_())
-        
-        if obj.plasticity:
-            d["plasticity"] = eval(obj.plasticity._json_())
-
-        return d
 
 
 class Material(object):
@@ -90,9 +51,6 @@ class Material(object):
     def _repr_html_(self):
         return _material_html_repr(self)
 
-    def _json_(self):
-        return json.dumps(self, cls=_MaterialEncoder)
-
     def __getitem__(self, name):
         return self.__dict__[name]
 
@@ -125,9 +83,9 @@ class Material(object):
                 d[attribute] = val
         
         if self.viscosity:
-            d["viscosity"] = json.dumps(self.viscosity, cls=ObjectEncoder)
+            d["viscosity"] = self.viscosity
         if self.plasticity:
-            d["plasticity"] = json.dumps(self.plasticity, cls=ObjectEncoder)
+            d["plasticity"] = self.plasticity
 
         return d
 

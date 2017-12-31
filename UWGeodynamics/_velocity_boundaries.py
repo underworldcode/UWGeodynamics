@@ -4,29 +4,7 @@ from .LecodeIsostasy import LecodeIsostasy
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
 import json
-from json import JSONEncoder
 from json_encoder import ObjectEncoder
-
-
-class _VelocityBCsEncoder(JSONEncoder):
-
-    attributes = [
-        "left",
-        "right",
-        "top",
-        "bottom",
-        "back",
-        "front",
-        "indexSets"]
-
-    def default(self, obj):
-
-        d = {}
-        for attribute in self.attributes:
-            if obj.__dict__[attribute]:
-                d[attribute] = str(obj.__dict__[attribute])
-
-        return d
 
 
 def _is_neumann(val):
@@ -226,9 +204,6 @@ class VelocityBCs(object):
 
         return conditions
 
-    def _json_(self):
-        return json.dumps(self, cls=_VelocityBCsEncoder)
-
     def to_json(self):
         attributes = [
             "left",
@@ -242,7 +217,7 @@ class VelocityBCs(object):
         d = {}
         for attribute in attributes:
             if self[attribute]:
-                d[attribute] = json.dumps(self[attribute], cls=ObjectEncoder)
+                d[attribute] = self[attribute]
 
         return d
 

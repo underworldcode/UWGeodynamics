@@ -416,7 +416,7 @@ class ViscousCreep(Rheology):
         d = {}
 
         for attribute in attributes:
-            if isinstance(attributes[attribute], u.Quantity):
+            if isinstance(self[attribute], u.Quantity):
                 d[attribute] = str(self[attribute])
             else:
                 d[attribute] = self[attribute]

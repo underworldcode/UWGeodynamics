@@ -30,7 +30,7 @@ u = UnitRegistry
 
 rheologies = ViscousCreepRegistry()
 yieldCriteria = PlasticityRegistry()
-materials = MaterialRegistry()
+#materials = MaterialRegistry()
 scaling = scaling_coefficients
 
 def mkdirs(newdir, mode=0o777):
