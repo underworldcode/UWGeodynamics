@@ -11,7 +11,7 @@ import underworld.function as fn
 import UWGeodynamics.shapes as shapes
 import UWGeodynamics.surfaceProcesses as surfaceProcesses
 from . import scaling_coefficients
-from UWGeodynamics import rcParams, uwgeodynamics_fname
+from . import rcParams, uwgeodynamics_fname
 from .scaling import Dimensionalize
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
@@ -91,7 +91,7 @@ class Model(Material):
         """
 
         super(Model, self).__init__()
-        
+
         # Process __init__ arguments
         if not name:
             self.name = rcParams["model.name"]
@@ -103,14 +103,14 @@ class Model(Material):
         self.top = maxCoord[-1]
         self.bottom = minCoord[-1]
         self.dimension = dim = len(maxCoord)
-        
+
         if not gravity:
             self.gravity = [0.0 for val in range(self.dimension)]
             self.gravity[-1] = -1.0 * rcParams["gravity"]
             self.gravity = tuple(self.gravity)
         else:
             self.gravity = gravity
-        
+
         self.Tref = Tref
 
         if not elementType:
@@ -120,7 +120,7 @@ class Model(Material):
 
         self.elementRes = elementRes
         self.outputDir = rcParams["output.directory"]
-        
+
         # Compute model dimensions
         self.length = maxCoord[0] - minCoord[0]
         self.height = maxCoord[-1] - minCoord[-1]
@@ -202,7 +202,7 @@ class Model(Material):
         # Create a series of aliases for the boundary sets
         self._left_wall = self.mesh.specialSets["MinI_VertexSet"]
         self._right_wall = self.mesh.specialSets["MaxI_VertexSet"]
-        
+
         if self.mesh.dim == 2:
             self._top_wall = self.mesh.specialSets["MaxJ_VertexSet"]
             self._bottom_wall = self.mesh.specialSets["MinJ_VertexSet"]
@@ -231,7 +231,7 @@ class Model(Material):
 
         # Mesh advector
         self._advector = None
-        
+
         # Initialise remaining attributes
         self._default_strain_rate = 1e-30 / u.second
         self._solution_exist = False
@@ -265,7 +265,7 @@ class Model(Material):
 
         # Initialise materialField to Model material
         self.materialField.data[:] = self.index
-        
+
         # Initialise remaining fields to 0.
         self.plasticStrain.data[:] = 0.0
         self._viscosityField.data[:] = 0.
@@ -299,7 +299,7 @@ class Model(Material):
         return self.__dict__[name]
 
     def _repr_html_(self):
-        return _model_html_repr(self) 
+        return _model_html_repr(self)
 
     def to_json(self):
         model = OrderedDict()
@@ -312,7 +312,6 @@ class Model(Material):
 
         # Encode Scaling
         scaling = {}
-
         for key, val in scaling_coefficients.iteritems():
             scaling[key] = str(val)
 
@@ -322,20 +321,20 @@ class Model(Material):
         for attribute in _attributes_to_save:
             val = self[attribute]
             if isinstance(val, (list, tuple)):
-                model[attribute] = ", ".join([str(v) for v in val]) 
+                model[attribute] = ", ".join([str(v) for v in val])
             else:
                 model[attribute] = str(val)
-       
+
         model["materials"] = []
         # Encode materials
         for material in self.materials:
             if material is not self:
                 model["materials"].append(material)
-        
+
         # Encode velocity boundary conditions
         if self.velocityBCs:
             model["velocityBCs"] = self.velocityBCs
-        
+
         # Encode temperature boundary conditions
         if self.temperatureBCs:
             model["temperatureBCs"] = self.temperatureBCs
@@ -1060,7 +1059,7 @@ class Model(Material):
 
         if checkpoint:
             next_checkpoint = time + nd(checkpoint)
-        
+
         #pbar = tqdm(total=duration-time)
         while time < duration:
             self.solve()
@@ -1369,7 +1368,7 @@ def load_model(filename):
     import warnings
 
     warnings.warn("Functionality in development", UserWarning)
-    
+
 
     def convert(obj):
         try:
@@ -1396,7 +1395,7 @@ def load_model(filename):
     # Set constructors attributes
     for key, val in _attributes_to_save.iteritems():
         model[key] = _attributes_to_save[key](model[key])
-    
+
     # Process materials
 
     try:
@@ -1410,13 +1409,13 @@ def load_model(filename):
         if "viscosity" in material:
             if isinstance(material["viscosity"], Iterable):
                 for elem in material["viscosity"]:
-                    material["viscosity"][elem] = convert(material["viscosity"][elem]) 
+                    material["viscosity"][elem] = convert(material["viscosity"][elem])
             else:
                 material["viscosity"] = convert(material["viscosity"])
         if "plasticity" in material:
             if isinstance(material["plasticity"], Iterable):
                 for elem in material["plasticity"]:
-                    material["plasticity"][elem] = convert(material["plasticity"][elem]) 
+                    material["plasticity"][elem] = convert(material["plasticity"][elem])
             else:
                 material["plasticity"] = convert(material["plasticity"])
 
@@ -1437,20 +1436,20 @@ def load_model(filename):
 
     for elem in temperatureBCs:
         temperatureBCs[elem] = convert(temperatureBCs[elem])
-    
+
     # Initialize the model
     Mod = Model(**model)
 
     for material in materials:
         mat = Material(**material)
         Mod.add_material(mat)
-   
+
     if velocityBCs:
         Mod.set_velocityBCs(**velocityBCs)
 
     if temperatureBCs:
         Mod.set_temperatureBCs(**temperatureBCs)
-            
+
     return Mod
 
 _html_global = OrderedDict()
@@ -1468,5 +1467,5 @@ def _model_html_repr(Model):
         value = Model.__dict__.get(val)
         html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, value)
 
-    return header + html + footer      
+    return header + html + footer
 

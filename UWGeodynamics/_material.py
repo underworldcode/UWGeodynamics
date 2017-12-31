@@ -2,10 +2,10 @@ from itertools import count
 from copy import copy
 from collections import OrderedDict
 import json
+from json_encoder import ObjectEncoder
 import pkg_resources
 from .scaling import u
 from ._rheology import ConstantViscosity
-from json_encoder import ObjectEncoder
 
 
 class Material(object):
@@ -184,16 +184,6 @@ def _material_html_repr(Material):
         with open(filename, "r") as f:
             image = f.read()
         html += "<th align='center', colspan='2'>" + image + "</th>"
-
-#    html += """
-#    <tr>
-#      <th colspan="2">Melt Properties</th>
-#    </tr>"""
-#    for key, val in _melt.iteritems():
-#        value = Material.__dict__.get(val)
-#        if value is None:
-#            value = Material.__dict__.get("_"+val)
-#        html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, value)
 
     return header + html + footer
 

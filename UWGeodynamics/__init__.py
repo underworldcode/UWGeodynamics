@@ -1,17 +1,19 @@
+from __future__ import print_function
 try:
     import underworld
 except ImportError:
     raise ImportError("Can not find Underworld, please check your installation")
 
-import shapes
-import surfaceProcesses
-import six
 import sys
 import os
 import warnings
 import errno
 import tempfile
+import locale
 from itertools import chain
+import six
+import shapes
+import surfaceProcesses
 from ._rcParams import rcParams as defaultParams
 from .scaling import COEFFICIENTS as scaling_coefficients
 from .scaling import UnitRegistry
@@ -22,7 +24,7 @@ from .lithopress import LithostaticPressure
 from ._rheology import Rheology, ConstantViscosity, ViscousCreep, DruckerPrager
 from ._rheology import VonMises
 from ._rheology import ViscousCreepRegistry, PlasticityRegistry
-from ._material import Material, MaterialRegistry
+from ._material import Material
 from ._melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry
 
 nd = nonDimensionalize
@@ -30,7 +32,6 @@ u = UnitRegistry
 
 rheologies = ViscousCreepRegistry()
 yieldCriteria = PlasticityRegistry()
-#materials = MaterialRegistry()
 scaling = scaling_coefficients
 
 def mkdirs(newdir, mode=0o777):
@@ -281,7 +282,7 @@ def uwgeodynamics_fname():
                 return os.path.join(
                     home, '.uwgeodynamics', 'uwgeodynamicsrc')
             return fname
-    
+
     path = get_data_path()  # guaranteed to exist or raise
     fname = os.path.join(path, 'uwgeodynamicsrc')
     if not os.path.exists(fname):
@@ -357,8 +358,8 @@ See rcParams.keys() for a list of valid parameters.' % (key,))
         val = dict.__getitem__(self, key)
         if inverse_alt is not None:
             return inverse_alt(val)
-        else:
-            return val
+        
+        return val
 
     # http://stackoverflow.com/questions/2390827
     # (how-to-properly-subclass-dict-and-override-get-set)
