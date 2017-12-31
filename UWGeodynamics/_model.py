@@ -3,6 +3,7 @@ import os
 import sys
 import json
 from json_encoder import ObjectEncoder
+from collections import Iterable
 from collections import OrderedDict
 import numpy as np
 import underworld as uw
@@ -1364,6 +1365,11 @@ class Model(Material):
 
 
 def load_model(filename):
+    """ Reload Model from json file """
+    import warnings
+
+    warnings.warn("Functionality in development", UserWarning)
+    
 
     def convert(obj):
         try:
@@ -1378,48 +1384,74 @@ def load_model(filename):
     with open(filename, "r") as f:
         model = json.load(f)
 
+    # rcParams
+    rcParams = model.pop("rcParams")
+
     # Set scaling
+    scaling = model.pop("scaling")
     for elem in scaling_coefficients:
-        if model["scaling"][elem]:
-            scaling_coefficients[elem] = model["scaling"][elem]
+        if scaling[elem]:
+            scaling_coefficients[elem] = u.Quantity(scaling[elem])
 
     # Set constructors attributes
     for key, val in _attributes_to_save.iteritems():
         model[key] = _attributes_to_save[key](model[key])
     
-    # Initialize the model
-    Model = Model(**model)
-
     # Process materials
-    if model["materials"]:
-        for material in model["materials"]:
-            for elem in material:
-                material[elem] = convert(material[elem])
-            if material["viscosity"]:
+
+    try:
+        materials = model.pop("materials")
+    except:
+        materials = []
+
+    for material in materials:
+        for elem in material:
+            material[elem] = convert(material[elem])
+        if "viscosity" in material:
+            if isinstance(material["viscosity"], Iterable):
                 for elem in material["viscosity"]:
                     material["viscosity"][elem] = convert(material["viscosity"][elem]) 
-            if material["plasticity"]:
+            else:
+                material["viscosity"] = convert(material["viscosity"])
+        if "plasticity" in material:
+            if isinstance(material["plasticity"], Iterable):
                 for elem in material["plasticity"]:
                     material["plasticity"][elem] = convert(material["plasticity"][elem]) 
-
-            material = Material(**material)
-            Model.add_material(material)
+            else:
+                material["plasticity"] = convert(material["plasticity"])
 
     # Process Velocity BCs
-    if model["velocityBCs"]:
-        for elem in model["velocityBCs"]:
-            model["velocityBCs"][elem] = convert(model["velocityBCs"][elem])
-        Model.set_velocityBCs(**model["velocityBCs"])
+    try:
+        velocityBCs = model.pop("velocityBCs")
+    except:
+        velocityBCs = []
+
+    for elem in velocityBCs:
+        velocityBCs[elem] = convert(velocityBCs[elem])
 
     # Process Temperature BCs
-    if model["temperatureBCs"]:
-        for elem in model["temperatureBCs"]:
-            model["temperatureBCs"][elem] = convert(model["temperatureBCs"][elem])
-        Model.set_temperatureBCs(**model["temperatureBCs"])
-    
-            
-    return model
+    try:
+        temperatureBCs = model.pop("temperatureBCs")
+    except:
+        temperatureBCs = []
 
+    for elem in temperatureBCs:
+        temperatureBCs[elem] = convert(temperatureBCs[elem])
+    
+    # Initialize the model
+    Mod = Model(**model)
+
+    for material in materials:
+        mat = Material(**material)
+        Mod.add_material(mat)
+   
+    if velocityBCs:
+        Mod.set_velocityBCs(**velocityBCs)
+
+    if temperatureBCs:
+        Mod.set_temperatureBCs(**temperatureBCs)
+            
+    return Mod
 
 _html_global = OrderedDict()
 _html_global["Number of Elements"] = "elementRes"
