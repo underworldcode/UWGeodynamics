@@ -1,28 +1,8 @@
 import underworld as uw
 from .scaling import nonDimensionalize as nd
 import json
-from json import JSONEncoder
+from json_encoder import ObjectEncoder
 
-
-class _TemperatureBCsEncoder(JSONEncoder):
-
-    attributes = [
-        "left",
-        "right",
-        "top",
-        "bottom",
-        "back",
-        "front",
-        "indexSets"]
-
-    def default(self, obj):
-
-        d = {}
-        for attribute in self.attributes:
-            if obj.__dict__[attribute]:
-                d[attribute] = str(obj.__dict__[attribute])
-
-        return d
 
 class TemperatureBCs(object):
 
@@ -40,6 +20,9 @@ class TemperatureBCs(object):
         self.back = back
         self.indexSets = indexSets
         self.materials = materials
+
+    def __getitem__(self, name):
+        return self.__dict__[name]
 
     def get_conditions(self):
 
@@ -78,5 +61,19 @@ class TemperatureBCs(object):
         return uw.conditions.DirichletCondition(variable=Model.temperature,
                                                 indexSetsPerDof=indices)
     
-    def _json_(self):
-        return json.dumps(self, cls=_TemperatureBCsEncoder)
+    def to_json(self):
+        attributes = [
+            "left",
+            "right",
+            "top",
+            "bottom",
+            "back",
+            "front",
+            "indexSets"]
+
+        d = {}
+        for attribute in attributes:
+            if self[attribute]:
+                d[attribute] = self[attribute]
+
+        return d

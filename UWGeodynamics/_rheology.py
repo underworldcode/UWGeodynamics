@@ -1,10 +1,11 @@
+import json
+from json import JSONEncoder
 import underworld.function as fn
 import numpy as np
 from .scaling import UnitRegistry as u
 from .scaling import nonDimensionalize as nd
 from copy import copy
 from collections import OrderedDict
-import json
 
 def linearCohesionWeakening(cumulativeTotalStrain, Cohesion, CohesionSw, epsilon1=0.5, epsilon2=1.5, **kwargs):
 
@@ -58,6 +59,26 @@ class Rheology(object):
         return
 
 
+class _DruckerPragerEncoder(JSONEncoder):
+    attributes = [
+        "name",
+        "cohesion",
+        "frictionCoefficient",
+        "cohesionAfterSoftening",
+        "frictionAfterSoftening",
+        "minimumViscosity",
+        "epsilon1",
+        "epsilon2"]
+    
+    def default(self, obj):
+        d = {}
+
+        for attribute in self.attributes:
+            d[attribute] = str(obj[attribute])
+
+        return d
+
+
 class DruckerPrager(object):
 
     def __init__(self, name=None, cohesion=None, frictionCoefficient=None,
@@ -81,7 +102,31 @@ class DruckerPrager(object):
         
         self.cohesionWeakeningFn = linearCohesionWeakening
         self.frictionWeakeningFn = linearFrictionWeakening
-    
+
+    def __getitem__(self, name):
+        return self.__dict__[name]
+
+    def _json_(self):
+        return json.dumps(self, cls=_DruckerPragerEncoder)
+
+    def to_json(self):
+        attributes = [
+            "name",
+            "cohesion",
+            "frictionCoefficient",
+            "cohesionAfterSoftening",
+            "frictionAfterSoftening",
+            "minimumViscosity",
+            "epsilon1",
+            "epsilon2"]
+        
+        d = {}
+
+        for attribute in attributes:
+            d[attribute] = str(self[attribute])
+
+        return d
+
     def _repr_html_(self):
         attributes  = OrderedDict()
         attributes["Cohesion"] = self.cohesion
@@ -232,6 +277,41 @@ class ConstantViscosity(Rheology):
     def _effectiveViscosity(self):
         return fn.misc.constant(nd(self._viscosity))
 
+    def _json_(self):
+        return json.dumps(str(self.Quantity))
+
+    def to_json(self):
+        if isinstance(self.Quantity, u.Quantity):
+            return str(self.Quantity)
+        else:
+            return self.Quantity
+
+class _ViscousCreepEncoder(JSONEncoder):
+
+    attributes = [
+        "name",
+        "preExponentialFactor",
+        "stressExponent",
+        "defaultStrainRateInvariant",
+        "activationVolume",
+        "activationEnergy",
+        "waterFugacity",
+        "grainSize",
+        "meltFraction",
+        "grainSizeExponent",
+        "waterFugacityExponent",
+        "meltFractionFactor",
+        "f",
+        "mineral"]
+
+    def default(self, obj):
+        d = {}
+
+        for attribute in self.attributes:
+            d[attribute] = str(obj[attribute])
+
+        return d
+        
 
 class ViscousCreep(Rheology):
 
@@ -283,6 +363,9 @@ class ViscousCreep(Rheology):
         self.f = other
         return self
 
+    def __getitem__(self, name):
+        return self.__dict__[name]
+
     def _repr_html_(self):
         attributes  = OrderedDict()
         attributes["Mineral"] = self.mineral
@@ -308,7 +391,38 @@ class ViscousCreep(Rheology):
             if val:
                 html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
 
-        return header + html + footer      
+        return header + html + footer  
+
+    def _json_(self):
+        return json.dumps(self, cls=_ViscousCreepEncoder)
+
+    def to_json(self):
+        attributes = [
+            "name",
+            "preExponentialFactor",
+            "stressExponent",
+            "defaultStrainRateInvariant",
+            "activationVolume",
+            "activationEnergy",
+            "waterFugacity",
+            "grainSize",
+            "meltFraction",
+            "grainSizeExponent",
+            "waterFugacityExponent",
+            "meltFractionFactor",
+            "f",
+            "mineral"]
+
+        d = {}
+
+        for attribute in attributes:
+            if isinstance(self[attribute], u.Quantity):
+                d[attribute] = str(self[attribute])
+            else:
+                d[attribute] = self[attribute]
+
+        return d
+
 
     @property
     def muEff(self):
@@ -379,6 +493,23 @@ class ViscousCreep(Rheology):
         return fn.branching.conditional(FirstIterCondition)
 
 
+class _TemperatureAndDepthDependentViscosityEncoder(JSONEncoder):
+
+    attributes = [
+            "eta0",
+            "beta",
+            "gamma",
+            "reference"]
+
+    def default(self, obj):
+        d = {}
+
+        for attribute in self.attributes:
+            d[attribute] = str(obj[attribute])
+
+        return d
+
+
 class TemperatureAndDepthDependentViscosity(Rheology):
 
     def __init__(self, eta0, beta,  gamma, reference, temperatureField=None):
@@ -392,6 +523,10 @@ class TemperatureAndDepthDependentViscosity(Rheology):
     def muEff(self):
         coord = fn.input()
         return self._eta0 * fn.math.exp(gamma * (coord[-1] - reference))
+    
+    def _json_(self):
+        return json.dumps(
+            self, cls=_TemperatureAndDepthDependentViscosityEncoder)
 
 
 class ViscousCreepRegistry(object):
@@ -424,7 +559,6 @@ class ViscousCreepRegistry(object):
     def __dir__(self):
         # Make all the rheology available through autocompletion
         return list(self._dir.keys())
-
 
     def __getattr__(self, item):
         # Make sure to return a new instance of ViscousCreep

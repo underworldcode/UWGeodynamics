@@ -1,47 +1,11 @@
 from itertools import count
-from .scaling import u
-from ._rheology import ConstantViscosity
 from copy import copy
 from collections import OrderedDict
 import json
-from json import JSONEncoder
+from json_encoder import ObjectEncoder
 import pkg_resources
-
-
-class _MaterialEncoder(JSONEncoder):
-
-    attributes = [
-        "index",
-        "name",
-        "top",
-        "bottom",
-        "density",
-        "diffusivity",
-        "capacity",
-        "thermalExpansivity",
-        "radiogenicHeatProd",
-        "compressibility",
-        "solidus",
-        "liquidus",
-        "latentHeatFusion",
-        "meltFraction",
-        "meltFractionLimit",
-        "meltExpansion",
-        "viscosityChangeX1",
-        "viscosityChangeX2",
-        "viscosityChange",
-        "melt",
-        ]
-
-
-    def default(self, obj):
-
-        d = {}
-        for attribute in self.attributes:
-            if obj.__dict__[attribute]:
-                d[attribute] = str(obj.__dict__[attribute])
-
-        return d
+from .scaling import u
+from ._rheology import ConstantViscosity
 
 
 class Material(object):
@@ -87,9 +51,44 @@ class Material(object):
     def _repr_html_(self):
         return _material_html_repr(self)
 
-    def _json_(self):
-        return json.dumps(self, cls=_MaterialEncoder)
-    
+    def __getitem__(self, name):
+        return self.__dict__[name]
+
+    def to_json(self):
+        attributes = [
+            "name",
+            "density",
+            "diffusivity",
+            "capacity",
+            "thermalExpansivity",
+            "radiogenicHeatProd",
+            "compressibility",
+            "solidus",
+            "liquidus",
+            "latentHeatFusion",
+            "meltFraction",
+            "meltFractionLimit",
+            "meltExpansion",
+            "viscosityChangeX1",
+            "viscosityChangeX2",
+            "viscosityChange"
+            ]
+
+        d = {}
+        for attribute in attributes:
+            val = self.__dict__[attribute]
+            if val:
+                if isinstance(val, u.Quantity):
+                    val = str(val)
+                d[attribute] = val
+        
+        if self.viscosity:
+            d["viscosity"] = self.viscosity
+        if self.plasticity:
+            d["plasticity"] = self.plasticity
+
+        return d
+
     @property
     def viscosity(self):
         return self._viscosity
@@ -119,7 +118,6 @@ class Material(object):
         self.viscosityChangeX2 = viscosityChangeX2
         self.viscosityChange = viscosityChange
         self.melt = True
-
 
 _default = OrderedDict()
 _default["Density"] = "density"
@@ -187,16 +185,6 @@ def _material_html_repr(Material):
             image = f.read()
         html += "<th align='center', colspan='2'>" + image + "</th>"
 
-#    html += """
-#    <tr>
-#      <th colspan="2">Melt Properties</th>
-#    </tr>"""
-#    for key, val in _melt.iteritems():
-#        value = Material.__dict__.get(val)
-#        if value is None:
-#            value = Material.__dict__.get("_"+val)
-#        html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, value)
-
     return header + html + footer
 
 class MaterialRegistry(object):
@@ -204,7 +192,6 @@ class MaterialRegistry(object):
     def __init__(self, filename=None):
 
         if not filename:
-            import pkg_resources
             filename = pkg_resources.resource_filename(__name__, "ressources/Materials.json")
 
         with open(filename, "r") as infile:
@@ -233,4 +220,3 @@ class MaterialRegistry(object):
     def __getattr__(self, item):
         # Make sure to return a new instance of ViscousCreep
         return copy(self._dir[item])
-
