@@ -28,7 +28,7 @@ from ._frictional_boundary import FrictionBoundaries
 
 
 _attributes_to_save = {
-    "elementRes": lambda x: tuple(int(val) for val in x.split(",")) ,
+    "elementRes": lambda x: tuple(int(val) for val in x.split(","))  ,
     "minCoord": lambda x: tuple([val if u.Quantity(val).dimensionless else u.Quantity(val) for val in x.split(",")]),
     "maxCoord": lambda x: tuple([val if u.Quantity(val).dimensionless else u.Quantity(val) for val in x.split(",")]),
     "name": lambda x: str(x),
@@ -316,7 +316,7 @@ class Model(Material):
             scaling[key] = str(val)
 
         model["scaling"] = scaling
-        
+
         # Encode Model attributes
         for attribute in _attributes_to_save:
             val = self[attribute]
