@@ -7,3 +7,4 @@ recursive-include docs *
 recursive-include manual *
 recursive-include examples *
 recursive-include tutorials *
+recursive-include ressources *
