@@ -158,7 +158,6 @@ class VelocityBCs(object):
         self.apply_condition_nodes(self.left, Model._left_wall)
         self.apply_condition_nodes(self.right, Model._right_wall)
         self.apply_condition_nodes(self.top, Model._top_wall)
-        self.apply_condition_nodes(self.bottom, Model._bottom_wall)
         self.apply_condition_nodes(self.indexSets, self.indexSets)
 
         if Model.mesh.dim > 2:
@@ -166,18 +165,17 @@ class VelocityBCs(object):
             self.apply_condition_nodes(self.back, Model._back_wall)
 
         # Apply support condition
-        if isinstance(self.bottom, (list, tuple)):
-            for dim in range(Model.mesh.dim):
-                if isinstance(self.bottom, LecodeIsostasy):
-                    Model._isostasy = self.bottom
-                    Model._isostasy.mesh = Model.mesh
-                    Model._isostasy.swarm = Model.swarm
-                    Model._isostasy.velocityField = Model.velocityField
-                    Model._isostasy.materialIndexField = Model.materialField
-                    Model._isostasy._densityFn = Model._densityFn
-                    self.dirichlet_indices[-1] += Model._bottom_wall
-                else:
-                    Model._isostasy = None
+        if isinstance(self.bottom, LecodeIsostasy):
+            Model._isostasy = self.bottom
+            Model._isostasy.mesh = Model.mesh
+            Model._isostasy.swarm = Model.swarm
+            Model._isostasy.velocityField = Model.velocityField
+            Model._isostasy.materialIndexField = Model.materialField
+            Model._isostasy._densityFn = Model._densityFn
+            self.dirichlet_indices[-1] += Model._bottom_wall
+        else:
+            Model._isostasy = None
+            self.apply_condition_nodes(self.bottom, Model._bottom_wall)
 
         conditions = []
 
