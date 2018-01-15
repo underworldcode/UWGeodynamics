@@ -1036,7 +1036,8 @@ class Model(Material):
             self.get_lithostatic_pressureField()
         return
 
-    def run_for(self, duration=None, checkpoint_interval=None, timeCheckpoints=None):
+    def run_for(self, duration=None, checkpoint_interval=None,
+                timeCheckpoints=None, swarm_checkpoint=None):
         """ Run the Model
 
         Parameters:
@@ -1088,7 +1089,7 @@ class Model(Material):
             if time == next_checkpoint:
                 self.checkpointID += 1
                 self.checkpoint()
-                #self.output_glucifer_figures(self.checkpointID)
+                self.output_glucifer_figures(self.checkpointID)
                 next_checkpoint += nd(checkpoint_interval)
 
             #pbar.update(self._dt)
