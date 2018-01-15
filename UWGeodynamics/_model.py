@@ -1036,14 +1036,14 @@ class Model(Material):
             self.get_lithostatic_pressureField()
         return
 
-    def run_for(self, duration=None, checkpoint=None, timeCheckpoints=None):
+    def run_for(self, duration=None, checkpoint_interval=None, timeCheckpoints=None):
         """ Run the Model
 
         Parameters:
         -----------
 
             duration: duration of the Model in Time units or nb of steps
-            checkpoint: checkpoint interval
+            checkpoint_interval: checkpoint interval
             timeCheckpoints: Additional checkpoints
         """
 
@@ -1057,8 +1057,8 @@ class Model(Material):
         if timeCheckpoints:
             timeCheckpoints = [nd(val) for val in timeCheckpoints]
 
-        if checkpoint:
-            next_checkpoint = time + nd(checkpoint)
+        if checkpoint_interval:
+            next_checkpoint = time + nd(checkpoint_interval)
 
         #pbar = tqdm(total=duration-time)
         while time < duration:
@@ -1072,7 +1072,7 @@ class Model(Material):
             if self.temperature:
                 dt = min(dt, self._advdiffSystem.get_max_dt())
 
-            if checkpoint:
+            if checkpoint_interval:
                 dt = min(dt, next_checkpoint - time)
 
             self._dt = min(dt, duration - time)
@@ -1088,11 +1088,11 @@ class Model(Material):
             if time == next_checkpoint:
                 self.checkpointID += 1
                 self.checkpoint()
-                self.output_glucifer_figures(self.checkpointID)
-                next_checkpoint += nd(checkpoint)
+                #self.output_glucifer_figures(self.checkpointID)
+                next_checkpoint += nd(checkpoint_interval)
 
             #pbar.update(self._dt)
-            if checkpoint or step % 1 == 0:
+            if checkpoint_interval or step % 1 == 0:
                 if uw.rank() == 0:
                     print("Time: ", str(self.time.to(units)),
                           'dt:', str(Dimensionalize(self._dt, units)))
@@ -1256,7 +1256,7 @@ class Model(Material):
         for variable in variables:
             if variable == "temperature" and not self.temperature:
                 continue
-            self._save_field(variable, checkpointID)
+            self._save_field(str(variable), checkpointID)
 
         if checkpointID > 2:
             for field in rcParams["swarm.variables"]:
@@ -1333,7 +1333,11 @@ class Model(Material):
 
         if field in rcParams["mesh.variables"]:
             if not units:
-                units = rcParams[field + ".SIunits"]
+                try:
+                    units = rcParams[field + ".SIunits"]
+                except KeyError:
+                    units = None
+
             mH = self.mesh.save(os.path.join(self.outputDir, "mesh.h5"),
                                 units=u.kilometers)
             file_prefix = os.path.join(self.outputDir,
@@ -1345,7 +1349,11 @@ class Model(Material):
 
         elif field in rcParams["swarm.variables"]:
             if not units:
-                units = rcParams[field + ".SIunits"]
+                try:
+                    units = rcParams[field + ".SIunits"]
+                except KeyError:
+                    units = None
+
             sH = self.swarm.save(os.path.join(self.outputDir,
                                  'swarm-%s.h5' % checkpointID),
                                  units=u.kilometers)

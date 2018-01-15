@@ -65,7 +65,7 @@ def validate_int(s):
         raise ValueError("Could not convert value to int") 
 
 def validate_path(s):
-    return s
+    return str(s)
 
 def validate_bool(b):
     """Convert b to a boolean or raise"""

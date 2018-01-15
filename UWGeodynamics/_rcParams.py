@@ -47,21 +47,21 @@ rcParams = {
 "scaling.temperature": [1.0 * u.degK, validate_quantity],
 "scaling.substance": [1.0 * u.mole, validate_quantity],
 
-"velocity.units" : [u.centimeter / u.year, validate_quantity],
-"temperature.units"   : [u.degK, validate_quantity],
-"pressure.units" : [u.pascal, validate_quantity],
-"strain.rate" : [1.0/u.second, validate_quantity],
-"viscosity.units": [u.pascal * u.second, validate_quantity],
-"density.units": [u.kilogram / u.meter**3, validate_quantity],
+# "velocity.SIunits" : [u.centimeter / u.year, validate_quantity],
+# "temperature.SIunits"   : [u.degK, validate_quantity],
+# "pressure.SIunits" : [u.pascal, validate_quantity],
+# "strainrate.SIunits" : [1.0/u.second, validate_quantity],
+# "viscosity.SIunits": [u.pascal * u.second, validate_quantity],
+# "density.SIunits": [u.kilogram / u.meter**3, validate_quantity],
 
 
-"viscosityField" : [u.pascal * u.second, validate_quantity],
-"densityField" : [u.kilogram / u.metre**3, validate_quantity],
-"velocityField" : [u.centimeter / u.year, validate_quantity],
-"temperature" : [u.degK, validate_quantity],
-"pressureField" : [u.pascal , validate_quantity],
-"strainRateField" : [1.0 / u.second, validate_quantity],
-"projViscosityField"  : [u.pascal * u.second, validate_quantity],
-"projDensityField" : [u.kilogram / u.metre**3, validate_quantity]
+"viscosityField.SIunits" : [u.pascal * u.second, validate_quantity],
+"densityField.SIunits" : [u.kilogram / u.metre**3, validate_quantity],
+"velocityField.SIunits" : [u.centimeter / u.year, validate_quantity],
+"temperature.SIunits" : [u.degK, validate_quantity],
+"pressureField.SIunits" : [u.pascal , validate_quantity],
+"strainRateField.SIunits" : [1.0 / u.second, validate_quantity],
+"projViscosityField.SIunits"  : [u.pascal * u.second, validate_quantity],
+"projDensityField.Siunits" : [u.kilogram / u.metre**3, validate_quantity]
         }
 
