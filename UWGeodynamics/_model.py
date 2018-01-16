@@ -1089,7 +1089,7 @@ class Model(Material):
             if time == next_checkpoint:
                 self.checkpointID += 1
                 self.checkpoint()
-                self.output_glucifer_figures(self.checkpointID)
+                # self.output_glucifer_figures(self.checkpointID)
                 next_checkpoint += nd(checkpoint_interval)
 
             #pbar.update(self._dt)
