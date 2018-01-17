@@ -30,7 +30,8 @@ class PassiveTracers(object):
         self.name = name
         self.particleEscape = particleEscape
 
-        vertices = [nd(x) for x in vertices]
+        for dim in range(len(vertices)):
+            vertices[dim] = nd(vertices[dim])
 
         points = np.zeros((len(vertices[0]), len(vertices)))
 
