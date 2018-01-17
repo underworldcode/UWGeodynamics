@@ -33,7 +33,8 @@ class PassiveTracers(object):
         for dim in range(len(vertices)):
             vertices[dim] = nd(vertices[dim])
 
-        points = np.zeros((len(vertices[0]), len(vertices)))
+        sizes = np.array([np.array(x).size for x in vertices])
+        points = np.zeros((sizes.max(), len(vertices)))
 
         for dim in range(len(vertices)):
             points[:, dim] = vertices[dim]
