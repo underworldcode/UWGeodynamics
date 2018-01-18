@@ -536,7 +536,7 @@ class Model(Material):
                     material.radiogenicHeatProd]):
 
                 HeatProdMap[material.index] = (nd(material.radiogenicHeatProd) /
-                                               (nd(material.density) *
+                                               (self._densityFn *
                                                 nd(material.capacity)))
             else:
                 HeatProdMap[material.index] = 0.
@@ -669,7 +669,6 @@ class Model(Material):
             # Initialize some properties to Model property
             mat.diffusivity = self.diffusivity
             mat.capacity = self.capacity
-            mat.thermalExpansivity = self.thermalExpansivity
             mat.radiogenicHeatProd = self.radiogenicHeatProd
 
         if isinstance(shape, shapes.Layer):
@@ -700,28 +699,18 @@ class Model(Material):
         self.materialField.data[:] = vals
 
     @property
-    def material_drawing_order(self):
-        """ Order of material drawing. Overlapping shapes reset the material"""
-        return self._material_drawing_order
-
-    @material_drawing_order.setter
-    def material_drawing_order(self, value):
-        if value:
-            self.materials = value
-            self._material_drawing_order = value
-            self._fill_model()
-
-    @property
     def _densityFn(self):
         densityMap = {}
         for material in self.materials:
 
             if self.temperature:
-                densityMap[material.index] = nd(material.density) * (1.0 -
-                                             nd(material.thermalExpansivity) *
-                                             (self.temperature - nd(self.Tref)))
+                dens_handler = material.density
+                dens_handler.temperatureField = self.temperature
+                dens_handler.pressureField = self.pressureField
+                densityMap[material.index] = dens_handler.effective_density()
             else:
-                densityMap[material.index] = nd(material.density)
+                dens_handler = material.density
+                densityMap[material.index] = nd(dens_handler.reference_density)
 
             if material.meltExpansion:
                 fact = material.meltExpansion * self.meltField
@@ -928,7 +917,7 @@ class Model(Material):
 
                     HeatProdMap[material.index] = (
                         nd(material.radiogenicHeatProd) /
-                        (nd(material.density) *
+                        (self._densityFn *
                          nd(material.capacity))
                     )
 

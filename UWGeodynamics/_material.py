@@ -2,17 +2,17 @@ from itertools import count
 from copy import copy
 from collections import OrderedDict
 import json
-from json_encoder import ObjectEncoder
 import pkg_resources
 from .scaling import u
 from ._rheology import ConstantViscosity
+from ._density import ConstantDensity
 
 
 class Material(object):
     _ids = count(0)
 
     def __init__(self, name="Undefined", density=0.0,
-                 diffusivity=None, capacity=None, thermalExpansivity=None,
+                 diffusivity=None, capacity=None,
                  radiogenicHeatProd=0.0, shape=None, viscosity=None,
                  plasticity=None, solidus=None, liquidus=None,
                  latentHeatFusion=0.0, meltExpansion=0.0, meltFraction=0.0,
@@ -26,10 +26,12 @@ class Material(object):
         self.bottom = None
 
         self.shape = shape
+        self._density = None
         self.density = density
+        self.referenceDensity = self.density
         self.diffusivity = diffusivity
         self.capacity = capacity
-        self.thermalExpansivity = thermalExpansivity
+        self._thermalExpansivity = None
         self.radiogenicHeatProd = radiogenicHeatProd
         self.compressibility = None
 
@@ -60,7 +62,6 @@ class Material(object):
             "density",
             "diffusivity",
             "capacity",
-            "thermalExpansivity",
             "radiogenicHeatProd",
             "compressibility",
             "solidus",
@@ -71,8 +72,7 @@ class Material(object):
             "meltExpansion",
             "viscosityChangeX1",
             "viscosityChangeX2",
-            "viscosityChange"
-            ]
+            "viscosityChange"]
 
         d = {}
         for attribute in attributes:
@@ -81,7 +81,7 @@ class Material(object):
                 if isinstance(val, u.Quantity):
                     val = str(val)
                 d[attribute] = val
-        
+
         if self.viscosity:
             d["viscosity"] = self.viscosity
         if self.plasticity:
@@ -99,6 +99,22 @@ class Material(object):
             self._viscosity = ConstantViscosity(value)
         else:
             self._viscosity = value
+
+    @property
+    def density(self):
+        return self._density
+
+    @density.setter
+    def density(self, value):
+        if isinstance(value, (u.Quantity, float)):
+            self._density = ConstantDensity(value)
+        else:
+            self._density = value
+            self._thermalExpansivity = value.thermalExpansivity
+
+    @property
+    def thermalExpansivity(self):
+        return self._thermalExpansivity
 
     def add_melt_modifier(self, solidus, liquidus, latentHeatFusion,
                           meltExpansion,
@@ -119,12 +135,11 @@ class Material(object):
         self.viscosityChange = viscosityChange
         self.melt = True
 
+
 _default = OrderedDict()
-_default["Density"] = "density"
+_default["Radiogenic Heat Production"] = "radiogenicHeatProd"
 _default["Diffusivity"] = "diffusivity"
 _default["Capacity"] = "capacity"
-_default["Thermal Expansivity"] = "thermalExpansivity"
-_default["Radiogenic Heat Production"] = "radiogenicHeatProd"
 
 _melt = OrderedDict()
 _melt["Solidus"] = ""
@@ -145,6 +160,12 @@ def _material_html_repr(Material):
     <tr>
       <th colspan="2">{0}</th>
     </tr>""".format(Material.name)
+
+    if Material.density:
+        key = "Density"
+        value = str(Material.density.name)
+        html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, value)
+
     for key, val in _default.iteritems():
         value = Material.__dict__.get(val)
         if value is None:

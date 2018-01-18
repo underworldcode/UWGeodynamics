@@ -25,6 +25,7 @@ from ._rheology import Rheology, ConstantViscosity, ViscousCreep, DruckerPrager
 from ._rheology import VonMises
 from ._rheology import ViscousCreepRegistry, PlasticityRegistry
 from ._material import Material
+from ._density import ConstantDensity, LinearDensity
 from ._melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry
 
 nd = nonDimensionalize
