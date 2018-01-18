@@ -176,16 +176,10 @@ def _material_html_repr(Material):
 
     if Material.viscosity and Material.plasticity:
         type_ = "(Visco-plastic)"
-        filename = pkg_resources.resource_filename(
-            __name__, "images/viscoplastic.svg")
     elif Material.viscosity:
         type_ = "(Viscous)"
-        filename = pkg_resources.resource_filename(
-            __name__, "images/viscous.svg")
     elif Material.plasticity:
         type_ = "(Plastic)"
-        filename = pkg_resources.resource_filename(
-            __name__, "images/frictional.svg")
     else:
         type_ = ""
 
@@ -200,11 +194,6 @@ def _material_html_repr(Material):
     if Material.plasticity:
         html += "<tr><td>{0}</td><td>{1}</td></tr>".format(
             "Plasticity", Material.plasticity.name)
-
-    if filename:
-        with open(filename, "r") as f:
-            image = f.read()
-        html += "<th align='center', colspan='2'>" + image + "</th>"
 
     return header + html + footer
 
