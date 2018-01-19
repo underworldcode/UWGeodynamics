@@ -1056,7 +1056,7 @@ class Model(Material):
         return
 
     def run_for(self, duration=None, checkpoint_interval=None,
-                timeCheckpoints=None, swarm_checkpoint=None):
+                timeCheckpoints=None, swarm_checkpoint=None, dt=None):
         """ Run the Model
 
         Parameters:
@@ -1065,12 +1065,14 @@ class Model(Material):
             duration: duration of the Model in Time units or nb of steps
             checkpoint_interval: checkpoint interval
             timeCheckpoints: Additional checkpoints
+            dt: force time interval.
         """
 
         step = self.step
         time = nd(self.time)
         units = duration.units
         duration = time + nd(duration)
+        user_dt = nd(dt)
 
         next_checkpoint = None
 
@@ -1083,8 +1085,8 @@ class Model(Material):
         while time < duration:
             self.solve()
 
-            # Whats the longest we can run before reaching the end of the model
-            # or a checkpoint?
+            # Whats the longest we can run before reaching the end
+            # of the model or a checkpoint?
             # Need to generalize that
             dt = rcParams["CFL"] * self.swarm_advector.get_max_dt()
 
@@ -1095,6 +1097,9 @@ class Model(Material):
                 dt = min(dt, next_checkpoint - time)
 
             self._dt = min(dt, duration - time)
+
+            if user_dt:
+                self._dt = min(self._dt, user_dt)
 
             uw.barrier()
 
