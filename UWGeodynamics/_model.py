@@ -231,7 +231,7 @@ class Model(Material):
         self._advector = None
 
         # Initialise remaining attributes
-        self._default_strain_rate = 1e-30 / u.second
+        self._default_strain_rate = 1e-15 / u.second
         self._solution_exist = False
         self._isYielding = None
         self._temperatureDot = None
@@ -815,11 +815,13 @@ class Model(Material):
                     yieldStress = YieldHandler._get_yieldStress2D()
                 if self.mesh.dim == 3:
                     yieldStress = YieldHandler._get_yieldStress3D()
-                eijdef = nd(self._default_strain_rate)
                 eij = fn.branching.conditional(
                     [(self._strainRate_2ndInvariant < sys.float_info.epsilon,
-                      eijdef),
+                      sys.float_info.epsilon),
                      (True, self._strainRate_2ndInvariant)])
+                # eij = fn.branching.conditional(
+                    # [(self._solution_exist, eij),
+                     # (True, nd(self._default_strain_rate))])
                 muEff = 0.5 * yieldStress / eij
 
                 if not material.minViscosity:
@@ -852,12 +854,14 @@ class Model(Material):
                         yieldStress = YieldHandler._get_yieldStress2D()
                     if self.mesh.dim == 3:
                         yieldStress = YieldHandler._get_yieldStress3D()
-                    eijdef = nd(self._default_strain_rate)
                     eij = fn.branching.conditional(
                         [(self._strainRate_2ndInvariant <
                           sys.float_info.epsilon,
-                          eijdef),
+                          sys.float_info.epsilon),
                          (True, self._strainRate_2ndInvariant)])
+                    # eij = fn.branching.conditional(
+                        # [(self._solution_exist, eij),
+                         # (True, nd(self._default_strain_rate))])
                     muEff = 0.5 * yieldStress / eij
                     muEff = self._viscosity_limiter.apply(muEff)
 
@@ -902,7 +906,7 @@ class Model(Material):
         # Do not yield at the very first solve
         if self._solution_exist:
             self._isYielding = (fn.branching.conditional(yieldConditions) *
-                               self._strainRate_2ndInvariant)
+                                self._strainRate_2ndInvariant)
         else:
             self._isYielding = fn.misc.constant(0.0)
 
@@ -1008,6 +1012,8 @@ class Model(Material):
             if material.viscosity:
                 material.viscosity.firstIter = False
 
+        self._solution_exist = True
+
     def _get_material_indices(self, material):
         """ Get mesh indices of a Material
 
@@ -1026,8 +1032,8 @@ class Model(Material):
     def solve(self):
         """ Solve Stokes """
         self._stokes.solve(nonLinearIterate=True,
-                          callback_post_solve=self._calibrate_pressureField,
-                          nonLinearTolerance=rcParams["nonlinear.tolerance"])
+                           callback_post_solve=self._calibrate_pressureField,
+                           nonLinearTolerance=rcParams["nonlinear.tolerance"])
         self._solution_exist = True
 
     def init_model(self, temperature=True, pressureField=True):
@@ -1074,17 +1080,16 @@ class Model(Material):
         if checkpoint_interval:
             next_checkpoint = time + nd(checkpoint_interval)
 
-        #pbar = tqdm(total=duration-time)
         while time < duration:
             self.solve()
 
             # Whats the longest we can run before reaching the end of the model
             # or a checkpoint?
             # Need to generalize that
-            dt = self.swarm_advector.get_max_dt()
+            dt = rcParams["CFL"] * self.swarm_advector.get_max_dt()
 
             if self.temperature:
-                dt = min(dt, self._advdiffSystem.get_max_dt())
+                dt = rcParams["CFL"] * min(dt, self._advdiffSystem.get_max_dt())
 
             if checkpoint_interval:
                 dt = min(dt, next_checkpoint - time)
@@ -1105,7 +1110,6 @@ class Model(Material):
                 # self.output_glucifer_figures(self.checkpointID)
                 next_checkpoint += nd(checkpoint_interval)
 
-            #pbar.update(self._dt)
             if checkpoint_interval or step % 1 == 0:
                 if uw.rank() == 0:
                     print("Time: ", str(self.time.to(units)),

@@ -28,6 +28,8 @@ rcParams = {
 "popcontrol.max.splits" : [10, validate_int],
 "popcontrol.particles.per.cell" : [20, validate_int],
 
+"CFL": [0.5, validate_float], 
+
 "solver" : ["mg", validate_solver],
 "penalty" : [0.0, validate_float],
 "nonlinear.tolerance": [1e-2, validate_float],
