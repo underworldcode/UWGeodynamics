@@ -15,6 +15,7 @@ class Material(object):
                  diffusivity=None, capacity=None,
                  radiogenicHeatProd=0.0, shape=None, viscosity=None,
                  plasticity=None, solidus=None, liquidus=None,
+                 min_viscosity=None, max_viscosity=None,
                  latentHeatFusion=0.0, meltExpansion=0.0, meltFraction=0.0,
                  meltFractionLimit=1.0, viscosityChangeX1=0.15,
                  viscosityChangeX2=0.3, viscosityChange=1.0):
@@ -33,6 +34,10 @@ class Material(object):
         self.capacity = capacity
         self._thermalExpansivity = None
         self.radiogenicHeatProd = radiogenicHeatProd
+
+        self.minViscosity = min_viscosity
+        self.maxViscosity = max_viscosity
+
         self.compressibility = None
 
         self.solidus = solidus
@@ -140,6 +145,8 @@ _default = OrderedDict()
 _default["Radiogenic Heat Production"] = "radiogenicHeatProd"
 _default["Diffusivity"] = "diffusivity"
 _default["Capacity"] = "capacity"
+_default["Min Viscosity Limit"] = "minViscosity"
+_default["Max Viscosity Limit"] = "maxViscosity"
 
 _melt = OrderedDict()
 _melt["Solidus"] = ""

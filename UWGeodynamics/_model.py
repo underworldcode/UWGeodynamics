@@ -192,8 +192,6 @@ class Model(Material):
         # viscosity limiter
         self.minViscosity = rcParams["minimum.viscosity"]
         self.maxViscosity = rcParams["maximum.viscosity"]
-        self._viscosity_limiter = ViscosityLimiter(self.minViscosity,
-                                                   self.maxViscosity)
 
         self._defaultMaterial = self.index
         self.materials = [self]
@@ -775,7 +773,20 @@ class Model(Material):
                 ViscosityHandler.strainRateInvariantField = (
                     self._strainRate_2ndInvariant)
                 ViscosityHandler.temperatureField = self.temperature
-                ViscosityHandler.viscosityLimiter = self._viscosity_limiter
+
+                if not material.minViscosity:
+                    minViscosity = self.minViscosity
+                else:
+                    minViscosity = material.minViscosity
+
+                if not material.maxViscosity:
+                    maxViscosity = self.maxViscosity
+                else:
+                    maxViscosity = material.maxViscosity
+
+                viscosity_limiter = ViscosityLimiter(minViscosity,
+                                                     maxViscosity)
+                ViscosityHandler.viscosityLimiter = viscosity_limiter
                 ViscosityMap[material.index] = ViscosityHandler.muEff
 
         # Melt Modifier
@@ -810,7 +821,20 @@ class Model(Material):
                       eijdef),
                      (True, self._strainRate_2ndInvariant)])
                 muEff = 0.5 * yieldStress / eij
-                muEff = self._viscosity_limiter.apply(muEff)
+
+                if not material.minViscosity:
+                    minViscosity = self.minViscosity
+                else:
+                    minViscosity = material.minViscosity
+
+                if not material.maxViscosity:
+                    maxViscosity = self.maxViscosity
+                else:
+                    maxViscosity = material.maxViscosity
+
+                viscosity_limiter = ViscosityLimiter(minViscosity,
+                                                     maxViscosity)
+                muEff = viscosity_limiter.apply(muEff)
                 PlasticityMap[material.index] = muEff
 
             if self.frictionalBCs is not None:
