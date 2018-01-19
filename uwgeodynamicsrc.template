@@ -44,6 +44,8 @@
 #popcontrol.max.splits  : 10
 #popcontrol.particles.per.cell  : 50
 #
+# CFL condition
+# CFL : 0.1
 # Solver configuration
 #solver  : mg
 #penalty  : 0.0
