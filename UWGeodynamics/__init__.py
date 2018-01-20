@@ -14,6 +14,7 @@ from itertools import chain
 import six
 import shapes
 import surfaceProcesses
+import utilities
 from ._rcParams import rcParams as defaultParams
 from .scaling import COEFFICIENTS as scaling_coefficients
 from .scaling import UnitRegistry
