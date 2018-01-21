@@ -35,7 +35,7 @@
             }, 
             "activationVolume": {
                 "units": "meter ** 3 / mole", 
-                "value": 0.0
+                "value": 3.1e-6
             }, 
             "defaultStrainRateInvariant": {
                 "units": "1 / second", 
