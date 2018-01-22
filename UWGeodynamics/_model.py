@@ -522,7 +522,8 @@ class Model(Material):
 
         DiffusivityMap = {}
         for material in self.materials:
-            DiffusivityMap[material.index] = nd(material.diffusivity)
+            if material.diffusivity:
+                DiffusivityMap[material.index] = nd(material.diffusivity)
 
         self.DiffusivityFn = fn.branching.map(fn_key=self.materialField,
                                               mapping=DiffusivityMap)
@@ -533,9 +534,9 @@ class Model(Material):
                     material.capacity,
                     material.radiogenicHeatProd]):
 
-                HeatProdMap[material.index] = (nd(material.radiogenicHeatProd) /
-                                               (self._densityFn *
-                                                nd(material.capacity)))
+                HeatProdMap[material.index] = (
+                    nd(material.radiogenicHeatProd) /
+                    (self._densityFn * nd(material.capacity)))
             else:
                 HeatProdMap[material.index] = 0.
 
@@ -931,7 +932,8 @@ class Model(Material):
 
             DiffusivityMap = {}
             for material in self.materials:
-                DiffusivityMap[material.index] = nd(material.diffusivity)
+                if material.diffusivity:
+                    DiffusivityMap[material.index] = nd(material.diffusivity)
 
             self.DiffusivityFn = fn.branching.map(fn_key=self.materialField,
                                                   mapping=DiffusivityMap)
