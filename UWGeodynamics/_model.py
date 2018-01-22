@@ -864,7 +864,20 @@ class Model(Material):
                         # [(self._solution_exist, eij),
                          # (True, nd(self._default_strain_rate))])
                     muEff = 0.5 * yieldStress / eij
-                    muEff = self._viscosity_limiter.apply(muEff)
+
+                    if not material.minViscosity:
+                        minViscosity = self.minViscosity
+                    else:
+                        minViscosity = material.minViscosity
+
+                    if not material.maxViscosity:
+                        maxViscosity = self.maxViscosity
+                    else:
+                        maxViscosity = material.maxViscosity
+
+                    viscosity_limiter = ViscosityLimiter(minViscosity,
+                                                         maxViscosity)
+                    muEff = viscosity_limiter.apply(muEff)
 
                     conditions = [(self.frictionalBCs._mask == 1, muEff),
                                   (True, PlasticityMap[material.index])]
