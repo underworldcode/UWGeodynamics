@@ -10,7 +10,7 @@ class FrictionBoundaries(object):
     def __init__(self, Model, right=False, left=False,
                  top=False, bottom=False, friction=0.0, thickness=2):
 
-        if self.Model.mesh.dim > 2:
+        if Model.mesh.dim > 2:
             raise NotImplemented("Frictional boundaries are not yet implemented in 3D")
 
         self.Model = Model
