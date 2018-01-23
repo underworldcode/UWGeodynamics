@@ -3,13 +3,15 @@ from .scaling import nonDimensionalize as nd
 import numpy as np
 
 class FrictionBoundaries(object):
-    """ This class flags elements at the boundaries 
-    
+    """ This class flags elements at the boundaries
+
         Works in 2D only for now
     """
     def __init__(self, Model, right=False, left=False,
                  top=False, bottom=False, friction=0.0, thickness=2):
 
+        if self.Model.mesh.dim > 2:
+            raise NotImplemented("Frictional boundaries are not yet implemented in 3D")
 
         self.Model = Model
         self.friction = friction
@@ -36,10 +38,10 @@ class FrictionBoundaries(object):
             self.left = globalIndices[:,:thickness].ravel()
 
         boundaries = [self.bottom, self.right, self.left, self.top]
-        boundaries = [boundary for boundary in boundaries if boundary is not False] 
+        boundaries = [boundary for boundary in boundaries if boundary is not False]
 
         self.boundaries = np.concatenate(boundaries)
-       
+
         subMesh = Model.mesh.subMesh
         self._mask = uw.mesh.MeshVariable(mesh=subMesh, nodeDofCount=1)
         self._mask.data[:] = 0
