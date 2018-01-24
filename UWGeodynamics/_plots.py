@@ -96,6 +96,9 @@ class Plots(object):
             # pts.colourBar["vertical"] = True
             pts.colourBar.colourMap["discrete"] = True
 
+        if visugrid:
+            Fig.Mesh(visugrid.mesh)
+
         Fig.script(script)
         if show:
             Fig.show()
