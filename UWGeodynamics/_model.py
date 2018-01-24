@@ -1294,7 +1294,8 @@ class Model(Material):
         for variable in variables:
             if variable == "temperature" and not self.temperature:
                 continue
-            self._save_field(str(variable), checkpointID)
+            else:
+                self._save_field(str(variable), checkpointID)
 
         if checkpointID > 2:
             for field in rcParams["swarm.variables"]:
