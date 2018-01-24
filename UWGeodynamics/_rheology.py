@@ -322,7 +322,7 @@ class ViscousCreep(Rheology):
                  pressureField=None,
                  preExponentialFactor=1.0,
                  stressExponent=1.0,
-                 defaultStrainRateInvariant=1.0e-13 / u.seconds,
+                 defaultStrainRateInvariant=1.0e-15 / u.seconds,
                  activationVolume=0.0,
                  activationEnergy=0.0,
                  waterFugacity=None,
@@ -388,7 +388,7 @@ class ViscousCreep(Rheology):
           <th colspan="2">Viscous Creep Rheology: {0}</th>
         </tr>""".format(self.name)
         for key, val in attributes.iteritems():
-            if val:
+            if val is not None:
                 html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
 
         return header + html + footer  

@@ -20,6 +20,14 @@
             "minimumViscosity": {
                 "units": "pascal * second", 
                 "value": 1e+19
+            },
+            "epsilon1": {
+                "units": "None", 
+                "value": 0.5 
+            },
+            "epsilon2": {
+                "units": "None", 
+                "value": 1.5 
             }
         }
     }, 
@@ -52,6 +60,14 @@
             "minimumViscosity": {
                 "units": "pascal * second", 
                 "value": 1e+19
+            },
+            "epsilon1": {
+                "units": "None", 
+                "value": 0.5 
+            },
+            "epsilon2": {
+                "units": "None", 
+                "value": 1.5 
             }
         }
     }, 
@@ -76,6 +92,14 @@
             "minimumViscosity": {
                 "units": "pascal * second", 
                 "value": 1e+19
+            },
+            "epsilon1": {
+                "units": "None", 
+                "value": 0.5 
+            },
+            "epsilon2": {
+                "units": "None", 
+                "value": 1.5 
             }
         }
     }, 
@@ -100,6 +124,14 @@
             "minimumViscosity": {
                 "units": "pascal * second", 
                 "value": 1e+19
+            },
+            "epsilon1": {
+                "units": "None", 
+                "value": 0.5 
+            },
+            "epsilon2": {
+                "units": "None", 
+                "value": 1.5 
             }
         }
     }, 
@@ -124,6 +156,14 @@
             "minimumViscosity": {
                 "units": "pascal * second", 
                 "value": 1e+19
+            },
+            "epsilon1": {
+                "units": "None", 
+                "value": 0.5 
+            },
+            "epsilon2": {
+                "units": "None", 
+                "value": 1.5 
             }
         }
     }

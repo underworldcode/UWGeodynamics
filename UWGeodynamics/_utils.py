@@ -48,3 +48,81 @@ class PassiveTracers(object):
     def integrate(self, dt, **kwargs):
 
         self.advector.integrate(dt, **kwargs)
+
+
+def _get_side_flow(Vtop, top, pt1, pt2, y, tol=1e-12,
+                   nitmax=200, nitmin=3, default_vel=0.0):
+    """ Calculate Bottom velocity as for Huismans et al. velocity boundary
+        conditions such as the total volume is conserved.
+        Return the velocity profile.
+
+        NOTE. The current version implies uniform dy.
+
+        Input:
+
+        Vtop     Top Velocity condition
+        pt1, pt2 Top and Bottom location of the transition zone where the
+                 velocity linearly decreases from Vtop to VBottom.
+        y        Coordinates of the nodes in the y-direction.
+
+        Output:
+
+        velocities numpy array.
+
+        """
+
+    # locate index of closest node coordinates
+    top_idx = np.argmin((y - top)**2)
+    pt1_idx = np.argmin((y - pt1)**2)
+    pt2_idx = np.argmin((y - pt2)**2)
+
+    # do some initialization
+    velocity = np.ones(y.shape) * Vtop
+    Vmin = -Vtop
+    Vmax = 0.0
+    N = 0
+
+    dy = np.diff(y)
+    budget = 0.5 * (velocity[1:] + velocity[:-1]) * dy
+    prev = np.copy(budget)
+
+    # The following loop uses a kind of bissection approach
+    # to look for the suitable value of Vbot.
+    while True:
+
+        Vbot = (Vmin + Vmax) / 2.0
+
+        for i in range(len(y)):
+            if i > top_idx:
+                velocity[i] = 0.0
+            if i >= pt1_idx and i <= top_idx:
+                velocity[i] = Vtop
+            if i <= pt2_idx:
+                velocity[i] = Vbot
+            if i < pt1_idx and i > pt2_idx:
+                velocity[i] = (Vtop - Vbot) / (y[pt1_idx] - y[pt2_idx]) * (y[i] - y[pt2_idx]) + Vbot
+
+        budget = 0.5 * (velocity[1:] + velocity[:-1]) * dy
+
+        if np.abs(np.sum(budget) - np.sum(prev)) < tol and N > nitmin:
+            velocity[top_idx + 1:] = default_vel
+            return velocity, np.sum(budget)
+        else:
+            ctol = np.abs(np.sum(budget) - np.sum(prev))
+            N += 1
+            prev = np.copy(budget)
+
+        if Vtop < 0.0:
+            if np.sum(budget) < 0.0:
+                Vmax = Vbot
+            else:
+                Vmin = Vbot
+        else:
+            if np.sum(budget) > 0.0:
+                Vmax = Vbot
+            else:
+                Vmin = Vbot
+
+    velocity[top_idx + 1:] = default_vel
+    return velocity, np.sum(budget)
+

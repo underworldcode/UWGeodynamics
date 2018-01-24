@@ -1,5 +1,5 @@
 {
-    "Brace et al., 1980": {
+    "Brace and Kohlstedt, 1980": {
         "Mineral": "Wet Dunite", 
         "Type": "Strain Rate and Temperature Dependent Rheology", 
         "coefficients": {
@@ -35,7 +35,7 @@
             }, 
             "activationVolume": {
                 "units": "meter ** 3 / mole", 
-                "value": 0.0
+                "value": 3.1e-6
             }, 
             "defaultStrainRateInvariant": {
                 "units": "1 / second", 
