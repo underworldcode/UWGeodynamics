@@ -1,4 +1,7 @@
 from __future__ import print_function
+import warnings
+warnings.filterwarnings("ignore")
+
 try:
     import underworld
 except ImportError:
@@ -25,6 +28,7 @@ from .lithopress import LithostaticPressure
 from ._rheology import Rheology, ConstantViscosity, ViscousCreep, DruckerPrager
 from ._rheology import VonMises
 from ._rheology import ViscousCreepRegistry, PlasticityRegistry
+from ._rheology import Elasticity
 from ._material import Material
 from ._density import ConstantDensity, LinearDensity
 from ._melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry

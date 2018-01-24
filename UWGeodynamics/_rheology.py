@@ -598,3 +598,26 @@ class PlasticityRegistry(object):
     def __getattr__(self, item):
         # Make sure to return a new instance of ViscousCreep
         return copy(self._dir[item])
+
+
+class Elasticity(Rheology):
+
+    def __init__(self, shear_modulus, observation_time):
+        super(Elasticity, self).__init__()
+        self.shear_modulus = shear_modulus
+        self.observation_time = observation_time
+
+    @property
+    def muEff(self):
+        return self._effectiveViscosity()
+
+    def _effectiveViscosity(self, viscosityField):
+        # Maxwell relaxation time
+        alpha = viscosityField / nd(self.shear_modulus)
+        # observation time
+        dt_e = nd(self.observation_time)
+        # Calculate effective viscosity
+        mu_eff = (viscosityField * dt_e) / (alpha + dt_e)
+        if self._viscosity_limiter:
+            mu_eff = self._viscosity_limiter.apply(mu_eff)
+        return mu_eff

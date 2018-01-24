@@ -14,7 +14,7 @@ class Material(object):
     def __init__(self, name="Undefined", density=0.0,
                  diffusivity=None, capacity=None,
                  radiogenicHeatProd=0.0, shape=None, viscosity=None,
-                 plasticity=None, solidus=None, liquidus=None,
+                 plasticity=None, elasticity=None, solidus=None, liquidus=None,
                  min_viscosity=None, max_viscosity=None,
                  latentHeatFusion=0.0, meltExpansion=0.0, meltFraction=0.0,
                  meltFractionLimit=1.0, viscosityChangeX1=0.15,
@@ -54,6 +54,8 @@ class Material(object):
         self._viscosity = None
         self.viscosity = viscosity
         self.plasticity = plasticity
+
+        self.elasticity = elasticity
 
     def _repr_html_(self):
         return _material_html_repr(self)

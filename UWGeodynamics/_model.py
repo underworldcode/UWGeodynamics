@@ -790,6 +790,12 @@ class Model(Material):
                 ViscosityHandler.viscosityLimiter = viscosity_limiter
                 ViscosityMap[material.index] = ViscosityHandler.muEff
 
+                if material.elasticity:
+                    ElasticityHandler = material.elasticity
+                    ElasticityHandler.viscosity = ViscosityMap[material.index]
+                    ElasticityHandler._viscosityLimiter = viscosity_limiter
+                    ViscosityMap[material.index] = ElasticityHandler.muEff
+
         # Melt Modifier
         for material in self.materials:
             if material.viscosity and material.viscosityChange > 1.0:
