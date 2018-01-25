@@ -237,21 +237,39 @@ class VonMises(object):
         self.cohesionWeakeningFn = linearCohesionWeakening
 
     @property
-    def _cohesion(self):
+    def cohesion(self):
+        return self._cohesion
+
+    @cohesion.setter
+    def cohesion(self, value):
+        self._cohesion = value
+
+    @property
+    def cohesionAfterSoftening(self):
+        return self._cohesionAfterSoftening
+
+    @cohesionAfterSoftening.setter
+    def cohesionAfterSoftening(self, value):
+        if value:
+            self._cohesionAfterSoftening = value
+        else:
+            self._cohesionAfterSoftening = self.cohesion
+
+    def _cohesionFn(self):
         if self.plasticStrain:
             cohesion = self.cohesionWeakeningFn(
                 self.plasticStrain,
                 Cohesion=nd(self.cohesion),
                 CohesionSw=nd(self.cohesionAfterSoftening))
         else:
-            cohesion = fn.misc.constant(self.cohesion)
+            cohesion = fn.misc.constant(nd(self.cohesion))
         return cohesion
-        
+
     def _get_yieldStress2D(self):
-        return self._cohesion
+        return self._cohesionFn()
 
     def _get_yieldStress3D(self):
-        return self._cohesion
+        return self._cohesionFn()
 
 
 class ConstantViscosity(Rheology):

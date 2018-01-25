@@ -273,6 +273,7 @@ class Model(Material):
         self._viscosityField.data[:] = 0.
         self._densityField.data[:] = 0.
         self.meltField.data[:] = 0.
+        self._previousStressField.data[:] = [0., 0., 0.]
 
         # Create a bunch of tools to project swarmVariable onto the mesh
         self._projMaterialField = uw.mesh.MeshVariable(mesh=self.mesh,
@@ -797,15 +798,16 @@ class Model(Material):
                 ViscosityMap[material.index] = ViscosityHandler.muEff
 
         # Elasticity
-        for materials in self.materials:
+        for material in self.materials:
             if material.elasticity:
+
                 # We are dealing with viscous material
                 # Raise an error is no viscosity has been defined.
                 if not material.viscosity:
                     raise ValueError("""Viscosity undefined for
                                      {0}""".format(material.name))
                 ElasticityHandler = material.elasticity
-                ElasticityHandler.viscosity = material.viscosity
+                ElasticityHandler.viscosity = ViscosityMap[material.index]
                 if not material.minViscosity:
                     minViscosity = self.minViscosity
                 else:
@@ -971,7 +973,7 @@ class Model(Material):
                                 mapping=stressMap)
 
     def _viscous_stressFn(self):
-        return 2. * self.viscosityFn * self.strainRate
+        return 2. * self._viscosityFn * self.strainRate
 
     @property
     def _elastic_stressFn(self):
@@ -979,7 +981,7 @@ class Model(Material):
         for material in self.materials:
             if material.elasticity:
                 ElasticityHandler = material.elasticity
-                ElasticityHandler.viscosity = self.viscosityFn
+                ElasticityHandler.viscosity = self._viscosityFn
                 ElasticityHandler.previousStress = self._previousStressField
                 elasticStressFn = ElasticityHandler.elastic_stress
             else:
@@ -1191,6 +1193,16 @@ class Model(Material):
             if user_dt:
                 self._dt = min(self._dt, user_dt)
 
+            dte = []
+            for material in self.materials:
+                if material.elasticity:
+                    dte.append(nd(material.elasticity.observation_time))
+                dte = np.array(dte).min()
+
+            # Cap dt for observation time, dte / 3.
+            if self._dt > (dte / 3.):
+                self._dt = dte / 3.
+
             uw.barrier()
 
             self._update()
@@ -1211,6 +1223,12 @@ class Model(Material):
                           'dt:', str(Dimensionalize(self._dt, units)))
         return 1
 
+    def preSolveHook(self):
+        return
+
+    def postSolveHook(self):
+        return
+
     def _update(self):
         """ Update Function
 
@@ -1219,6 +1237,8 @@ class Model(Material):
         update the fields according to the Model state.
 
         """
+
+        self.preSolveHook()
 
         dt = self._dt
         # Increment plastic strain
@@ -1239,7 +1259,7 @@ class Model(Material):
 
         # Update stress
         if any([material.elasticity for material in self.materials]):
-            self._update_stress_history()
+            self._update_stress_history(dt)
 
         if self.passive_tracers:
             for tracers in self.passive_tracers:
@@ -1259,6 +1279,8 @@ class Model(Material):
 
         if self._visugrid:
             self._visugrid.advect(dt)
+
+        self.postSolveHook()
 
     def mesh_advector(self, axis):
         """ Initialize the mesh advector
