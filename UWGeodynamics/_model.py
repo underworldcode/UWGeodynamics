@@ -157,6 +157,7 @@ class Model(Material):
         self._strainRateField = uw.mesh.MeshVariable(mesh=self.mesh,
                                                      nodeDofCount=1)
 
+
         # Initialise fields to 0.
         self.pressureField.data[...] = 0.
         self.velocityField.data[...] = 0.
@@ -260,6 +261,9 @@ class Model(Material):
         self._densityField = self.swarm.add_variable(dataType="double",
                                                      count=1)
         self.meltField = self.swarm.add_variable(dataType="double", count=1)
+
+        self._previousStressField = self.swarm.add_variable(dataType="double",
+                                                            count=3)
 
         # Initialise materialField to Model material
         self.materialField.data[:] = self.index
@@ -567,12 +571,14 @@ class Model(Material):
 
         if any([material.viscosity for material in self.materials]):
 
-            stokes_object = uw.systems.Stokes(velocityField=self.velocityField,
-                                              pressureField=self.pressureField,
-                                              conditions=self._velocityBCs,
-                                              fn_viscosity=self._viscosityFn,
-                                              fn_bodyforce=self._buoyancyFn,
-                                              fn_one_on_lambda=None)
+            stokes_object = uw.systems.Stokes(
+                velocityField=self.velocityField,
+                pressureField=self.pressureField,
+                conditions=self._velocityBCs,
+                fn_viscosity=self._viscosityFn,
+                fn_bodyforce=self._buoyancyFn,
+                fn_stresshistory=self._elastic_stressFn,
+                fn_one_on_lambda=None)
 
             solver = uw.systems.Solver(stokes_object)
             solver.set_inner_method(rcParams["solver"])
@@ -790,11 +796,30 @@ class Model(Material):
                 ViscosityHandler.viscosityLimiter = viscosity_limiter
                 ViscosityMap[material.index] = ViscosityHandler.muEff
 
-                if material.elasticity:
-                    ElasticityHandler = material.elasticity
-                    ElasticityHandler.viscosity = ViscosityMap[material.index]
-                    ElasticityHandler._viscosityLimiter = viscosity_limiter
-                    ViscosityMap[material.index] = ElasticityHandler.muEff
+        # Elasticity
+        for materials in self.materials:
+            if material.elasticity:
+                # We are dealing with viscous material
+                # Raise an error is no viscosity has been defined.
+                if not material.viscosity:
+                    raise ValueError("""Viscosity undefined for
+                                     {0}""".format(material.name))
+                ElasticityHandler = material.elasticity
+                ElasticityHandler.viscosity = material.viscosity
+                if not material.minViscosity:
+                    minViscosity = self.minViscosity
+                else:
+                    minViscosity = material.minViscosity
+
+                if not material.maxViscosity:
+                    maxViscosity = self.maxViscosity
+                else:
+                    maxViscosity = material.maxViscosity
+
+                viscosity_limiter = ViscosityLimiter(minViscosity,
+                                                     maxViscosity)
+                ElasticityHandler._viscosityLimiter = viscosity_limiter
+                ViscosityMap[material.index] = ElasticityHandler.muEff
 
         # Melt Modifier
         for material in self.materials:
@@ -931,6 +956,50 @@ class Model(Material):
             self._isYielding = fn.misc.constant(0.0)
 
         return viscosityFn
+
+    @property
+    def _stressFn(self):
+        """ Calculate the viscous stress """
+        stressMap = {}
+        for material in self.materials:
+            # Calculate viscous stress
+            viscousStressFn = self._viscous_stressFn()
+            elasticStressFn = self._elastic_stressFn
+            stressMap[material.index] = viscousStressFn + elasticStressFn
+
+        return fn.branching.map(fn_key=self.materialField,
+                                mapping=stressMap)
+
+    def _viscous_stressFn(self):
+        return 2. * self.viscosityFn * self.strainRate
+
+    @property
+    def _elastic_stressFn(self):
+        stressMap = {}
+        for material in self.materials:
+            if material.elasticity:
+                ElasticityHandler = material.elasticity
+                ElasticityHandler.viscosity = self.viscosityFn
+                ElasticityHandler.previousStress = self._previousStressField
+                elasticStressFn = ElasticityHandler.elastic_stress
+            else:
+                # Set elastic stress to zero if material
+                # has no elasticity
+                elasticStressFn = [0.0, 0.0, 0.0]
+            stressMap[material.index] = elasticStressFn
+        return fn.branching.map(fn_key=self.materialField,
+                                mapping=stressMap)
+
+    def _update_stress_history(self, dt):
+        dt_e = []
+        for material in self.materials:
+            if material.elasticity:
+                dt_e.append(nd(material.elasticity.observation_time))
+        dt_e = np.array(dt_e).min()
+        phi = dt / dt_e
+        veStressFn_data = self._elastic_stressFn.evaluate(self.swarm)
+        self._previousStressField.data[:] *= (1. - phi)
+        self._previousStressField.data[:] += phi * veStressFn_data[:]
 
     @property
     def _yieldStressFn(self):
@@ -1167,6 +1236,10 @@ class Model(Material):
 
         # Integrate Swarms in time
         self.swarm_advector.integrate(dt, update_owners=True)
+
+        # Update stress
+        if any([material.elasticity for material in self.materials]):
+            self._update_stress_history()
 
         if self.passive_tracers:
             for tracers in self.passive_tracers:
