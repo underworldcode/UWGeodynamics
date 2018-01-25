@@ -1399,7 +1399,7 @@ class Model(Material):
             file_prefix = os.path.join(self.outputDir,
                                        field + '-%s' % checkpointID)
             obj = getattr(self, field)
-            handle = obj.save('%s.h5' % file_prefix)
+            handle = obj.save('%s.h5' % file_prefix, units=units)
             obj.xdmf('%s.xdmf' % file_prefix, handle, field, sH, 'swarm',
                      modeltime=self.time.magnitude)
         else:
