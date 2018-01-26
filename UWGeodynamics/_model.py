@@ -256,25 +256,6 @@ class Model(Material):
         self.add_swarm_field("_previousStressField", dataType="double",
                              count=3)
 
-        # Create a bunch of tools to project swarmVariable onto the mesh
-        self._projMaterialField = MeshVariable(mesh=self.mesh, nodeDofCount=1)
-
-        self._materialFieldProjector = uw.utils.MeshVariable_Projection(
-            self._projMaterialField, self.materialField, type=0)
-
-        self._projViscosityField = MeshVariable(mesh=self.mesh, nodeDofCount=1)
-
-        self._viscosityFieldProjector = uw.utils.MeshVariable_Projection(
-            self._projViscosityField, self._viscosityField, type=0)
-
-        self._projPlasticStrain = MeshVariable(mesh=self.mesh, nodeDofCount=1)
-        self._plasticStrainProjector = uw.utils.MeshVariable_Projection(
-            self._projPlasticStrain, self.plasticStrain, type=0)
-
-        self._projDensityField = MeshVariable(mesh=self.mesh, nodeDofCount=1)
-        self._densityFieldProjector = uw.utils.MeshVariable_Projection(
-            self._projDensityField, self._densityField, type=0)
-
     def __getitem__(self, name):
         return self.__dict__[name]
 
@@ -688,12 +669,31 @@ class Model(Material):
         newField.data[...] = init_value
         self.swarm_fields[name] = newField
 
+        if count == 1:
+            # Create mesh variable for projection
+            if name.startswith("_"):
+                proj_name = "_proj" + name[1].upper() + name[2:]
+            else:
+                proj_name = "_proj" + name[0].upper() + name[1:]
+            projected = self.add_mesh_field(proj_name, nodeDofCount=1,
+                                            dataType="double")
+            # Create a projector
+            if name.startswith("_"):
+                projector_name = name + "Projector"
+            else:
+                projector_name = "_" + name + "Projector"
+            projector = uw.utils.MeshVariable_Projection(projected,
+                                                         newField, type=0)
+            setattr(self, projector_name, projector)
+        return newField
+
     def add_mesh_field(self, name, nodeDofCount,
                        dataType="double", init_value=0., **kwargs):
         newField = self.mesh.add_variable(nodeDofCount, dataType, **kwargs)
         setattr(self, name, newField)
         newField.data[...] = init_value
         self.mesh_fields[name] = newField
+        return newField
 
     def add_submesh_field(self, name, nodeDofCount,
                           dataType="double", init_value=0., **kwargs):
