@@ -1113,7 +1113,8 @@ class Model(Material):
         return
 
     def run_for(self, duration=None, checkpoint_interval=None,
-                timeCheckpoints=None, swarm_checkpoint=None, dt=None):
+                timeCheckpoints=None, swarm_checkpoint=None, dt=None,
+                glucifer_outputs=False):
         """ Run the Model
 
         Parameters:
@@ -1123,6 +1124,7 @@ class Model(Material):
             checkpoint_interval: checkpoint interval
             timeCheckpoints: Additional checkpoints
             dt: force time interval.
+            glucifer_outputs: output glucifer figures [False]
         """
 
         step = self.step
@@ -1180,7 +1182,8 @@ class Model(Material):
             if time == next_checkpoint:
                 self.checkpointID += 1
                 self.checkpoint()
-                # self.output_glucifer_figures(self.checkpointID)
+                if glucifer_outputs:
+                    self.output_glucifer_figures(self.checkpointID)
                 next_checkpoint += nd(checkpoint_interval)
 
             if checkpoint_interval or step % 1 == 0:
@@ -1380,33 +1383,10 @@ class Model(Material):
                                        "glucifer"))
         GluciferStore.step = step
 
-        pressure = self.plot.pressureField(store=GluciferStore, show=False)
-        pressure.save()
-
-        temperature = self.plot.temperature(store=GluciferStore, show=False)
-        temperature.save()
-
-        velocity = self.plot.velocityField(store=GluciferStore, show=False)
-        velocity.save()
-
-        strainrate = self.plot.strainRate(store=GluciferStore, show=False)
-        strainrate.save()
-
-        material = self.plot.material(projected=True, store=GluciferStore,
-                                      show=False)
-        material.save()
-
-        strain = self.plot.plastic_strain(projected=True, store=GluciferStore,
-                                          show=False)
-        strain.save()
-
-        density = self.plot.density(projected=True, store=GluciferStore,
-                                    show=False)
-        density.save()
-
-        viscosity = self.plot.viscosity(projected=True, store=GluciferStore,
-                                        show=False)
-        viscosity.save()
+        for field in rcParams["glucifer.outputs"]:
+            func = eval("self.plot."+field)
+            fig = func(store=GluciferStore, show=False)
+            fig.save()
 
     def add_visugrid(self, elementRes, minCoord=None, maxCoord=None):
         """ Add a tracking grid to the Model
