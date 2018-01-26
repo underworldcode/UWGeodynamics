@@ -25,7 +25,10 @@ from ._velocity_boundaries import VelocityBCs
 from ._thermal_boundaries import TemperatureBCs
 from ._mesh_advector import _mesh_advector
 from ._frictional_boundary import FrictionBoundaries
-
+from ._mesh import FeMesh_Cartesian
+from ._swarm import Swarm
+from ._meshvariable import MeshVariable
+from ._swarmvariable import SwarmVariable
 
 _attributes_to_save = {
     "elementRes": lambda x: tuple(int(val) for val in x.split(","))  ,
@@ -140,22 +143,22 @@ class Model(Material):
         maxCoord = tuple([nd(val) for val in self.maxCoord])
 
         # Initialize model mesh
-        self.mesh = uw.mesh.FeMesh_Cartesian(elementType=self.elementType,
-                                             elementRes=self.elementRes,
-                                             minCoord=minCoord,
-                                             maxCoord=maxCoord,
-                                             periodic=self.periodic)
+        self.mesh = FeMesh_Cartesian(elementType=self.elementType,
+                                     elementRes=self.elementRes,
+                                     minCoord=minCoord,
+                                     maxCoord=maxCoord,
+                                     periodic=self.periodic)
 
         # Add common mesh variables
         # Temperature Field is initialised to None
         self.temperature = None
-        self.pressureField = uw.mesh.MeshVariable(mesh=self.mesh.subMesh,
+        self.pressureField = MeshVariable(mesh=self.mesh.subMesh,
                                                   nodeDofCount=1)
-        self.velocityField = uw.mesh.MeshVariable(mesh=self.mesh,
+        self.velocityField = MeshVariable(mesh=self.mesh,
                                                   nodeDofCount=self.mesh.dim)
-        self.tractionField = uw.mesh.MeshVariable(mesh=self.mesh,
+        self.tractionField = MeshVariable(mesh=self.mesh,
                                                   nodeDofCount=self.mesh.dim)
-        self._strainRateField = uw.mesh.MeshVariable(mesh=self.mesh,
+        self._strainRateField = MeshVariable(mesh=self.mesh,
                                                      nodeDofCount=1)
 
         # Initialise fields to 0.
@@ -170,7 +173,7 @@ class Model(Material):
         )
 
         # Create the material swarm
-        self.swarm = uw.swarm.Swarm(mesh=self.mesh, particleEscape=True)
+        self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
         self._swarmLayout = uw.swarm.layouts.GlobalSpaceFillerLayout(
             swarm=self.swarm,
             particlesPerCell=rcParams["swarm.particles.per.cell"])
@@ -275,24 +278,24 @@ class Model(Material):
         self._previousStressField.data[:] = [0., 0., 0.]
 
         # Create a bunch of tools to project swarmVariable onto the mesh
-        self._projMaterialField = uw.mesh.MeshVariable(mesh=self.mesh,
+        self._projMaterialField = MeshVariable(mesh=self.mesh,
                                                        nodeDofCount=1)
 
         self._materialFieldProjector = uw.utils.MeshVariable_Projection(
             self._projMaterialField, self.materialField, type=0)
 
-        self._projViscosityField = uw.mesh.MeshVariable(
+        self._projViscosityField = MeshVariable(
             mesh=self.mesh, nodeDofCount=1)
 
         self._viscosityFieldProjector = uw.utils.MeshVariable_Projection(
             self._projViscosityField, self._viscosityField, type=0)
 
-        self._projPlasticStrain = uw.mesh.MeshVariable(mesh=self.mesh,
+        self._projPlasticStrain = MeshVariable(mesh=self.mesh,
                                                        nodeDofCount=1)
         self._plasticStrainProjector = uw.utils.MeshVariable_Projection(
             self._projPlasticStrain, self.plasticStrain, type=0)
 
-        self._projDensityField = uw.mesh.MeshVariable(mesh=self.mesh,
+        self._projDensityField = MeshVariable(mesh=self.mesh,
                                                       nodeDofCount=1)
         self._densityFieldProjector = uw.utils.MeshVariable_Projection(
             self._projDensityField, self._densityField, type=0)
@@ -491,9 +494,9 @@ class Model(Material):
         """
 
         if not self.temperature:
-            self.temperature = uw.mesh.MeshVariable(mesh=self.mesh,
+            self.temperature = MeshVariable(mesh=self.mesh,
                                                     nodeDofCount=1)
-            self._temperatureDot = uw.mesh.MeshVariable(mesh=self.mesh,
+            self._temperatureDot = MeshVariable(mesh=self.mesh,
                                                         nodeDofCount=1)
             self.temperature.data[...] = nd(self.Tref)
             self._temperatureDot.data[...] = 0.
@@ -709,7 +712,7 @@ class Model(Material):
         setattr(self, name, newField)
 
     def add_mesh_field(self, name, dataType, count=1):
-        newField = uw.mesh.MeshVariable(mesh=self.mesh.subMesh, nodeDofCount=1)
+        newField = MeshVariable(mesh=self.mesh.subMesh, nodeDofCount=1)
         setattr(self, name, newField)
 
     @property
