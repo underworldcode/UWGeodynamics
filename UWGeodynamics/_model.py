@@ -1,6 +1,5 @@
 from __future__ import print_function
 import os
-import sys
 import json
 from json_encoder import ObjectEncoder
 from collections import Iterable
@@ -30,15 +29,14 @@ from ._swarm import Swarm
 from ._meshvariable import MeshVariable
 
 _attributes_to_save = {
-    "elementRes": lambda x: tuple(int(val) for val in x.split(","))  ,
+    "elementRes": lambda x: tuple(int(val) for val in x.split(",")),
     "minCoord": lambda x: tuple([val if u.Quantity(val).dimensionless else u.Quantity(val) for val in x.split(",")]),
     "maxCoord": lambda x: tuple([val if u.Quantity(val).dimensionless else u.Quantity(val) for val in x.split(",")]),
     "name": lambda x: str(x),
     "gravity": lambda x: tuple([val if u.Quantity(val).dimensionless else u.Quantity(val) for val in x.split(",")]),
     "periodic": lambda x: tuple(bool(val) for val in x.split(",")),
     "elementType": lambda x: str(x),
-    "Tref": lambda x: x if u.Quantity(x).dimensionless else u.Quantity(x)
-    }
+    "Tref": lambda x: x if u.Quantity(x).dimensionless else u.Quantity(x)}
 
 
 class Model(Material):
@@ -148,18 +146,17 @@ class Model(Material):
                                      maxCoord=maxCoord,
                                      periodic=self.periodic)
 
+        self.mesh_fields = {}
+        self.submesh_fields = {}
+        self.swarm_fields = {}
+
         # Add common mesh variables
         # Temperature Field is initialised to None
         self.temperature = None
-        self.pressureField = MeshVariable(mesh=self.mesh.subMesh, nodeDofCount=1)
-        self.velocityField = MeshVariable(mesh=self.mesh, nodeDofCount=self.mesh.dim)
-        self.tractionField = MeshVariable(mesh=self.mesh, nodeDofCount=self.mesh.dim)
-        self._strainRateField = MeshVariable(mesh=self.mesh, nodeDofCount=1)
-
-        # Initialise fields to 0.
-        self.pressureField.data[...] = 0.
-        self.velocityField.data[...] = 0.
-        self.tractionField.data[...] = 0.
+        self.add_submesh_field("pressureField", nodeDofCount=1)
+        self.add_mesh_field("velocityField", nodeDofCount=self.mesh.dim)
+        self.add_mesh_field("tractionField", nodeDofCount=self.mesh.dim)
+        self.add_mesh_field("_strainRateField", nodeDofCount=1)
 
         # symmetric component of the gradient of the flow velocityField.
         self.strainRate = fn.tensor.symmetric(self.velocityField.fn_gradient)
@@ -250,27 +247,14 @@ class Model(Material):
         )
 
         # Add Common Swarm Variables
-        self.materialField = self.swarm.add_variable(dataType="int", count=1)
-        self.plasticStrain = self.swarm.add_variable(dataType="double",
-                                                     count=1)
-        self._viscosityField = self.swarm.add_variable(dataType="double",
-                                                       count=1)
-        self._densityField = self.swarm.add_variable(dataType="double",
-                                                     count=1)
-        self.meltField = self.swarm.add_variable(dataType="double", count=1)
-
-        self._previousStressField = self.swarm.add_variable(dataType="double",
-                                                            count=3)
-
-        # Initialise materialField to Model material
-        self.materialField.data[:] = self.index
-
-        # Initialise remaining fields to 0.
-        self.plasticStrain.data[:] = 0.0
-        self._viscosityField.data[:] = 0.
-        self._densityField.data[:] = 0.
-        self.meltField.data[:] = 0.
-        self._previousStressField.data[:] = [0., 0., 0.]
+        self.add_swarm_field("materialField", dataType="int", count=1,
+                             init_value=self.index)
+        self.add_swarm_field("plasticStrain", dataType="double", count=1)
+        self.add_swarm_field("_viscosityField", dataType="double", count=1)
+        self.add_swarm_field("_densityField", dataType="double", count=1)
+        self.add_swarm_field("_meltField", dataType="double", count=1)
+        self.add_swarm_field("_previousStressField", dataType="double",
+                             count=3)
 
         # Create a bunch of tools to project swarmVariable onto the mesh
         self._projMaterialField = MeshVariable(mesh=self.mesh, nodeDofCount=1)
@@ -486,9 +470,9 @@ class Model(Material):
 
         if not self.temperature:
             self.temperature = MeshVariable(mesh=self.mesh,
-                                                    nodeDofCount=1)
+                                            nodeDofCount=1)
             self._temperatureDot = MeshVariable(mesh=self.mesh,
-                                                        nodeDofCount=1)
+                                                nodeDofCount=1)
             self.temperature.data[...] = nd(self.Tref)
             self._temperatureDot.data[...] = 0.
 
@@ -697,13 +681,27 @@ class Model(Material):
         vals = fn.branching.conditional(conditions).evaluate(self.swarm)
         self.materialField.data[:] = vals
 
-    def add_swarm_field(self, name, dataType, count=1):
-        newField = self.swarm.add_variable(dataType=dataType, count=count)
+    def add_swarm_field(self, name, dataType="double", count=1,
+                        init_value=0., **kwargs):
+        newField = self.swarm.add_variable(dataType, count, **kwargs)
         setattr(self, name, newField)
+        newField.data[...] = init_value
+        self.swarm_fields[name] = newField
 
-    def add_mesh_field(self, name, dataType, count=1):
-        newField = MeshVariable(mesh=self.mesh.subMesh, nodeDofCount=1)
+    def add_mesh_field(self, name, nodeDofCount,
+                       dataType="double", init_value=0., **kwargs):
+        newField = self.mesh.add_variable(nodeDofCount, dataType, **kwargs)
         setattr(self, name, newField)
+        newField.data[...] = init_value
+        self.mesh_fields[name] = newField
+
+    def add_submesh_field(self, name, nodeDofCount,
+                          dataType="double", init_value=0., **kwargs):
+        newField = MeshVariable(self.mesh.subMesh, nodeDofCount,
+                                dataType, **kwargs)
+        setattr(self, name, newField)
+        newField.data[...] = init_value
+        self.submesh_fields[name] = newField
 
     @property
     def _densityFn(self):
@@ -796,7 +794,6 @@ class Model(Material):
                 viscosity_limiter = ViscosityLimiter(minViscosity,
                                                      maxViscosity)
                 ViscosityHandler.viscosityLimiter = viscosity_limiter
-
 
                 ViscosityMap[material.index] = ViscosityHandler.muEff
 
@@ -1119,7 +1116,9 @@ class Model(Material):
 
         """
         nodes = np.arange(0, self.mesh.nodesLocal)[self.projMaterialField.evaluate(self.mesh.data[0:self.mesh.nodesLocal])[:, 0] == material.index]
-        return uw.mesh.FeMesh_IndexSet(self.mesh, topologicalIndex=0, size=self.mesh.nodesGlobal, fromObject=nodes)
+        return uw.mesh.FeMesh_IndexSet(self.mesh, topologicalIndex=0,
+                                       size=self.mesh.nodesGlobal,
+                                       fromObject=nodes)
 
     def solve(self):
         """ Solve Stokes """
@@ -1189,7 +1188,8 @@ class Model(Material):
             dt = rcParams["CFL"] * self.swarm_advector.get_max_dt()
 
             if self.temperature:
-                dt = rcParams["CFL"] * min(dt, self._advdiffSystem.get_max_dt())
+                dt = min(dt, self._advdiffSystem.get_max_dt())
+                dt *= rcParams["CFL"]
 
             if checkpoint_interval:
                 dt = min(dt, next_checkpoint - time)
@@ -1362,7 +1362,8 @@ class Model(Material):
         ratio = material.latentHeatFusion / material.capacity
 
         if not ratio.dimensionless:
-            raise ValueError("Unit Error in either Latent Heat Fusion or Capacity (Material: "+material.name)
+            raise ValueError("""Unit Error in either Latent Heat Fusion or
+                             Capacity (Material: """ + material.name)
         ratio = ratio.magnitude
 
         dF = (self._get_melt_fraction() - self.meltField) / self._dt
@@ -1423,7 +1424,7 @@ class Model(Material):
         GluciferStore.step = step
 
         for field in rcParams["glucifer.outputs"]:
-            func = eval("self.plot."+field)
+            func = eval("self.plot." + field)
             fig = func(store=GluciferStore, show=False)
             fig.save()
 
@@ -1510,7 +1511,7 @@ def load_model(filename):
                 return val.magnitude
             else:
                 return val
-        except:
+        except ValueError:
             return obj
 
     with open(filename, "r") as f:
@@ -1533,7 +1534,7 @@ def load_model(filename):
 
     try:
         materials = model.pop("materials")
-    except:
+    except KeyError:
         materials = []
 
     for material in materials:
@@ -1542,20 +1543,22 @@ def load_model(filename):
         if "viscosity" in material:
             if isinstance(material["viscosity"], Iterable):
                 for elem in material["viscosity"]:
-                    material["viscosity"][elem] = convert(material["viscosity"][elem])
+                    quantity = convert(material["viscosity"][elem])
+                    material["viscosity"][elem] = quantity
             else:
                 material["viscosity"] = convert(material["viscosity"])
         if "plasticity" in material:
             if isinstance(material["plasticity"], Iterable):
                 for elem in material["plasticity"]:
-                    material["plasticity"][elem] = convert(material["plasticity"][elem])
+                    quantity = convert(material["plasticity"][elem])
+                    material["plasticity"][elem] = quantity
             else:
                 material["plasticity"] = convert(material["plasticity"])
 
     # Process Velocity BCs
     try:
         velocityBCs = model.pop("velocityBCs")
-    except:
+    except KeyError:
         velocityBCs = []
 
     for elem in velocityBCs:
@@ -1564,7 +1567,7 @@ def load_model(filename):
     # Process Temperature BCs
     try:
         temperatureBCs = model.pop("temperatureBCs")
-    except:
+    except KeyError:
         temperatureBCs = []
 
     for elem in temperatureBCs:
@@ -1585,6 +1588,7 @@ def load_model(filename):
 
     return Mod
 
+
 _html_global = OrderedDict()
 _html_global["Number of Elements"] = "elementRes"
 _html_global["length"] = "length"
@@ -1601,4 +1605,3 @@ def _model_html_repr(Model):
         html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, value)
 
     return header + html + footer
-
