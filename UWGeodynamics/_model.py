@@ -120,7 +120,7 @@ class Model(Material):
             self.elementType = elementType
 
         self.elementRes = elementRes
-        self.outputDir = rcParams["output.directory"]
+        self._outputDir = rcParams["output.directory"]
 
         # Compute model dimensions
         self.length = maxCoord[0] - minCoord[0]
@@ -237,7 +237,6 @@ class Model(Material):
         self._isYielding = None
         self._temperatureDot = None
         self._temperature = None
-        self._outputDir = None
         self.DiffusivityFn = None
         self.HeatProdFn = None
         self._buoyancyFn = None
@@ -1354,7 +1353,8 @@ class Model(Material):
         for variable in variables:
             if variable == "temperature" and not self.temperature:
                 continue
-            self._save_field(str(variable), checkpointID)
+            else:
+                self._save_field(str(variable), checkpointID)
 
         if checkpointID > 2:
             for field in rcParams["swarm.variables"]:
