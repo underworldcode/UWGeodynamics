@@ -704,6 +704,14 @@ class Model(Material):
         vals = fn.branching.conditional(conditions).evaluate(self.swarm)
         self.materialField.data[:] = vals
 
+    def add_swarm_field(self, name, dataType, count=1):
+        newField = self.swarm.add_variable(dataType=dataType, count=count)
+        setattr(self, name, newField)
+
+    def add_mesh_field(self, name, dataType, count=1):
+        newField = uw.mesh.MeshVariable(mesh=self.mesh.subMesh, nodeDofCount=1)
+        setattr(self, name, newField)
+
     @property
     def _densityFn(self):
         densityMap = {}
