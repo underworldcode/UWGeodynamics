@@ -238,7 +238,7 @@ class Model(Material):
         self.DiffusivityFn = None
         self.HeatProdFn = None
         self._buoyancyFn = None
-
+        self._stokes_obj = None
         self._initialize()
 
     def _initialize(self):
@@ -556,7 +556,6 @@ class Model(Material):
         )
         return obj
 
-    @property
     def _stokes(self):
         """ Stokes solver """
 
@@ -1124,9 +1123,13 @@ class Model(Material):
 
     def solve(self):
         """ Solve Stokes """
-        self._stokes.solve(nonLinearIterate=True,
-                           callback_post_solve=self._calibrate_pressureField,
-                           nonLinearTolerance=rcParams["nonlinear.tolerance"])
+        if not self._stokes_obj:
+            self._stokes_obj = self._stokes()
+
+        self._stokes_obj.solve(
+            nonLinearIterate=True,
+            callback_post_solve=self._calibrate_pressureField,
+            nonLinearTolerance=rcParams["nonlinear.tolerance"])
         self._solution_exist = True
 
     def init_model(self, temperature=True, pressureField=True):
