@@ -28,7 +28,6 @@ from ._frictional_boundary import FrictionBoundaries
 from ._mesh import FeMesh_Cartesian
 from ._swarm import Swarm
 from ._meshvariable import MeshVariable
-from ._swarmvariable import SwarmVariable
 
 _attributes_to_save = {
     "elementRes": lambda x: tuple(int(val) for val in x.split(","))  ,
@@ -152,14 +151,10 @@ class Model(Material):
         # Add common mesh variables
         # Temperature Field is initialised to None
         self.temperature = None
-        self.pressureField = MeshVariable(mesh=self.mesh.subMesh,
-                                                  nodeDofCount=1)
-        self.velocityField = MeshVariable(mesh=self.mesh,
-                                                  nodeDofCount=self.mesh.dim)
-        self.tractionField = MeshVariable(mesh=self.mesh,
-                                                  nodeDofCount=self.mesh.dim)
-        self._strainRateField = MeshVariable(mesh=self.mesh,
-                                                     nodeDofCount=1)
+        self.pressureField = MeshVariable(mesh=self.mesh.subMesh, nodeDofCount=1)
+        self.velocityField = MeshVariable(mesh=self.mesh, nodeDofCount=self.mesh.dim)
+        self.tractionField = MeshVariable(mesh=self.mesh, nodeDofCount=self.mesh.dim)
+        self._strainRateField = MeshVariable(mesh=self.mesh, nodeDofCount=1)
 
         # Initialise fields to 0.
         self.pressureField.data[...] = 0.
@@ -278,25 +273,21 @@ class Model(Material):
         self._previousStressField.data[:] = [0., 0., 0.]
 
         # Create a bunch of tools to project swarmVariable onto the mesh
-        self._projMaterialField = MeshVariable(mesh=self.mesh,
-                                                       nodeDofCount=1)
+        self._projMaterialField = MeshVariable(mesh=self.mesh, nodeDofCount=1)
 
         self._materialFieldProjector = uw.utils.MeshVariable_Projection(
             self._projMaterialField, self.materialField, type=0)
 
-        self._projViscosityField = MeshVariable(
-            mesh=self.mesh, nodeDofCount=1)
+        self._projViscosityField = MeshVariable(mesh=self.mesh, nodeDofCount=1)
 
         self._viscosityFieldProjector = uw.utils.MeshVariable_Projection(
             self._projViscosityField, self._viscosityField, type=0)
 
-        self._projPlasticStrain = MeshVariable(mesh=self.mesh,
-                                                       nodeDofCount=1)
+        self._projPlasticStrain = MeshVariable(mesh=self.mesh, nodeDofCount=1)
         self._plasticStrainProjector = uw.utils.MeshVariable_Projection(
             self._projPlasticStrain, self.plasticStrain, type=0)
 
-        self._projDensityField = MeshVariable(mesh=self.mesh,
-                                                      nodeDofCount=1)
+        self._projDensityField = MeshVariable(mesh=self.mesh, nodeDofCount=1)
         self._densityFieldProjector = uw.utils.MeshVariable_Projection(
             self._projDensityField, self._densityField, type=0)
 

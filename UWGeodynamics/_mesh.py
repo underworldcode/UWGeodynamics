@@ -6,6 +6,7 @@ from mpi4py import MPI
 from .scaling import Dimensionalize
 from .scaling import nonDimensionalize
 from .scaling import UnitRegistry as u
+import _meshvariable as var 
 
 class FeMesh_Cartesian(uw.mesh.FeMesh_Cartesian):
 
@@ -21,6 +22,36 @@ class FeMesh_Cartesian(uw.mesh.FeMesh_Cartesian):
                                                periodic,
                                                partitioned,
                                                **kwargs)
+    
+    def add_variable(self, nodeDofCount, dataType='double', **kwargs):
+        """
+        Creates and returns a mesh variable using the discretisation of the given mesh.
+
+        To set / read nodal values, use the numpy interface via the 'data' property.
+
+        Parameters
+        ----------
+        dataType : string
+            The data type for the variable.
+            Note that only 'double' type variables are currently
+            supported.
+        nodeDofCount : int
+            Number of degrees of freedom per node the variable will have
+
+        Returns
+        -------
+        underworld.mesh.MeshVariable
+            The newly created mesh variable.
+
+        Example
+        -------
+        >>> linearMesh  = uw.mesh.FeMesh_Cartesian( elementType='Q1/dQ0', elementRes=(16,16), minCoord=(0.,0.), maxCoord=(1.,1.) )
+        >>> scalarFeVar = linearMesh.add_variable( nodeDofCount=1, dataType="double" )
+        >>> q0field     = linearMesh.subMesh.add_variable( 1 )  # adds variable to secondary elementType discretisation
+        """
+
+        return  var.MeshVariable(self, nodeDofCount, dataType, **kwargs)
+    
     def save(self, filename, units=None):
         """
         Save the mesh to disk
