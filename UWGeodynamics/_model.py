@@ -38,6 +38,7 @@ _attributes_to_save = {
     "Tref": lambda x: x if u.Quantity(x).dimensionless else u.Quantity(x)
     }
 
+
 class Model(Material):
     """ This class provides the main UWGeodynamics Model
 
@@ -119,7 +120,7 @@ class Model(Material):
             self.elementType = elementType
 
         self.elementRes = elementRes
-        self.outputDir = rcParams["output.directory"]
+        self._outputDir = rcParams["output.directory"]
 
         # Compute model dimensions
         self.length = maxCoord[0] - minCoord[0]
@@ -236,7 +237,6 @@ class Model(Material):
         self._isYielding = None
         self._temperatureDot = None
         self._temperature = None
-        self._outputDir = None
         self.DiffusivityFn = None
         self.HeatProdFn = None
         self._buoyancyFn = None
@@ -261,6 +261,9 @@ class Model(Material):
                                                      count=1)
         self.meltField = self.swarm.add_variable(dataType="double", count=1)
 
+        self._previousStressField = self.swarm.add_variable(dataType="double",
+                                                            count=3)
+
         # Initialise materialField to Model material
         self.materialField.data[:] = self.index
 
@@ -269,6 +272,7 @@ class Model(Material):
         self._viscosityField.data[:] = 0.
         self._densityField.data[:] = 0.
         self.meltField.data[:] = 0.
+        self._previousStressField.data[:] = [0., 0., 0.]
 
         # Create a bunch of tools to project swarmVariable onto the mesh
         self._projMaterialField = uw.mesh.MeshVariable(mesh=self.mesh,
@@ -567,12 +571,14 @@ class Model(Material):
 
         if any([material.viscosity for material in self.materials]):
 
-            stokes_object = uw.systems.Stokes(velocityField=self.velocityField,
-                                              pressureField=self.pressureField,
-                                              conditions=self._velocityBCs,
-                                              fn_viscosity=self._viscosityFn,
-                                              fn_bodyforce=self._buoyancyFn,
-                                              fn_one_on_lambda=None)
+            stokes_object = uw.systems.Stokes(
+                velocityField=self.velocityField,
+                pressureField=self.pressureField,
+                conditions=self._velocityBCs,
+                fn_viscosity=self._viscosityFn,
+                fn_bodyforce=self._buoyancyFn,
+                fn_stresshistory=self._elastic_stressFn,
+                fn_one_on_lambda=None)
 
             solver = uw.systems.Solver(stokes_object)
             solver.set_inner_method(rcParams["solver"])
@@ -636,7 +642,8 @@ class Model(Material):
             raise ValueError("Set Boundary Conditions")
         return self.velocityBCs.get_conditions()
 
-    def add_material(self, material=None, shape=None, name="unknown", reset=False):
+    def add_material(self, material=None, shape=None, name="unknown",
+                     reset=False):
         """ Add Material to the Model
 
         Parameters:
@@ -774,21 +781,20 @@ class Model(Material):
                 ViscosityHandler.strainRateInvariantField = (
                     self._strainRate_2ndInvariant)
                 ViscosityHandler.temperatureField = self.temperature
-
-                if not material.minViscosity:
-                    minViscosity = self.minViscosity
-                else:
-                    minViscosity = material.minViscosity
-
-                if not material.maxViscosity:
-                    maxViscosity = self.maxViscosity
-                else:
-                    maxViscosity = material.maxViscosity
-
-                viscosity_limiter = ViscosityLimiter(minViscosity,
-                                                     maxViscosity)
-                ViscosityHandler.viscosityLimiter = viscosity_limiter
                 ViscosityMap[material.index] = ViscosityHandler.muEff
+
+        # Elasticity
+        for material in self.materials:
+            if material.elasticity:
+
+                # We are dealing with viscous material
+                # Raise an error is no viscosity has been defined.
+                if not material.viscosity:
+                    raise ValueError("""Viscosity undefined for
+                                     {0}""".format(material.name))
+                ElasticityHandler = material.elasticity
+                ElasticityHandler.viscosity = ViscosityMap[material.index]
+                ViscosityMap[material.index] = ElasticityHandler.muEff
 
         # Melt Modifier
         for material in self.materials:
@@ -806,38 +812,23 @@ class Model(Material):
         # Plasticity
         PlasticityMap = {}
         for material in self.materials:
-
             if material.plasticity:
 
                 YieldHandler = material.plasticity
                 YieldHandler.pressureField = self.pressureField
                 YieldHandler.plasticStrain = self.plasticStrain
+
                 if self.mesh.dim == 2:
                     yieldStress = YieldHandler._get_yieldStress2D()
+
                 if self.mesh.dim == 3:
                     yieldStress = YieldHandler._get_yieldStress3D()
+
                 eij = fn.branching.conditional(
-                    [(self._strainRate_2ndInvariant < sys.float_info.epsilon,
-                      sys.float_info.epsilon),
+                    [(self._strainRate_2ndInvariant < 1e-18, 1e-18),
                      (True, self._strainRate_2ndInvariant)])
-                # eij = fn.branching.conditional(
-                    # [(self._solution_exist, eij),
-                     # (True, nd(self._default_strain_rate))])
+
                 muEff = 0.5 * yieldStress / eij
-
-                if not material.minViscosity:
-                    minViscosity = self.minViscosity
-                else:
-                    minViscosity = material.minViscosity
-
-                if not material.maxViscosity:
-                    maxViscosity = self.maxViscosity
-                else:
-                    maxViscosity = material.maxViscosity
-
-                viscosity_limiter = ViscosityLimiter(minViscosity,
-                                                     maxViscosity)
-                muEff = viscosity_limiter.apply(muEff)
                 PlasticityMap[material.index] = muEff
 
             if self.frictionalBCs is not None:
@@ -851,33 +842,18 @@ class Model(Material):
                         self.frictionalBCs.friction)
                     YieldHandler.pressureField = self.pressureField
                     YieldHandler.plasticStrain = self.plasticStrain
+
                     if self.mesh.dim == 2:
                         yieldStress = YieldHandler._get_yieldStress2D()
+
                     if self.mesh.dim == 3:
                         yieldStress = YieldHandler._get_yieldStress3D()
+
                     eij = fn.branching.conditional(
-                        [(self._strainRate_2ndInvariant <
-                          sys.float_info.epsilon,
-                          sys.float_info.epsilon),
+                        [(self._strainRate_2ndInvariant <= 1e-18, 1e-18),
                          (True, self._strainRate_2ndInvariant)])
-                    # eij = fn.branching.conditional(
-                        # [(self._solution_exist, eij),
-                         # (True, nd(self._default_strain_rate))])
+
                     muEff = 0.5 * yieldStress / eij
-
-                    if not material.minViscosity:
-                        minViscosity = self.minViscosity
-                    else:
-                        minViscosity = material.minViscosity
-
-                    if not material.maxViscosity:
-                        maxViscosity = self.maxViscosity
-                    else:
-                        maxViscosity = material.maxViscosity
-
-                    viscosity_limiter = ViscosityLimiter(minViscosity,
-                                                         maxViscosity)
-                    muEff = viscosity_limiter.apply(muEff)
 
                     conditions = [(self.frictionalBCs._mask == 1, muEff),
                                   (True, PlasticityMap[material.index])]
@@ -890,19 +866,33 @@ class Model(Material):
         EffViscosityMap = {}
         PlasticMap = {}
         for material in self.materials:
+
+            if not material.minViscosity:
+                minViscosity = nd(self.minViscosity)
+            else:
+                minViscosity = nd(material.minViscosity)
+
+            if not material.maxViscosity:
+                maxViscosity = nd(self.maxViscosity)
+            else:
+                maxViscosity = nd(material.maxViscosity)
+
+            vlim = ViscosityLimiter(minViscosity,
+                                    maxViscosity)
             idx = material.index
             if material.viscosity and material.plasticity:
-                EffViscosityMap[idx] = fn.misc.min(PlasticityMap[idx],
-                                                   ViscosityMap[idx])
-                BGViscosityMap[idx] = ViscosityMap[idx]
+                EffViscosityMap[idx] = vlim.apply(
+                    fn.misc.min(PlasticityMap[idx],
+                                ViscosityMap[idx]))
+                BGViscosityMap[idx] = vlim.apply(ViscosityMap[idx])
                 PlasticMap[idx] = 0.
             elif material.viscosity:
-                EffViscosityMap[idx] = ViscosityMap[idx]
-                BGViscosityMap[idx] = ViscosityMap[idx]
+                EffViscosityMap[idx] = vlim.apply(ViscosityMap[idx])
+                BGViscosityMap[idx] = vlim.apply(ViscosityMap[idx])
                 PlasticMap[idx] = 0.
             elif material.plasticity:
-                EffViscosityMap[idx] = PlasticityMap[idx]
-                BGViscosityMap[idx] = PlasticityMap[idx]
+                EffViscosityMap[idx] = vlim.apply(PlasticityMap[idx])
+                BGViscosityMap[idx] = vlim.apply(PlasticityMap[idx])
                 PlasticMap[idx] = 1.0
 
         viscosityFn = fn.branching.map(fn_key=self.materialField,
@@ -925,6 +915,50 @@ class Model(Material):
             self._isYielding = fn.misc.constant(0.0)
 
         return viscosityFn
+
+    @property
+    def _stressFn(self):
+        """ Calculate the viscous stress """
+        stressMap = {}
+        for material in self.materials:
+            # Calculate viscous stress
+            viscousStressFn = self._viscous_stressFn()
+            elasticStressFn = self._elastic_stressFn
+            stressMap[material.index] = viscousStressFn + elasticStressFn
+
+        return fn.branching.map(fn_key=self.materialField,
+                                mapping=stressMap)
+
+    def _viscous_stressFn(self):
+        return 2. * self._viscosityFn * self.strainRate
+
+    @property
+    def _elastic_stressFn(self):
+        stressMap = {}
+        for material in self.materials:
+            if material.elasticity:
+                ElasticityHandler = material.elasticity
+                ElasticityHandler.viscosity = self._viscosityFn
+                ElasticityHandler.previousStress = self._previousStressField
+                elasticStressFn = ElasticityHandler.elastic_stress
+            else:
+                # Set elastic stress to zero if material
+                # has no elasticity
+                elasticStressFn = [0.0, 0.0, 0.0]
+            stressMap[material.index] = elasticStressFn
+        return fn.branching.map(fn_key=self.materialField,
+                                mapping=stressMap)
+
+    def _update_stress_history(self, dt):
+        dt_e = []
+        for material in self.materials:
+            if material.elasticity:
+                dt_e.append(nd(material.elasticity.observation_time))
+        dt_e = np.array(dt_e).min()
+        phi = dt / dt_e
+        veStressFn_data = self._elastic_stressFn.evaluate(self.swarm)
+        self._previousStressField.data[:] *= (1. - phi)
+        self._previousStressField.data[:] += phi * veStressFn_data[:]
 
     @property
     def _yieldStressFn(self):
@@ -1116,6 +1150,17 @@ class Model(Material):
             if user_dt:
                 self._dt = min(self._dt, user_dt)
 
+            dte = []
+            for material in self.materials:
+                if material.elasticity:
+                    dte.append(nd(material.elasticity.observation_time))
+
+            if dte:
+                dte = np.array(dte).min()
+                # Cap dt for observation time, dte / 3.
+                if dte and self._dt > (dte / 3.):
+                    self._dt = dte / 3.
+
             uw.barrier()
 
             self._update()
@@ -1136,6 +1181,12 @@ class Model(Material):
                           'dt:', str(Dimensionalize(self._dt, units)))
         return 1
 
+    def preSolveHook(self):
+        return
+
+    def postSolveHook(self):
+        return
+
     def _update(self):
         """ Update Function
 
@@ -1144,6 +1195,8 @@ class Model(Material):
         update the fields according to the Model state.
 
         """
+
+        self.preSolveHook()
 
         dt = self._dt
         # Increment plastic strain
@@ -1161,6 +1214,10 @@ class Model(Material):
 
         # Integrate Swarms in time
         self.swarm_advector.integrate(dt, update_owners=True)
+
+        # Update stress
+        if any([material.elasticity for material in self.materials]):
+            self._update_stress_history(dt)
 
         if self.passive_tracers:
             for tracers in self.passive_tracers:
@@ -1180,6 +1237,8 @@ class Model(Material):
 
         if self._visugrid:
             self._visugrid.advect(dt)
+
+        self.postSolveHook()
 
     def mesh_advector(self, axis):
         """ Initialize the mesh advector
@@ -1349,7 +1408,8 @@ class Model(Material):
         Parameters:
         -----------
             elementRes:
-                Grid resolution in number of elements along each axis (x, y, z).
+                Grid resolution in number of elements
+                along each axis (x, y, z).
             minCoord:
                 Minimum coordinate for each axis.
                 Used to define the extent of the grid,
@@ -1415,7 +1475,6 @@ def load_model(filename):
     import warnings
 
     warnings.warn("Functionality in development", UserWarning)
-
 
     def convert(obj):
         try:

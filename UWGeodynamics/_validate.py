@@ -53,7 +53,7 @@ def validate_float(s):
         raise ValueError("Could not convert value to float") 
 
 def validate_solver(s):
-    if s in ["mg", "mumps"]:
+    if s in ["mg", "mumps", "lu"]:
         return s
     else:
         raise ValueError("Wrong solver option")

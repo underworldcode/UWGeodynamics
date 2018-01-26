@@ -237,21 +237,39 @@ class VonMises(object):
         self.cohesionWeakeningFn = linearCohesionWeakening
 
     @property
-    def _cohesion(self):
+    def cohesion(self):
+        return self._cohesion
+
+    @cohesion.setter
+    def cohesion(self, value):
+        self._cohesion = value
+
+    @property
+    def cohesionAfterSoftening(self):
+        return self._cohesionAfterSoftening
+
+    @cohesionAfterSoftening.setter
+    def cohesionAfterSoftening(self, value):
+        if value:
+            self._cohesionAfterSoftening = value
+        else:
+            self._cohesionAfterSoftening = self.cohesion
+
+    def _cohesionFn(self):
         if self.plasticStrain:
             cohesion = self.cohesionWeakeningFn(
                 self.plasticStrain,
                 Cohesion=nd(self.cohesion),
                 CohesionSw=nd(self.cohesionAfterSoftening))
         else:
-            cohesion = fn.misc.constant(self.cohesion)
+            cohesion = fn.misc.constant(nd(self.cohesion))
         return cohesion
-        
+
     def _get_yieldStress2D(self):
-        return self._cohesion
+        return self._cohesionFn()
 
     def _get_yieldStress3D(self):
-        return self._cohesion
+        return self._cohesionFn()
 
 
 class ConstantViscosity(Rheology):
@@ -598,3 +616,55 @@ class PlasticityRegistry(object):
     def __getattr__(self, item):
         # Make sure to return a new instance of ViscousCreep
         return copy(self._dir[item])
+
+
+class Elasticity(Rheology):
+
+    def __init__(self, shear_modulus, observation_time):
+        super(Elasticity, self).__init__()
+        self.shear_modulus = shear_modulus
+        self.observation_time = observation_time
+        self.previousStress = None
+
+    @property
+    def muEff(self):
+        return self._effectiveViscosity()
+
+    def _effectiveViscosity(self):
+        if not self.viscosity:
+            raise ValueError("Can not find viscosity field")
+
+        # Maxwell relaxation time
+        alpha = self.viscosity / nd(self.shear_modulus)
+        # observation time
+        dt_e = nd(self.observation_time)
+        # Calculate effective viscosity
+        mu_eff = (self.viscosity * dt_e) / (alpha + dt_e)
+        if self._viscosity_limiter:
+            mu_eff = self._viscosity_limiter.apply(mu_eff)
+        return mu_eff
+
+    @property
+    def elastic_stress(self):
+        return self._elastic_stress()
+
+    def _elastic_stress(self):
+        # Check that the viscosity field has been properly
+        # linked
+        if not self.viscosity:
+            raise ValueError("Can not find viscosity field")
+        if not self.previousStress:
+            raise ValueError("Can not find previous stress field")
+
+        eta_eff = self.muEff
+        elasticStressFn = eta_eff / (nd(self.shear_modulus) *
+                                     nd(self.observation_time))
+        elasticStressFn *= self.previousStress
+        return elasticStressFn
+
+    @property
+    def elastic_strainRate(self):
+        return self._elastic_strainRate()
+
+    def _elastic_strainRate(self):
+        return self.elastic_stress / (2.0 * self.viscosity)
