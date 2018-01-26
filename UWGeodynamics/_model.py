@@ -1155,11 +1155,12 @@ class Model(Material):
             for material in self.materials:
                 if material.elasticity:
                     dte.append(nd(material.elasticity.observation_time))
-                dte = np.array(dte).min()
 
-            # Cap dt for observation time, dte / 3.
-            if self._dt > (dte / 3.):
-                self._dt = dte / 3.
+            if dte:
+                dte = np.array(dte).min()
+                # Cap dt for observation time, dte / 3.
+                if dte and self._dt > (dte / 3.):
+                    self._dt = dte / 3.
 
             uw.barrier()
 
