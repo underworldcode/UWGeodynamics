@@ -593,6 +593,8 @@ class Model(Material):
                                        back=back, indexSets=indexSets)
         return self.velocityBCs.get_conditions()
 
+    set_mechanicalBCs = set_velocityBCs
+
     @property
     def _velocityBCs(self):
         """ Retrieve kinematic boundary conditions """
