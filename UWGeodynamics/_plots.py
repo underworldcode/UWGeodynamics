@@ -74,10 +74,10 @@ class Plots(object):
         boundingBox = (minCoord, maxCoord)
         return boundingBox
 
-    def material(self, figsize=None, title="Material Field",
-                 colours=None, script=None, cullface=False,
-                 mask=None, visugrid=None, onMesh=False,
-                 tracers=[], show=True, store=None, **kwargs):
+    def materialField(self, figsize=None, title="Material Field",
+                      colours=None, script=None, cullface=False,
+                      mask=None, visugrid=None, onMesh=False,
+                      tracers=[], show=True, store=None, **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize)
         Fig["title"] = title
@@ -101,15 +101,18 @@ class Plots(object):
 
         Fig.script(script)
         if show:
+            #Fig.viewer().window()
             Fig.show()
 
         return Fig
 
-    def viscosity(self, figsize=None, title="Viscosity Field",
-                  units=u.pascal * u.second, logScale=True,
-                  projected=False, cullface=False,
-                  script=None, show=True,
-                  store=None, **kwargs):
+    material = materialField
+
+    def viscosityField(self, figsize=None, title="Viscosity Field",
+                       units=u.pascal * u.second, logScale=True,
+                       projected=False, cullface=False,
+                       script=None, show=True,
+                       store=None, **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize)
         Fig["title"] = title + " " + str(units)
@@ -124,6 +127,8 @@ class Plots(object):
             Fig.show()
 
         return Fig
+
+    viscosity = viscosityField
 
     def strainRate(self, figsize=None, title="Strain Rate Field",
                    units=1.0 / u.second,
@@ -231,9 +236,9 @@ class Plots(object):
 
         return Fig
 
-    def plastic_strain(self, figsize=None, title="Plastic Strain",
-                       cullface=False, script=None, show=True,
-                       store=None, **kwargs):
+    def plasticStrain(self, figsize=None, title="Plastic Strain",
+                      cullface=False, script=None, show=True,
+                      store=None, **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize)
         Fig["title"] = title
@@ -247,6 +252,8 @@ class Plots(object):
             Fig.show()
 
         return Fig
+
+    plastic_strain = plasticStrain
 
     def melt_fraction(self, figsize=None, title="Melt fraction",
                       cullface=False, script=None, show=True,
