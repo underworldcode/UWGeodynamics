@@ -36,11 +36,11 @@ class Polygon(Shape):
 
 class Layer(Shape):
 
-    def __init__(self, top, bottom):
+    def __init__(self, top, bottom, minY=None, maxY=None):
         self.top = top
         self.bottom = bottom
-        self.minY = None
-        self.maxY = None
+        self.minY = minY
+        self.maxY = maxY
 
     def _init_shape(self):
         coord = fn.input()
