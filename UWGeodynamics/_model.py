@@ -252,7 +252,7 @@ class Model(Material):
         self.add_swarm_field("plasticStrain", dataType="double", count=1)
         self.add_swarm_field("_viscosityField", dataType="double", count=1)
         self.add_swarm_field("_densityField", dataType="double", count=1)
-        self.add_swarm_field("_meltField", dataType="double", count=1)
+        self.add_swarm_field("meltField", dataType="double", count=1)
         self.add_swarm_field("_previousStressField", dataType="double",
                              count=3)
 
