@@ -152,7 +152,7 @@ class MeshVariable(uw.mesh.MeshVariable):
         uw.libUnderworld.StgFEM._FeVariable_SyncShadowValues( self._cself )
         h5f.close()
 
-    def _save_meshVariable( self, filename, meshHandle=None, units=None):
+    def save(self, filename, meshHandle=None, units=None):
         """
         Save the MeshVariable to disk.
     
