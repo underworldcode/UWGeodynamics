@@ -28,6 +28,7 @@ rcParams = {
                           "temperature",
                           "pressureField",
                           "plasticStrain",
+                          "strainRateField",
                           "velocityField",
                           "viscosityField"], validate_stringlist],
     "glucifer.outputs" : [["materialField",
