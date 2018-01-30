@@ -22,7 +22,7 @@ def linearFrictionWeakening(cumulativeTotalStrain, FrictionCoef, FrictionCoefSw,
                    (True, FrictionCoef + ((FrictionCoef - FrictionCoefSw)/(epsilon1 - epsilon2)) * (cumulativeTotalStrain - epsilon1))]
 
     frictionVal = fn.branching.conditional(frictionVal)
- 
+
     return fn.math.atan(frictionVal)
 
 
@@ -36,26 +36,27 @@ class ViscosityLimiter(object):
     def apply(self, viscosityField):
         maxBound = fn.misc.min(viscosityField, nd(self.maxViscosity))
         minMaxBound = fn.misc.max(maxBound, nd(self.minViscosity))
-        return minMaxBound 
+        return minMaxBound
 
 
 class Rheology(object):
 
     def __init__(self, pressureField=None, strainRateInvariantField=None,
-                 temperatureField=None, viscosityLimiter=None, stressLimiter=None):
+                 temperatureField=None, viscosityLimiter=None,
+                 stressLimiter=None):
 
         self.pressureField = pressureField
         self.strainRateInvariantField = strainRateInvariantField
         self.temperatureField = temperatureField
         self._viscosity_limiter = viscosityLimiter
         self.stressLimiter = stressLimiter
-        self.firstIter = True
-        
+        self.firstIter = fn.misc.constant(True)
+
         self.viscosity = None
         self.plasticity = None
         self.cohesion = None
         self.friction = None
-        
+
         return
 
 
@@ -69,7 +70,7 @@ class _DruckerPragerEncoder(JSONEncoder):
         "minimumViscosity",
         "epsilon1",
         "epsilon2"]
-    
+
     def default(self, obj):
         d = {}
 
@@ -92,14 +93,14 @@ class DruckerPrager(object):
         self._frictionCoefficient = frictionCoefficient
         self.cohesionAfterSoftening = cohesionAfterSoftening
         self.frictionAfterSoftening = frictionAfterSoftening
-        
+
         self.minimumViscosity = minimumViscosity
-        
+
         self.plasticStrain = plasticStrain
         self.pressureField = pressureField
         self.epsilon1 = epsilon1
         self.epsilon2 = epsilon2
-        
+
         self.cohesionWeakeningFn = linearCohesionWeakening
         self.frictionWeakeningFn = linearFrictionWeakening
 
@@ -119,7 +120,7 @@ class DruckerPrager(object):
             "minimumViscosity",
             "epsilon1",
             "epsilon2"]
-        
+
         d = {}
 
         for attribute in attributes:
@@ -142,7 +143,7 @@ class DruckerPrager(object):
         for key, val in attributes.iteritems():
             html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
 
-        return header + html + footer      
+        return header + html + footer
 
     @property
     def cohesion(self):
@@ -166,11 +167,11 @@ class DruckerPrager(object):
     @property
     def frictionCoefficient(self):
         return self._frictionCoefficient
-    
+
     @frictionCoefficient.setter
     def frictionCoefficient(self, value):
         self._frictionCoefficient = value
-    
+
     @property
     def frictionAfterSoftening(self):
         return self._frictionAfterSoftening
@@ -181,7 +182,7 @@ class DruckerPrager(object):
             self._frictionAfterSoftening = value
         else:
             self._frictionAfterSoftening = self.frictionCoefficient
-    
+
     def _frictionFn(self):
         if self.plasticStrain:
             friction = self.frictionWeakeningFn(
@@ -203,7 +204,7 @@ class DruckerPrager(object):
         else:
             cohesion = fn.misc.constant(self.cohesion)
         return cohesion
-        
+
     def _get_yieldStress2D(self):
         f = self._frictionFn()
         C = self._cohesionFn()
@@ -215,7 +216,7 @@ class DruckerPrager(object):
         f = self._frictionFn()
         C = self._cohesionFn()
         P = self.pressureField
-        self.yieldStress = 6.0*C*fn.math.cos(f) + 2.0*fn.math.sin(f)*fn.misc.max(P, 0.0) 
+        self.yieldStress = 6.0*C*fn.math.cos(f) + 2.0*fn.math.sin(f)*fn.misc.max(P, 0.0)
         self.yieldStress /= (fn.math.sqrt(3.0) * (3.0 + fn.math.sin(f)))
         return self.yieldStress
 
@@ -329,7 +330,7 @@ class _ViscousCreepEncoder(JSONEncoder):
             d[attribute] = str(obj[attribute])
 
         return d
-        
+
 
 class ViscousCreep(Rheology):
 
@@ -351,9 +352,9 @@ class ViscousCreep(Rheology):
                  meltFractionFactor=0.0,
                  f=1.0,
                  mineral="unspecified"):
-        
+
         super(ViscousCreep, self).__init__()
-        
+
         self.name = name
         self.mineral = mineral
         self.strainRateInvariantField = strainRateInvariantField
@@ -371,12 +372,12 @@ class ViscousCreep(Rheology):
         self.waterFugacityExponent = waterFugacityExponent
         self.meltFractionFactor = meltFractionFactor
         self.f = f
-        self.constantGas = 8.3144621 * u.joule / u.mole / u.degK  
+        self.constantGas = 8.3144621 * u.joule / u.mole / u.degK
 
     def __mul__(self, other):
         self.f = other
         return self
-    
+
     def __rmul__(self, other):
         self.f = other
         return self
@@ -409,7 +410,7 @@ class ViscousCreep(Rheology):
             if val is not None:
                 html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
 
-        return header + html + footer  
+        return header + html + footer
 
     def _json_(self):
         return json.dumps(self, cls=_ViscousCreepEncoder)
@@ -447,19 +448,19 @@ class ViscousCreep(Rheology):
         return self._effectiveViscosity()
 
     def _effectiveViscosity(self):
-        """ 
-        Return effetive viscosity based on 
+        """
+        Return effetive viscosity based on
 
         Power law creep equation
         viscosity = 0.5 * A^(-1/n) * edot_ii^((1-n)/n) * d^(m/n) * exp((E + P*V)/(nRT))
-        
+
         A: prefactor
         I: square root of second invariant of deviatoric strain rate tensor,
         d: grain size,
         p: grain size exponent,
-        E: activation energy, 
+        E: activation energy,
         P: pressure,
-        Va; activation volume, 
+        Va; activation volume,
         n: stress exponent,
         R: gas constant,
         T: temperature.
@@ -485,7 +486,7 @@ class ViscousCreep(Rheology):
 
         if np.abs(n - 1.0) > 1e-5:
             mu_eff *= I**((1.0-n)/n)
-        
+
         # Grain size dependency
         if p and d:
             mu_eff *= d**(p/n)
@@ -502,7 +503,7 @@ class ViscousCreep(Rheology):
 
         if self._viscosity_limiter:
             mu_eff = self._viscosity_limiter.apply(mu_eff)
-        
+
         return mu_eff
 
     def _get_second_invariant(self):
@@ -531,7 +532,7 @@ class _TemperatureAndDepthDependentViscosityEncoder(JSONEncoder):
 class TemperatureAndDepthDependentViscosity(Rheology):
 
     def __init__(self, eta0, beta,  gamma, reference, temperatureField=None):
-        
+
         self._eta0 = nd(eta0)
         self._gamma = gamma
         self._beta = gamma
@@ -541,7 +542,7 @@ class TemperatureAndDepthDependentViscosity(Rheology):
     def muEff(self):
         coord = fn.input()
         return self._eta0 * fn.math.exp(gamma * (coord[-1] - reference))
-    
+
     def _json_(self):
         return json.dumps(
             self, cls=_TemperatureAndDepthDependentViscosityEncoder)
@@ -585,7 +586,7 @@ class ViscousCreepRegistry(object):
 
 class PlasticityRegistry(object):
     def __init__(self, filename=None):
-        
+
         if not filename:
             import pkg_resources
             filename = pkg_resources.resource_filename(__name__, "ressources/PlasticRheologies.json")

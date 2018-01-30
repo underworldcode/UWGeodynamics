@@ -228,7 +228,7 @@ class Model(Material):
 
         # Initialise remaining attributes
         self._default_strain_rate = 1e-15 / u.second
-        self._solution_exist = False
+        self._solution_exist = fn.misc.constant(False)
         self._isYielding = None
         self._temperatureDot = None
         self._temperature = None
@@ -950,7 +950,7 @@ class Model(Material):
                            (True, 0.0)]
 
         # Do not yield at the very first solve
-        if self._solution_exist:
+        if self._solution_exist.value:
             self._isYielding = (fn.branching.conditional(yieldConditions) *
                                 self._strainRate_2ndInvariant)
         else:
@@ -1092,18 +1092,17 @@ class Model(Material):
             integrationType='surface',
             surfaceIndexSet=self._top_wall
         )
-
-        area, _ = surfaceArea.evaluate()
-        p0, _ = surfacepressureFieldIntegral.evaluate()
+        area, = surfaceArea.evaluate()
+        p0, = surfacepressureFieldIntegral.evaluate()
         offset = p0 / area
         self.pressureField.data[:] -= offset
         self.pressSmoother.smooth()
 
         for material in self.materials:
             if material.viscosity:
-                material.viscosity.firstIter = False
+                material.viscosity.firstIter.value = False
 
-        self._solution_exist = True
+        self._solution_exist.value = True
 
     def _get_material_indices(self, material):
         """ Get mesh indices of a Material
@@ -1131,7 +1130,7 @@ class Model(Material):
             nonLinearIterate=True,
             callback_post_solve=self._calibrate_pressureField,
             nonLinearTolerance=rcParams["nonlinear.tolerance"])
-        self._solution_exist = True
+        self._solution_exist.value = True
 
     def init_model(self, temperature=True, pressureField=True):
         """ Initialize the Temperature Field as steady state,
