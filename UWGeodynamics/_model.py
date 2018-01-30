@@ -1425,9 +1425,10 @@ class Model(Material):
         GluciferStore.step = step
 
         for field in rcParams["glucifer.outputs"]:
-            func = eval("self.plot." + field)
-            fig = func(store=GluciferStore, show=False)
-            fig.save()
+            if self.field:
+                func = eval("self.plot." + field)
+                fig = func(store=GluciferStore, show=False)
+                fig.save()
 
     def add_visugrid(self, elementRes, minCoord=None, maxCoord=None):
         """ Add a tracking grid to the Model
