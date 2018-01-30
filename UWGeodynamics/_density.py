@@ -53,13 +53,13 @@ class LinearDensity(Density):
 
         # Temperature dependency
         if not self.temperatureField:
-            raise RuntimeError("Not temperatureField found!")
+            raise RuntimeError("No temperatureField found!")
 
         t_term = self._alpha * (self.temperatureField - self._Tref)
 
         # Pressure dependency
         if not self.pressureField:
-            raise RuntimeError("Not temperatureField found!")
+            raise RuntimeError("No pressureField found!")
 
         p_term = self._beta * (self.pressureField - self._Pref)
 
