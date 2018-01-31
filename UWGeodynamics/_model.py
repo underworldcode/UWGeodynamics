@@ -253,8 +253,14 @@ class Model(Material):
         self.add_swarm_field("_viscosityField", dataType="double", count=1)
         self.add_swarm_field("_densityField", dataType="double", count=1)
         self.add_swarm_field("meltField", dataType="double", count=1)
+
+        if self.mesh.dim == 3:
+            stress_dim = 6
+        else:
+            stress_dim = 3
+
         self.add_swarm_field("_previousStressField", dataType="double",
-                             count=3)
+                             count=stress_dim)
 
     def __getitem__(self, name):
         return self.__dict__[name]
@@ -976,20 +982,22 @@ class Model(Material):
 
     @property
     def _elastic_stressFn(self):
-        stressMap = {}
-        for material in self.materials:
-            if material.elasticity:
-                ElasticityHandler = material.elasticity
-                ElasticityHandler.viscosity = self._viscosityFn
-                ElasticityHandler.previousStress = self._previousStressField
-                elasticStressFn = ElasticityHandler.elastic_stress
-            else:
-                # Set elastic stress to zero if material
-                # has no elasticity
-                elasticStressFn = [0.0, 0.0, 0.0]
-            stressMap[material.index] = elasticStressFn
-        return fn.branching.map(fn_key=self.materialField,
-                                mapping=stressMap)
+        if any([material.melt for material in self.materials]):
+            stressMap = {}
+            for material in self.materials:
+                if material.elasticity:
+                    ElasticityHandler = material.elasticity
+                    ElasticityHandler.viscosity = self._viscosityFn
+                    ElasticityHandler.previousStress = self._previousStressField
+                    elasticStressFn = ElasticityHandler.elastic_stress
+                else:
+                    # Set elastic stress to zero if material
+                    # has no elasticity
+                    elasticStressFn = [0.0, 0.0, 0.0]
+                stressMap[material.index] = elasticStressFn
+            return fn.branching.map(fn_key=self.materialField,
+                                    mapping=stressMap)
+        return
 
     def _update_stress_history(self, dt):
         dt_e = []
