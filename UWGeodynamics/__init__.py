@@ -522,7 +522,8 @@ def rc_params_from_file(fname, fail_on_error=False, use_default_template=True):
                                       if key not in _all_deprecated])
     config.update(config_from_file)
 
-    print('loaded rc file %s' % fname)
+    if underworld.rank() == 0:
+        print('loaded rc file %s' % fname)
 
     return config
 
