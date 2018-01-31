@@ -106,7 +106,9 @@ class SPM(object):
     def solve(self, dt, sigma=0):
           
         if rank == 0 and self.verbose:
-            print "Processing surface with Badlands"
+            purple = "\033[0;35m"
+            endcol = "\033[00m"
+            print(purple+"Processing surface with Badlands"+endcol)
 
         dt_years = Dimensionalize(dt, UnitRegistry.years).magnitude
 
@@ -144,7 +146,9 @@ class SPM(object):
         comm.Barrier()
 
         if rank == 0 and self.verbose:
-            print "Processing surface with Badlands ... Done"
+            purple = "\033[0;35m"
+            endcol = "\033[00m"
+            print(purple + "Processing surface with Badlands...Done" + endcol)
 
         return
     
