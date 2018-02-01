@@ -1416,13 +1416,13 @@ class Model(Material):
             else:
                 self._save_field(str(variable), checkpointID)
 
-        if checkpointID > 2:
-            for field in rcParams["swarm.variables"]:
-                try:
-                    os.remove(os.path.join(self.outputDir,
-                                           field + "-%s" % checkpointID - 2))
-                except:
-                    pass
+        #if checkpointID > 2:
+        #    for field in rcParams["swarm.variables"]:
+        #        try:
+        #            os.remove(os.path.join(self.outputDir,
+        #                                   field + "-%s" % checkpointID - 2))
+        #        except:
+        #            pass
 
     def output_glucifer_figures(self, step):
         """ Output glucifer Figures to the gldb store """
