@@ -156,7 +156,7 @@ class Model(Material):
         self.add_submesh_field("pressureField", nodeDofCount=1)
         self.add_mesh_field("velocityField", nodeDofCount=self.mesh.dim)
         self.add_mesh_field("tractionField", nodeDofCount=self.mesh.dim)
-        self.add_mesh_field("_strainRateField", nodeDofCount=1)
+        self.add_submesh_field("_strainRateField", nodeDofCount=1)
 
         # symmetric component of the gradient of the flow velocityField.
         self.strainRate = fn.tensor.symmetric(self.velocityField.fn_gradient)
@@ -383,7 +383,7 @@ class Model(Material):
     def strainRateField(self):
         """ Strain Rate Field """
         self._strainRateField.data[:] = self._strainRate_2ndInvariant.evaluate(
-            self.mesh)
+            self.mesh.subMesh)
         return self._strainRateField
 
     @property

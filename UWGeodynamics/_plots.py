@@ -142,7 +142,7 @@ class Plots(object):
         Fig["boundingBox"] = self._boundingBox
 
         fact = Dimensionalize(1.0, units).magnitude
-        Fig.Surface(self.Model.mesh,
+        Fig.Surface(self.Model.mesh.subMesh,
                     self.Model._strainRate_2ndInvariant * fact,
                     cullface=cullface, logScale=logScale,
                     onMesh=onMesh, colours=colours,
