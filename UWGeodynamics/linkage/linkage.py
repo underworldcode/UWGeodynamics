@@ -23,7 +23,7 @@ class SPM(object):
                  sedimentIndex, XML, resolution, checkpoint_interval,
                  surfElevation=0., verbose=True, restartStep=None,
                  restartFolder=None):
-        
+
         self.SECONDS_PER_YEAR = 31556925.9747  # Tropical year in seconds
         self.verbose = verbose
         self.restartStep = restartStep
@@ -79,17 +79,17 @@ class SPM(object):
             np.savetxt(self._demfile, self.dem)
             # Build Mesh
             self.badlands_model.build_mesh(self._demfile, verbose=False)
-        
+
             self.badlands_model.input.disp3d = True  # enable 3D displacements
             self.badlands_model.input.region = 0  # TODO: check what this does
-        
+
             # Override the checkpoint/display interval in the Badlands model to
             # ensure BL and UW are synced
             self.badlands_model.input.tDisplay = self.checkpoint_interval
 
             # Set Badlands minimal distance between nodes before regridding
             self.badlands_model.force.merge3d = self.badlands_model.input.Afactor * self.badlands_model.recGrid.resEdges * 0.5
-        
+
             # Bodge Badlands to perform an initial checkpoint
             # FIXME: we need to run the model for at least one iteration before this is generated. It would be nice if this wasn't the case.
             self.badlands_model.force.next_display = 0
@@ -104,7 +104,7 @@ class SPM(object):
         comm.Barrier()
 
     def solve(self, dt, sigma=0):
-          
+
         if rank == 0 and self.verbose:
             purple = "\033[0;35m"
             endcol = "\033[00m"
@@ -138,7 +138,7 @@ class SPM(object):
 
             # Run the Badlands model to the same time point
             self.badlands_model.run_to_time(self.time_years+dt_years)
-        
+
         self.time_years += dt_years
 
         # TODO: Improve the performance of this function
@@ -151,9 +151,9 @@ class SPM(object):
             print(purple + "Processing surface with Badlands...Done" + endcol)
 
         return
-    
+
     def _determine_particle_state_2D(self):
-        
+
         if rank == 0:
             known_xy = self.badlands_model.recGrid.tinMesh['vertices']*self.scaleDIM  # points that we have known elevation for
             known_z = self.badlands_model.elevation*self.scaleDIM  # elevation for those points
@@ -171,20 +171,20 @@ class SPM(object):
         ys = comm.bcast(ys, root=0)
 
         comm.Barrier()
-        
+
         grid_x, grid_y = np.meshgrid(xs, ys)
         interpolate_z = griddata(known_xy, known_z, (grid_x, grid_y), method='nearest').T
         interpolate_z = interpolate_z.mean(axis=1)
-      
+
         f = interp1d(xs, interpolate_z)
-        
+
         uw_surface = self.swarm.particleCoordinates.data
         bdl_surface = f(uw_surface[:,0])
-        
+
         flags = uw_surface[:,1] < bdl_surface
-        
+
         return flags
-    
+
     def _determine_particle_state(self):
         # Given Badlands' mesh, determine if each particle in 'volume' is above
         # (False) or below (True) it.
@@ -222,7 +222,7 @@ class SPM(object):
         flags = volume[:, 2] < interpolate_z
 
         return flags
-    
+
     def _update_material_types(self):
 
         # What do the materials (in air/sediment terms) look like now?
@@ -235,13 +235,15 @@ class SPM(object):
         mi = self.material_index.data
 
         # convert air to sediment
-        sedimented_mask = np.logical_and(np.in1d(mi, self.airIndex), material_flags)
-        mi[sedimented_mask] = self.sedimentIndex
+        for air_material in self.airIndex:
+            sedimented_mask = np.logical_and(np.in1d(mi, air_material), material_flags)
+            mi[sedimented_mask] = self.sedimentIndex
 
         # convert sediment to air
-        eroded_mask = np.logical_and(np.in1d(mi, self.sedimentIndex), ~material_flags)
-        mi[eroded_mask] = self.airIndex[0]
-    
+        for air_material in self.airIndex:
+            eroded_mask = np.logical_and(~np.in1d(mi, air_material), ~material_flags)
+            mi[eroded_mask] = self.airIndex[0]
+
     def _inject_badlands_displacement(self, time, dt, disp, sigma):
         """
         Takes a plane of tracer points and their DISPLACEMENTS in 3D over time
@@ -274,7 +276,7 @@ class SPM(object):
             disp[:,0] = dispX
             disp[:,1] = dispY
             disp[:,2] = dispZ
-        
+
         # Gaussian smoothing
         if sigma>0:
             dispX = np.copy(disp[:,0]).reshape(self.badlands_model.recGrid.rnx, self.badlands_model.recGrid.rny)
@@ -288,7 +290,7 @@ class SPM(object):
             disp[:,2] = smoothZ.flatten()
 
         self.badlands_model.force.injected_disps = disp
-    
+
     def _generate_flat_dem(self, minCoord, maxCoord, resolution, elevation, scale=1.):
         """
         Generate a flat DEM. This can be used as the initial Badlands state.
@@ -314,7 +316,7 @@ class SPM(object):
         """
 
         # Calculate number of nodes from required resolution.
-        nx = np.int((maxCoord[0] - minCoord[0]) / resolution) 
+        nx = np.int((maxCoord[0] - minCoord[0]) / resolution)
         ny = np.int((maxCoord[1] - minCoord[1]) / resolution)
 
         if self.mesh.dim == 2:
