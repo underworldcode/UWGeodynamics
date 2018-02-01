@@ -132,7 +132,7 @@ class Plots(object):
 
     def strainRate(self, figsize=None, title="Strain Rate Field",
                    units=1.0 / u.second,
-                   cullface=False, onMesh=True,
+                   cullface=False,
                    logScale=True, colours="coolwarm",
                    script=None, show=True,
                    store=None, **kwargs):
@@ -145,7 +145,7 @@ class Plots(object):
         Fig.Surface(self.Model.mesh.subMesh,
                     self.Model._strainRate_2ndInvariant * fact,
                     cullface=cullface, logScale=logScale,
-                    onMesh=onMesh, colours=colours,
+                    colours=colours,
                     **kwargs)
 
         Fig.script(script)
