@@ -95,11 +95,11 @@
             },
             "epsilon1": {
                 "units": "None", 
-                "value": 0.5 
+                "value": 0.0 
             },
             "epsilon2": {
                 "units": "None", 
-                "value": 1.5 
+                "value": 0.5 
             }
         }
     }, 
@@ -127,11 +127,11 @@
             },
             "epsilon1": {
                 "units": "None", 
-                "value": 0.5 
+                "value": 0.0 
             },
             "epsilon2": {
                 "units": "None", 
-                "value": 1.5 
+                "value": 0.5 
             }
         }
     }, 
@@ -159,11 +159,11 @@
             },
             "epsilon1": {
                 "units": "None", 
-                "value": 0.5 
+                "value": 0.0 
             },
             "epsilon2": {
                 "units": "None", 
-                "value": 1.5 
+                "value": 0.5 
             }
         }
     }
