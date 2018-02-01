@@ -27,6 +27,7 @@ rcParams = {
     "default.outputs" : [["materialField",
                           "temperature",
                           "pressureField",
+                          "densityField",
                           "plasticStrain",
                           "strainRateField",
                           "velocityField",
