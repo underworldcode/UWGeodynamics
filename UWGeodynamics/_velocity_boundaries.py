@@ -3,6 +3,7 @@ import underworld.function as fn
 from .LecodeIsostasy import LecodeIsostasy
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
+from ._utils import Balanced_InflowOutflow
 import json
 from json_encoder import ObjectEncoder
 
@@ -127,6 +128,16 @@ class VelocityBCs(object):
                         self.Model.tractionField.data[nodes.data, dim] = (
                             nd(condition[dim]))
                         self.neumann_indices[dim] += nodes
+
+                # Inflow Outflow
+                if isinstance(condition[dim], Balanced_InflowOutflow):
+                    obj = condition[dim]
+                    obj.ynodes = self.Model.mesh.data[nodes.data, 1]
+                    obj._get_side_flow()
+                    self.Model.velocityField.data[nodes.data, dim] = (
+                        obj._get_side_flow()
+                        )
+                    self.dirichlet_indices[dim] += nodes
 
         return
 

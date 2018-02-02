@@ -50,79 +50,109 @@ class PassiveTracers(object):
         self.advector.integrate(dt, **kwargs)
 
 
-def _get_side_flow(Vtop, top, pt1, pt2, y, tol=1e-12,
-                   nitmax=200, nitmin=3, default_vel=0.0):
-    """ Calculate Bottom velocity as for Huismans et al. velocity boundary
-        conditions such as the total volume is conserved.
-        Return the velocity profile.
+class Balanced_InflowOutflow(object):
 
-        NOTE. The current version implies uniform dy.
+    def __init__(self, Vtop, top, pt1, pt2, ynodes=None, 
+                 tol=1e-12, nitmax=200, 
+                 nitmin=3, default_vel=0.0):
+        """ Calculate Bottom velocity as for Huismans et al. velocity boundary
+            conditions such as the total volume is conserved.
+            Return the velocity profile.
 
-        Input:
+            NOTE. The current version implies uniform dy.
 
-        Vtop     Top Velocity condition
-        pt1, pt2 Top and Bottom location of the transition zone where the
-                 velocity linearly decreases from Vtop to VBottom.
-        y        Coordinates of the nodes in the y-direction.
+            Input:
 
-        Output:
+            Vtop     Top Velocity condition
+            pt1, pt2 Top and Bottom location of the transition zone where the
+                     velocity linearly decreases from Vtop to VBottom.
+            ynodes   Coordinates of the nodes in the y-direction.
 
-        velocities numpy array.
+            Output:
 
-        """
+            velocities numpy array.
 
-    # locate index of closest node coordinates
-    top_idx = np.argmin((y - top)**2)
-    pt1_idx = np.argmin((y - pt1)**2)
-    pt2_idx = np.argmin((y - pt2)**2)
+            """
 
-    # do some initialization
-    velocity = np.ones(y.shape) * Vtop
-    Vmin = -Vtop
-    Vmax = 0.0
-    N = 0
+        self.vtop = Vtop
+        self.top = top
+        self.pt1 = pt1
+        self.pt2 = pt2
+        self.ynodes = ynodes
+        self.tol = tol
+        self.nitmax = nitmax
+        self.nitmin = nitmin
+        self.default_vel = default_vel
 
-    dy = np.diff(y)
-    budget = 0.5 * (velocity[1:] + velocity[:-1]) * dy
-    prev = np.copy(budget)
 
-    # The following loop uses a kind of bissection approach
-    # to look for the suitable value of Vbot.
-    while True:
+    def _get_side_flow(self):
+   
+        Vtop = nd(self.vtop)
+        top = nd(self.top)
+        pt1 = nd(self.pt1)
+        pt2 = nd(self.pt2)
+        y = nd(self.ynodes)
+        tol = self.tol
+        nitmax = self.nitmax
+        nitmin = self.nitmin
+        default_vel = nd(self.default_vel)
 
-        Vbot = (Vmin + Vmax) / 2.0
-
-        for i in range(len(y)):
-            if i > top_idx:
-                velocity[i] = 0.0
-            if i >= pt1_idx and i <= top_idx:
-                velocity[i] = Vtop
-            if i <= pt2_idx:
-                velocity[i] = Vbot
-            if i < pt1_idx and i > pt2_idx:
-                velocity[i] = (Vtop - Vbot) / (y[pt1_idx] - y[pt2_idx]) * (y[i] - y[pt2_idx]) + Vbot
-
+        # locate index of closest node coordinates
+        top_idx = np.argmin((y - top)**2)
+        pt1_idx = np.argmin((y - pt1)**2)
+        pt2_idx = np.argmin((y - pt2)**2)
+    
+        # do some initialization
+        velocity = np.ones(y.shape) * Vtop
+        Vmin = -Vtop
+        Vmax = 0.0
+        N = 0
+    
+        dy = np.diff(y)
         budget = 0.5 * (velocity[1:] + velocity[:-1]) * dy
-
-        if np.abs(np.sum(budget) - np.sum(prev)) < tol and N > nitmin:
-            velocity[top_idx + 1:] = default_vel
-            return velocity, np.sum(budget)
-        else:
-            ctol = np.abs(np.sum(budget) - np.sum(prev))
-            N += 1
-            prev = np.copy(budget)
-
-        if Vtop < 0.0:
-            if np.sum(budget) < 0.0:
-                Vmax = Vbot
+        prev = np.copy(budget)
+    
+        # The following loop uses a kind of bissection approach
+        # to look for the suitable value of Vbot.
+        while True:
+    
+            Vbot = (Vmin + Vmax) / 2.0
+    
+            for i in range(len(y)):
+                if i > top_idx:
+                    velocity[i] = 0.0
+                if i >= pt1_idx and i <= top_idx:
+                    velocity[i] = Vtop
+                if i <= pt2_idx:
+                    velocity[i] = Vbot
+                if i < pt1_idx and i > pt2_idx:
+                    velocity[i] = (Vtop - Vbot) / (y[pt1_idx] - y[pt2_idx]) * (y[i] - y[pt2_idx]) + Vbot
+    
+            budget = 0.5 * (velocity[1:] + velocity[:-1]) * dy
+    
+            if np.abs(np.sum(budget) - np.sum(prev)) < tol and N > nitmin:
+                velocity[top_idx + 1:] = default_vel
+                self.budget = np.sum(budget)
+                return velocity
             else:
-                Vmin = Vbot
-        else:
-            if np.sum(budget) > 0.0:
-                Vmax = Vbot
+                ctol = np.abs(np.sum(budget) - np.sum(prev))
+                N += 1
+                prev = np.copy(budget)
+    
+            if Vtop < 0.0:
+                if np.sum(budget) < 0.0:
+                    Vmax = Vbot
+                else:
+                    Vmin = Vbot
             else:
-                Vmin = Vbot
+                if np.sum(budget) > 0.0:
+                    Vmax = Vbot
+                else:
+                    Vmin = Vbot
+    
+        velocity[top_idx + 1:] = default_vel
 
-    velocity[top_idx + 1:] = default_vel
-    return velocity, np.sum(budget)
-
+        self.budget = np.sum(budget)
+        
+        return velocity
+    
