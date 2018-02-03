@@ -34,7 +34,7 @@ class Polygon(Shape):
         self._fn = uw.function.shape.Polygon(np.array(vertices))
 
 
-class MultiShape(shape):
+class MultiShape(Shape):
 
     def __init__(self, shapes):
         self.shapes = shapes
