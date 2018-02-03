@@ -34,6 +34,25 @@ class Polygon(Shape):
         self._fn = uw.function.shape.Polygon(np.array(vertices))
 
 
+class MultiShape(shape):
+
+    def __init__(self, shapes):
+        self.shapes = shapes
+
+    def _init_shape(self):
+        import operator
+        import functools
+        self._fnlist = []
+        for shape in self.shapes:
+            shape._init_shape()
+            self._fnlist.append(shape._fn)
+        self._fn = functools.reduce(
+                operator.and_, 
+                self._fnlist, 
+                fn.misc.constant(True))
+        return self._fn
+
+
 class Layer(Shape):
 
     def __init__(self, top, bottom, minY=None, maxY=None):
