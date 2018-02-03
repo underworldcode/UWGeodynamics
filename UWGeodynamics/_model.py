@@ -609,7 +609,7 @@ class Model(Material):
         return self.velocityBCs.get_conditions()
 
     def add_material(self, material=None, shape=None, name="unknown",
-                     reset=False):
+                     reset=False, fill=True):
         """ Add Material to the Model
 
         Parameters:
@@ -656,7 +656,9 @@ class Model(Material):
         self.materials.reverse()
         self.materials.append(mat)
         self.materials.reverse()
-        self._fill_model()
+
+        if fill:
+            self._fill_model()
 
         return mat
 
