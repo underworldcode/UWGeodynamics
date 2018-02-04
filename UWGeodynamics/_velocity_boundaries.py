@@ -93,11 +93,11 @@ class VelocityBCs(object):
         return self.__dict__[name]
 
     def apply_condition_nodes(self, condition, nodes):
-        """ Apply condition to a set of nodes 
-        
+        """ Apply condition to a set of nodes
+
         Parameters:
         -----------
-            condition: 
+            condition:
                 velocity condition
             nodes:
                 set of nodes
@@ -165,28 +165,39 @@ class VelocityBCs(object):
             self.dirichlet_indices.append(Model.mesh.specialSets["Empty"])
             self.neumann_indices.append(Model.mesh.specialSets["Empty"])
 
-        # Apply conditions to each wall.
-        self.apply_condition_nodes(self.left, Model._left_wall)
-        self.apply_condition_nodes(self.right, Model._right_wall)
-        self.apply_condition_nodes(self.top, Model._top_wall)
-        self.apply_condition_nodes(self.indexSets, self.indexSets)
-
-        if Model.mesh.dim > 2:
-            self.apply_condition_nodes(self.front, Model._front_wall)
-            self.apply_condition_nodes(self.back, Model._back_wall)
-
-        # Apply support condition
+        # Apply condition to the bottom first
         if isinstance(self.bottom, LecodeIsostasy):
+            # Apply support condition
             Model._isostasy = self.bottom
             Model._isostasy.mesh = Model.mesh
             Model._isostasy.swarm = Model.swarm
             Model._isostasy.velocityField = Model.velocityField
             Model._isostasy.materialIndexField = Model.materialField
             Model._isostasy._densityFn = Model._densityFn
+            vertical_walls_conditions = {
+                "left": self.left,
+                "right": self.right,
+                "front": self.front,
+                "back": self.back
+            }
+            Model._isostasy.vertical_walls_conditions = (
+                vertical_walls_conditions)
             self.dirichlet_indices[-1] += Model._bottom_wall
         else:
             Model._isostasy = None
             self.apply_condition_nodes(self.bottom, Model._bottom_wall)
+
+        # Apply condition at the top.
+        self.apply_condition_nodes(self.top, Model._top_wall)
+
+        # Apply conditions to each wall.
+        self.apply_condition_nodes(self.left, Model._left_wall)
+        self.apply_condition_nodes(self.right, Model._right_wall)
+        self.apply_condition_nodes(self.indexSets, self.indexSets)
+
+        if Model.mesh.dim > 2:
+            self.apply_condition_nodes(self.front, Model._front_wall)
+            self.apply_condition_nodes(self.back, Model._back_wall)
 
         conditions = []
 
