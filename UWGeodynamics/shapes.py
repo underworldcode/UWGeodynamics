@@ -47,9 +47,9 @@ class MultiShape(Shape):
             shape._init_shape()
             self._fnlist.append(shape._fn)
         self._fn = functools.reduce(
-                operator.and_, 
+                operator.or_, 
                 self._fnlist, 
-                fn.misc.constant(True))
+                fn.misc.constant(False))
         return self._fn
 
 
