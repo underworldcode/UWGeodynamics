@@ -1516,6 +1516,27 @@ class Model(Material):
             json.dump(self, f, sort_keys=True, indent=4, cls=ObjectEncoder)
 
 
+    def geometry_from_shapefile(self, filename, units=None):
+        from ._utils import MoveImporter
+        Importer = MoveImporter(filename, units=units)
+
+        shape_dict = {name: []  for name in Importer.names}
+
+        for polygon in Importer.generator:
+            name = polygon["properties"]["Name"]
+            vertices = polygon["coordinates"]
+            shape = shapes.Polygon(vertices)
+            shape_dict[name].append(shape)
+    
+        for name, shape in shape_dict.iteritems():
+            mshape = shapes.MultiShape(shape)
+            self.add_material(name=name,
+                              shape=mshape,
+                              fill=False)
+    
+        self._fill_model()
+
+
 def load_model(filename):
     """ Reload Model from json file """
     import warnings
