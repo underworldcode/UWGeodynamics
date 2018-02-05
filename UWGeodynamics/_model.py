@@ -356,16 +356,11 @@ class Model(Material):
         self.swarm = uw.swarm.Swarm(mesh=self.mesh, particleEscape=True)
         self.swarm.load(os.path.join(restartDir, 'swarm-%s.h5' % step))
         self._initialize()
-        self.materialField.load(os.path.join(restartDir,
-                                             "materialField-%s.h5" % step))
-        self.temperature.load(os.path.join(restartDir,
-                                           'temperature-%s.h5' % step))
-        self.pressureField.load(os.path.join(restartDir,
-                                             'pressureField-%s.h5' % step))
-        self.plasticStrain.load(os.path.join(restartDir,
-                                             'plasticStrain-%s.h5' % step))
-        self.velocityField.load(os.path.join(restartDir,
-                                             'velocityField-%s.h5' % step))
+
+        for field in rcParams["restart.fields"]:
+            obj = getattr(field, self)
+            path = os.path.join(restartDir, field + "-%s.h5" % step)
+            obj.load(path)
 
     @property
     def projMaterialField(self):
