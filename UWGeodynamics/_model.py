@@ -1441,7 +1441,7 @@ class Model(Material):
         GluciferStore.step = step
 
         for field in rcParams["glucifer.outputs"]:
-            if self.field:
+            if getattr(self, field):
                 func = eval("self.plot." + field)
                 fig = func(store=GluciferStore, show=False)
                 fig.save()
