@@ -371,6 +371,9 @@ class Model(Material):
     def projMaterialField(self):
         """ Material field projected on the mesh """
         self._materialFieldProjector.solve()
+        self._projMaterialField.data[:] = np.rint(
+            self._projMaterialField.data[:]
+        )
         return self._projMaterialField
 
     @property
