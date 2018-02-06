@@ -4,7 +4,6 @@ from .LecodeIsostasy import LecodeIsostasy
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
 from ._utils import Balanced_InflowOutflow
-import json
 from json_encoder import ObjectEncoder
 
 
@@ -104,14 +103,18 @@ class VelocityBCs(object):
 
         """
 
-        if isinstance(condition, (list, tuple)):
+        # Expect a list or tuple of dimension mesh.dim.
+        # Check that the domain actually contains some boundary nodes
+        # (nodes is not None)
+        if isinstance(condition, (list, tuple)) and nodes:
             for dim in range(self.Model.mesh.dim):
 
                 # User defined function
                 if isinstance(condition[dim], (list, tuple)):
                     func = fn.branching.conditional(condition[dim])
                     self.Model.velocityField.data[nodes.data, dim] = (
-                        func.evaluate(self.Model.mesh.data[nodes.data])[:, dim])
+                        func.evaluate(
+                            self.Model.mesh.data[nodes.data])[:, dim])
                     self.dirichlet_indices[dim] += nodes
                     continue
 
@@ -135,8 +138,7 @@ class VelocityBCs(object):
                     obj.ynodes = self.Model.mesh.data[nodes.data, 1]
                     obj._get_side_flow()
                     self.Model.velocityField.data[nodes.data, dim] = (
-                        obj._get_side_flow()
-                        )
+                        obj._get_side_flow())
                     self.dirichlet_indices[dim] += nodes
 
         return
