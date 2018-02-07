@@ -103,10 +103,13 @@ class VelocityBCs(object):
 
         """
 
+        if not nodes:
+            return
+
         # Expect a list or tuple of dimension mesh.dim.
         # Check that the domain actually contains some boundary nodes
         # (nodes is not None)
-        if isinstance(condition, (list, tuple)) and nodes:
+        if isinstance(condition, (list, tuple)) and nodes.data.size > 0:
             for dim in range(self.Model.mesh.dim):
 
                 # User defined function
