@@ -31,11 +31,6 @@ class TemperatureBCs(object):
 
     def _get_heat_flux(self, side, heat_flow, material):
 
-        if isinstance(heat_flow, u.Quantity):
-            val = heat_flow.to_base_units()
-            if val.units != u.kilogram * u.second**-3:
-                raise ValueError("Please check your heat flow units")
-
         if not material.capacity:
             raise ValueError("""Material {0} has no capacity
                              defined""".format(material.name))
@@ -51,9 +46,13 @@ class TemperatureBCs(object):
     def _check_temp(self, val):
         if isinstance(val, u.Quantity):
             check = (val.units == u.degK) or (val.units == u.degC)
-            if not check:
-                raise ValueError("Temperature units error")
-        return
+        return check
+
+    def _check_flux(self, heat_flow):
+        if isinstance(heat_flow, u.Quantity):
+            val = heat_flow.to_base_units()
+            check = (val.units == u.kilogram * u.second**-3)
+        return check
 
     def get_conditions(self):
 
@@ -70,113 +69,84 @@ class TemperatureBCs(object):
 
         self.dirichlet_indices = [Model.mesh.specialSets["Empty"]]
         if self.left is not None:
-            if not isinstance(self.left, (list, tuple)):
-                self._check_temp(self.left)
+            if self._check_temp(self.left):
                 Model.temperature.data[Model._left_wall.data] = nd(self.left)
                 self.dirichlet_indices[0] += Model._left_wall
-            else:
-                if len(self.left) != Model.mesh.dim:
-                    raise ValueError("Wrong vector dimensions")
+            elif self._check_flux(self.left):
                 if not self.left_material:
                     raise ValueError("left_material is missing")
                 material = self.left_material
                 self.neumann_indices[0] += Model._left_wall
-                for dim in range(len(self.left)):
-                    flux = self.left[dim]
-                    heat_flow = self._get_heat_flux("left", flux, material)
-                    Model._heatFlux.data[Model._left_wall.data, dim] = (
-                        nd(heat_flow))
+                heat_flow = self._get_heat_flux("left", self.left, material)
+                Model._heatFlux.data[Model._left_wall.data] = (
+                    nd(heat_flow))
 
         if self.right is not None:
-            if not isinstance(self.right, (list, tuple)):
-                self._check_temp(self.right)
+            if self._check_temp(self.right):
                 Model.temperature.data[Model._right_wall.data] = nd(self.right)
                 self.dirichlet_indices[0] += Model._right_wall
-            else:
-                if len(self.right) != Model.mesh.dim:
-                    raise ValueError("Wrong vector dimensions")
+            elif self._check_flux(self.right):
                 if not self.right_material:
                     raise ValueError("right_material is missing")
                 material = self.right_material
                 self.neumann_indices[0] += Model._right_wall
-                for dim in range(len(self.right)):
-                    flux = self.right[dim]
-                    heat_flow = self._get_heat_flux("right", flux, material)
-                    Model._heatFlux.data[Model._right_wall.data, dim] = (
-                        nd(heat_flow))
+                heat_flow = self._get_heat_flux("right", self.right, material)
+                Model._heatFlux.data[Model._right_wall.data] = (
+                    nd(heat_flow))
 
         if self.top is not None:
-            if not isinstance(self.top, (list, tuple)):
-                self._check_temp(self.top)
+            if self._check_temp(self.top):
                 Model.temperature.data[Model._top_wall.data] = nd(self.top)
                 self.dirichlet_indices[0] += Model._top_wall
-            else:
-                if len(self.top) != Model.mesh.dim:
-                    raise ValueError("Wrong vector dimensions")
+            elif self._check_flux(self.top):
                 if not self.top_material:
                     raise ValueError("top_material is missing")
                 material = self.top_material
                 self.neumann_indices[0] += Model._top_wall
-                for dim in range(len(self.top)):
-                    flux = self.top[dim]
-                    heat_flow = self._get_heat_flux("top", flux, material)
-                    Model._heatFlux.data[Model._top_wall.data, dim] = (
-                        nd(heat_flow))
+                heat_flow = self._get_heat_flux("top", self.top, material)
+                Model._heatFlux.data[Model._top_wall.data] = (
+                    nd(heat_flow))
 
         if self.bottom is not None:
-            if not isinstance(self.bottom, (list, tuple)):
-                self._check_temp(self.bottom)
+            if self._check_temp(self.bottom):
                 Model.temperature.data[Model._bottom_wall.data] = (
                     nd(self.bottom))
                 self.dirichlet_indices[0] += Model._bottom_wall
-            else:
-                if len(self.bottom) != Model.mesh.dim:
-                    raise ValueError("Wrong vector dimensions")
+            elif self._check_flux(self.bottom):
                 if not self.bottom_material:
                     raise ValueError("bottom_material is missing")
                 material = self.bottom_material
                 self.neumann_indices[0] += Model._bottom_wall
-                for dim in range(len(self.bottom)):
-                    flux = self.bottom[dim]
-                    heat_flow = self._get_heat_flux("bottom", flux, material)
-                    Model._heatFlux.data[Model._bottom_wall.data, dim] = (
-                        nd(heat_flow))
+                heat_flow = self._get_heat_flux(
+                    "bottom", self.bottom, material)
+                Model._heatFlux.data[Model._bottom_wall.data] = (
+                    nd(heat_flow))
 
         if self.back is not None and Model.mesh.dim > 2:
-            if not isinstance(self.back, (list, tuple)):
-                self._check_temp(self.back)
+            if self._check_temp(self.back):
                 Model.temperature.data[Model._back_wall.data] = nd(self.back)
                 self.dirichlet_indices[0] += Model._back_wall
-            else:
-                if len(self.back) != Model.mesh.dim:
-                    raise ValueError("Wrong vector dimensions")
+            elif self._check_flux(self.back):
                 if not self.back_material:
                     raise ValueError("back_material is missing")
                 material = self.back_material
                 self.neumann_indices[0] += Model._back_wall
-                for dim in range(len(self.back)):
-                    flux = self.back[dim]
-                    heat_flow = self._get_heat_flux("back", flux, material)
-                    Model._heatFlux.data[Model._back_wall.data, dim] = (
-                        nd(heat_flow))
+                heat_flow = self._get_heat_flux("back", self.back, material)
+                Model._heatFlux.data[Model._back_wall.data] = (
+                    nd(heat_flow))
 
         if self.front is not None and Model.mesh.dim > 2:
-            if not isinstance(self.front, (list, tuple)):
-                self._check_temp(self.front)
+            if self._check_temp(self.front):
                 Model.temperature.data[Model._front_wall.data] = nd(self.front)
                 self.dirichlet_indices[0] += Model._front_wall
-            else:
-                if len(self.front) != Model.mesh.dim:
-                    raise ValueError("Wrong vector dimensions")
+            elif self._check_flux(self.front):
                 if not self.front_material:
                     raise ValueError("front_material is missing")
                 material = self.front_material
                 self.neumann_indices[0] += Model._front_wall
-                for dim in range(len(self.front)):
-                    flux = self.front[dim]
-                    heat_flow = self._get_heat_flux("front", flux, material)
-                    Model._heatFlux.data[Model._front_wall.data, dim] = (
-                        nd(heat_flow))
+                heat_flow = self._get_heat_flux("front", self.front, material)
+                Model._heatFlux.data[Model._front_wall.data] = (
+                    nd(heat_flow))
 
         if self.indexSets:
             for indexSet, temp in self.indexSets:

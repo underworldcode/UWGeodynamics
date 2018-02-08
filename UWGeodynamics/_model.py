@@ -489,7 +489,7 @@ class Model(Material):
             self._temperatureDot = MeshVariable(mesh=self.mesh,
                                                 nodeDofCount=1)
             self._heatFlux = MeshVariable(mesh=self.mesh,
-                                          nodeDofCount=self.mesh.dim)
+                                          nodeDofCount=1)
             self.temperature.data[...] = nd(self.Tref)
             self._temperatureDot.data[...] = 0.
             self._heatFlux.data[...] = 0.
