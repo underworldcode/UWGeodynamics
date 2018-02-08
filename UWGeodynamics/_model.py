@@ -546,11 +546,6 @@ class Model(Material):
             else:
                 HeatProdMap[material.index] = 0.
 
-            # Melt heating
-            if material.latentHeatFusion and self._dt:
-                dynamicHeating = self._get_dynamic_heating(material)
-                HeatProdMap[material.index] += dynamicHeating
-
         self.HeatProdFn = fn.branching.map(fn_key=self.materialField,
                                            mapping=HeatProdMap)
 
@@ -1090,6 +1085,11 @@ class Model(Material):
                 else:
                     HeatProdMap[material.index] = 0.
 
+                # Melt heating
+                if material.latentHeatFusion and self._dt:
+                    dynamicHeating = self._get_dynamic_heating(material)
+                    HeatProdMap[material.index] += dynamicHeating
+
             self.HeatProdFn = fn.branching.map(fn_key=self.materialField,
                                                mapping=HeatProdMap)
         else:
@@ -1309,8 +1309,7 @@ class Model(Material):
 
         if any([material.melt for material in self.materials]):
             # Calculate New meltField
-            meltFraction = self._get_melt_fraction()
-            self.meltField.data[:] = meltFraction.evaluate(self.swarm)
+            self.update_melt_fraction()
 
         # Solve for temperature
         if self.temperature:
@@ -1403,6 +1402,11 @@ class Model(Material):
 
         return fn.branching.map(fn_key=self.materialField,
                                 mapping=meltMap, fn_default=0.0)
+
+    def update_melt_fraction(self):
+        # Calculate New meltField
+        meltFraction = self._get_melt_fraction()
+        self.meltField.data[:] = meltFraction.evaluate(self.swarm)
 
     def _get_dynamic_heating(self, material):
         """ Calculate additional heating source due to melt

@@ -259,6 +259,7 @@ class Plots(object):
                       cullface=False, script=None, show=True,
                       store=None, **kwargs):
 
+        self.Model.update_melt_fraction()
         Fig = glucifer.Figure(store=store, figsize=figsize)
         Fig["title"] = title
         Fig["boundingBox"] = self._boundingBox
