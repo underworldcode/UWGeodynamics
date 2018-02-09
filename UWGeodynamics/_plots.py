@@ -11,28 +11,30 @@ size = comm.Get_size()
 rank = comm.Get_rank()
 
 
-def visugrid_drawing_object2(Model):
+def _visugrid_drawing_object(Model, visugrid):
 
-    visugrid = Model.visugrid.mesh
+    m_minx, m_maxx = _get_minmax_coordinates_mesh(Model.mesh, 0)
+    m_miny, m_maxy = _get_minmax_coordinates_mesh(Model.mesh, 1)
+    model_domain = np.array([(m_minx, m_miny), (m_maxx, m_maxy)])
 
-    m_minx, m_maxx = _get_minmax_coordinates_mesh(visugrid, 0)
-    m_miny, m_maxy = _get_minmax_coordinates_mesh(visugrid, 1)
-
-    v_minx, v_maxx = _get_minmax_coordinates_mesh(Model.mesh, 0)
-    v_miny, v_maxy = _get_minmax_coordinates_mesh(Model.mesh, 1)
+    v_minx, v_maxx = _get_minmax_coordinates_mesh(visugrid.mesh, 0)
+    v_miny, v_maxy = _get_minmax_coordinates_mesh(visugrid.mesh, 1)
+    # visugrid_domain = np.array([(v_minx, v_miny), (v_maxx, v_maxy)])
 
     minx = min(m_minx, v_minx)
     miny = min(m_miny, v_miny)
     maxx = max(m_maxx, v_maxx)
     maxy = max(m_maxy, v_maxy)
 
-    norm_x1 = (m_minx - minx) / (maxx - minx)
-    norm_x2 = (m_maxx - minx) / (maxx - minx)
+    full_domain = np.array([(minx, miny), (maxx, maxy)])
+    bounds = full_domain[1] - full_domain[0]
 
-    norm_y1 = (m_miny - miny) / (maxy - miny)
-    norm_y2 = (m_maxy - miny) / (maxy - miny)
+    minx = (model_domain[0][0] - full_domain[0][0]) / bounds[0]
+    maxx = 1 + (model_domain[1][0] - full_domain[1][0]) / bounds[0]
+    miny = (model_domain[0][1] - full_domain[0][1]) / bounds[1]
+    maxy = 1 + (model_domain[1][1] - full_domain[1][1]) / bounds[1]
 
-    return norm_x1, norm_x2, norm_y1, norm_y2
+    return (minx[0], maxx[0]), (miny[0], maxy[0])
 
 
 def _get_minmax_coordinates_mesh(mesh, axis=0):
@@ -79,7 +81,9 @@ class Plots(object):
                       mask=None, visugrid=None, onMesh=False,
                       tracers=[], show=True, store=None, **kwargs):
 
-        Fig = glucifer.Figure(store=store, figsize=figsize)
+        Fig = glucifer.Figure(store=store, figsize=figsize,
+                              min=self._boundingBox[0],
+                              max=self._boundingBox[1])
         Fig["title"] = title
         Fig["boundingBox"] = self._boundingBox
 
@@ -97,11 +101,13 @@ class Plots(object):
             pts.colourBar.colourMap["discrete"] = True
 
         if visugrid:
-            Fig.Mesh(visugrid.mesh)
+            clip_X, clip_Y = _visugrid_drawing_object(self.Model, visugrid)
+            Fig.Mesh(visugrid.mesh, xmin=clip_X[0], xmax=clip_X[1],
+                     ymin=clip_Y[0], ymax=clip_Y[1])
 
         Fig.script(script)
         if show and glucifer.lavavu.is_notebook():
-            #Fig.viewer().window()
+            # Fig.viewer().window()
             Fig.show()
 
         return Fig
