@@ -49,8 +49,8 @@ RUN jupyter serverextension enable --py jupyterlab --sys-prefix
 
 # update all permissions for jovyan user
 ENV UW2_DIR /opt/underworld2
+#RUN useradd -m -s /bin/bash -N jovyan
 ENV NB_USER jovyan
-RUN useradd -m -s /bin/bash -N $NB_USER
 
 # copy this file over so that no password is required
 COPY jupyter_notebook_config.json /home/$NB_USER/.jupyter/jupyter_notebook_config.json
