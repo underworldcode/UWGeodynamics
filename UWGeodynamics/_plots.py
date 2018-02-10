@@ -100,7 +100,7 @@ class Plots(object):
             Fig.Mesh(visugrid.mesh)
 
         Fig.script(script)
-        if show:
+        if show and glucifer.lavavu.is_notebook():
             #Fig.viewer().window()
             Fig.show()
 
@@ -123,7 +123,7 @@ class Plots(object):
                    logScale=logScale, cullface=cullface, **kwargs)
 
         Fig.script(script)
-        if show:
+        if show and glucifer.lavavu.is_notebook():
             Fig.show()
 
         return Fig
@@ -149,7 +149,7 @@ class Plots(object):
                     **kwargs)
 
         Fig.script(script)
-        if show:
+        if show and glucifer.lavavu.is_notebook():
             Fig.show()
 
         return Fig
@@ -169,7 +169,7 @@ class Plots(object):
                    cullface=cullface, **kwargs)
 
         Fig.script(script)
-        if show:
+        if show and glucifer.lavavu.is_notebook():
             Fig.show()
 
         return Fig
@@ -189,7 +189,7 @@ class Plots(object):
                     **kwargs)
 
         Fig.script(script)
-        if show:
+        if show and glucifer.lavavu.is_notebook():
             Fig.show()
 
         return Fig
@@ -208,7 +208,7 @@ class Plots(object):
                     cullface=cullface, **kwargs)
 
         Fig.script(script)
-        if show:
+        if show and glucifer.lavavu.is_notebook():
             Fig.show()
 
         return Fig
@@ -231,7 +231,7 @@ class Plots(object):
                          **kwargs)
 
         Fig.script(script)
-        if show:
+        if show and glucifer.lavavu.is_notebook():
             Fig.show()
 
         return Fig
@@ -248,7 +248,7 @@ class Plots(object):
                    cullface=cullface, **kwargs)
 
         Fig.script(script)
-        if show:
+        if show and glucifer.lavavu.is_notebook():
             Fig.show()
 
         return Fig
@@ -259,6 +259,7 @@ class Plots(object):
                       cullface=False, script=None, show=True,
                       store=None, **kwargs):
 
+        self.Model.update_melt_fraction()
         Fig = glucifer.Figure(store=store, figsize=figsize)
         Fig["title"] = title
         Fig["boundingBox"] = self._boundingBox
@@ -268,7 +269,7 @@ class Plots(object):
 
         Fig.script(script)
 
-        if show:
+        if show and glucifer.lavavu.is_notebook():
             Fig.show()
 
         return Fig

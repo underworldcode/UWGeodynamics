@@ -356,21 +356,19 @@ class Model(Material):
         self.swarm = uw.swarm.Swarm(mesh=self.mesh, particleEscape=True)
         self.swarm.load(os.path.join(restartDir, 'swarm-%s.h5' % step))
         self._initialize()
-        self.materialField.load(os.path.join(restartDir,
-                                             "materialField-%s.h5" % step))
-        self.temperature.load(os.path.join(restartDir,
-                                           'temperature-%s.h5' % step))
-        self.pressureField.load(os.path.join(restartDir,
-                                             'pressureField-%s.h5' % step))
-        self.plasticStrain.load(os.path.join(restartDir,
-                                             'plasticStrain-%s.h5' % step))
-        self.velocityField.load(os.path.join(restartDir,
-                                             'velocityField-%s.h5' % step))
+
+        for field in rcParams["restart.fields"]:
+            obj = getattr(field, self)
+            path = os.path.join(restartDir, field + "-%s.h5" % step)
+            obj.load(path)
 
     @property
     def projMaterialField(self):
         """ Material field projected on the mesh """
         self._materialFieldProjector.solve()
+        self._projMaterialField.data[:] = np.rint(
+            self._projMaterialField.data[:]
+        )
         return self._projMaterialField
 
     @property
@@ -423,35 +421,65 @@ class Model(Material):
         if isinstance(value, surfaceProcesses.Badlands):
             self._surfaceProcesses.Model = self
 
-    def set_temperatureBCs(self, left=None, right=None, top=None, bottom=None,
+    def set_temperatureBCs(self, left=None, right=None,
+                           top=None, bottom=None,
                            front=None, back=None,
-                           indexSets=None, materials=None):
+                           indexSets=None, materials=None,
+                           bottom_material=None, top_material=None,
+                           left_material=None, right_material=None,
+                           back_material=None, front_material=None):
+
         """ Set Model thermal conditions
 
         Parameters:
             left:
                 Temperature or flux along the left wall.
+                Flux must be a vector (Fx, Fy, [Fz])
                 Default is 'None'
             right:
                 Temperature or flux along the right wall.
+                Flux must be a vector (Fx, Fy, [Fz])
                 Default is 'None'
             top:
                 Temperature or flux along the top wall.
+                Flux must be a vector (Fx, Fy, [Fz])
                 Default is 'None'
             bottom:
                 Temperature or flux along the bottom wall.
+                Flux must be a vector (Fx, Fy, [Fz])
                 Default is 'None'
             front:
                 Temperature or flux along the front wall.
+                Flux must be a vector (Fx, Fy, [Fz])
                 Default is 'None'
             back:
                 Temperature or flux along the back wall.
+                Flux must be a vector (Fx, Fy, [Fz])
                 Default is 'None'
             indexSets: (set, temperature)
                 underworld mesh index set and associate temperature
             materials:
                 list of materials for which temperature need to be
                 fixed. [(material, temperature)]
+            bottom_material:
+                Specify Material that lays at the bottom of the model
+                Default is 'None' (required if a flux is defined at the
+                base).
+            top_material:
+                Specify Material that lays at the top of the model
+                Default is 'None' (required if a flux is defined at the top).
+            left_material:
+                Specify Material that lays at the left of the model
+                Default is 'None' (required if a flux is defined at the left).
+            right_material:
+                Specify Material that lays at the right of the model
+                Default is 'None' (required if a flux is defined at the right).
+            back_material:
+                Specify Material that lays at the back of the model
+                Default is 'None' (required if a flux is defined at the back).
+            front_material:
+                Specify Material that lays at the front of the model
+                Default is 'None' (required if a flux is defined at the front).
 
         """
 
@@ -460,14 +488,23 @@ class Model(Material):
                                             nodeDofCount=1)
             self._temperatureDot = MeshVariable(mesh=self.mesh,
                                                 nodeDofCount=1)
+            self._heatFlux = MeshVariable(mesh=self.mesh,
+                                          nodeDofCount=1)
             self.temperature.data[...] = nd(self.Tref)
             self._temperatureDot.data[...] = 0.
+            self._heatFlux.data[...] = 0.
 
         self.temperatureBCs = TemperatureBCs(self, left=left, right=right,
                                              top=top, bottom=bottom,
                                              back=back, front=front,
                                              indexSets=indexSets,
-                                             materials=materials)
+                                             materials=materials,
+                                             bottom_material=bottom_material,
+                                             top_material=top_material,
+                                             left_material=left_material,
+                                             right_material=right_material,
+                                             back_material=back_material,
+                                             front_material=front_material)
         return self.temperatureBCs.get_conditions()
 
     @property
@@ -509,11 +546,6 @@ class Model(Material):
             else:
                 HeatProdMap[material.index] = 0.
 
-            # Melt heating
-            if material.latentHeatFusion and self._dt:
-                dynamicHeating = self._get_dynamic_heating(material)
-                HeatProdMap[material.index] += dynamicHeating
-
         self.HeatProdFn = fn.branching.map(fn_key=self.materialField,
                                            mapping=HeatProdMap)
 
@@ -523,7 +555,7 @@ class Model(Material):
             velocityField=self.velocityField,
             fn_diffusivity=self.DiffusivityFn,
             fn_sourceTerm=self.HeatProdFn,
-            conditions=[self._temperatureBCs]
+            conditions=self._temperatureBCs
         )
         return obj
 
@@ -1053,6 +1085,11 @@ class Model(Material):
                 else:
                     HeatProdMap[material.index] = 0.
 
+                # Melt heating
+                if material.latentHeatFusion and self._dt:
+                    dynamicHeating = self._get_dynamic_heating(material)
+                    HeatProdMap[material.index] += dynamicHeating
+
             self.HeatProdFn = fn.branching.map(fn_key=self.materialField,
                                                mapping=HeatProdMap)
         else:
@@ -1272,8 +1309,7 @@ class Model(Material):
 
         if any([material.melt for material in self.materials]):
             # Calculate New meltField
-            meltFraction = self._get_melt_fraction()
-            self.meltField.data[:] = meltFraction.evaluate(self.swarm)
+            self.update_melt_fraction()
 
         # Solve for temperature
         if self.temperature:
@@ -1367,6 +1403,11 @@ class Model(Material):
         return fn.branching.map(fn_key=self.materialField,
                                 mapping=meltMap, fn_default=0.0)
 
+    def update_melt_fraction(self):
+        # Calculate New meltField
+        meltFraction = self._get_melt_fraction()
+        self.meltField.data[:] = meltFraction.evaluate(self.swarm)
+
     def _get_dynamic_heating(self, material):
         """ Calculate additional heating source due to melt
 
@@ -1441,7 +1482,7 @@ class Model(Material):
         GluciferStore.step = step
 
         for field in rcParams["glucifer.outputs"]:
-            if self.field:
+            if getattr(self, field):
                 func = eval("self.plot." + field)
                 fig = func(store=GluciferStore, show=False)
                 fig.save()
@@ -1515,7 +1556,6 @@ class Model(Material):
         with open(filename, "w") as f:
             json.dump(self, f, sort_keys=True, indent=4, cls=ObjectEncoder)
 
-
     def geometry_from_shapefile(self, filename, units=None):
         from ._utils import MoveImporter
         Importer = MoveImporter(filename, units=units)
@@ -1527,13 +1567,13 @@ class Model(Material):
             vertices = polygon["coordinates"]
             shape = shapes.Polygon(vertices)
             shape_dict[name].append(shape)
-    
+
         for name, shape in shape_dict.iteritems():
             mshape = shapes.MultiShape(shape)
             self.add_material(name=name,
                               shape=mshape,
                               fill=False)
-    
+
         self._fill_model()
 
 
