@@ -50,7 +50,8 @@ RUN jupyter serverextension enable --py jupyterlab --sys-prefix
 # update all permissions for jovyan user
 ENV UW2_DIR /opt/underworld2
 ENV NB_USER jovyan
-RUN chown -R $NB_USER /workspace $UW2_DIR /home/$NB_USER
+RUN useradd -m -s /bin/bash -N $NB_USER
+RUN chown -R $NB_USER:users /workspace $UW2_DIR /home/$NB_USER
 
 # change user and update pythonpath
 USER $NB_USER
