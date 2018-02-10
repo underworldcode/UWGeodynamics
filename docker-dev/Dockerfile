@@ -3,6 +3,8 @@ MAINTAINER romain.beucher@unimelb.edu
 
 USER root
 
+RUN apt-get install python-mpltoolkits.basemap
+
 # UWGeodynamics
 WORKDIR /opt
 RUN git clone -b development https://github.com/rbeucher/UWGeodynamics.git
