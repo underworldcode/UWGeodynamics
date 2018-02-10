@@ -118,15 +118,22 @@ class Plots(object):
                        units=u.pascal * u.second, logScale=True,
                        projected=False, cullface=False,
                        script=None, show=True,
-                       store=None, **kwargs):
+                       store=None, visugrid=None, **kwargs):
 
-        Fig = glucifer.Figure(store=store, figsize=figsize)
+        Fig = glucifer.Figure(store=store, figsize=figsize,
+                              min=self._boundingBox[0],
+                              max=self._boundingBox[1])
         Fig["title"] = title + " " + str(units)
         Fig["boundingBox"] = self._boundingBox
 
         fact = Dimensionalize(1.0, units).magnitude
         Fig.Points(self.Model.swarm, self.Model._viscosityFn * fact,
                    logScale=logScale, cullface=cullface, **kwargs)
+
+        if visugrid:
+            clip_X, clip_Y = _visugrid_drawing_object(self.Model, visugrid)
+            Fig.Mesh(visugrid.mesh, xmin=clip_X[0], xmax=clip_X[1],
+                     ymin=clip_Y[0], ymax=clip_Y[1])
 
         Fig.script(script)
         if show and glucifer.lavavu.is_notebook():
@@ -141,9 +148,11 @@ class Plots(object):
                    cullface=False,
                    logScale=True, colours="coolwarm",
                    script=None, show=True,
-                   store=None, **kwargs):
+                   store=None, visugrid=None, **kwargs):
 
-        Fig = glucifer.Figure(store=store, figsize=figsize)
+        Fig = glucifer.Figure(store=store, figsize=figsize,
+                              min=self._boundingBox[0],
+                              max=self._boundingBox[1])
         Fig["title"] = title + " " + str(units)
         Fig["boundingBox"] = self._boundingBox
 
@@ -154,6 +163,11 @@ class Plots(object):
                     colours=colours,
                     **kwargs)
 
+        if visugrid:
+            clip_X, clip_Y = _visugrid_drawing_object(self.Model, visugrid)
+            Fig.Mesh(visugrid.mesh, xmin=clip_X[0], xmax=clip_X[1],
+                     ymin=clip_Y[0], ymax=clip_Y[1])
+
         Fig.script(script)
         if show and glucifer.lavavu.is_notebook():
             Fig.show()
@@ -163,9 +177,11 @@ class Plots(object):
     def density(self, figsize=None, title="Density Field",
                 units=u.kilogram / u.metre**3,
                 script=None, cullface=False, show=True,
-                store=None, **kwargs):
+                store=None, visugrid=None, **kwargs):
 
-        Fig = glucifer.Figure(store=store, figsize=figsize)
+        Fig = glucifer.Figure(store=store, figsize=figsize,
+                              min=self._boundingBox[0],
+                              max=self._boundingBox[1])
         Fig["title"] = title + " " + str(units)
         Fig["boundingBox"] = self._boundingBox
 
@@ -183,9 +199,11 @@ class Plots(object):
     def temperature(self, figsize=None, title="Temperature Field",
                     units=u.degK, script=None, cullface=False,
                     colours="coolwarm", show=True,
-                    store=None, **kwargs):
+                    store=None, visugrid=None, **kwargs):
 
-        Fig = glucifer.Figure(store=store, figsize=figsize)
+        Fig = glucifer.Figure(store=store, figsize=figsize,
+                              min=self._boundingBox[0],
+                              max=self._boundingBox[1])
         Fig["title"] = title + " " + str(units)
         Fig["boundingBox"] = self._boundingBox
 
@@ -193,6 +211,10 @@ class Plots(object):
         Fig.Surface(self.Model.mesh, self.Model.temperature * fact,
                     colours=colours, cullface=cullface,
                     **kwargs)
+        if visugrid:
+            clip_X, clip_Y = _visugrid_drawing_object(self.Model, visugrid)
+            Fig.Mesh(visugrid.mesh, xmin=clip_X[0], xmax=clip_X[1],
+                     ymin=clip_Y[0], ymax=clip_Y[1])
 
         Fig.script(script)
         if show and glucifer.lavavu.is_notebook():
@@ -203,15 +225,21 @@ class Plots(object):
     def pressureField(self, figsize=None, title="Pressure Field",
                       units=u.pascal, cullface=False,
                       script=None, show=True,
-                      store=None, **kwargs):
+                      store=None, visugrid=None, **kwargs):
 
-        Fig = glucifer.Figure(store=store, figsize=figsize)
+        Fig = glucifer.Figure(store=store, figsize=figsize,
+                              min=self._boundingBox[0],
+                              max=self._boundingBox[1])
         Fig["title"] = title + " " + str(units)
         Fig["boundingBox"] = self._boundingBox
 
         fact = Dimensionalize(1.0, units).magnitude
         Fig.Surface(self.Model.mesh, self.Model.pressureField * fact,
                     cullface=cullface, **kwargs)
+        if visugrid:
+            clip_X, clip_Y = _visugrid_drawing_object(self.Model, visugrid)
+            Fig.Mesh(visugrid.mesh, xmin=clip_X[0], xmax=clip_X[1],
+                     ymin=clip_Y[0], ymax=clip_Y[1])
 
         Fig.script(script)
         if show and glucifer.lavavu.is_notebook():
@@ -221,9 +249,12 @@ class Plots(object):
 
     def velocityField(self, figsize=None, title="Velocity Field",
                       units=u.centimeter / u.year, cullface=False,
-                      script=None, show=True, store=None, **kwargs):
+                      script=None, show=True,
+                      store=None, visugrid=None, **kwargs):
 
-        Fig = glucifer.Figure(store=store, figsize=figsize)
+        Fig = glucifer.Figure(store=store, figsize=figsize,
+                              min=self._boundingBox[0],
+                              max=self._boundingBox[1])
         Fig["title"] = title + " " + str(units)
         Fig["boundingBox"] = self._boundingBox
 
@@ -235,6 +266,10 @@ class Plots(object):
                     cullface=cullface, **kwargs)
         Fig.VectorArrows(self.Model.mesh, self.Model.velocityField,
                          **kwargs)
+        if visugrid:
+            clip_X, clip_Y = _visugrid_drawing_object(self.Model, visugrid)
+            Fig.Mesh(visugrid.mesh, xmin=clip_X[0], xmax=clip_X[1],
+                     ymin=clip_Y[0], ymax=clip_Y[1])
 
         Fig.script(script)
         if show and glucifer.lavavu.is_notebook():
@@ -244,14 +279,20 @@ class Plots(object):
 
     def plasticStrain(self, figsize=None, title="Plastic Strain",
                       cullface=False, script=None, show=True,
-                      store=None, **kwargs):
+                      store=None, visugrid=None, **kwargs):
 
-        Fig = glucifer.Figure(store=store, figsize=figsize)
+        Fig = glucifer.Figure(store=store, figsize=figsize,
+                              min=self._boundingBox[0],
+                              max=self._boundingBox[1])
         Fig["title"] = title
         Fig["boundingBox"] = self._boundingBox
 
         Fig.Points(self.Model.swarm, fn_colour=self.Model.plasticStrain,
                    cullface=cullface, **kwargs)
+        if visugrid:
+            clip_X, clip_Y = _visugrid_drawing_object(self.Model, visugrid)
+            Fig.Mesh(visugrid.mesh, xmin=clip_X[0], xmax=clip_X[1],
+                     ymin=clip_Y[0], ymax=clip_Y[1])
 
         Fig.script(script)
         if show and glucifer.lavavu.is_notebook():
@@ -263,15 +304,22 @@ class Plots(object):
 
     def melt_fraction(self, figsize=None, title="Melt fraction",
                       cullface=False, script=None, show=True,
-                      store=None, **kwargs):
+                      store=None, visugrid=None, **kwargs):
 
         self.Model.update_melt_fraction()
-        Fig = glucifer.Figure(store=store, figsize=figsize)
+        Fig = glucifer.Figure(store=store, figsize=figsize,
+                              min=self._boundingBox[0],
+                              max=self._boundingBox[1])
         Fig["title"] = title
         Fig["boundingBox"] = self._boundingBox
 
         Fig.Points(self.Model.swarm, fn_colour=self.Model.meltField,
                    cullface=cullface, **kwargs)
+
+        if visugrid:
+            clip_X, clip_Y = _visugrid_drawing_object(self.Model, visugrid)
+            Fig.Mesh(visugrid.mesh, xmin=clip_X[0], xmax=clip_X[1],
+                     ymin=clip_Y[0], ymax=clip_Y[1])
 
         Fig.script(script)
 
