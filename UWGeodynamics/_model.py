@@ -292,19 +292,20 @@ class Model(Material):
             else:
                 model[attribute] = str(val)
 
-        model["materials"] = []
-        # Encode materials
-        for material in self.materials:
-            if material is not self:
-                model["materials"].append(material)
+        ## Encode velocity boundary conditions
+        #if self.velocityBCs:
+        #    model["velocityBCs"] = self.velocityBCs
 
-        # Encode velocity boundary conditions
-        if self.velocityBCs:
-            model["velocityBCs"] = self.velocityBCs
-
-        # Encode temperature boundary conditions
-        if self.temperatureBCs:
-            model["temperatureBCs"] = self.temperatureBCs
+        ## Encode temperature boundary conditions
+        #if self.temperatureBCs:
+        #    model["temperatureBCs"] = self.temperatureBCs
+        
+        #model["materials"] = []
+        ## Encode materials
+        #for material in self.materials:
+        #    print(material is not self)
+        #    if material is not self:
+        #        model["materials"].append(material)
 
         return model
 
@@ -332,7 +333,7 @@ class Model(Material):
                 os.makedirs(value)
         self._outputDir = value
 
-    def restart(self, restartDir=None, step=None):
+    def restart(self, step=None, restartDir=None):
         """ Restart a Model
 
         parameters:
@@ -346,21 +347,43 @@ class Model(Material):
         """
         if not restartDir:
             restartDir = self.outputDir
-        if not step:
+        if step is None:
             step = max([int(os.path.splitext(filename)[0].split("-")[-1])
                         for filename in os.listdir(restartDir) if "-" in
                         filename])
 
         self.checkpointID = step
         self.mesh.load(os.path.join(restartDir, "mesh.h5"))
-        self.swarm = uw.swarm.Swarm(mesh=self.mesh, particleEscape=True)
+        self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
         self.swarm.load(os.path.join(restartDir, 'swarm-%s.h5' % step))
         self._initialize()
 
         for field in rcParams["restart.fields"]:
-            obj = getattr(field, self)
+            "Temporary !!!!"
+            if field == "temperature":
+                continue
+            obj = getattr(self, field)
             path = os.path.join(restartDir, field + "-%s.h5" % step)
-            obj.load(path)
+            print("Reloading field {0} from {1}".format(field, path))
+            obj.load(str(path))
+
+        "Temporary !!!!"
+        if u"temperature" in rcParams["restart.fields"]:
+            if not self.temperature:
+                self.temperature = MeshVariable(mesh=self.mesh,
+                                                nodeDofCount=1)
+                self._temperatureDot = MeshVariable(mesh=self.mesh,
+                                                    nodeDofCount=1)
+                self._heatFlux = MeshVariable(mesh=self.mesh,
+                                              nodeDofCount=1)
+                self.temperature.data[...] = nd(self.Tref)
+                self._temperatureDot.data[...] = 0.
+                self._heatFlux.data[...] = 0.
+                obj = getattr(self, "temperature")
+                path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
+                print("Reloading field {0} from {1}".format("temperature", path))
+                obj.load(str(path))
+
 
     @property
     def projMaterialField(self):
@@ -1233,6 +1256,15 @@ class Model(Material):
         if checkpoint_interval:
             next_checkpoint = time + nd(checkpoint_interval)
 
+        if checkpoint_interval or timeCheckpoints:
+            # Check point initial set up
+            self.checkpoint()
+            if glucifer_outputs:
+                self.output_glucifer_figures(self.checkpointID)
+
+        # Save model to json
+        self.save()
+
         while time < duration:
             self.solve()
 
@@ -1552,8 +1584,12 @@ class Model(Material):
         else:
             raise ValueError(field, ' is not a valid variable name \n')
 
-    def save(self, filename):
-        with open(filename, "w") as f:
+    def save(self, filename=None):
+        if not filename:
+            filename = self.name + ".json"
+
+        path = os.path.join(self.outputDir, filename)
+        with open(path, "w") as f:
             json.dump(self, f, sort_keys=True, indent=4, cls=ObjectEncoder)
 
     def geometry_from_shapefile(self, filename, units=None):
@@ -1577,7 +1613,7 @@ class Model(Material):
         self._fill_model()
 
 
-def load_model(filename):
+def load_model(filename, step=None):
     """ Reload Model from json file """
     import warnings
 
@@ -1654,6 +1690,7 @@ def load_model(filename):
 
     # Initialize the model
     Mod = Model(**model)
+    Mod.outputDir = os.path.split(filename)[0]
 
     for material in materials:
         mat = Material(**material)
@@ -1664,6 +1701,9 @@ def load_model(filename):
 
     if temperatureBCs:
         Mod.set_temperatureBCs(**temperatureBCs)
+
+    if step is not None:
+        Mod.restart(step)
 
     return Mod
 
