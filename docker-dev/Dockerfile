@@ -3,8 +3,8 @@ MAINTAINER romain.beucher@unimelb.edu
 
 USER root
 
-RUN apt-get update -qq
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommend python-mpltoolkits.basemap
+#RUN apt-get update -qq
+#RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommend python-mpltoolkits.basemap
 
 # UWGeodynamics
 WORKDIR /opt
