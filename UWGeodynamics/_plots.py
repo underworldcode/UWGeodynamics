@@ -79,9 +79,11 @@ class Plots(object):
     def materialField(self, figsize=None, title="Material Field",
                       colours=None, script=None, cullface=False,
                       mask=None, visugrid=None, onMesh=False,
-                      tracers=[], show=True, store=None, **kwargs):
+                      tracers=[], show=True, store=None, quality=3,
+                      **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize,
+                              quality=quality,
                               min=self._boundingBox[0],
                               max=self._boundingBox[1])
         Fig["title"] = title
@@ -117,10 +119,11 @@ class Plots(object):
     def viscosityField(self, figsize=None, title="Viscosity Field",
                        units=u.pascal * u.second, logScale=True,
                        projected=False, cullface=False,
-                       script=None, show=True,
+                       script=None, show=True, quality=3,
                        store=None, visugrid=None, **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize,
+                              quality=quality,
                               min=self._boundingBox[0],
                               max=self._boundingBox[1])
         Fig["title"] = title + " " + str(units)
@@ -147,10 +150,11 @@ class Plots(object):
                    units=1.0 / u.second,
                    cullface=False,
                    logScale=True, colours="coolwarm",
-                   script=None, show=True,
+                   script=None, show=True, quality=3,
                    store=None, visugrid=None, **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize,
+                              quality=quality,
                               min=self._boundingBox[0],
                               max=self._boundingBox[1])
         Fig["title"] = title + " " + str(units)
@@ -175,11 +179,12 @@ class Plots(object):
         return Fig
 
     def density(self, figsize=None, title="Density Field",
-                units=u.kilogram / u.metre**3,
+                units=u.kilogram / u.metre**3, quality=3,
                 script=None, cullface=False, show=True,
                 store=None, visugrid=None, **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize,
+                              quality=quality,
                               min=self._boundingBox[0],
                               max=self._boundingBox[1])
         Fig["title"] = title + " " + str(units)
@@ -198,10 +203,11 @@ class Plots(object):
 
     def temperature(self, figsize=None, title="Temperature Field",
                     units=u.degK, script=None, cullface=False,
-                    colours="coolwarm", show=True,
+                    colours="coolwarm", show=True, quality=3,
                     store=None, visugrid=None, **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize,
+                              quality=quality,
                               min=self._boundingBox[0],
                               max=self._boundingBox[1])
         Fig["title"] = title + " " + str(units)
@@ -224,10 +230,11 @@ class Plots(object):
 
     def pressureField(self, figsize=None, title="Pressure Field",
                       units=u.pascal, cullface=False,
-                      script=None, show=True,
+                      script=None, show=True, quality=3,
                       store=None, visugrid=None, **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize,
+                              quality=quality,
                               min=self._boundingBox[0],
                               max=self._boundingBox[1])
         Fig["title"] = title + " " + str(units)
@@ -249,10 +256,11 @@ class Plots(object):
 
     def velocityField(self, figsize=None, title="Velocity Field",
                       units=u.centimeter / u.year, cullface=False,
-                      script=None, show=True,
+                      script=None, show=True, quality=3,
                       store=None, visugrid=None, **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize,
+                              quality=quality,
                               min=self._boundingBox[0],
                               max=self._boundingBox[1])
         Fig["title"] = title + " " + str(units)
@@ -279,9 +287,11 @@ class Plots(object):
 
     def plasticStrain(self, figsize=None, title="Plastic Strain",
                       cullface=False, script=None, show=True,
-                      store=None, visugrid=None, **kwargs):
+                      store=None, visugrid=None, quality=3,
+                      **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize,
+                              quality=quality,
                               min=self._boundingBox[0],
                               max=self._boundingBox[1])
         Fig["title"] = title
@@ -304,10 +314,12 @@ class Plots(object):
 
     def melt_fraction(self, figsize=None, title="Melt fraction",
                       cullface=False, script=None, show=True,
-                      store=None, visugrid=None, **kwargs):
+                      store=None, visugrid=None, quality=3,
+                      **kwargs):
 
         self.Model.update_melt_fraction()
         Fig = glucifer.Figure(store=store, figsize=figsize,
+                              quality=quality,
                               min=self._boundingBox[0],
                               max=self._boundingBox[1])
         Fig["title"] = title
