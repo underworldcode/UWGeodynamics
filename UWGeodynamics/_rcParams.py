@@ -60,6 +60,7 @@ rcParams = {
 
     "solver" : ["mg", validate_solver],
     "penalty" : [0.0, validate_float],
+    "initial.nonlinear.tolerance": [1e-2, validate_float],
     "nonlinear.tolerance": [1e-2, validate_float],
     "maximum.timestep" : [200000, validate_int],
     "nonlinear.min.iterations": [3, validate_int],
