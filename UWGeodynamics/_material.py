@@ -66,7 +66,7 @@ class Material(object):
     def to_json(self):
         attributes = [
             "name",
-            "density",
+            "_density",
             "diffusivity",
             "capacity",
             "radiogenicHeatProd",

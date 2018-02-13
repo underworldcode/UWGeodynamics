@@ -39,6 +39,13 @@ class LecodeIsostasy(object):
                                    {0}""".format(options))
             self.vertical_walls_conditions = vertical_walls_conditions
 
+    def to_json(self):
+        d = {}
+        d["Type"] = "LecodeIsostasy"
+        d["reference_mat"] = str(self.reference_mat)
+        d["average"] = str(self.average)
+        return d
+
     def solve(self):
 
         if not self.initialized:

@@ -292,20 +292,23 @@ class Model(Material):
             else:
                 model[attribute] = str(val)
 
-        ## Encode velocity boundary conditions
-        #if self.velocityBCs:
-        #    model["velocityBCs"] = self.velocityBCs
+        # Encode velocity boundary conditions
+        if self.velocityBCs:
+            model["velocityBCs"] = self.velocityBCs
 
-        ## Encode temperature boundary conditions
-        #if self.temperatureBCs:
-        #    model["temperatureBCs"] = self.temperatureBCs
-        
-        #model["materials"] = []
-        ## Encode materials
-        #for material in self.materials:
-        #    print(material is not self)
-        #    if material is not self:
-        #        model["materials"].append(material)
+        # Encode temperature boundary conditions
+        if self.temperatureBCs:
+            model["temperatureBCs"] = self.temperatureBCs
+
+        model["materials"] = []
+        # Encode materials
+        for material in reversed(self.materials):
+            # Model itself
+            if material is self:
+                val = super(Model, self).to_json()
+                model["materials"].append(val)
+            else:
+                model["materials"].append(material)
 
         return model
 

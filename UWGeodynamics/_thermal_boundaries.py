@@ -200,6 +200,6 @@ class TemperatureBCs(object):
         d = {}
         for attribute in attributes:
             if self[attribute]:
-                d[attribute] = self[attribute]
+                d[attribute] = str(self[attribute])
 
         return d
