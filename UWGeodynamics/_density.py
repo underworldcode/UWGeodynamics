@@ -24,8 +24,8 @@ class ConstantDensity(Density):
     def to_json(self):
         d = {}
         d["type"] = "ConstantDensity"
-        d["reference_density"] = self.reference_density
-
+        d["reference_density"] = str(self.reference_density)
+        return d
 
 class LinearDensity(Density):
 
@@ -59,7 +59,7 @@ class LinearDensity(Density):
         d["thermalExpansivity"] =  str(self.thermalExpansivity)
         d["reference_temperature"] = str(self.reference_temperature)
         d["beta"] = str(self._beta)
-        d["reference_density"] = str(self.reference_pressure)
+        d["reference_pressure"] = str(self.reference_pressure)
         return d
 
     def effective_density(self):
