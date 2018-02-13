@@ -1202,10 +1202,15 @@ class Model(Material):
         if not self._stokes_obj:
             self._stokes_obj = self._stokes()
 
+        if self.step == 0:
+            tol = rcParams["initial.nonlinear.tolerance"]
+        else:
+            tol = rcParams["nonlinear.tolerance"]
+
         self._stokes_obj.solve(
             nonLinearIterate=True,
             callback_post_solve=self._calibrate_pressureField,
-            nonLinearTolerance=rcParams["nonlinear.tolerance"])
+            nonLinearTolerance=tol)
         self._solution_exist.value = True
 
     def init_model(self, temperature=True, pressureField=True):
