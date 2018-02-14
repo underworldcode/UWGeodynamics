@@ -66,6 +66,7 @@ class Material(object):
     def to_json(self):
         attributes = [
             "name",
+            "_density",
             "diffusivity",
             "capacity",
             "radiogenicHeatProd",
@@ -82,11 +83,8 @@ class Material(object):
 
         d = {}
 
-        if self._density:
-            d["density"] = self["_density"]
-
         for attribute in attributes:
-            val = self.__dict__[attribute]
+            val = self[attribute]
             if val:
                 if isinstance(val, u.Quantity):
                     val = str(val)
