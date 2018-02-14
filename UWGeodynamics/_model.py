@@ -27,6 +27,8 @@ from ._frictional_boundary import FrictionBoundaries
 from ._mesh import FeMesh_Cartesian
 from ._swarm import Swarm
 from ._meshvariable import MeshVariable
+from ._swarmvariable import SwarmVariable
+from scipy import interpolate
 
 _attributes_to_save = {
     "elementRes": lambda x: tuple(int(val) for val in x.split(",")),
@@ -1512,6 +1514,58 @@ class Model(Material):
         #                                   field + "-%s" % checkpointID - 2))
         #        except:
         #            pass
+
+    def profile(self,
+                start_point,
+                end_point,
+                field,
+                field_units=u.dimensionless,
+                distance_units=u.dimensionless,
+                npoints=1000):
+
+        if (field not in rcParams["mesh.variables"] and
+           field not in rcParams["swarm.variables"]):
+            raise ValueError("""{0} is not a valid field, \n
+                                Valid fields are {1} or {2}""".format(
+                                    field, rcParams["mesh.variables"],
+                                    rcParams["swarm.variables"]))
+
+        start_point = np.array([nd(val) for val in start_point])
+        end_point = np.array([nd(val) for val in end_point])
+
+        points = [start_point, end_point]
+        x_coords, y_coords = zip(*points)
+
+        x = np.linspace(x_coords[0], x_coords[1], npoints)
+
+        if x_coords[0] == x_coords[1]:
+            y = np.linspace(y_coords[0], y_coords[1], npoints)
+        else:
+            f = interpolate.interp1d(x_coords, y_coords)
+            y = f(x)
+
+        dx = np.diff(x)
+        dy = np.diff(y)
+        distances = np.zeros(x.shape)
+        distances[1:] = np.sqrt(dx**2 + dy**2)
+        distances = np.cumsum(distances)
+
+        obj = getattr(self, field)
+
+        if isinstance(obj, SwarmVariable):
+            obj = getattr(self, "proj" + field[0].upper() + field[1:])
+
+        pts = np.array(zip(x, y))
+
+        values = obj.evaluate(pts)
+
+        distance_fact = Dimensionalize(1.0, distance_units)
+        field_fact = Dimensionalize(1.0, field_units)
+
+        distances *= distance_fact.magnitude
+        values *= field_fact.magnitude
+
+        return distances, values
 
     def output_glucifer_figures(self, step):
         """ Output glucifer Figures to the gldb store """
