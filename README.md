@@ -16,6 +16,9 @@ We hope that the user will naturally move to the low-level functionalities as he
 or her gets more confident, and by doing so will access the wide range of 
 possibilities offered by Underworld.
 
+![https://github.com/rbeucher/UWGeodynamics/wiki/img/cover.png]
+
+
 ## Getting started
 
 For installation information and documentation visit our github [**wiki page**](https://github.com/rbeucher/UWGeodynamics/wiki) which provides several useful notes on how to start using the tool.
