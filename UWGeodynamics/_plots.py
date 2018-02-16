@@ -96,7 +96,7 @@ class Plots(object):
             pts = Fig.Points(self.Model.swarm,
                              fn_colour=self.Model.materialField,
                              colours=colours,
-                             cullface=cullface, **kwargs)
+                             cullface=cullface, name=Fig["title"], **kwargs)
             # pts.colourBar["binlabels"] = True
             # pts.colourBar["align"] = "right"
             # pts.colourBar["vertical"] = True
@@ -131,7 +131,7 @@ class Plots(object):
 
         fact = Dimensionalize(1.0, units).magnitude
         Fig.Points(self.Model.swarm, self.Model._viscosityFn * fact,
-                   logScale=logScale, cullface=cullface, **kwargs)
+                   logScale=logScale, name=Fig["title"], cullface=cullface, **kwargs)
 
         if visugrid:
             clip_X, clip_Y = _visugrid_drawing_object(self.Model, visugrid)
@@ -163,7 +163,7 @@ class Plots(object):
         fact = Dimensionalize(1.0, units).magnitude
         Fig.Surface(self.Model.mesh.subMesh,
                     self.Model._strainRate_2ndInvariant * fact,
-                    cullface=cullface, logScale=logScale,
+                    cullface=cullface, logScale=logScale, name=Fig["title"],
                     colours=colours,
                     **kwargs)
 
@@ -193,7 +193,7 @@ class Plots(object):
         fact = Dimensionalize(1.0, units).magnitude
         Fig.Points(self.Model.swarm,
                    fn_colour=self.Model._densityFn * fact,
-                   cullface=cullface, **kwargs)
+                   cullface=cullface, name=Fig["title"], **kwargs)
 
         Fig.script(script)
         if show and glucifer.lavavu.is_notebook():
@@ -215,7 +215,7 @@ class Plots(object):
 
         fact = Dimensionalize(1.0, units).magnitude
         Fig.Surface(self.Model.mesh, self.Model.temperature * fact,
-                    colours=colours, cullface=cullface,
+                    colours=colours, cullface=cullface, name=Fig["title"],
                     **kwargs)
         if visugrid:
             clip_X, clip_Y = _visugrid_drawing_object(self.Model, visugrid)
@@ -242,7 +242,7 @@ class Plots(object):
 
         fact = Dimensionalize(1.0, units).magnitude
         Fig.Surface(self.Model.mesh, self.Model.pressureField * fact,
-                    cullface=cullface, **kwargs)
+                    cullface=cullface, name=Fig["title"], **kwargs)
         if visugrid:
             clip_X, clip_Y = _visugrid_drawing_object(self.Model, visugrid)
             Fig.Mesh(visugrid.mesh, xmin=clip_X[0], xmax=clip_X[1],
@@ -271,7 +271,7 @@ class Plots(object):
             uw.function.math.dot(self.Model.velocityField,
                                  self.Model.velocityField))
         Fig.Surface(self.Model.mesh, velmagfield * fact,
-                    cullface=cullface, **kwargs)
+                    cullface=cullface, name=Fig["title"], **kwargs)
         Fig.VectorArrows(self.Model.mesh, self.Model.velocityField,
                          **kwargs)
         if visugrid:
@@ -298,7 +298,7 @@ class Plots(object):
         Fig["boundingBox"] = self._boundingBox
 
         Fig.Points(self.Model.swarm, fn_colour=self.Model.plasticStrain,
-                   cullface=cullface, **kwargs)
+                   cullface=cullface, name=Fig["title"], **kwargs)
         if visugrid:
             clip_X, clip_Y = _visugrid_drawing_object(self.Model, visugrid)
             Fig.Mesh(visugrid.mesh, xmin=clip_X[0], xmax=clip_X[1],
@@ -326,7 +326,7 @@ class Plots(object):
         Fig["boundingBox"] = self._boundingBox
 
         Fig.Points(self.Model.swarm, fn_colour=self.Model.meltField,
-                   cullface=cullface, **kwargs)
+                   cullface=cullface, name=Fig["title"], **kwargs)
 
         if visugrid:
             clip_X, clip_Y = _visugrid_drawing_object(self.Model, visugrid)
