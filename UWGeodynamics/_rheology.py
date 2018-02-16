@@ -200,11 +200,12 @@ class DruckerPrager(object):
 
 class VonMises(object):
 
-    def __init__(self, cohesion=None,
+    def __init__(self, name=None, cohesion=None,
                  cohesionAfterSoftening = None,
                  minimumViscosity=None, plasticStrain=None,
                  epsilon1=0.5, epsilon2=1.0):
 
+        self.name = name
         self.cohesion = cohesion
         self.cohesionAfterSoftening = cohesionAfterSoftening
         self.minimumViscosity = minimumViscosity
@@ -213,6 +214,25 @@ class VonMises(object):
         self.epsilon1 = epsilon1
         self.epsilon2 = epsilon2
         self.cohesionWeakeningFn = linearCohesionWeakening
+    
+    def __getitem__(self, name):
+        return self.__dict__[name]
+
+    def to_json(self):
+        attributes = [
+            "name",
+            "_cohesion",
+            "_cohesionAfterSoftening",
+            "minimumViscosity",
+            "epsilon1",
+            "epsilon2"]
+
+        d = {}
+
+        for attribute in attributes:
+            d[attribute] = str(self[attribute])
+
+        return d
 
     @property
     def cohesion(self):
