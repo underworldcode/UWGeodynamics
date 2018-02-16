@@ -925,6 +925,13 @@ class Model(Material):
                     [(self._strainRate_2ndInvariant < 1e-20, 1e-20),
                      (True, self._strainRate_2ndInvariant)])
 
+                if material.elasticity:
+                    ElasticityHandler = material.elasticity
+                    shear_modulus = nd(ElasticityHandler.shear_modulus)
+                    observation_time = nd(ElasticityHandler.observation_time)
+                    eij += (0.5 * self.previousStress /
+                           (shear_modulus * observation_time))
+
                 muEff = 0.5 * yieldStress / eij
                 if not material.minViscosity:
                     minViscosity = self.minViscosity
@@ -1028,7 +1035,7 @@ class Model(Material):
 
     @property
     def _stressFn(self):
-        """ Calculate the viscous stress """
+        """ Calculate Stress """
         stressMap = {}
         for material in self.materials:
             # Calculate viscous stress
@@ -1044,7 +1051,7 @@ class Model(Material):
 
     @property
     def _elastic_stressFn(self):
-        if any([material.melt for material in self.materials]):
+        if any([material.elasticity for material in self.materials]):
             stressMap = {}
             for material in self.materials:
                 if material.elasticity:
@@ -1276,6 +1283,9 @@ class Model(Material):
         self.save()
 
         while time < duration:
+
+            self.preSolveHook()
+
             self.solve()
 
             # Whats the longest we can run before reaching the end
@@ -1325,6 +1335,9 @@ class Model(Material):
                 if uw.rank() == 0:
                     print("Time: ", str(self.time.to(units)),
                           'dt:', str(Dimensionalize(self._dt, units)))
+
+            self.postSolveHook()
+
         return 1
 
     def preSolveHook(self):
@@ -1341,8 +1354,6 @@ class Model(Material):
         update the fields according to the Model state.
 
         """
-
-        self.preSolveHook()
 
         dt = self._dt
         # Increment plastic strain
@@ -1383,7 +1394,6 @@ class Model(Material):
         if self._visugrid:
             self._visugrid.advect(dt)
 
-        self.postSolveHook()
 
     def mesh_advector(self, axis):
         """ Initialize the mesh advector
