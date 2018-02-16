@@ -929,8 +929,10 @@ class Model(Material):
                     ElasticityHandler = material.elasticity
                     shear_modulus = nd(ElasticityHandler.shear_modulus)
                     observation_time = nd(ElasticityHandler.observation_time)
-                    eij += (0.5 * self.previousStress /
-                           (shear_modulus * observation_time))
+                    stress = (0.5 * self._previousStressField /
+                              (shear_modulus * observation_time))
+                    stressInv = fn.math.sqrt(0.5*(stress[0]**2+stress[1]**2)+stress[2]**2)
+                    eij += stressInv
 
                 muEff = 0.5 * yieldStress / eij
                 if not material.minViscosity:
@@ -1075,7 +1077,7 @@ class Model(Material):
                 dt_e.append(nd(material.elasticity.observation_time))
         dt_e = np.array(dt_e).min()
         phi = dt / dt_e
-        veStressFn_data = self._elastic_stressFn.evaluate(self.swarm)
+        veStressFn_data = self._stressFn.evaluate(self.swarm)
         self._previousStressField.data[:] *= (1. - phi)
         self._previousStressField.data[:] += phi * veStressFn_data[:]
 
