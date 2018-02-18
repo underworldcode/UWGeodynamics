@@ -13,10 +13,10 @@ class Visugrid(object):
         self.maxCoord = maxCoord
         self.elementRes = elementRes
         self.velocityField = velocityField
-        
+
         minCoord = tuple([nd(val) for val in self.minCoord])
         maxCoord = tuple([nd(val) for val in self.maxCoord])
-        
+
         self.mesh = uw.mesh.FeMesh_Cartesian(elementType="Q1/dQ0",
                                              elementRes=self.elementRes,
                                              minCoord=minCoord,
@@ -24,7 +24,7 @@ class Visugrid(object):
 
         boundaryNodes = (Model._left_wall + Model._right_wall +
                          Model._top_wall + Model._bottom_wall)
-       
+
         self.Model = Model
         # Build a KDTree to handle boundaries
         self.boundaries = boundaryNodes.data
@@ -43,4 +43,12 @@ class Visugrid(object):
                     loc = self.boundaries[loc]
                     coords = self.Model.mesh.data[loc]
                     self.mesh.data[index] += self.velocityField.data[loc] * dt
+
+    def to_json(self):
+        d = {}
+        d["minCoord"] = str(self.minCoord)
+        d["maxCoord"] = str(self.maxCoord)
+        d["elementRes"] = self.elementRes
+        return d
+
 

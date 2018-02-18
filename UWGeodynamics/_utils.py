@@ -192,6 +192,20 @@ class Balanced_InflowOutflow(object):
 
         return velocity
 
+    def to_json(self):
+        d = {}
+        d["type"] = "Balanced_InflowOutflow"
+        d["vtop"] = str(self.vtop)
+        d["top"] = str(self.top)
+        d["pt1"] = str(self.pt1)
+        d["pt2"] = str(self.pt2)
+        d["ynodes"] = self.ynodes
+        d["tol"] = str(self.tol)
+        d["nitmax"] = str(self.nitmax)
+        d["mitmin"] = str(self.nitmin)
+        d["default_vel"] = str(self.default_vel)
+        return d
+
 
 class MoveImporter(object):
 
