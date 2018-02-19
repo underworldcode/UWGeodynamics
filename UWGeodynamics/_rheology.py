@@ -624,9 +624,3 @@ class Elasticity(Rheology):
         elasticStressFn *= self.previousStress
         return elasticStressFn
 
-    @property
-    def elastic_strainRate(self):
-        return self._elastic_strainRate()
-
-    def _elastic_strainRate(self):
-        return self.elastic_stress / (2.0 * self.viscosity)
