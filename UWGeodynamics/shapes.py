@@ -33,6 +33,12 @@ class Polygon(Shape):
         vertices = [(nd(x), nd(y)) for x, y in self.vertices]
         self._fn = uw.function.shape.Polygon(np.array(vertices))
 
+    def to_json(self):
+        d = {}
+        d["type"] = "polygon"
+        d["vertices"] = str(self.vertices)
+        return d
+
 
 class MultiShape(Shape):
 
@@ -47,10 +53,16 @@ class MultiShape(Shape):
             shape._init_shape()
             self._fnlist.append(shape._fn)
         self._fn = functools.reduce(
-                operator.or_, 
-                self._fnlist, 
+                operator.or_,
+                self._fnlist,
                 fn.misc.constant(False))
         return self._fn
+
+    def to_json(self):
+        d = {}
+        d["type"] = "multishape"
+        d["shapes"] = self.shapes
+        return d
 
 
 class Layer(Shape):
@@ -85,6 +97,15 @@ class Layer(Shape):
     @bottom.setter
     def bottom(self, value):
         self._bottom = value
+
+    def to_json(self):
+        d = {}
+        d["type"] = "Layer"
+        d["top"] = str(self.top)
+        d["bottom"] = str(self.bottom)
+        d["minY"] = str(self.minY)
+        d["maxY"] = str(self.maxY)
+        return d
 
 
 class Box(Shape):
@@ -144,6 +165,17 @@ class Box(Shape):
     def bottom(self, value):
         self._bottom = value
 
+    def to_json(self):
+        d = {}
+        d["type"] = "Box"
+        d["top"] = str(self.top)
+        d["bottom"] = str(self.bottom)
+        d["minY"] = str(self.minY)
+        d["maxY"] = str(self.maxY)
+        d["minX"] = str(self.minX)
+        d["maxX"] = str(self.maxX)
+        return d
+
 
 class Disk(Shape):
 
@@ -156,6 +188,13 @@ class Disk(Shape):
         radius = nd(self.radius)
         coord = fn.input() - center
         self._fn = fn.math.dot(coord, coord) < radius**2
+
+    def to_json(self):
+        d = {}
+        d["type"] = "Disk"
+        d["center"] = str(self.center)
+        d["radius"] = str(self.radius)
+        return d
 
 
 class Annulus(Shape):
@@ -172,3 +211,10 @@ class Annulus(Shape):
         coord = fn.input() - center
         self._fn = (fn.math.dot(coord, coord) < r2**2) & (fn.math.dot(coord, coord) > r1**2)
 
+    def to_json(self):
+        d = {}
+        d["type"] = "Disk"
+        d["center"] = str(self.center)
+        d["r1"] = str(self.r1)
+        d["r2"] = str(self.r2)
+        return d

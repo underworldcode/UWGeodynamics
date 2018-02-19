@@ -60,26 +60,6 @@ class Rheology(object):
         return
 
 
-class _DruckerPragerEncoder(JSONEncoder):
-    attributes = [
-        "name",
-        "cohesion",
-        "frictionCoefficient",
-        "cohesionAfterSoftening",
-        "frictionAfterSoftening",
-        "minimumViscosity",
-        "epsilon1",
-        "epsilon2"]
-
-    def default(self, obj):
-        d = {}
-
-        for attribute in self.attributes:
-            d[attribute] = str(obj[attribute])
-
-        return d
-
-
 class DruckerPrager(object):
 
     def __init__(self, name=None, cohesion=None, frictionCoefficient=None,
@@ -107,16 +87,13 @@ class DruckerPrager(object):
     def __getitem__(self, name):
         return self.__dict__[name]
 
-    def _json_(self):
-        return json.dumps(self, cls=_DruckerPragerEncoder)
-
     def to_json(self):
         attributes = [
             "name",
-            "cohesion",
-            "frictionCoefficient",
-            "cohesionAfterSoftening",
-            "frictionAfterSoftening",
+            "_cohesion",
+            "_frictionCoefficient",
+            "_cohesionAfterSoftening",
+            "_frictionAfterSoftening",
             "minimumViscosity",
             "epsilon1",
             "epsilon2"]
@@ -223,11 +200,12 @@ class DruckerPrager(object):
 
 class VonMises(object):
 
-    def __init__(self, cohesion=None,
+    def __init__(self, name=None, cohesion=None,
                  cohesionAfterSoftening = None,
                  minimumViscosity=None, plasticStrain=None,
                  epsilon1=0.5, epsilon2=1.0):
 
+        self.name = name
         self.cohesion = cohesion
         self.cohesionAfterSoftening = cohesionAfterSoftening
         self.minimumViscosity = minimumViscosity
@@ -236,6 +214,25 @@ class VonMises(object):
         self.epsilon1 = epsilon1
         self.epsilon2 = epsilon2
         self.cohesionWeakeningFn = linearCohesionWeakening
+    
+    def __getitem__(self, name):
+        return self.__dict__[name]
+
+    def to_json(self):
+        attributes = [
+            "name",
+            "_cohesion",
+            "_cohesionAfterSoftening",
+            "minimumViscosity",
+            "epsilon1",
+            "epsilon2"]
+
+        d = {}
+
+        for attribute in attributes:
+            d[attribute] = str(self[attribute])
+
+        return d
 
     @property
     def cohesion(self):
@@ -281,6 +278,12 @@ class ConstantViscosity(Rheology):
         self._Quantity = viscosity
         self.name = "Constant ({0})".format(str(viscosity))
 
+    def to_json(self):
+        d = {}
+        d["Type"] = "ConstantViscosity"
+        d["viscosity"] = str(self._Quantity)
+        return d
+
     @property
     def muEff(self):
         return self._effectiveViscosity()
@@ -295,41 +298,6 @@ class ConstantViscosity(Rheology):
 
     def _effectiveViscosity(self):
         return fn.misc.constant(nd(self._viscosity))
-
-    def _json_(self):
-        return json.dumps(str(self.Quantity))
-
-    def to_json(self):
-        if isinstance(self.Quantity, u.Quantity):
-            return str(self.Quantity)
-        else:
-            return self.Quantity
-
-class _ViscousCreepEncoder(JSONEncoder):
-
-    attributes = [
-        "name",
-        "preExponentialFactor",
-        "stressExponent",
-        "defaultStrainRateInvariant",
-        "activationVolume",
-        "activationEnergy",
-        "waterFugacity",
-        "grainSize",
-        "meltFraction",
-        "grainSizeExponent",
-        "waterFugacityExponent",
-        "meltFractionFactor",
-        "f",
-        "mineral"]
-
-    def default(self, obj):
-        d = {}
-
-        for attribute in self.attributes:
-            d[attribute] = str(obj[attribute])
-
-        return d
 
 
 class ViscousCreep(Rheology):
@@ -411,9 +379,6 @@ class ViscousCreep(Rheology):
                 html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
 
         return header + html + footer
-
-    def _json_(self):
-        return json.dumps(self, cls=_ViscousCreepEncoder)
 
     def to_json(self):
         attributes = [
@@ -542,10 +507,6 @@ class TemperatureAndDepthDependentViscosity(Rheology):
     def muEff(self):
         coord = fn.input()
         return self._eta0 * fn.math.exp(gamma * (coord[-1] - reference))
-
-    def _json_(self):
-        return json.dumps(
-            self, cls=_TemperatureAndDepthDependentViscosityEncoder)
 
 
 class ViscousCreepRegistry(object):

@@ -15,6 +15,7 @@ class FrictionBoundaries(object):
 
         self.Model = Model
         self.friction = friction
+        self.thickness = thickness
 
         # Build borders
         globalIndices = np.arange(reduce(lambda x, y: x*y, Model.mesh.elementRes))
@@ -46,6 +47,17 @@ class FrictionBoundaries(object):
         self._mask = uw.mesh.MeshVariable(mesh=subMesh, nodeDofCount=1)
         self._mask.data[:] = 0
         self._mask.data[np.intersect1d(subMesh.data_nodegId.ravel(), self.boundaries)] = 1
+
+    def to_json(self):
+        d = {}
+        d["type"] = "frictional"
+        d["thickness"] = self.thickness
+        d["friction"] = str(self.friction)
+        d["right"] = self.right
+        d["left"] = self.left
+        d["top"] = self.top
+        d["bottom"] = self.bottom
+        return d
 
 
 

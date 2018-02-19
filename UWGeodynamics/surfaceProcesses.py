@@ -51,6 +51,18 @@ class Badlands(object):
         self._BadlandsModel.solve(dt)
         return
 
+    def to_json(self):
+        d = {}
+        d["type"] = "badlands"
+        d["airIndex"] = self.airIndex
+        d["sedimentIndex"] = self.sedimentIndex
+        d["XML"] = self.XML
+        d["resolution"] = str(self.resolution)
+        d["checkpoint_interval"] = str(self.checkpoint_interval)
+        d["surfElevation"] = str(self.surfElevation)
+        d["verbose"] = self.verbose
+        return d
+
 
 class ErosionThreshold(object):
 
@@ -60,6 +72,9 @@ class ErosionThreshold(object):
         self.materialIndexField = materialIndexField
         self.swarm = swarm
         self.threshold = nd(threshold)
+        self.air = air
+        self.sediment = sediment
+        self.threshold = threshold
 
         materialMap = {}
         for material in air:
@@ -76,6 +91,14 @@ class ErosionThreshold(object):
         self.materialIndexField.data[:] = self._fn.evaluate(self.swarm)
         return
 
+    def to_json(self):
+        d = {}
+        d["type"] = "ErosionThreshold"
+        d["air"] = self.air
+        d["sediment"] = self.sediment
+        d["threshold"] = str(self.threshold)
+        return d
+
 
 class SedimentationThreshold(object):
 
@@ -84,6 +107,8 @@ class SedimentationThreshold(object):
 
         self.materialIndexField = materialIndexField
         self.swarm = swarm
+        self.air = air
+        self.sediment = sediment
         self.threshold = nd(threshold)
 
         materialMap = {}
@@ -100,6 +125,14 @@ class SedimentationThreshold(object):
     def solve(self, dt):
         self.materialIndexField.data[:] = self._fn.evaluate(self.swarm)
         return
+    
+    def to_json(self):
+        d = {}
+        d["type"] = "SedimentationThreshold"
+        d["air"] = self.air
+        d["sediment"] = self.sediment
+        d["threshold"] = str(self.threshold)
+        return d
 
 
 class ErosionAndSedimentationThreshold(object):
@@ -109,6 +142,8 @@ class ErosionAndSedimentationThreshold(object):
 
         self.materialIndexField = materialIndexField
         self.swarm = swarm
+        self.air = air
+        self.sediment = sediment
         self.threshold = nd(threshold)
 
         materialMap = {}
@@ -129,3 +164,11 @@ class ErosionAndSedimentationThreshold(object):
         self.materialIndexField.data[:] = self._fn1.evaluate(self.swarm)
         self.materialIndexField.data[:] = self._fn2.evaluate(self.swarm)
         return
+    
+    def to_json(self):
+        d = {}
+        d["type"] = "ErosionAndSedimentationThreshold"
+        d["air"] = self.air
+        d["sediment"] = self.sediment
+        d["threshold"] = str(self.threshold)
+        return d

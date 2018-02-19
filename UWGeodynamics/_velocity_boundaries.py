@@ -241,8 +241,11 @@ class VelocityBCs(object):
 
         d = {}
         for attribute in attributes:
-            if self[attribute]:
+            if isinstance(self[attribute], LecodeIsostasy):
                 d[attribute] = self[attribute]
+            elif self[attribute]:
+                d[attribute] = ", ".join(
+                    [str(val) for val in self[attribute]])
 
         return d
 

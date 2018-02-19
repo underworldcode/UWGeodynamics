@@ -27,6 +27,8 @@ from ._frictional_boundary import FrictionBoundaries
 from ._mesh import FeMesh_Cartesian
 from ._swarm import Swarm
 from ._meshvariable import MeshVariable
+from ._swarmvariable import SwarmVariable
+from scipy import interpolate
 
 _attributes_to_save = {
     "elementRes": lambda x: tuple(int(val) for val in x.split(",")),
@@ -292,20 +294,23 @@ class Model(Material):
             else:
                 model[attribute] = str(val)
 
-        ## Encode velocity boundary conditions
-        #if self.velocityBCs:
-        #    model["velocityBCs"] = self.velocityBCs
+        # Encode velocity boundary conditions
+        if self.velocityBCs:
+            model["velocityBCs"] = self.velocityBCs
 
-        ## Encode temperature boundary conditions
-        #if self.temperatureBCs:
-        #    model["temperatureBCs"] = self.temperatureBCs
-        
-        #model["materials"] = []
-        ## Encode materials
-        #for material in self.materials:
-        #    print(material is not self)
-        #    if material is not self:
-        #        model["materials"].append(material)
+        # Encode temperature boundary conditions
+        if self.temperatureBCs:
+            model["temperatureBCs"] = self.temperatureBCs
+
+        model["materials"] = []
+        # Encode materials
+        for material in reversed(self.materials):
+            # Model itself
+            if material is self:
+                val = super(Model, self).to_json()
+                model["materials"].append(val)
+            else:
+                model["materials"].append(material)
 
         return model
 
@@ -920,6 +925,15 @@ class Model(Material):
                     [(self._strainRate_2ndInvariant < 1e-20, 1e-20),
                      (True, self._strainRate_2ndInvariant)])
 
+                if material.elasticity:
+                    ElasticityHandler = material.elasticity
+                    shear_modulus = nd(ElasticityHandler.shear_modulus)
+                    observation_time = nd(ElasticityHandler.observation_time)
+                    stress = (0.5 * self._previousStressField /
+                              (shear_modulus * observation_time))
+                    stressInv = fn.math.sqrt(0.5*(stress[0]**2+stress[1]**2)+stress[2]**2)
+                    eij += stressInv
+
                 muEff = 0.5 * yieldStress / eij
                 if not material.minViscosity:
                     minViscosity = self.minViscosity
@@ -1023,7 +1037,7 @@ class Model(Material):
 
     @property
     def _stressFn(self):
-        """ Calculate the viscous stress """
+        """ Calculate Stress """
         stressMap = {}
         for material in self.materials:
             # Calculate viscous stress
@@ -1039,7 +1053,7 @@ class Model(Material):
 
     @property
     def _elastic_stressFn(self):
-        if any([material.melt for material in self.materials]):
+        if any([material.elasticity for material in self.materials]):
             stressMap = {}
             for material in self.materials:
                 if material.elasticity:
@@ -1063,7 +1077,7 @@ class Model(Material):
                 dt_e.append(nd(material.elasticity.observation_time))
         dt_e = np.array(dt_e).min()
         phi = dt / dt_e
-        veStressFn_data = self._elastic_stressFn.evaluate(self.swarm)
+        veStressFn_data = self._stressFn.evaluate(self.swarm)
         self._previousStressField.data[:] *= (1. - phi)
         self._previousStressField.data[:] += phi * veStressFn_data[:]
 
@@ -1202,10 +1216,15 @@ class Model(Material):
         if not self._stokes_obj:
             self._stokes_obj = self._stokes()
 
+        if self.step == 0:
+            tol = rcParams["initial.nonlinear.tolerance"]
+        else:
+            tol = rcParams["nonlinear.tolerance"]
+
         self._stokes_obj.solve(
             nonLinearIterate=True,
             callback_post_solve=self._calibrate_pressureField,
-            nonLinearTolerance=rcParams["nonlinear.tolerance"])
+            nonLinearTolerance=tol)
         self._solution_exist.value = True
 
     def init_model(self, temperature=True, pressureField=True):
@@ -1266,6 +1285,9 @@ class Model(Material):
         self.save()
 
         while time < duration:
+
+            self.preSolveHook()
+
             self.solve()
 
             # Whats the longest we can run before reaching the end
@@ -1315,6 +1337,9 @@ class Model(Material):
                 if uw.rank() == 0:
                     print("Time: ", str(self.time.to(units)),
                           'dt:', str(Dimensionalize(self._dt, units)))
+
+            self.postSolveHook()
+
         return 1
 
     def preSolveHook(self):
@@ -1331,8 +1356,6 @@ class Model(Material):
         update the fields according to the Model state.
 
         """
-
-        self.preSolveHook()
 
         dt = self._dt
         # Increment plastic strain
@@ -1373,7 +1396,6 @@ class Model(Material):
         if self._visugrid:
             self._visugrid.advect(dt)
 
-        self.postSolveHook()
 
     def mesh_advector(self, axis):
         """ Initialize the mesh advector
@@ -1504,6 +1526,58 @@ class Model(Material):
         #                                   field + "-%s" % checkpointID - 2))
         #        except:
         #            pass
+
+    def profile(self,
+                start_point,
+                end_point,
+                field,
+                field_units=u.dimensionless,
+                distance_units=u.dimensionless,
+                npoints=1000):
+
+        if (field not in rcParams["mesh.variables"] and
+           field not in rcParams["swarm.variables"]):
+            raise ValueError("""{0} is not a valid field, \n
+                                Valid fields are {1} or {2}""".format(
+                                    field, rcParams["mesh.variables"],
+                                    rcParams["swarm.variables"]))
+
+        start_point = np.array([nd(val) for val in start_point])
+        end_point = np.array([nd(val) for val in end_point])
+
+        points = [start_point, end_point]
+        x_coords, y_coords = zip(*points)
+
+        x = np.linspace(x_coords[0], x_coords[1], npoints)
+
+        if x_coords[0] == x_coords[1]:
+            y = np.linspace(y_coords[0], y_coords[1], npoints)
+        else:
+            f = interpolate.interp1d(x_coords, y_coords)
+            y = f(x)
+
+        dx = np.diff(x)
+        dy = np.diff(y)
+        distances = np.zeros(x.shape)
+        distances[1:] = np.sqrt(dx**2 + dy**2)
+        distances = np.cumsum(distances)
+
+        obj = getattr(self, field)
+
+        if isinstance(obj, SwarmVariable):
+            obj = getattr(self, "proj" + field[0].upper() + field[1:])
+
+        pts = np.array(zip(x, y))
+
+        values = obj.evaluate(pts)
+
+        distance_fact = Dimensionalize(1.0, distance_units)
+        field_fact = Dimensionalize(1.0, field_units)
+
+        distances *= distance_fact.magnitude
+        values *= field_fact.magnitude
+
+        return distances, values
 
     def output_glucifer_figures(self, step):
         """ Output glucifer Figures to the gldb store """
