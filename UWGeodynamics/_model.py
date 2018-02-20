@@ -926,7 +926,7 @@ class Model(Material):
                     mu = nd(ElasticityHandler.shear_modulus)
                     dt_e = nd(ElasticityHandler.observation_time)
                     strainRate = fn.tensor.symmetric(self.velocityField.fn_gradient)
-                    D_eff = strainRate + 0.5 * self._previousStress / (mu * dt_e)
+                    D_eff = strainRate + 0.5 * self._previousStressField / (mu * dt_e)
                     SRInv = fn.tensor.second_invariant(D_eff)
                 else:
                     SRInv = self._strainRate_2ndInvariant
