@@ -62,6 +62,9 @@ RUN pip install \
         jupyter_contrib_nbextensions \
         tqdm
 
+# install jupyter extensions
+RUN jupyter contrib nbextension install --system
+
 # basemap needs compilation :((
 # note geos is install via apt
 RUN wget http://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz && \
@@ -114,6 +117,9 @@ RUN jupyter nbextension enable hide_input/main && \
 
 # move back to workspace directory
 WORKDIR /workspace
+
+# Trust underworld notebooks
+RUN find -name \*.ipynb  -print0 | xargs -0 jupyter trust
 
 # launch notebook
 CMD ["jupyter", "notebook", "--ip='*'", "--no-browser"]
