@@ -1,15 +1,8 @@
-FROM underworldcode/underworld2_untested:v2.5
+#FROM underworldcode/underworld2_untested:v2.5
+FROM myuw2_new
 MAINTAINER romain.beucher@unimelb.edu
 
 USER root
-
-WORKDIR /opt
-RUN git clone https://github.com/rbeucher/UWGeodynamics.git
-RUN pip install -e /opt/UWGeodynamics
-RUN mkdir /workspace/UWGeodynamics
-RUN rsync -av /opt/UWGeodynamics/examples/* /workspace/UWGeodynamics/examples/
-RUN rsync -av /opt/UWGeodynamics/tutorials/* /workspace/UWGeodynamics/tutorials/
-RUN rsync -av /opt/UWGeodynamics/manual/* /workspace/UWGeodynamics/manual/
 
 # required dependency for pyBadlands and friends
 RUN apt-get update -qq && \
@@ -30,10 +23,9 @@ RUN apt-get update -qq && \
       libgeos++-dev \
       wget && \
 apt-get clean && \
-rm -rf /var/lib/apt/lists/*
-
+rm -rf /var/lib/apt/lists/* && \
 # dependency python packages
-RUN pip install \
+pip install \
         pillow \
         enum34 \
         pyvirtualdisplay \
@@ -60,14 +52,12 @@ RUN pip install \
 	shapely \
 	descartes \
         jupyter_contrib_nbextensions \
-        tqdm
-
+        tqdm && \
 # install jupyter extensions
-RUN jupyter contrib nbextension install --system
-
+jupyter contrib nbextension install --system && \
 # basemap needs compilation :((
 # note geos is install via apt
-RUN wget http://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz && \
+wget http://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz && \
   tar -zxvf basemap-1.0.7.tar.gz && \
   cd basemap-1.0.7 && \
   python setup.py build && \
@@ -76,44 +66,57 @@ RUN wget http://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits
   rm -rf basemap-1.0.7.tar.gz && \
   rm -rf basemap-1.0.7
 
-# download pyBadland, companion and workshop
+
+# switch user
+ENV NB_USER jovyan
+USER $NB_USER
 WORKDIR /opt
 ENV BLAND_DIR /opt/pyBadlands
 ENV BCOMP_DIR /opt/pyBadlands-Companion
 ENV BWORK_DIR /opt/pyBadlands-workshop
-RUN git clone https://github.com/badlands-model/pyBadlands_serial.git $BLAND_DIR && \
-    git clone https://github.com/badlands-model/pyBadlands-Companion.git $BCOMP_DIR && \
-    git clone https://github.com/badlands-model/pyBadlands-workshop.git $BWORK_DIR
+
+RUN git clone --depth 1 https://github.com/rbeucher/UWGeodynamics.git
+USER root
+RUN pip install -e /opt/UWGeodynamics
+USER $NB_USER
+
+RUN mkdir /workspace/UWGeodynamics                          && \
+rsync -av /opt/UWGeodynamics/examples/* /workspace/UWGeodynamics/examples/   && \
+rsync -av /opt/UWGeodynamics/tutorials/* /workspace/UWGeodynamics/tutorials/ && \
+rsync -av /opt/UWGeodynamics/manual/* /workspace/UWGeodynamics/manual/ 
+
+# download pyBadland, companion and workshop
+WORKDIR /opt
+RUN git clone --depth 1 https://github.com/badlands-model/pyBadlands_serial.git $BLAND_DIR    && \
+    git clone --depth 1 https://github.com/badlands-model/pyBadlands-Companion.git $BCOMP_DIR && \
+    git clone --depth 1 https://github.com/badlands-model/pyBadlands-workshop.git $BWORK_DIR
 
 # compile pyBadlands and companion
 WORKDIR $BLAND_DIR/pyBadlands/libUtils
-RUN make && \
-    pip install -e $BLAND_DIR && \
-    pip install -e $BCOMP_DIR && \
-    mkdir /workspace/volume && \
-    mkdir /workspace/companion && \
-    mkdir /workspace/workshop && \
+USER root
+RUN make                         && \
+    pip install -e $BLAND_DIR    && \
+    cd /opt 
+RUN pip install -e $BCOMP_DIR    && \
+# update jupyter extensions while here
+jupyter nbextension enable hide_input/main --system && \
+jupyter nbextension enable init_cell/main --system
+USER $NB_USER
+RUN mkdir /workspace/volume      && \
+    mkdir /workspace/companion   && \
+    mkdir /workspace/workshop    && \
     mkdir /workspace/LavaVu
 
-# Copy test files to workspace
-RUN cp -av $BWORK_DIR/* /workspace/workshop/
-RUN cp -av $BLAND_DIR/Examples/* /workspace/examples/
-RUN cp -av $BCOMP_DIR/notebooks/* /workspace/companion/
+# Copy test files to workspace. Is this required??? takes 500Mb
+RUN cp -av $BWORK_DIR/* /workspace/workshop/        && \
+cp -av $BLAND_DIR/Examples/* /workspace/examples/   && \
+cp -av $BCOMP_DIR/notebooks/* /workspace/companion/
 
-# NOT SURE ABOUT /workspace/volume
-ENV LD_LIBRARY_PATH=/workspace/volume/pyBadlands_serial/pyBadlands/libUtils:/$BLAND_DIR/pyBadlands/libUtils
-
-# update all permissions for jovyan user
-ENV NB_USER jovyan
-RUN chown -R $NB_USER /workspace $UW2_DIR /home/$NB_USER
+# NOT SURE ABOUT /workspace/volume???
+ENV LD_LIBRARY_PATH /workspace/volume/pyBadlands_serial/pyBadlands/libUtils:/$BLAND_DIR/pyBadlands/libUtils
 
 # change user and update pythonpath
-USER $NB_USER
 ENV PYTHONPATH $PYTHONPATH:$UW2_DIR
-
-# update jupyter extensions 
-RUN jupyter nbextension enable hide_input/main && \
-    jupyter nbextension enable init_cell/main
 
 # move back to workspace directory
 WORKDIR /workspace
