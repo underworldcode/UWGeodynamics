@@ -1,5 +1,4 @@
-#FROM underworldcode/underworld2_untested:v2.5
-FROM myuw2_new
+FROM underworldcode/underworld2_untested:v2.5
 MAINTAINER romain.beucher@unimelb.edu
 
 USER root
