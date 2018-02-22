@@ -921,18 +921,19 @@ class Model(Material):
                 if self.mesh.dim == 3:
                     yieldStress = YieldHandler._get_yieldStress3D()
 
-                eij = fn.branching.conditional(
-                    [(self._strainRate_2ndInvariant < 1e-20, 1e-20),
-                     (True, self._strainRate_2ndInvariant)])
-
                 if material.elasticity:
                     ElasticityHandler = material.elasticity
-                    shear_modulus = nd(ElasticityHandler.shear_modulus)
-                    observation_time = nd(ElasticityHandler.observation_time)
-                    stress = (0.5 * self._previousStressField /
-                              (shear_modulus * observation_time))
-                    stressInv = fn.math.sqrt(0.5*(stress[0]**2+stress[1]**2)+stress[2]**2)
-                    eij += stressInv
+                    mu = nd(ElasticityHandler.shear_modulus)
+                    dt_e = nd(ElasticityHandler.observation_time)
+                    strainRate = fn.tensor.symmetric(self.velocityField.fn_gradient)
+                    D_eff = strainRate + 0.5 * self._previousStressField / (mu * dt_e)
+                    SRInv = fn.tensor.second_invariant(D_eff)
+                else:
+                    SRInv = self._strainRate_2ndInvariant
+
+                eij = fn.branching.conditional(
+                    [(SRInv < 1e-20, 1e-20),
+                     (True, SRInv)])
 
                 muEff = 0.5 * yieldStress / eij
                 if not material.minViscosity:
