@@ -125,14 +125,16 @@ class LecodeIsostasy(object):
             # if one has been defined, remove the corners from the base
             # and do not change the velocity on those nodes.
             if self.vertical_walls_conditions:
-                if self.vertical_walls_conditions["left"][-1]:
-                    left = self.mesh.specialSets["MinI_vertexSet"]
-                    if left:
-                        base -= left
-                if self.vertical_walls_conditions["right"][-1]:
-                    right = self.mesh.specialSets["MaxI_vertexSet"]
-                    if right:
-                        base -= right
+                if self.vertical_walls_conditions["left"]:
+                    if self.vertical_walls_conditions["left"][-1]:
+                        left = self.mesh.specialSets["MinI_vertexSet"]
+                        if left:
+                            base -= left
+                if self.vertical_walls_conditions["right"]:
+                    if self.vertical_walls_conditions["right"][-1]:
+                        right = self.mesh.specialSets["MaxI_vertexSet"]
+                        if right:
+                            base -= right
 
             bot_ids = base.data[base.data < self.mesh.nodesLocal]
             node_gids = self.mesh.data_nodegId[bot_ids].flatten()
@@ -157,29 +159,33 @@ class LecodeIsostasy(object):
         if self.average:
             basal_velocities = np.ones((basal_velocities.shape)) * np.mean(basal_velocities)
 
-        base   = self.mesh.specialSets["MinK_VertexSet"]
+        base = self.mesh.specialSets["MinK_VertexSet"]
         if base:
 
             # Look at the vertical conditions on the vertical walls
             # if one has been defined, remove the corners from the base
             # and do not change the velocity on those nodes.
             if self.vertical_walls_conditions:
-                if self.vertical_walls_conditions["left"][-1]:
-                    left = self.mesh.specialSets["MinI_vertexSet"]
-                    if left:
-                        base -= left
-                if self.vertical_walls_conditions["right"][-1]:
-                    right = self.mesh.specialSets["MaxI_vertexSet"]
-                    if right:
-                        base -= right
-                if self.vertical_walls_conditions["front"][-1]:
-                    front = self.mesh.specialSets["MinJ_vertexSet"]
-                    if front:
-                        base -= front
-                if self.vertical_walls_conditions["back"][-1]:
-                    back = self.mesh.specialSets["MaxJ_vertexSet"]
-                    if back:
-                        base -= back
+                if self.vertical_walls_conditions["left"]:
+                    if self.vertical_walls_conditions["left"][-1]:
+                        left = self.mesh.specialSets["MinI_vertexSet"]
+                        if left:
+                            base -= left
+                if self.vertical_walls_conditions["right"]:
+                    if self.vertical_walls_conditions["right"][-1]:
+                        right = self.mesh.specialSets["MaxI_vertexSet"]
+                        if right:
+                            base -= right
+                if self.vertical_walls_conditions["front"]:
+                    if self.vertical_walls_conditions["front"][-1]:
+                        front = self.mesh.specialSets["MinJ_vertexSet"]
+                        if front:
+                            base -= front
+                if self.vertical_walls_conditions["back"]:
+                    if self.vertical_walls_conditions["back"][-1]:
+                        back = self.mesh.specialSets["MaxJ_vertexSet"]
+                        if back:
+                            base -= back
             bot_ids = base.data[base.data < self.mesh.nodesLocal]
             node_gids = self.mesh.data_nodegId[bot_ids].flatten()
             self.velocityField.data[bot_ids, -1] = basal_velocities.flatten()[node_gids]

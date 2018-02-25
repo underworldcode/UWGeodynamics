@@ -237,7 +237,6 @@ class Model(Material):
         self.DiffusivityFn = None
         self.HeatProdFn = None
         self._buoyancyFn = None
-        self._stokes_obj = None
         self._initialize()
 
     def _initialize(self):
@@ -970,7 +969,7 @@ class Model(Material):
                         yieldStress = YieldHandler._get_yieldStress3D()
 
                     eij = fn.branching.conditional(
-                        [(self._strainRate_2ndInvariant <= 1e-18, 1e-18),
+                        [(self._strainRate_2ndInvariant <= 1e-20, 1e-20),
                          (True, self._strainRate_2ndInvariant)])
 
                     muEff = 0.5 * yieldStress / eij
@@ -1214,15 +1213,13 @@ class Model(Material):
 
     def solve(self):
         """ Solve Stokes """
-        if not self._stokes_obj:
-            self._stokes_obj = self._stokes()
 
         if self.step == 0:
             tol = rcParams["initial.nonlinear.tolerance"]
         else:
             tol = rcParams["nonlinear.tolerance"]
 
-        self._stokes_obj.solve(
+        self._stokes().solve(
             nonLinearIterate=True,
             callback_post_solve=self._calibrate_pressureField,
             nonLinearTolerance=tol)

@@ -55,10 +55,10 @@ class _mesh_advector(object):
         self.Model.pressureField.data[...] = np.copy(self.Model.pressureField.evaluate(self.Model.mesh.subMesh))
 
         if self.Model._right_wall:
-            self.Model.velocityField.data[self.Model._right_wall.data,:] = vxRight
+            self.Model.velocityField.data[self.Model._right_wall.data, axis] = vxRight
 
         if self.Model._left_wall:
-            self.Model.velocityField.data[self.Model._left_wall.data,:]  = vxLeft
+            self.Model.velocityField.data[self.Model._left_wall.data, axis]  = vxLeft
 
     def advect_mesh(self, dt):
         self._advect_along_axis(dt)
