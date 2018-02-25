@@ -169,7 +169,7 @@ class DruckerPrager(object):
                 epsilon1=self.epsilon1,
                 epsilon2=self.epsilon2)
         else:
-            friction = fn.misc.constant(nd(self.frictionCoefficient))
+            friction = fn.math.atan(nd(self.frictionCoefficient))
         return friction
 
     def _cohesionFn(self):
