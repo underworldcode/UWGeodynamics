@@ -970,7 +970,7 @@ class Model(Material):
                         yieldStress = YieldHandler._get_yieldStress3D()
 
                     eij = fn.branching.conditional(
-                        [(self._strainRate_2ndInvariant <= 1e-18, 1e-18),
+                        [(self._strainRate_2ndInvariant <= 1e-20, 1e-20),
                          (True, self._strainRate_2ndInvariant)])
 
                     muEff = 0.5 * yieldStress / eij
