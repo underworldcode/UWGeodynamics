@@ -162,7 +162,7 @@ class Plots(object):
 
         fact = Dimensionalize(1.0, units).magnitude
         Fig.Surface(self.Model.mesh.subMesh,
-                    self.Model._strainRate_2ndInvariant * fact,
+                    self.Model.strainRateField * fact,
                     cullface=cullface, logScale=logScale, name=Fig["title"],
                     colours=colours,
                     **kwargs)
