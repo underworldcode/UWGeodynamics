@@ -193,7 +193,7 @@ class DruckerPrager(object):
         f = self._frictionFn()
         C = self._cohesionFn()
         P = self.pressureField
-        self.yieldStress = 6.0*C*fn.math.cos(f) + 2.0*fn.math.sin(f)*fn.misc.max(P, 0.0)
+        self.yieldStress = 6.0*C*fn.math.cos(f) + 6.0*fn.math.sin(f)*fn.misc.max(P, 0.0)
         self.yieldStress /= (fn.math.sqrt(3.0) * (3.0 + fn.math.sin(f)))
         return self.yieldStress
 
