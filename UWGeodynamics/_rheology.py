@@ -65,7 +65,7 @@ class DruckerPrager(object):
     def __init__(self, name=None, cohesion=None, frictionCoefficient=None,
                  cohesionAfterSoftening = None,
                  frictionAfterSoftening = None,
-                 minimumViscosity=None, plasticStrain=None, pressureField=None,
+                 minimumViscosity=None,
                  epsilon1=0.5, epsilon2=1.0):
 
         self.name = name
@@ -76,8 +76,8 @@ class DruckerPrager(object):
 
         self.minimumViscosity = minimumViscosity
 
-        self.plasticStrain = plasticStrain
-        self.pressureField = pressureField
+        self.plasticStrain = None
+        self.pressureField = None
         self.epsilon1 = epsilon1
         self.epsilon2 = epsilon2
 
@@ -87,23 +87,6 @@ class DruckerPrager(object):
     def __getitem__(self, name):
         return self.__dict__[name]
 
-    def to_json(self):
-        attributes = [
-            "name",
-            "_cohesion",
-            "_frictionCoefficient",
-            "_cohesionAfterSoftening",
-            "_frictionAfterSoftening",
-            "minimumViscosity",
-            "epsilon1",
-            "epsilon2"]
-
-        d = {}
-
-        for attribute in attributes:
-            d[attribute] = str(self[attribute])
-
-        return d
 
     def _repr_html_(self):
         attributes  = OrderedDict()
@@ -202,14 +185,14 @@ class VonMises(object):
 
     def __init__(self, name=None, cohesion=None,
                  cohesionAfterSoftening = None,
-                 minimumViscosity=None, plasticStrain=None,
-                 epsilon1=0.5, epsilon2=1.0):
+                 minimumViscosity=None, epsilon1=0.5,
+                 epsilon2=1.0):
 
         self.name = name
         self.cohesion = cohesion
         self.cohesionAfterSoftening = cohesionAfterSoftening
         self.minimumViscosity = minimumViscosity
-        self.plasticStrain = plasticStrain
+        self.plasticStrain = None
         self.pressureField = None
         self.epsilon1 = epsilon1
         self.epsilon2 = epsilon2
@@ -217,22 +200,6 @@ class VonMises(object):
     
     def __getitem__(self, name):
         return self.__dict__[name]
-
-    def to_json(self):
-        attributes = [
-            "name",
-            "_cohesion",
-            "_cohesionAfterSoftening",
-            "minimumViscosity",
-            "epsilon1",
-            "epsilon2"]
-
-        d = {}
-
-        for attribute in attributes:
-            d[attribute] = str(self[attribute])
-
-        return d
 
     @property
     def cohesion(self):
@@ -274,39 +241,21 @@ class ConstantViscosity(Rheology):
 
     def __init__(self, viscosity):
         super(ConstantViscosity, self).__init__()
-        self._viscosity = nd(viscosity)
-        self._Quantity = viscosity
+        self.viscosity = viscosity
         self.name = "Constant ({0})".format(str(viscosity))
-
-    def to_json(self):
-        d = {}
-        d["Type"] = "ConstantViscosity"
-        d["viscosity"] = str(self._Quantity)
-        return d
 
     @property
     def muEff(self):
         return self._effectiveViscosity()
 
-    @property
-    def Quantity(self):
-        return self._Quantity
-
-    @Quantity.setter
-    def Quantity(self, value):
-        self._Quantity = value
-
     def _effectiveViscosity(self):
-        return fn.misc.constant(nd(self._viscosity))
+        return fn.misc.constant(nd(self.viscosity))
 
 
 class ViscousCreep(Rheology):
 
     def __init__(self,
                  name=None,
-                 strainRateInvariantField=None,
-                 temperatureField=None,
-                 pressureField=None,
                  preExponentialFactor=1.0,
                  stressExponent=1.0,
                  defaultStrainRateInvariant=1.0e-15 / u.seconds,
@@ -325,9 +274,6 @@ class ViscousCreep(Rheology):
 
         self.name = name
         self.mineral = mineral
-        self.strainRateInvariantField = strainRateInvariantField
-        self.temperatureField = temperatureField
-        self.pressureField = pressureField
         self.preExponentialFactor = preExponentialFactor
         self.stressExponent = stressExponent
         self.defaultStrainRateInvariant = defaultStrainRateInvariant
@@ -379,34 +325,6 @@ class ViscousCreep(Rheology):
                 html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
 
         return header + html + footer
-
-    def to_json(self):
-        attributes = [
-            "name",
-            "preExponentialFactor",
-            "stressExponent",
-            "defaultStrainRateInvariant",
-            "activationVolume",
-            "activationEnergy",
-            "waterFugacity",
-            "grainSize",
-            "meltFraction",
-            "grainSizeExponent",
-            "waterFugacityExponent",
-            "meltFractionFactor",
-            "f",
-            "mineral"]
-
-        d = {}
-
-        for attribute in attributes:
-            if isinstance(self[attribute], u.Quantity):
-                d[attribute] = str(self[attribute])
-            else:
-                d[attribute] = self[attribute]
-
-        return d
-
 
     @property
     def muEff(self):

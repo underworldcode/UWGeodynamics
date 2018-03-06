@@ -187,19 +187,3 @@ class TemperatureBCs(object):
 
         return conditions
 
-    def to_json(self):
-        attributes = [
-            "left",
-            "right",
-            "top",
-            "bottom",
-            "back",
-            "front",
-            "indexSets"]
-
-        d = {}
-        for attribute in attributes:
-            if self[attribute]:
-                d[attribute] = str(self[attribute])
-
-        return d

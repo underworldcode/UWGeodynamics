@@ -120,9 +120,4 @@ class _mesh_advector(object):
 
         return minVal, maxVal
 
-    def to_json(self):
-        d = {}
-        d["type"] = "_mesh_advector"
-        d["axis"] = self.axis
-        return d
 
