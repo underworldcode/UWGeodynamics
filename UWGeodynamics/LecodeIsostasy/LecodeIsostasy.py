@@ -10,7 +10,7 @@ rank = comm.Get_rank()
 class LecodeIsostasy(object):
 
     def __init__(self, reference_mat=None, average=False,
-                 surface=None, maskedMat=[],
+                 surface=None, maskedMat=list(),
                  vertical_walls_conditions=None):
 
         self.mesh = None
