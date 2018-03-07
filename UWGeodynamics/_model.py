@@ -321,7 +321,6 @@ class Model(Material):
             print("Reloading field {0} from {1}".format(field, path))
             obj.load(str(path))
 
-        "Temporary !!!!"
         if u"temperature" in rcParams["restart.fields"]:
             if not self.temperature:
                 self.temperature = MeshVariable(mesh=self.mesh,
@@ -332,10 +331,10 @@ class Model(Material):
                                               nodeDofCount=1)
                 self._temperatureDot.data[...] = 0.
                 self._heatFlux.data[...] = 0.
-                obj = getattr(self, "temperature")
-                path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
-                print("Reloading field {0} from {1}".format("temperature", path))
-                obj.load(str(path))
+            obj = getattr(self, "temperature")
+            path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
+            print("Reloading field {0} from {1}".format("temperature", path))
+            obj.load(str(path))
 
 
     @property
