@@ -1227,7 +1227,8 @@ class Model(Material):
                 self.output_glucifer_figures(self.checkpointID)
 
         # Save model to json
-        self.save()
+        # Comment as it does not work in parallel
+        # self.save()
 
         while time < duration:
 
