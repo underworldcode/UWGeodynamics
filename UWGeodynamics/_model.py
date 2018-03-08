@@ -741,8 +741,8 @@ class Model(Material):
         return fn.branching.map(fn_key=self.materialField, mapping=densityMap)
 
     def set_frictional_boundary(self, right=False, left=False,
-                                top=False, bottom=False,
-                                thickness=2, friction=0.0):
+                                top=False, bottom=False, front=False,
+                                back=False, thickness=2, friction=0.0):
         """ Set Frictional Boundary conditions
 
         Frictional boundaries are implemented as a thin layer of frictional
