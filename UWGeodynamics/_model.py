@@ -1576,13 +1576,18 @@ class Model(Material):
                 except KeyError:
                     units = None
 
-            mH = self.mesh.save(os.path.join(self.outputDir, "mesh.h5"),
-                                units=u.kilometers)
-            file_prefix = os.path.join(self.outputDir,
-                                       field + '-%s' % checkpointID)
+            if self.mesh_advector:
+                mesh_name = 'mesh-%s' % checkpointID
+                mesh_prefix = os.path.join(self.outputDir, mesh_name)
+            else:
+                mesh_name = 'mesh'
+                mesh_prefix = os.path.join(self.outputDir, mesh_name)
+
+            mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers)
+            file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
             obj = getattr(self, field)
             handle = obj.save('%s.h5' % file_prefix, units=units)
-            obj.xdmf('%s.xdmf' % file_prefix, handle, field, mH, 'mesh',
+            obj.xdmf('%s.xdmf' % file_prefix, handle, field, mH, mesh_name,
                      modeltime=self.time.magnitude)
 
         elif field in rcParams["swarm.variables"]:
