@@ -256,6 +256,8 @@ class Model(Material):
         self.add_swarm_field("_previousStressField", dataType="double",
                              count=stress_dim)
 
+        self._add_surface_tracers()
+
     def __getitem__(self, name):
         return self.__dict__[name]
 
@@ -1354,7 +1356,7 @@ class Model(Material):
         """
         self._advector = _mesh_advector(self, axis)
 
-    def add_passive_tracers(self, name=None, vertices=None,
+    def add_passive_tracers(self, name, vertices=None,
                             particleEscape=True):
         """ Add a swarm of passive tracers to the Model
 
@@ -1376,7 +1378,28 @@ class Model(Material):
 
         self.passive_tracers.append(tracers)
 
+        setattr(self, name.lower() + "_tracers", tracers)
+
         return tracers
+
+    def _add_surface_tracers(self):
+        """ Add tracers at the surface """
+
+        if self.mesh.dim < 3:
+            xcoords = np.linspace(nd(self.minCoord[0]), nd(self.maxCoord[0]), 1000)
+            ycoords = 0.
+            self.add_passive_tracers(name="Surface", vertices=[xcoords, ycoords])
+        else:
+            xcoords = np.linspace(nd(self.minCoord[0]), nd(self.maxCoord[0]), 100)
+            ycoords = np.linspace(nd(self.minCoord[1]), nd(self.maxCoord[1]), 100)
+            xcoords, ycoords = np.meshgrid(xcoords, ycoords)
+            xcoords = xcoords.ravel()
+            ycoords = ycoords.ravel()
+            zcoords = 0.
+            self.add_passive_tracers(name="Surface",
+                                     vertices=[xcoords, ycoords, zcoords])
+
+        return
 
     def _get_melt_fraction(self):
         """ Melt Fraction function
