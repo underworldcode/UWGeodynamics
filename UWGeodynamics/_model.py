@@ -162,7 +162,7 @@ class Model(Material):
 
         # Create the material swarm
         self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
-        self._swarmLayout = uw.swarm.layouts.GlobalSpaceFillerLayout(
+        self._swarmLayout = uw.swarm.layouts.PerCellSpaceFillerLayout(
             swarm=self.swarm,
             particlesPerCell=rcParams["swarm.particles.per.cell"])
 
