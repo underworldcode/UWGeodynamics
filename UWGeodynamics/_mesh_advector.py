@@ -13,7 +13,7 @@ class _mesh_advector(object):
 
     def __init__(self, Model, axis):
 
-        self._mesh2nd = Model.mesh
+        self._mesh2nd = copy(Model.mesh)
         self.Model = Model
 
     def _advect_along_axis(self, dt, axis=0):
@@ -40,8 +40,13 @@ class _mesh_advector(object):
         maxX += vxRight * dt
         length = np.abs(minX - maxX)
 
-        newValues = np.linspace(minX, maxX, self.Model.mesh.elementRes[axis]+1)
-        newValues = np.repeat(newValues[np.newaxis,:], self.Model.mesh.elementRes[1] + 1, axis)
+        if self.Model.mesh.dim <3:
+            newValues = np.linspace(minX, maxX, self.Model.mesh.elementRes[axis]+1)
+            newValues = np.repeat(newValues[np.newaxis,:], self.Model.mesh.elementRes[1] + 1, axis)
+        else:
+            newValues = np.linspace(minX, maxX, self.Model.mesh.elementRes[axis]+1)
+            newValues = np.repeat(newValues[np.newaxis, :], self.Model.mesh.elementRes[1] + 1, axis)
+            newValues = np.repeat(newValues[np.newaxis, :, :], self.Model.mesh.elementRes[2] + 1, axis)
 
         with self._mesh2nd.deform_mesh():
             values = newValues.flatten()
