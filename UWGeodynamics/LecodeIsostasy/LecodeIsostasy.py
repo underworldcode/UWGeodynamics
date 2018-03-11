@@ -9,16 +9,15 @@ rank = comm.Get_rank()
 
 class LecodeIsostasy(object):
 
-    def __init__(self, mesh=None, swarm=None, velocityField=None,
-                 densityFn=None, materialIndexField=None, reference_mat=None,
-                 average=False, surface=None, maskedMat=[],
+    def __init__(self, reference_mat=None, average=False,
+                 surface=None, maskedMat=list(),
                  vertical_walls_conditions=None):
 
-        self.mesh = mesh
-        self.swarm = swarm
-        self.velocityField = velocityField
-        self._densityFn = densityFn
-        self.materialIndexField = materialIndexField
+        self.mesh = None
+        self.swarm = None
+        self.velocityField = None
+        self._densityFn = None
+        self.materialIndexField = None
         self.reference_mat = reference_mat
         self.average = average
         self.surface = surface
@@ -38,13 +37,6 @@ class LecodeIsostasy(object):
                                    Wrong dictionary key, options are:
                                    {0}""".format(options))
             self.vertical_walls_conditions = vertical_walls_conditions
-
-    def to_json(self):
-        d = {}
-        d["Type"] = "LecodeIsostasy"
-        d["reference_mat"] = str(self.reference_mat)
-        d["average"] = str(self.average)
-        return d
 
     def solve(self):
 

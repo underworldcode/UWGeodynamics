@@ -4,8 +4,6 @@ from .LecodeIsostasy import LecodeIsostasy
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
 from ._utils import Balanced_InflowOutflow
-from json_encoder import ObjectEncoder
-
 
 def _is_neumann(val):
     """ Returns true if x as units of stress """
@@ -228,24 +226,4 @@ class VelocityBCs(object):
             raise ValueError("Undefined conditions")
 
         return conditions
-
-    def to_json(self):
-        attributes = [
-            "left",
-            "right",
-            "top",
-            "bottom",
-            "back",
-            "front",
-            "indexSets"]
-
-        d = {}
-        for attribute in attributes:
-            if isinstance(self[attribute], LecodeIsostasy):
-                d[attribute] = self[attribute]
-            elif self[attribute]:
-                d[attribute] = ", ".join(
-                    [str(val) for val in self[attribute]])
-
-        return d
 

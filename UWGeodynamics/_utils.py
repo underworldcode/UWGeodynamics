@@ -88,7 +88,7 @@ class PassiveTracers(object):
 
 class Balanced_InflowOutflow(object):
 
-    def __init__(self, Vtop, top, pt1, pt2, ynodes=None,
+    def __init__(self, vtop, top, pt1, pt2, ynodes=None,
                  tol=1e-12, nitmax=200,
                  nitmin=3, default_vel=0.0):
         """ Calculate Bottom velocity as for Huismans et al. velocity boundary
@@ -110,7 +110,7 @@ class Balanced_InflowOutflow(object):
 
             """
 
-        self.vtop = Vtop
+        self.vtop = vtop
         self.top = top
         self.pt1 = pt1
         self.pt2 = pt2
@@ -191,20 +191,6 @@ class Balanced_InflowOutflow(object):
         self.budget = np.sum(budget)
 
         return velocity
-
-    def to_json(self):
-        d = {}
-        d["type"] = "Balanced_InflowOutflow"
-        d["vtop"] = str(self.vtop)
-        d["top"] = str(self.top)
-        d["pt1"] = str(self.pt1)
-        d["pt2"] = str(self.pt2)
-        d["ynodes"] = self.ynodes
-        d["tol"] = str(self.tol)
-        d["nitmax"] = str(self.nitmax)
-        d["mitmin"] = str(self.nitmin)
-        d["default_vel"] = str(self.default_vel)
-        return d
 
 
 class MoveImporter(object):

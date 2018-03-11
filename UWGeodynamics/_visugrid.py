@@ -44,11 +44,5 @@ class Visugrid(object):
                     coords = self.Model.mesh.data[loc]
                     self.mesh.data[index] += self.velocityField.data[loc] * dt
 
-    def to_json(self):
-        d = {}
-        d["minCoord"] = str(self.minCoord)
-        d["maxCoord"] = str(self.maxCoord)
-        d["elementRes"] = self.elementRes
-        return d
 
 

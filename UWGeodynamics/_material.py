@@ -15,7 +15,7 @@ class Material(object):
                  diffusivity=None, capacity=None,
                  radiogenicHeatProd=0.0, shape=None, viscosity=None,
                  plasticity=None, elasticity=None, solidus=None, liquidus=None,
-                 min_viscosity=None, max_viscosity=None,
+                 minViscosity=None, maxViscosity=None,
                  latentHeatFusion=0.0, meltExpansion=0.0, meltFraction=0.0,
                  meltFractionLimit=1.0, viscosityChangeX1=0.15,
                  viscosityChangeX2=0.3, viscosityChange=1.0):
@@ -35,8 +35,8 @@ class Material(object):
         self._thermalExpansivity = None
         self.radiogenicHeatProd = radiogenicHeatProd
 
-        self.minViscosity = min_viscosity
-        self.maxViscosity = max_viscosity
+        self.minViscosity = minViscosity
+        self.maxViscosity = maxViscosity
 
         self.compressibility = None
 
@@ -62,40 +62,6 @@ class Material(object):
 
     def __getitem__(self, name):
         return self.__dict__[name]
-
-    def to_json(self):
-        attributes = [
-            "name",
-            "_density",
-            "diffusivity",
-            "capacity",
-            "radiogenicHeatProd",
-            "compressibility",
-            "solidus",
-            "liquidus",
-            "latentHeatFusion",
-            "meltFraction",
-            "meltFractionLimit",
-            "meltExpansion",
-            "viscosityChangeX1",
-            "viscosityChangeX2",
-            "viscosityChange"]
-
-        d = {}
-
-        for attribute in attributes:
-            val = self[attribute]
-            if val:
-                if isinstance(val, u.Quantity):
-                    val = str(val)
-                d[attribute] = val
-
-        if self.viscosity:
-            d["viscosity"] = self.viscosity
-        if self.plasticity:
-            d["plasticity"] = self.plasticity
-
-        return d
 
     @property
     def viscosity(self):

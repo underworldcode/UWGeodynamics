@@ -32,10 +32,7 @@ class Solidus(_Polynom):
     form suggested by Hirshmann, 2000"""
 
     pass
-    
-    def to_json(self):
-        d = {}
-        return d
+
 
 class Liquidus(_Polynom):
     """ This class defines a liquidus using the
@@ -43,9 +40,6 @@ class Liquidus(_Polynom):
 
     pass
 
-    def to_json(self):
-        d = {}
-        return d
 
 class SolidusRegistry(object):
     def __init__(self, filename=None):

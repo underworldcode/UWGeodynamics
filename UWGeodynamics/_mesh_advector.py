@@ -13,7 +13,7 @@ class _mesh_advector(object):
 
     def __init__(self, Model, axis):
 
-        self._mesh2nd = Model.mesh
+        self._mesh2nd = copy(Model.mesh)
         self.Model = Model
 
     def _advect_along_axis(self, dt, axis=0):
@@ -40,13 +40,19 @@ class _mesh_advector(object):
         maxX += vxRight * dt
         length = np.abs(minX - maxX)
 
-        newValues = np.linspace(minX, maxX, self.Model.mesh.elementRes[axis]+1)
-        newValues = np.repeat(newValues[np.newaxis,:], self.Model.mesh.elementRes[1] + 1, axis)
+        if self.Model.mesh.dim <3:
+            newValues = np.linspace(minX, maxX, self.Model.mesh.elementRes[axis]+1)
+            newValues = np.repeat(newValues[np.newaxis,:], self.Model.mesh.elementRes[1] + 1, axis)
+        else:
+            newValues = np.linspace(minX, maxX, self.Model.mesh.elementRes[axis]+1)
+            newValues = np.repeat(newValues[np.newaxis, :], self.Model.mesh.elementRes[1] + 1, axis)
+            newValues = np.repeat(newValues[np.newaxis, :, :], self.Model.mesh.elementRes[2] + 1, axis)
 
         with self._mesh2nd.deform_mesh():
-            self._mesh2nd.data[:, axis] = newValues.flatten()
+            values = newValues.flatten()
+            self._mesh2nd.data[:, axis] = values[self._mesh2nd.data_nodegId.ravel()]
 
-        uw.barrier
+        uw.barrier()
 
         with self.Model.mesh.deform_mesh():
             self.Model.mesh.data[:, axis] = self._mesh2nd.data[:, axis]
@@ -54,10 +60,10 @@ class _mesh_advector(object):
         self.Model.velocityField.data[...] = np.copy(self.Model.velocityField.evaluate(self.Model.mesh))
         self.Model.pressureField.data[...] = np.copy(self.Model.pressureField.evaluate(self.Model.mesh.subMesh))
 
-        if self.Model._right_wall:
+        if self.Model._right_wall.data.size > 0:
             self.Model.velocityField.data[self.Model._right_wall.data, axis] = vxRight
 
-        if self.Model._left_wall:
+        if self.Model._left_wall.data.size > 0:
             self.Model.velocityField.data[self.Model._left_wall.data, axis]  = vxLeft
 
     def advect_mesh(self, dt):
@@ -80,18 +86,17 @@ class _mesh_advector(object):
 
 
         # if local domain has wall, get velocities
-        if wall:
+        if wall.data.size > 0:
             velocities  = self.Model.velocityField.data[wall.data, axis]
-
-        # get local min and max
-        maxV[0] = velocities.max()
-        minV[0] = velocities.min()
+            # get local min and max
+            maxV[0] = velocities.max()
+            minV[0] = velocities.min()
 
         # reduce operation
-        uw.barrier
+        uw.barrier()
         comm.Allreduce(MPI.IN_PLACE, maxV, op=MPI.MAX)
         comm.Allreduce(MPI.IN_PLACE, minV, op=MPI.MIN)
-        uw.barrier
+        uw.barrier()
 
         return minV, maxV
 
@@ -113,16 +118,11 @@ class _mesh_advector(object):
         maxVal[0] = self.Model.mesh.data[:, axis].max()
         minVal[0] = self.Model.mesh.data[:, axis].min()
 
-        uw.barrier
+        uw.barrier()
         comm.Allreduce(MPI.IN_PLACE, maxVal, op=MPI.MAX)
         comm.Allreduce(MPI.IN_PLACE, minVal, op=MPI.MIN)
-        uw.barrier
+        uw.barrier()
 
         return minVal, maxVal
 
-    def to_json(self):
-        d = {}
-        d["type"] = "_mesh_advector"
-        d["axis"] = self.axis
-        return d
 

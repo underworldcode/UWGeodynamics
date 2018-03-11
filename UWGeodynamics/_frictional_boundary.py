@@ -5,26 +5,25 @@ import numpy as np
 class FrictionBoundaries(object):
     """ This class flags elements at the boundaries
 
-        Works in 2D only for now
     """
     def __init__(self, Model, right=False, left=False,
-                 top=False, bottom=False, friction=0.0, thickness=2):
-
-        if Model.mesh.dim > 2:
-            raise NotImplemented("Frictional boundaries are not yet implemented in 3D")
+                 top=False, bottom=False, front=False,
+                 back=False, friction=0.0, thickness=2):
 
         self.Model = Model
         self.friction = friction
         self.thickness = thickness
 
         # Build borders
-        globalIndices = np.arange(reduce(lambda x, y: x*y, Model.mesh.elementRes))
+        globalIndices = np.arange(np.prod(Model.mesh.elementRes))
         globalIndices = globalIndices.reshape((Model.mesh.elementRes[::-1]))
 
         self.bottom = bottom
-        self.right  = right
-        self.left   = left
-        self.top    = top
+        self.right = right
+        self.left = left
+        self.top = top
+        self.front = front
+        self.back = back
 
         if self.bottom:
             self.bottom = globalIndices[:thickness].ravel()
@@ -33,12 +32,31 @@ class FrictionBoundaries(object):
             self.top = globalIndices[-thickness:].ravel()
 
         if self.right:
-            self.right = globalIndices[:,-thickness:].ravel()
+            if Model.mesh.dim < 3:
+                self.right = globalIndices[:, -thickness:].ravel()
+            else:
+                self.right = globalIndices[:, :, -thickness:].ravel()
 
         if self.left:
-            self.left = globalIndices[:,:thickness].ravel()
+            if Model.mesh.dim < 3:
+                self.left = globalIndices[:, :thickness].ravel()
+            else:
+                self.left = globalIndices[:, :, :thickness].ravel()
 
-        boundaries = [self.bottom, self.right, self.left, self.top]
+        if self.front:
+            if Model.mesh.dim > 2:
+                self.front = globalIndices[:, :thickness, :].ravel()
+            else:
+                raise ValueError("Mesh is 2D")
+
+        if self.back:
+            if Model.mesh.dim > 2:
+                self.back = globalIndices[:, -thickness:, :].ravel()
+            else:
+                raise ValueError("Mesh is 2D")
+
+        boundaries = [self.bottom, self.right, self.left, self.top, self.back,
+                      self.front]
         boundaries = [boundary for boundary in boundaries if boundary is not False]
 
         self.boundaries = np.concatenate(boundaries)
@@ -46,19 +64,9 @@ class FrictionBoundaries(object):
         subMesh = Model.mesh.subMesh
         self._mask = uw.mesh.MeshVariable(mesh=subMesh, nodeDofCount=1)
         self._mask.data[:] = 0
-        self._mask.data[np.intersect1d(subMesh.data_nodegId.ravel(), self.boundaries)] = 1
-
-    def to_json(self):
-        d = {}
-        d["type"] = "frictional"
-        d["thickness"] = self.thickness
-        d["friction"] = str(self.friction)
-        d["right"] = self.right
-        d["left"] = self.left
-        d["top"] = self.top
-        d["bottom"] = self.bottom
-        return d
-
-
-
+        # Take the intersection between the globalID and the boundaries where
+        # friction is to be applied
+        intersect = np.intersect1d(subMesh.data_nodegId.ravel(), self.boundaries)
+        # Create a mask to highlight those elements in the local domain
+        self._mask.data[:,0] = np.in1d(subMesh.data_nodegId.ravel(), intersect)
 
