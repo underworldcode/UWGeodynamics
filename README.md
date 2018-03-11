@@ -1,5 +1,7 @@
 # Underworld Geodynamics project
 
+[![DOI](https://zenodo.org/badge/114189389.svg)](https://zenodo.org/badge/latestdoi/114189389)
+
 The UWGeodynamics module intents to facilitate rapid prototyping of geodynamics models using Underworld. 
 It can be seen as a set of high-level functions within the Underworld ecosystem. 
 It is a means to quickly get the user into Underworld modelling and assumes very
@@ -53,4 +55,5 @@ You should have received a copy of the GNU Lesser General Public License along w
 
 Current releases (**DOI** citable): 
 
+[![DOI](https://zenodo.org/badge/114189389.svg)](https://zenodo.org/badge/latestdoi/114189389)
 
