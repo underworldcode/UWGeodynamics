@@ -13,6 +13,7 @@ import warnings
 import errno
 import tempfile
 import locale
+import uuid as _uuid
 from itertools import chain
 import six
 import shapes
@@ -33,6 +34,12 @@ from ._material import Material
 from ._density import ConstantDensity, LinearDensity
 from ._melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry
 from ._utils import Balanced_InflowOutflow, MoveImporter
+import _net
+
+__version__ = "0.2.1"
+__author__ = "Romain Beucher"
+
+_id = str(_uuid.uuid4())
 
 nd = nonDimensionalize
 u = UnitRegistry
@@ -40,6 +47,7 @@ u = UnitRegistry
 rheologies = ViscousCreepRegistry()
 yieldCriteria = PlasticityRegistry()
 scaling = scaling_coefficients
+
 
 def mkdirs(newdir, mode=0o777):
     """
@@ -365,7 +373,7 @@ See rcParams.keys() for a list of valid parameters.' % (key,))
         val = dict.__getitem__(self, key)
         if inverse_alt is not None:
             return inverse_alt(val)
-        
+
         return val
 
     # http://stackoverflow.com/questions/2390827
@@ -527,6 +535,46 @@ def rc_params_from_file(fname, fail_on_error=False, use_default_template=True):
         print('loaded rc file %s' % fname)
 
     return config
+
+
+def _in_doctest():
+    """
+    Returns true if running inside a doctest.
+
+    http://stackoverflow.com/questions/8116118/how-to-determine-whether-code-is-running-in-a-doctest
+    """
+    return hasattr(sys.modules['__main__'], '_SpoofOut')
+
+# lets shoot off some usage metrics
+# send metrics *only* if we are rank=0, and if we are not running inside a doctest.
+if (underworld.rank() == 0) and not _in_doctest():
+    def _sendData():
+        import os
+        # disable collection of data if requested
+        if "UW_NO_USAGE_METRICS" not in os.environ:
+            # get platform info
+            import platform
+            label  =        platform.system()
+            label += "__" + platform.release()
+            # check if docker
+            import os.path
+            if (os.path.isfile("/.dockerinit")):
+                label += "__docker"
+
+            # send info async
+            import threading
+            thread = threading.Thread(target=_net.PostGAEvent,
+                                      args=("runtime",
+                                            "import",
+                                            label,
+                                            underworld.nProcs()))
+            thread.daemon = True
+            thread.start()
+
+    try:
+        _sendData()
+    except: # continue quietly if something above failed
+        pass
 
 
 rcParams = rc_params()
