@@ -36,7 +36,8 @@ from ._melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry
 from ._utils import Balanced_InflowOutflow, MoveImporter
 import _net
 
-__version__ = "0.2"
+__version__ = "0.2.1"
+__author__ = "Romain Beucher"
 
 _id = str(_uuid.uuid4())
 
