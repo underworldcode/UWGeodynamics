@@ -15,8 +15,12 @@ class _mesh_advector(object):
 
         self._mesh2nd = copy(Model.mesh)
         self.Model = Model
+        self.axis = axis
 
-    def _advect_along_axis(self, dt, axis=0):
+    def advect_mesh(self, dt):
+
+        axis = self.axis
+
         if axis != 0:
             raise ValueError("Axis not supported yet")
 
@@ -65,9 +69,6 @@ class _mesh_advector(object):
 
         if self.Model._left_wall.data.size > 0:
             self.Model.velocityField.data[self.Model._left_wall.data, axis]  = vxLeft
-
-    def advect_mesh(self, dt):
-        self._advect_along_axis(dt)
 
     def _get_minmax_velocity_wall(self, wall, axis=0):
         """ Return the minimum and maximum velocity component on the wall
