@@ -174,6 +174,7 @@ class VelocityBCs(object):
             Model._isostasy = self.bottom
             Model._isostasy.mesh = Model.mesh
             Model._isostasy.swarm = Model.swarm
+            Model._isostasy._mesh_advector = Model._advector
             Model._isostasy.velocityField = Model.velocityField
             Model._isostasy.materialIndexField = Model.materialField
             Model._isostasy._densityFn = Model._densityFn

@@ -15,6 +15,7 @@ class LecodeIsostasy(object):
 
         self.mesh = None
         self.swarm = None
+        self._mesh_advector = None
         self.velocityField = None
         self._densityFn = None
         self.materialIndexField = None
@@ -83,8 +84,15 @@ class LecodeIsostasy(object):
             self.MaterialVar, self.MaterialIndexFieldFloat, type=0)
 
         if not self.mesh._cself.isRegular:
-            raise TypeError("You are using an irregular mesh: \
-                             isostasy module only works with regular meshes")
+            if self._mesh_advector:
+                if self._mesh_advector.axis > 0:
+                    raise TypeError("""You are using an irregular mesh: \
+                                    isostasy module only works with regular
+                                    meshes""")
+            else:
+                raise TypeError("""You are using an irregular mesh: \
+                                isostasy module only works with regular
+                                meshes""")
 
         if (self.surface is not None and
            not isinstance(self.surface, uw.swarm._swarm.Swarm)):
