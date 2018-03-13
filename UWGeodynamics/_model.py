@@ -168,13 +168,6 @@ class Model(Material):
 
         self.swarm.populate_using_layout(layout=self._swarmLayout)
 
-        self.population_control = uw.swarm.PopulationControl(
-            self.swarm,
-            aggressive=rcParams["popcontrol.aggressive"],
-            splitThreshold=rcParams["popcontrol.split.threshold"],
-            maxSplits=rcParams["popcontrol.max.splits"],
-            particlesPerCell=rcParams["popcontrol.particles.per.cell"])
-
         # timing and checkpointing
         self.checkpointID = 0
         self.time = 0.0 * u.megayears
@@ -239,6 +232,13 @@ class Model(Material):
             velocityField=self.velocityField,
             order=2
         )
+        
+        self.population_control = uw.swarm.PopulationControl(
+            self.swarm,
+            aggressive=rcParams["popcontrol.aggressive"],
+            splitThreshold=rcParams["popcontrol.split.threshold"],
+            maxSplits=rcParams["popcontrol.max.splits"],
+            particlesPerCell=rcParams["popcontrol.particles.per.cell"])
 
         # Add Common Swarm Variables
         self.add_swarm_field("materialField", dataType="int", count=1,
