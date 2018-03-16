@@ -232,7 +232,7 @@ class Model(Material):
             velocityField=self.velocityField,
             order=2
         )
-        
+
         self.population_control = uw.swarm.PopulationControl(
             self.swarm,
             aggressive=rcParams["popcontrol.aggressive"],
@@ -554,7 +554,9 @@ class Model(Material):
 
             solver = uw.systems.Solver(stokes_object)
             solver.set_inner_method(rcParams["solver"])
-            solver.set_penalty(rcParams["penalty"])
+
+            if rcParams["penalty"]:
+                solver.set_penalty(rcParams["penalty"])
 
         return solver
 
