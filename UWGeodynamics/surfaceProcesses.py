@@ -62,7 +62,6 @@ class ErosionThreshold(object):
         self.threshold = nd(threshold)
         self.air = air
         self.sediment = sediment
-        self.threshold = threshold
 
         materialMap = {}
         for material in air:
