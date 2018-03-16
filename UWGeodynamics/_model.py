@@ -1170,6 +1170,7 @@ class Model(Material):
 
         self._stokes().solve(
             nonLinearIterate=True,
+            nonLinearMaxIterations=rcParams["nonlinear.max.iterations"],
             callback_post_solve=self._calibrate_pressureField,
             nonLinearTolerance=tol)
         self._solution_exist.value = True
