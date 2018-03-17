@@ -1600,7 +1600,7 @@ class Model(Material):
                 except KeyError:
                     units = None
 
-            if self.mesh_advector:
+            if self._advector:
                 mesh_name = 'mesh-%s' % checkpointID
                 mesh_prefix = os.path.join(self.outputDir, mesh_name)
             else:
