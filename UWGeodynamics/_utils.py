@@ -67,10 +67,26 @@ class PassiveTracers(object):
         """ Integrate swarm velocity in time """
         self.advector.integrate(dt, **kwargs)
 
-    def add_tracked_field(self, value, name, units, dataType, count=1):
+    def add_tracked_field(self, value, name, units, dataType, count=1,
+                          overwrite=True):
         """ Add a field to be tracked """
         if not isinstance(value, fn.Function):
             raise ValueError("%s is not an Underworld function")
+
+        # Check that the tracer does not exist already
+        for field in self.tracked_field:
+            if (name == field["name"]) or (value == field["value"]):
+                if not overwrite:
+                    raise ValueError(""" %s name already exist or already tracked
+                                     with a different name """ % name)
+                else:
+                    field["name"] = name
+                    field["units"] = units
+                    field["value"] = value
+                    field["dataType"] = dataType
+                    setattr(self, name, self.swarm.add_variable(dataType, count=count))
+                    return
+
         self.tracked_field.append({"value":value,
                                    "name": name,
                                    "units": units,
