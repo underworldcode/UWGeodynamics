@@ -338,6 +338,8 @@ class Model(Material):
             print("Reloading field {0} from {1}".format("temperature", path))
             obj.load(str(path))
 
+        for tracer in self.passive_tracers:
+            tracer.load(self.outputDir, step)
 
     @property
     def projMaterialField(self):
@@ -1488,7 +1490,6 @@ class Model(Material):
                 continue
             else:
                 self._save_field(str(variable), checkpointID)
-
 
         # Checkpoint passive tracers and associated tracked fields
         if self.passive_tracers:
