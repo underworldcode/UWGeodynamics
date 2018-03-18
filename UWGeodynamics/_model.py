@@ -1489,6 +1489,12 @@ class Model(Material):
             else:
                 self._save_field(str(variable), checkpointID)
 
+
+        # Checkpoint passive tracers and associated tracked fields
+        if self.passive_tracers:
+            for tracers in self.passive_tracers:
+                tracers.save(self.outputDir, checkpointID, self.time)
+
         #if checkpointID > 2:
         #    for field in rcParams["swarm.variables"]:
         #        try:

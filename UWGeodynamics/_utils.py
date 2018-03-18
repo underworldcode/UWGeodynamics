@@ -1,11 +1,13 @@
 import numpy as np
 import underworld as uw
+import underworld.function as fn
 import shapefile
 import numpy as np
 import os
 from .scaling import nonDimensionalize as nd
 from .scaling import Dimensionalize
 from .scaling import UnitRegistry as u
+from ._swarm import Swarm
 
 class PressureSmoother(object):
 
@@ -44,16 +46,36 @@ class PassiveTracers(object):
         for dim in range(len(vertices)):
             points[:, dim] = vertices[dim]
 
-        self.swarm = uw.swarm.Swarm(mesh=mesh, particleEscape=particleEscape)
+        self.swarm = Swarm(mesh=mesh, particleEscape=particleEscape)
         self.swarm.add_particles_with_coordinates(points)
         self.advector = uw.systems.SwarmAdvector(swarm=self.swarm,
                                                  velocityField=velocityField,
                                                  order=2)
+        indices = np.arange(self.swarm.particleLocalCount)
+        rank = uw.rank()
+        ranks = np.repeat(rank, self.swarm.particleLocalCount)
+        pairs = np.array(list(zip(ranks, indices)), dtype=[("a", np.int32),
+                                                           ("b", np.int32)])
+        # Get rank
+        self.global_index = self.swarm.add_variable(dataType="int", count=1)
+        self.pairs = pairs.view(np.int64)
+        self.global_index.data[:, 0] = pairs.view(np.int64)
+
+        self.tracked_field = list()
 
     def integrate(self, dt, **kwargs):
-
+        """ Integrate swarm velocity in time """
         self.advector.integrate(dt, **kwargs)
 
+    def add_tracked_field(self, value, name, units, dataType, count=1):
+        """ Add a field to be tracked """
+        if not isinstance(value, fn.Function):
+            raise ValueError("%s is not an Underworld function")
+        self.tracked_field.append({"value":value,
+                                   "name": name,
+                                   "units": units,
+                                   "dataType": dataType})
+        setattr(self, name, self.swarm.add_variable(dataType, count=count))
 
     def write_to_shapefile(self, filename, units=None, overwrite=False):
 
@@ -66,7 +88,7 @@ class PassiveTracers(object):
             w.records.extend(r.records())
             # Copy over the existing polygons
             w._shapes.extend(r.shapes())
- 
+
         else:
 
             w = shapefile.Writer(shapeType=shapefile.POLYLINEZ)
@@ -84,6 +106,30 @@ class PassiveTracers(object):
         w.poly(parts=[line])
         w.record(self.name, str(units))
         w.save(filename)
+
+    def save(self, outputDir, checkpointID, time):
+        """ Save to h5 and create an xdmf file for each tracked field """
+
+        # Save the swarm
+        swarm_name = self.name + '-%s.h5' % checkpointID
+        sH = self.swarm.save(os.path.join(outputDir,
+                                          swarm_name),
+                             units=u.kilometers)
+
+        for field in self.tracked_field:
+            fn = field["value"]
+            name = field["name"]
+            units = field["units"]
+
+            file_prefix = os.path.join(
+                outputDir,
+                self.name + "_" + name + '-%s' % checkpointID)
+
+            obj = getattr(self, name)
+            obj.data[...] = fn.evaluate(self.swarm)
+            handle = obj.save('%s.h5' % file_prefix, units=units)
+            obj.xdmf('%s.xdmf' % file_prefix, handle, name, sH, swarm_name,
+                     modeltime=time)
 
 
 class Balanced_InflowOutflow(object):
