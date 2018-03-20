@@ -1015,7 +1015,7 @@ class Model(Material):
                 else:
                     # Set elastic stress to zero if material
                     # has no elasticity
-                    elasticStressFn = [0.0, 0.0, 0.0]
+                    elasticStressFn = [0.0] * 3 if self.mesh.dim == 2 else [0.0] * 6
                 stressMap[material.index] = elasticStressFn
             return fn.branching.map(fn_key=self.materialField,
                                     mapping=stressMap)
