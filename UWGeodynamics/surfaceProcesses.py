@@ -59,7 +59,7 @@ class ErosionThreshold(object):
 
         self.materialIndexField = materialIndexField
         self.swarm = swarm
-        self.threshold = nd(threshold)
+        self.threshold = threshold
         self.air = air
         self.sediment = sediment
         
@@ -89,7 +89,7 @@ class SedimentationThreshold(object):
         self.swarm = swarm
         self.air = air
         self.sediment = sediment
-        self.threshold = nd(threshold)
+        self.threshold = threshold
 
         materialMap = {}
         for material in air:
@@ -116,7 +116,7 @@ class ErosionAndSedimentationThreshold(object):
         self.swarm = swarm
         self.air = air
         self.sediment = sediment
-        self.threshold = nd(threshold)
+        self.threshold = threshold
 
         materialMap = {}
         for material in air:
