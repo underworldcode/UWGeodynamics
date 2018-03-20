@@ -1485,24 +1485,13 @@ class Model(Material):
         if not checkpointID:
             checkpointID = self.checkpointID
 
-        for variable in variables:
-            if variable == "temperature" and not self.temperature:
-                continue
-            else:
-                self._save_field(str(variable), checkpointID)
+        self._save_fields(variables, checkpointID)
+        self._save_swarms(variables, checkpointID)
 
         # Checkpoint passive tracers and associated tracked fields
         if self.passive_tracers:
             for tracers in self.passive_tracers:
                 tracers.save(self.outputDir, checkpointID, self.time)
-
-        #if checkpointID > 2:
-        #    for field in rcParams["swarm.variables"]:
-        #        try:
-        #            os.remove(os.path.join(self.outputDir,
-        #                                   field + "-%s" % checkpointID - 2))
-        #        except:
-        #            pass
 
     def profile(self,
                 start_point,
@@ -1639,6 +1628,86 @@ class Model(Material):
                      modeltime=self.time.magnitude)
         else:
             raise ValueError(field, ' is not a valid variable name \n')
+
+    def _save_fields(self, fields, checkpointID):
+
+        if self._advector:
+            mesh_name = 'mesh-%s' % checkpointID
+            mesh_prefix = os.path.join(self.outputDir, mesh_name)
+        else:
+            mesh_name = 'mesh'
+            mesh_prefix = os.path.join(self.outputDir, mesh_name)
+
+        mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers)
+
+        filename = "XDMF.fields."+str(checkpointID).zfill(5)+".xmf"
+        filename = os.path.join(self.outputDir, filename)
+
+        # First write the XDMF header
+        string = uw.utils._xdmfheader()
+        string += uw.utils._spacetimeschema(mH, mesh_name, self.time)
+
+        for field in fields:
+            if field == "temperature" and not self.temperature:
+                continue
+            if field in rcParams["mesh.variables"]:
+                field = str(field)
+                try:
+                    units = rcParams[field + ".SIunits"]
+                except KeyError:
+                    units = None
+
+                # Save the h5 file and write the field schema for
+                # each one of the field variables
+                obj = getattr(self, field)
+                file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
+                handle = obj.save('%s.h5' % file_prefix, units=units)
+                string += uw.utils._fieldschema(handle, field)
+
+        # Write the footer to the xmf
+        string += uw.utils._xdmffooter()
+
+        # Write the string to file - only proc 0
+        xdmfFH = open(filename, "w")
+        xdmfFH.write(string)
+        xdmfFH.close()
+
+    def _save_swarms(self, fields, checkpointID):
+
+        swarm_name = 'swarm-%s.h5' % checkpointID
+        sH = self.swarm.save(os.path.join(self.outputDir,
+                             swarm_name),
+                             units=u.kilometers)
+
+        filename = "XDMF.swarms."+str(checkpointID).zfill(5)+".xmf"
+        filename = os.path.join(self.outputDir, filename)
+
+        # First write the XDMF header
+        string = uw.utils._xdmfheader()
+        string += uw.utils._swarmspacetimeschema(sH, swarm_name, self.time)
+
+        for field in fields:
+            if field in rcParams["swarm.variables"]:
+                field = str(field)
+                try:
+                    units = rcParams[field + ".SIunits"]
+                except KeyError:
+                    units = None
+
+                # Save the h5 file and write the field schema for
+                # each one of the field variables
+                obj = getattr(self, field)
+                file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
+                handle = obj.save('%s.h5' % file_prefix, units=units)
+                string += uw.utils._swarmvarschema(handle, field)
+
+        # Write the footer to the xmf
+        string += uw.utils._xdmffooter()
+
+        # Write the string to file - only proc 0
+        xdmfFH = open(filename, "w")
+        xdmfFH.write(string)
+        xdmfFH.close()
 
     def save(self, filename=None):
         save_model(self, filename)
