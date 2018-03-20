@@ -1019,7 +1019,10 @@ class Model(Material):
                 stressMap[material.index] = elasticStressFn
             return fn.branching.map(fn_key=self.materialField,
                                     mapping=stressMap)
-        return
+        else:
+
+            elasticStressFn = [0.0] * 3 if self.mesh.dim == 2 else [0.0] * 6
+            return elasticStressFn
 
     def _update_stress_history(self, dt):
         dt_e = []
