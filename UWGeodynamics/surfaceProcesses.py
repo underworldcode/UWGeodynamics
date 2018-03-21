@@ -59,10 +59,10 @@ class ErosionThreshold(object):
 
         self.materialIndexField = materialIndexField
         self.swarm = swarm
-        self.threshold = nd(threshold)
+        self.threshold = threshold
         self.air = air
         self.sediment = sediment
-        self.threshold = threshold
+        
 
         materialMap = {}
         for material in air:
@@ -89,7 +89,7 @@ class SedimentationThreshold(object):
         self.swarm = swarm
         self.air = air
         self.sediment = sediment
-        self.threshold = nd(threshold)
+        self.threshold = threshold
 
         materialMap = {}
         for material in air:
@@ -116,7 +116,7 @@ class ErosionAndSedimentationThreshold(object):
         self.swarm = swarm
         self.air = air
         self.sediment = sediment
-        self.threshold = nd(threshold)
+        self.threshold = threshold
 
         materialMap = {}
         for material in air:
@@ -129,8 +129,8 @@ class ErosionAndSedimentationThreshold(object):
         erosion = [(((isAirMaterial < 0.5) & (fn.input()[1] > nd(threshold))), sediment[0].index),
                          (True, materialIndexField)]
 
-        self._fn1 = fn.branching.conditional(belowthreshold)
-        self._fn2 = fn.branching.conditional(belowthreshold)
+        self._fn1 = fn.branching.conditional(sedimentation)
+        self._fn2 = fn.branching.conditional(erosion)
 
     def solve(self, dt):
         self.materialIndexField.data[:] = self._fn1.evaluate(self.swarm)
