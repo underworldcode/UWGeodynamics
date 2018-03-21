@@ -247,6 +247,8 @@ class Model(Material):
         self.add_swarm_field("_viscosityField", dataType="double", count=1)
         self.add_swarm_field("_densityField", dataType="double", count=1)
         self.add_swarm_field("meltField", dataType="double", count=1)
+        self.add_swarm_field("_timeField", dataType="double", count=1)
+        self._timeField.data[...] = 0.0
 
         if self.mesh.dim == 3:
             stress_dim = 6
@@ -357,6 +359,12 @@ class Model(Material):
         return self._projPlasticStrain
 
     @property
+    def projTimeField(self):
+        """ Plastic Strain Field projected on the mesh """
+        self._timeFieldProjector.solve()
+        return self._projTimeField
+
+    @property
     def strainRateField(self):
         """ Strain Rate Field """
         self._strainRateField.data[:] = self._strainRate_2ndInvariant.evaluate(
@@ -397,6 +405,7 @@ class Model(Material):
     @surfaceProcesses.setter
     def surfaceProcesses(self, value):
         self._surfaceProcesses = value
+        self._surfaceProcesses.timeField = self._timeField
         if isinstance(value, surfaceProcesses.Badlands):
             self._surfaceProcesses.Model = self
 
@@ -1340,6 +1349,9 @@ class Model(Material):
 
         # Do pop control
         self.population_control.repopulate()
+
+        # Update Time Field
+        self._timeField.data[...] = self.time.magnitude
 
         if self.surfaceProcesses:
             self.surfaceProcesses.solve(dt)
