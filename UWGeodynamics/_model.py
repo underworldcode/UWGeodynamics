@@ -16,7 +16,7 @@ from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
 from .lithopress import LithostaticPressure
 from ._utils import PressureSmoother, PassiveTracers
-from ._rheology import ViscosityLimiter
+from ._rheology import ViscosityLimiter, StressLimiter
 from ._material import Material
 from ._plots import Plots
 from ._visugrid import Visugrid
@@ -257,6 +257,8 @@ class Model(Material):
 
         self.add_swarm_field("_previousStressField", dataType="double",
                              count=stress_dim)
+        self.add_swarm_field("_stressField", dataType="double",
+                             count=stress_dim)
 
         self._add_surface_tracers()
 
@@ -383,6 +385,13 @@ class Model(Material):
         """ Viscosity Field on particles """
         self._viscosityField.data[:] = self._viscosityFn.evaluate(self.swarm)
         return self._viscosityField
+
+    @property
+    def projStressField(self):
+        """ Stress Tensor on mesh """
+        self._stressField.data[...] = self._stressFn.evaluate(self.swarm)
+        self._stressFieldProjector.solve()
+        return self._projStressField
 
     @property
     def projDensityField(self):
@@ -700,22 +709,22 @@ class Model(Material):
         newField.data[...] = init_value
         self.swarm_fields[name] = newField
 
-        if count == 1:
-            # Create mesh variable for projection
-            if name.startswith("_"):
-                proj_name = "_proj" + name[1].upper() + name[2:]
-            else:
-                proj_name = "_proj" + name[0].upper() + name[1:]
-            projected = self.add_mesh_field(proj_name, nodeDofCount=1,
-                                            dataType="double")
-            # Create a projector
-            if name.startswith("_"):
-                projector_name = name + "Projector"
-            else:
-                projector_name = "_" + name + "Projector"
-            projector = uw.utils.MeshVariable_Projection(projected,
-                                                         newField, type=0)
-            setattr(self, projector_name, projector)
+        # Create mesh variable for projection
+        if name.startswith("_"):
+            proj_name = "_proj" + name[1].upper() + name[2:]
+        else:
+            proj_name = "_proj" + name[0].upper() + name[1:]
+        projected = self.add_mesh_field(proj_name, nodeDofCount=count,
+                                        dataType="double")
+        # Create a projector
+        if name.startswith("_"):
+            projector_name = name + "Projector"
+        else:
+            projector_name = "_" + name + "Projector"
+        projector = uw.utils.MeshVariable_Projection(projected,
+                                                     newField, type=0)
+        setattr(self, projector_name, projector)
+
         return newField
 
     def add_mesh_field(self, name, nodeDofCount,
