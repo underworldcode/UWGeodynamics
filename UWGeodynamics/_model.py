@@ -889,6 +889,13 @@ class Model(Material):
                 if self.mesh.dim == 3:
                     yieldStress = YieldHandler._get_yieldStress3D()
 
+                if material.stressLimiter:
+                    stressLimiter = StressLimiter(material.stressLimiter)
+                    yieldStress = stressLimiter.apply(yieldStress)
+                elif self.stressLimiter:
+                    stressLimiter = StressLimiter(self.stressLimiter)
+                    yieldStress = stressLimiter.apply(yieldStress)
+
                 if material.elasticity:
                     ElasticityHandler = material.elasticity
                     mu = nd(ElasticityHandler.shear_modulus)

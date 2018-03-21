@@ -38,6 +38,15 @@ class ViscosityLimiter(object):
         minMaxBound = fn.misc.max(maxBound, nd(self.minViscosity))
         return minMaxBound
 
+class StressLimiter(object):
+
+    def __init__(self, maxStress):
+        # Add unit check
+        self.maxStress = maxStress
+
+    def apply(self, stress):
+        maxBound = fn.misc.min(stress, nd(self.maxStress))
+        return maxBound
 
 class Rheology(object):
 

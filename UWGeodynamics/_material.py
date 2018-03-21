@@ -15,7 +15,7 @@ class Material(object):
                  diffusivity=None, capacity=None,
                  radiogenicHeatProd=0.0, shape=None, viscosity=None,
                  plasticity=None, elasticity=None, solidus=None, liquidus=None,
-                 minViscosity=None, maxViscosity=None,
+                 minViscosity=None, maxViscosity=None, stressLimiter=None,
                  latentHeatFusion=0.0, meltExpansion=0.0, meltFraction=0.0,
                  meltFractionLimit=1.0, viscosityChangeX1=0.15,
                  viscosityChangeX2=0.3, viscosityChange=1.0):
@@ -37,6 +37,7 @@ class Material(object):
 
         self.minViscosity = minViscosity
         self.maxViscosity = maxViscosity
+        self.stressLimiter = stressLimiter
 
         self.compressibility = None
 
