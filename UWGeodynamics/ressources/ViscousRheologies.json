@@ -354,7 +354,7 @@
         }
     }, 
     "Wang et al., 2012": {
-        "Mineral": "Wet Quartz", 
+        "Mineral": "Dry Mafic Granulite", 
         "Type": "Strain Rate and Temperature Dependent Rheology", 
         "coefficients": {
             "activationEnergy": {
@@ -371,7 +371,7 @@
             }, 
             "preExponentialFactor": {
                 "units": "1 / megapascal ** 3.2 / second", 
-                "value": 0.1
+                "value": 1e-2
             }, 
             "stressExponent": {
                 "units": "None", 

@@ -99,7 +99,7 @@
             },
             "epsilon2": {
                 "units": "None", 
-                "value": 0.5 
+                "value": 0.2 
             }
         }
     }, 
@@ -131,7 +131,7 @@
             },
             "epsilon2": {
                 "units": "None", 
-                "value": 0.5 
+                "value": 0.2 
             }
         }
     }, 
@@ -163,7 +163,7 @@
             },
             "epsilon2": {
                 "units": "None", 
-                "value": 0.5 
+                "value": 0.2 
             }
         }
     }
