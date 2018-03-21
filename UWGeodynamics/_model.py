@@ -414,7 +414,8 @@ class Model(Material):
     @surfaceProcesses.setter
     def surfaceProcesses(self, value):
         self._surfaceProcesses = value
-        self._surfaceProcesses.timeField = self._timeField
+        if value:
+            self._surfaceProcesses.timeField = self._timeField
         if isinstance(value, surfaceProcesses.Badlands):
             self._surfaceProcesses.Model = self
 
