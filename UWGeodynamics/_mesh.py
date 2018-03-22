@@ -52,7 +52,7 @@ class FeMesh_Cartesian(uw.mesh.FeMesh_Cartesian):
 
         return  var.MeshVariable(self, nodeDofCount, dataType, **kwargs)
 
-    def save(self, filename, units=None):
+    def save(self, filename, units=None, time=None):
         """
         Save the mesh to disk
 
@@ -127,6 +127,7 @@ class FeMesh_Cartesian(uw.mesh.FeMesh_Cartesian):
         h5f.attrs['min'] = tuple([fact*x for x in self.minCoord])
         h5f.attrs['regular'] = self._cself.isRegular
         h5f.attrs['elementType'] = self.elementType
+        h5f.attrs['time'] = str(time)
 
         # write the vertices
         globalShape = ( self.nodesGlobal, self.data.shape[1] )

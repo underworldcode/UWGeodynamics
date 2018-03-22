@@ -1636,10 +1636,11 @@ class Model(Material):
                 mesh_name = 'mesh'
                 mesh_prefix = os.path.join(self.outputDir, mesh_name)
 
-            mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers)
+            mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
+                                time=self.time)
             file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
             obj = getattr(self, field)
-            handle = obj.save('%s.h5' % file_prefix, units=units)
+            handle = obj.save('%s.h5' % file_prefix, units=units, time=self.time)
             obj.xdmf('%s.xdmf' % file_prefix, handle, field, mH, mesh_name,
                      modeltime=self.time.magnitude)
 
@@ -1652,11 +1653,11 @@ class Model(Material):
 
             sH = self.swarm.save(os.path.join(self.outputDir,
                                  'swarm-%s.h5' % checkpointID),
-                                 units=u.kilometers)
+                                 units=u.kilometers, time=self.time)
             file_prefix = os.path.join(self.outputDir,
                                        field + '-%s' % checkpointID)
             obj = getattr(self, field)
-            handle = obj.save('%s.h5' % file_prefix, units=units)
+            handle = obj.save('%s.h5' % file_prefix, units=units, time=self.time)
             obj.xdmf('%s.xdmf' % file_prefix, handle, field, sH, 'swarm',
                      modeltime=self.time.magnitude)
         else:
@@ -1671,7 +1672,8 @@ class Model(Material):
             mesh_name = 'mesh'
             mesh_prefix = os.path.join(self.outputDir, mesh_name)
 
-        mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers)
+        mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
+                            time=self.time)
 
         filename = "XDMF.fields."+str(checkpointID).zfill(5)+".xmf"
         filename = os.path.join(self.outputDir, filename)
@@ -1694,7 +1696,8 @@ class Model(Material):
                 # each one of the field variables
                 obj = getattr(self, field)
                 file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
-                handle = obj.save('%s.h5' % file_prefix, units=units)
+                handle = obj.save('%s.h5' % file_prefix, units=units,
+                                  time=self.time)
                 string += uw.utils._fieldschema(handle, field)
 
         # Write the footer to the xmf
@@ -1710,7 +1713,8 @@ class Model(Material):
         swarm_name = 'swarm-%s.h5' % checkpointID
         sH = self.swarm.save(os.path.join(self.outputDir,
                              swarm_name),
-                             units=u.kilometers)
+                             units=u.kilometers,
+                             time=self.time)
 
         filename = "XDMF.swarms."+str(checkpointID).zfill(5)+".xmf"
         filename = os.path.join(self.outputDir, filename)
@@ -1731,7 +1735,7 @@ class Model(Material):
                 # each one of the field variables
                 obj = getattr(self, field)
                 file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
-                handle = obj.save('%s.h5' % file_prefix, units=units)
+                handle = obj.save('%s.h5' % file_prefix, units=units, time=self.time)
                 string += uw.utils._swarmvarschema(handle, field)
 
         # Write the footer to the xmf

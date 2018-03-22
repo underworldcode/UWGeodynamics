@@ -13,7 +13,7 @@ class SwarmVariable(uw.swarm.SwarmVariable):
         super(SwarmVariable, self).__init__(swarm, dataType, count,
                                             writeable=True, **kwargs)
 
-    def save(self, filename, units=None):
+    def save(self, filename, units=None, time=None):
         """
         Save the swarm variable to disk.
 
@@ -110,6 +110,9 @@ class SwarmVariable(uw.swarm.SwarmVariable):
         if units:
             fact = Dimensionalize(1.0, units=units).magnitude
             h5f.attrs['units'] = str(units)
+
+        if time:
+            h5f.attrs['time'] = str(time)
 
         if swarm.particleLocalCount > 0: # only add if there are local particles
             dset[offset:offset+swarm.particleLocalCount] = self.data[:] * fact

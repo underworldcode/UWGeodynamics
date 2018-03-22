@@ -56,7 +56,7 @@ class Swarm(uw.swarm.Swarm):
         """
         return svar.SwarmVariable( self, dataType, count )
 
-    def save(self, filename, units=None):
+    def save(self, filename, units=None, time=None):
         """
         Save the swarm to disk.
 
@@ -110,7 +110,7 @@ class Swarm(uw.swarm.Swarm):
             raise TypeError("Expected filename to be provided as a string")
 
         # just save the particle coordinates SwarmVariable
-        self.particleCoordinates.save(filename, units=units)
+        self.particleCoordinates.save(filename, units=units, time=time)
 
         return uw.utils.SavedFileData( self, filename )
 
