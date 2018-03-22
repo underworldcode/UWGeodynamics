@@ -345,6 +345,15 @@ class Model(Material):
         for tracer in self.passive_tracers:
             tracer.load(self.outputDir, step)
 
+        # get time from mesh.h5 file
+        import h5py
+        try:
+            f = h5py.File(os.path.join(restartDir, "mesh.h5"), "r")
+        except IOError:
+            f = h5py.File(os.path.join(restartDir, "mesh-0.h5"), "r")
+        self.time = u.Quantity(f.attrs.get("time"))
+        f.close()
+
     @property
     def projMaterialField(self):
         """ Material field projected on the mesh """
