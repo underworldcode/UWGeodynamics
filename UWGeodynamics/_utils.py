@@ -362,4 +362,24 @@ class MoveImporter(object):
                        extent=[xextent * units, yextent * units])
 
 
+def circles_grid(radius, minCoord, maxCoord, npoints=72, dim=2):
+
+    # Create points on circle
+    angles = np.linspace(0, 360, npoints)
+    radius = nd(radius)
+    x = radius * np.cos(np.radians(angles))
+    y = radius * np.sin(np.radians(angles))
+
+    # Calculate centroids
+    xc = np.arange(nd(minCoord[0]), nd(maxCoord[0]) + radius, 2.*radius)
+    yc = np.arange(nd(minCoord[1]) + radius, nd(maxCoord[1]), 2.*radius * np.sqrt(3)/2.)
+    xc, yc = np.meshgrid(xc, yc)
+    # Shift every other row by radius
+    xc[::2,:] = xc[::2, :] + radius
+
+    # Calculate coordinates of all circles points
+    points = np.array(zip(xc.ravel(), yc.ravel()))[:, np.newaxis] + np.array(zip(x, y))
+    x, y = points[:,:,0].ravel(), points[:,:,1].ravel()
+
+    return x, y
 
