@@ -1523,7 +1523,7 @@ class Model(Material):
         # Checkpoint passive tracers and associated tracked fields
         if self.passive_tracers:
             for tracers in self.passive_tracers:
-                tracers.save(self.outputDir, checkpointID, nd(self.time))
+                tracers.save(self.outputDir, checkpointID, self.time)
 
     def profile(self,
                 start_point,
