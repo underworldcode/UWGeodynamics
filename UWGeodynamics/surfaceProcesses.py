@@ -99,21 +99,23 @@ class SedimentationThreshold(object):
 
         isAirMaterial = fn.branching.map(fn_key=materialIndexField, mapping=materialMap, fn_default=0.0)
 
-        belowthreshold = [(((isAirMaterial > 0.5) & (fn.input()[1] < nd(threshold))), 1),
-                         (True, 0)]
+        belowthreshold = [(((isAirMaterial > 0.5) & (fn.input()[1] < nd(threshold))), 0.),
+                         (True, 1.)]
 
         self._change_material = fn.branching.conditional(belowthreshold)
 
-        conditions = [(self._change_material == 1, sediment[0].index),
+        conditions = [(self._change_material < 0.5, sediment[0].index),
                       (True, materialIndexField)]
 
         self._fn = fn.branching.conditional(conditions)
 
     def solve(self, dt):
-        self.materialIndexField.data[:] = self._fn.evaluate(self.swarm)
 
         if self.timeField:
-            self.timeField.data[...] += self._change_material.evaluate(self.swarm) * dt
+            fn = self._change_material * self.timeField
+            self.timeField.data[...] = fn.evaluate(self.swarm)
+
+        self.materialIndexField.data[:] = self._fn.evaluate(self.swarm)
 
         return
 
@@ -136,12 +138,12 @@ class ErosionAndSedimentationThreshold(object):
 
         isAirMaterial = fn.branching.map(fn_key=materialIndexField, mapping=materialMap, fn_default=0.0)
 
-        sedimentation = [(((isAirMaterial > 0.5) & (fn.input()[1] < nd(threshold))), 1),
-                         (True, 0)]
+        sedimentation = [(((isAirMaterial > 0.5) & (fn.input()[1] < nd(threshold))), 0.),
+                         (True, 1.0)]
 
         self._sedimented = fn.branching.conditional(sedimentation)
 
-        conditions = [(self._sedimented == 1, sediment[0].index),
+        conditions = [(self._sedimented < 0.5, sediment[0].index),
                       (True, materialIndexField)]
 
         erosion = [(((isAirMaterial < 0.5) & (fn.input()[1] > nd(threshold))), sediment[0].index),
@@ -151,10 +153,12 @@ class ErosionAndSedimentationThreshold(object):
         self._fn2 = fn.branching.conditional(erosion)
 
     def solve(self, dt):
-        self.materialIndexField.data[:] = self._fn1.evaluate(self.swarm)
-        self.materialIndexField.data[:] = self._fn2.evaluate(self.swarm)
 
         if self.timeField:
-            self.timeField.data[...] += self._sedimented.evaluate(self.swarm) * dt
+            fn = self._sedimented * self.timeField
+            self.timeField.data[...] = fn.evaluate(self.swarm)
+
+        self.materialIndexField.data[:] = self._fn1.evaluate(self.swarm)
+        self.materialIndexField.data[:] = self._fn2.evaluate(self.swarm)
 
         return
