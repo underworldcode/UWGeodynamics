@@ -2,6 +2,7 @@ import numpy as np
 import underworld as uw
 import underworld.function as fn
 import shapefile
+import h5py
 import numpy as np
 import os
 from .scaling import nonDimensionalize as nd
@@ -127,25 +128,52 @@ class PassiveTracers(object):
         """ Save to h5 and create an xdmf file for each tracked field """
 
         # Save the swarm
-        swarm_name = self.name + '-%s.h5' % checkpointID
-        sH = self.swarm.save(os.path.join(outputDir,
-                                          swarm_name),
-                             units=u.kilometers)
+        swarm_fname = self.name + '-%s.h5' % checkpointID
+        swarm_fpath = os.path.join(outputDir, swarm_fname)
+        sH = self.swarm.save(swarm_fpath, units=u.kilometers)
 
+        filename = self.name + '-%s.xdmf' % checkpointID
+        filename = os.path.join(outputDir, filename)
+
+        # First write the XDMF header
+        string = uw.utils._xdmfheader()
+        string += uw.utils._swarmspacetimeschema(sH, swarm_fname, time.magnitude)
+
+        # Save each tracked field
         for field in self.tracked_field:
-            fn = field["value"]
-            name = field["name"]
-            units = field["units"]
 
             file_prefix = os.path.join(
                 outputDir,
-                self.name + "_" + name + '-%s' % checkpointID)
+                self.name + "_" + field["name"] + '-%s' % checkpointID)
 
-            obj = getattr(self, name)
-            obj.data[...] = fn.evaluate(self.swarm)
-            handle = obj.save('%s.h5' % file_prefix, units=units)
-            obj.xdmf('%s.xdmf' % file_prefix, handle, name, sH, swarm_name,
-                     modeltime=time)
+            obj = getattr(self, field["name"])
+            obj.data[...] = field["value"].evaluate(self.swarm)
+            handle = obj.save('%s.h5' % file_prefix, units=field["units"])
+
+            # Add attribute to xdmf file
+            string += uw.utils._swarmvarschema(handle, field["name"])
+
+        # get swarm parameters - serially read from hdf5 file to get size
+        h5f = h5py.File(name=swarm_fpath, mode="r")
+        dset = h5f.get('data')
+        if dset == None:
+            raise RuntimeError("Can't find 'data' in file '{}'.\n".format(swarm_fname))
+        globalCount = len(dset)
+        dim = self.swarm.mesh.dim
+        h5f.close()
+
+        string += "\t<Attribute Type=\"Scalar\" Center=\"Node\" Name=\"Coordinates\">\n"
+        string += """\t\t\t<DataItem Format=\"HDF\" NumberType=\" Float\"
+                     Precision=\"8\" Dimensions=\"{0} {1}\">{2}:/data</DataItem>\n""".format(globalCount, dim, swarm_fname)
+        string += "\t</Attribute>\n"
+
+        # Write the footer to the xmf
+        string += uw.utils._xdmffooter()
+
+        # Write the string to file - only proc 0
+        xdmfFH = open(filename, "w")
+        xdmfFH.write(string)
+        xdmfFH.close()
 
     def load(self, outputDir, checkpointID):
         """ Load passive tracers from file """
