@@ -1376,13 +1376,13 @@ class Model(Material):
 
         # Do pop control
         self.population_control.repopulate()
+        self.swarm.update_particle_owners()
 
         if self.surfaceProcesses:
             self.surfaceProcesses.solve(dt)
 
         # Update Time Field
         self._timeField.data[...] += dt
-
 
         if self._isostasy:
             self._isostasy.solve()
