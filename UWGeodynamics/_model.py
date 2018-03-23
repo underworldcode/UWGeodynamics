@@ -1359,8 +1359,12 @@ class Model(Material):
         if self.temperature:
             self._advdiffSystem.integrate(dt)
 
-        # Integrate Swarms in time
-        self.swarm_advector.integrate(dt, update_owners=True)
+        if self._advector:
+            self.swarm_advector.integrate(dt)
+            self._advector.advect_mesh(dt)
+        else:
+            # Integrate Swarms in time
+            self.swarm_advector.integrate(dt, update_owners=True)
 
         # Update stress
         if any([material.elasticity for material in self.materials]):
@@ -1369,9 +1373,6 @@ class Model(Material):
         if self.passive_tracers:
             for tracers in self.passive_tracers:
                 tracers.integrate(dt)
-
-        if self._advector:
-            self._advector.advect_mesh(dt)
 
         # Do pop control
         self.population_control.repopulate()
