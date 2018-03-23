@@ -343,7 +343,7 @@ class Model(Material):
             obj.load(str(path))
 
         for tracer in self.passive_tracers:
-            tracer.load(self.outputDir, step)
+            tracer.load(restartDir, step)
 
         # get time from mesh.h5 file
         import h5py
