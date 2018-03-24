@@ -1311,7 +1311,7 @@ class Model(Material):
 
             self._update()
 
-            step += 1
+            self.step += 1
             self.time += Dimensionalize(self._dt, units)
             time += self._dt
 
