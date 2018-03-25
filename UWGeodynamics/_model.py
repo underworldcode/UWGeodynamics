@@ -310,7 +310,10 @@ class Model(Material):
         if step is None:
             step = max([int(os.path.splitext(filename)[0].split("-")[-1])
                         for filename in os.listdir(restartDir) if "-" in
-                        filename])
+                        filename]) - 1
+
+        if step < 1:
+            return
 
         self.checkpointID = step
         self.mesh.load(os.path.join(restartDir, "mesh.h5"))
@@ -353,6 +356,7 @@ class Model(Material):
             f = h5py.File(os.path.join(restartDir, "mesh-0.h5"), "r")
         self.time = u.Quantity(f.attrs.get("time"))
         f.close()
+        return
 
     @property
     def projMaterialField(self):
