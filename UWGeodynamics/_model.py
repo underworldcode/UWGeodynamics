@@ -312,7 +312,7 @@ class Model(Material):
                         for filename in os.listdir(restartDir) if "-" in
                         filename]) - 1
 
-        if step < 1:
+        if not step or step < 1:
             return
 
         self.checkpointID = step
