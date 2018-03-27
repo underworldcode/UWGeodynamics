@@ -12,7 +12,7 @@ class Badlands(object):
 
     def __init__(self, airIndex,
                  sedimentIndex, XML, resolution, checkpoint_interval,
-                 surfElevation=0., verbose=True, Model=None):
+                 surfElevation=0., verbose=True, Model=None, timeField=None):
 
         self.airIndex = airIndex
         self.sedimentIndex = sedimentIndex
