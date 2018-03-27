@@ -305,14 +305,24 @@ class Model(Material):
                 Step from which you want to restart the model.
 
         """
+        if step and not isinstance(step, int):
+            raise ValueError("step must be an int")
+
+        if restartDir and not isinstance(restartDir, str):
+            raise ValueError("restartDir must be a path to a folder")
+
         if not restartDir:
             restartDir = self.outputDir
-        if step is None:
-            step = max([int(os.path.splitext(filename)[0].split("-")[-1])
-                        for filename in os.listdir(restartDir) if "-" in
-                        filename]) - 1
 
-        if step < 1:
+        if step is None:
+            indices = [int(os.path.splitext(filename)[0].split("-")[-1])
+                    for filename in os.listdir(restartDir) if "-" in
+                    filename]
+
+            if indices:
+                step = max(indices) - 1
+
+        if not step or step < 1:
             return
 
         self.checkpointID = step

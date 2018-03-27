@@ -58,8 +58,7 @@ class PassiveTracers(object):
         pairs = np.array(list(zip(ranks, indices)), dtype=[("a", np.int32),
                                                            ("b", np.int32)])
         # Get rank
-        self.global_index = self.swarm.add_variable(dataType="int", count=1)
-        self.pairs = pairs.view(np.int64)
+        self.global_index = self.swarm.add_variable(dataType="long", count=1)
         self.global_index.data[:, 0] = pairs.view(np.int64)
 
         self.tracked_field = list()
@@ -138,6 +137,12 @@ class PassiveTracers(object):
         # First write the XDMF header
         string = uw.utils._xdmfheader()
         string += uw.utils._swarmspacetimeschema(sH, swarm_fname, time.magnitude)
+
+        # Save global index
+        file_prefix = os.path.join(
+            outputDir, self.name + '_global_index-%s' % checkpointID)
+        handle = self.global_index.save('%s.h5' % file_prefix)
+        string += uw.utils._swarmvarschema(handle, "global_index")
 
         # Save each tracked field
         for field in self.tracked_field:

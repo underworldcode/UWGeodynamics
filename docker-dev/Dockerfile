@@ -1,4 +1,4 @@
-FROM underworldcode/underworld2_untested:v2.5
+FROM underworldcode/underworld2_untested:dev
 MAINTAINER romain.beucher@unimelb.edu
 
 USER root
@@ -32,6 +32,8 @@ RUN pip install -e /opt/pyBadlands_serial
 # pyBadlands dependencies
 RUN pip install cmocean
 RUN pip install colorlover
+# Force matplotlib 2.1.2 (Bug Badlands), Temporary
+RUN pip install matplotlib==2.1.2
 
 # pyBadlands companion
 WORKDIR /opt
@@ -40,10 +42,8 @@ RUN pip install -e /opt/pyBadlands-Companion
 RUN mkdir /workspace/BADLANDS
 RUN rsync -av /opt/pyBadlands-Companion/notebooks/* /workspace/BADLANDS/companion/
 
-ENV PATH $PATH:/opt/pyBadlands-serial/pyBadlands/libUtils
-ENV PATH $PATH:/opt/pyBadlands-serial/pyBadlands/libUtils
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/pyBadlands-serial/pyBadlands/libUtils
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/pyBadlands-serial/pyBadlands/libUtils
+ENV PATH $PATH:/opt/pyBadlands_serial/pyBadlands/libUtils
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/pyBadlands_serial/pyBadlands/libUtils
 
 # memory profiler and jupyterlab
 RUN pip install memory_profiler
