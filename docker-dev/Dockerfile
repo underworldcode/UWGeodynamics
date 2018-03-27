@@ -32,6 +32,8 @@ RUN pip install -e /opt/pyBadlands_serial
 # pyBadlands dependencies
 RUN pip install cmocean
 RUN pip install colorlover
+# Force matplotlib 2.1.2 (Bug Badlands), Temporary
+RUN pip install matplotlib==2.1.2
 
 # pyBadlands companion
 WORKDIR /opt
