@@ -40,10 +40,8 @@ RUN pip install -e /opt/pyBadlands-Companion
 RUN mkdir /workspace/BADLANDS
 RUN rsync -av /opt/pyBadlands-Companion/notebooks/* /workspace/BADLANDS/companion/
 
-ENV PATH $PATH:/opt/pyBadlands-serial/pyBadlands/libUtils
-ENV PATH $PATH:/opt/pyBadlands-serial/pyBadlands/libUtils
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/pyBadlands-serial/pyBadlands/libUtils
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/pyBadlands-serial/pyBadlands/libUtils
+ENV PATH $PATH:/opt/pyBadlands_serial/pyBadlands/libUtils
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/pyBadlands_serial/pyBadlands/libUtils
 
 # memory profiler and jupyterlab
 RUN pip install memory_profiler
