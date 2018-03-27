@@ -315,9 +315,12 @@ class Model(Material):
             restartDir = self.outputDir
 
         if step is None:
-            step = max([int(os.path.splitext(filename)[0].split("-")[-1])
-                        for filename in os.listdir(restartDir) if "-" in
-                        filename]) - 1
+            indices = [int(os.path.splitext(filename)[0].split("-")[-1])
+                    for filename in os.listdir(restartDir) if "-" in
+                    filename]
+
+            if indices:
+                step = max(indices) - 1
 
         if not step or step < 1:
             return
