@@ -59,7 +59,7 @@ ENV NB_USER jovyan
 COPY jupyter_notebook_config.json /home/$NB_USER/.jupyter/jupyter_notebook_config.json
 
 # update all permissions for user
-RUN chown -R $NB_USER:users /workspace $UW2_DIR /home/$NB_USER
+RUN chown -R $NB_USER:users /workspace $UW2_DIR /home/$NB_USER /opt/pyBadlands_serial
 
 # change user and update pythonpath
 USER $NB_USER

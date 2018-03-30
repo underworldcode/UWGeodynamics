@@ -111,7 +111,7 @@ class SwarmVariable(uw.swarm.SwarmVariable):
             fact = Dimensionalize(1.0, units=units).magnitude
             h5f.attrs['units'] = str(units)
 
-        if time:
+        if time is not None:
             h5f.attrs['time'] = str(time)
 
         if swarm.particleLocalCount > 0: # only add if there are local particles

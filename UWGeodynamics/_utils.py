@@ -441,3 +441,33 @@ def sphere_points_tracers(radius, centre=tuple([0., 0., 0.]), npoints=30):
     z += nd(centre[2])
 
     return x, y, z
+
+
+def fn_Tukey_window(r, centre, width, top, bottom):
+    """ Define a tuckey window
+
+    A Tukey window is a rectangular window with the first and last r/2
+    percent of the width equal to parts of a cosine.
+    see tappered cosine function
+
+    """
+
+    centre = nd(centre)
+    width = nd(width)
+    top = nd(top)
+    bottom = nd(bottom)
+
+    x = fn.input()[0]
+    y = fn.input()[1]
+
+    start = centre - 0.5 * width
+    xx = (x - start) / width
+    x_conditions = [((0. <= xx) & (xx < r /2.0), 0.5 * (1.0 + fn.math.cos(2. * np.pi / r *(xx - r / 2.0)))),
+                    ((r / 2.0 <= xx) & (xx < 1.0 - r / 2.0), 1.0),
+                    ((1.0 - r / 2.0 <= xx) & (xx <= 1.0), 0.5 * (1. + fn.math.cos(2. * np.pi / r *(xx + r / 2.0)))),
+                    (True, 0.0)]
+
+    x_conditions =  fn.branching.conditional(x_conditions)
+
+    y_conditions = fn.branching.conditional([((y >= bottom) & (y <= top), 1.0), (True, 0.0)])
+    return x_conditions * y_conditions
