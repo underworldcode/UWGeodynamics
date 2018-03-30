@@ -288,9 +288,6 @@ class Model(Material):
 
     @outputDir.setter
     def outputDir(self, value):
-        if uw.rank() == 0:
-            if not os.path.exists(value):
-                os.makedirs(value)
         self._outputDir = value
 
     def restart(self, step=None, restartDir=None):
@@ -1536,6 +1533,9 @@ class Model(Material):
                 checkpoint ID.
 
         """
+        if not os.path.exists(self.outputDir):
+            os.mkdir(self.outputDir)
+
         if not variables:
             variables = rcParams["default.outputs"]
 
