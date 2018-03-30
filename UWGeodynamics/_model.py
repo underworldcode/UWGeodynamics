@@ -290,7 +290,8 @@ class Model(Material):
     def outputDir(self, value):
         self._outputDir = value
 
-    def restart(self, step=None, restartDir=None):
+    def restart(self, step=None, restartDir=None, badlands_prefix="outbdls",
+                badlands_step=None):
         """ Restart a Model
 
         parameters:
@@ -355,14 +356,47 @@ class Model(Material):
         for tracer in self.passive_tracers:
             tracer.load(restartDir, step)
 
-        # get time from mesh.h5 file
+        # get time from swarm-%.h5 file
         import h5py
-        try:
-            f = h5py.File(os.path.join(restartDir, "mesh.h5"), "r")
-        except IOError:
-            f = h5py.File(os.path.join(restartDir, "mesh-0.h5"), "r")
+        f = h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r")
         self.time = u.Quantity(f.attrs.get("time"))
         f.close()
+
+
+        if isinstance(self.surfaceProcesses, surfaceProcesses.Badlands):
+            badlands_model = self.surfaceProcesses
+            restartFolder = badlands_model.restartFolder
+            restartStep = badlands_model.restartStep
+
+            # Parse xmf for the last timestep time
+            import xml.etree.ElementTree as etree
+            xmf = restartFolder+"/xmf/tin.time"+str(restartStep)+".xmf"
+            tree = etree.parse(xmf)
+            root = tree.getroot()
+            badlands_time = float(root[0][0][0].attrib["Value"])
+            uw_time = self.time.to(u.years).magnitude
+
+            if np.abs(badlands_time - uw_time) > 1:
+                raise ValueError("""Time in Underworld and Badlands outputs
+                                 differs:\n
+                                 Badlands: {0}\n
+                                 Underworld: {1}""".format(badlands_time,
+                                                           uw_time))
+
+            airIndex = badlands_model.airIndex
+            sedimentIndex = badlands_model.sedimentIndex
+            XML = badlands_model.XML
+            resolution = badlands_model.resolution
+            checkpoint_interval = badlands_model.checkpoint_interval
+
+            self.surfaceProcesses = surfaceProcesses.Badlands(
+                airIndex, sedimentIndex,
+                XML, resolution,
+                checkpoint_interval,
+                restartFolder=restartFolder,
+                restartStep=restartStep
+                )
+
         return
 
     @property
@@ -1735,6 +1769,7 @@ class Model(Material):
     def _save_swarms(self, fields, checkpointID):
 
         swarm_name = 'swarm-%s.h5' % checkpointID
+
         sH = self.swarm.save(os.path.join(self.outputDir,
                              swarm_name),
                              units=u.kilometers,
