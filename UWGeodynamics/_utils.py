@@ -9,6 +9,7 @@ from .scaling import nonDimensionalize as nd
 from .scaling import Dimensionalize
 from .scaling import UnitRegistry as u
 from ._swarm import Swarm
+from scipy import spatial
 
 class PressureSmoother(object):
 
@@ -179,24 +180,6 @@ class PassiveTracers(object):
         xdmfFH = open(filename, "w")
         xdmfFH.write(string)
         xdmfFH.close()
-
-    def load(self, outputDir, checkpointID):
-        """ Load passive tracers from file """
-
-        swarm_name = self.name + '-%s.h5' % checkpointID
-        sH = self.swarm.load(os.path.join(outputDir, swarm_name))
-
-        for field in self.tracked_field:
-            fn = field["value"]
-            name = field["name"]
-            units = field["units"]
-
-            file_prefix = os.path.join(
-                outputDir,
-                self.name + "_" + name + '-%s' % checkpointID)
-
-            obj = getattr(self, name)
-            obj.data[...] = fn.evaluate(self.swarm)
 
 
 class Balanced_InflowOutflow(object):
@@ -441,6 +424,21 @@ def sphere_points_tracers(radius, centre=tuple([0., 0., 0.]), npoints=30):
     z += nd(centre[2])
 
     return x, y, z
+
+
+class Nearest_neigbhors_projector(object):
+
+    def __init__(self, mesh, swarm, swarm_variable, mesh_variable, dtype):
+        self.mesh = mesh
+        self.swarm = swarm
+        self.swarm_variable = swarm_variable
+        self.mesh_variable = mesh_variable
+
+    def solve(self):
+        tree = spatial.KDTree(self.swarm.particleCoordinates.data)
+        ids = tree.query(self.mesh.data)
+        pts = self.swarm.particleCoordinates.data[ids, :]
+        self.mesh_variable.data[...] = self.swarm_variable.evaluate(pts)
 
 
 def fn_Tukey_window(r, centre, width, top, bottom):
