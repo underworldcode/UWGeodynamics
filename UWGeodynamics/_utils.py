@@ -9,6 +9,7 @@ from .scaling import nonDimensionalize as nd
 from .scaling import Dimensionalize
 from .scaling import UnitRegistry as u
 from ._swarm import Swarm
+from scipy import spatial
 
 class PressureSmoother(object):
 
@@ -179,24 +180,6 @@ class PassiveTracers(object):
         xdmfFH = open(filename, "w")
         xdmfFH.write(string)
         xdmfFH.close()
-
-    def load(self, outputDir, checkpointID):
-        """ Load passive tracers from file """
-
-        swarm_name = self.name + '-%s.h5' % checkpointID
-        sH = self.swarm.load(os.path.join(outputDir, swarm_name))
-
-        for field in self.tracked_field:
-            fn = field["value"]
-            name = field["name"]
-            units = field["units"]
-
-            file_prefix = os.path.join(
-                outputDir,
-                self.name + "_" + name + '-%s' % checkpointID)
-
-            obj = getattr(self, name)
-            obj.data[...] = fn.evaluate(self.swarm)
 
 
 class Balanced_InflowOutflow(object):
@@ -441,3 +424,48 @@ def sphere_points_tracers(radius, centre=tuple([0., 0., 0.]), npoints=30):
     z += nd(centre[2])
 
     return x, y, z
+
+
+class Nearest_neigbhors_projector(object):
+
+    def __init__(self, mesh, swarm, swarm_variable, mesh_variable, dtype):
+        self.mesh = mesh
+        self.swarm = swarm
+        self.swarm_variable = swarm_variable
+        self.mesh_variable = mesh_variable
+
+    def solve(self):
+        tree = spatial.KDTree(self.swarm.particleCoordinates.data)
+        ids = tree.query(self.mesh.data)
+        pts = self.swarm.particleCoordinates.data[ids, :]
+        self.mesh_variable.data[...] = self.swarm_variable.evaluate(pts)
+
+
+def fn_Tukey_window(r, centre, width, top, bottom):
+    """ Define a tuckey window
+
+    A Tukey window is a rectangular window with the first and last r/2
+    percent of the width equal to parts of a cosine.
+    see tappered cosine function
+
+    """
+
+    centre = nd(centre)
+    width = nd(width)
+    top = nd(top)
+    bottom = nd(bottom)
+
+    x = fn.input()[0]
+    y = fn.input()[1]
+
+    start = centre - 0.5 * width
+    xx = (x - start) / width
+    x_conditions = [((0. <= xx) & (xx < r /2.0), 0.5 * (1.0 + fn.math.cos(2. * np.pi / r *(xx - r / 2.0)))),
+                    ((r / 2.0 <= xx) & (xx < 1.0 - r / 2.0), 1.0),
+                    ((1.0 - r / 2.0 <= xx) & (xx <= 1.0), 0.5 * (1. + fn.math.cos(2. * np.pi / r *(xx + r / 2.0)))),
+                    (True, 0.0)]
+
+    x_conditions =  fn.branching.conditional(x_conditions)
+
+    y_conditions = fn.branching.conditional([((y >= bottom) & (y <= top), 1.0), (True, 0.0)])
+    return x_conditions * y_conditions

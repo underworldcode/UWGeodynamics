@@ -288,12 +288,10 @@ class Model(Material):
 
     @outputDir.setter
     def outputDir(self, value):
-        if uw.rank() == 0:
-            if not os.path.exists(value):
-                os.makedirs(value)
         self._outputDir = value
 
-    def restart(self, step=None, restartDir=None):
+    def restart(self, step=None, restartDir=None, badlands_prefix="outbdls",
+                badlands_step=None):
         """ Restart a Model
 
         parameters:
@@ -314,6 +312,9 @@ class Model(Material):
         if not restartDir:
             restartDir = self.outputDir
 
+        if not os.path.exists(restartDir):
+            return
+
         if step is None:
             indices = [int(os.path.splitext(filename)[0].split("-")[-1])
                     for filename in os.listdir(restartDir) if "-" in
@@ -325,21 +326,35 @@ class Model(Material):
         if not step or step < 1:
             return
 
+        # Get time from swarm-%.h5 file
+        import h5py
+        f = h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r")
+        self.time = u.Quantity(f.attrs.get("time"))
+        f.close()
+
+        if uw.rank() == 0:
+            print(80*"="+"\n")
+            print("Restarting Model from Step {0} at Time = {1}\n".format(step, self.time))
+            print(80*"="+"\n")
+
         self.checkpointID = step
         self.mesh.load(os.path.join(restartDir, "mesh.h5"))
         self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
         self.swarm.load(os.path.join(restartDir, 'swarm-%s.h5' % step))
         self._initialize()
 
+        # Reload all the restart fields
         for field in rcParams["restart.fields"]:
             "Temporary !!!!"
             if field == "temperature":
                 continue
             obj = getattr(self, field)
             path = os.path.join(restartDir, field + "-%s.h5" % step)
-            print("Reloading field {0} from {1}".format(field, path))
+            if uw.rank() == 0:
+                print("Reloading field {0} from {1}".format(field, path))
             obj.load(str(path))
 
+        # Temperature is a special case...
         if u"temperature" in rcParams["restart.fields"]:
             if not self.temperature:
                 self.temperature = MeshVariable(mesh=self.mesh,
@@ -352,20 +367,65 @@ class Model(Material):
                 self._heatFlux.data[...] = 0.
             obj = getattr(self, "temperature")
             path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
-            print("Reloading field {0} from {1}".format("temperature", path))
+            if uw.rank() == 0:
+                print("Reloading field {0} from {1}".format("temperature", path))
             obj.load(str(path))
 
-        for tracer in self.passive_tracers:
-            tracer.load(restartDir, step)
+        # Reload Passive Tracers
+        for index, tracer in enumerate(self.passive_tracers):
 
-        # get time from mesh.h5 file
-        import h5py
-        try:
-            f = h5py.File(os.path.join(restartDir, "mesh.h5"), "r")
-        except IOError:
-            f = h5py.File(os.path.join(restartDir, "mesh-0.h5"), "r")
-        self.time = u.Quantity(f.attrs.get("time"))
-        f.close()
+            if uw.rank() == 0:
+                print("Reloading {0} passive tracers".format(tracer.name))
+
+            fname = tracer.name + '-%s.h5' % step
+            fpath = os.path.join(restartDir, fname)
+            with h5py.File(fpath, "r") as h5f:
+                vertices = h5f["data"].value * u.Quantity(h5f.attrs["units"])
+                obj = PassiveTracers(self.mesh,
+                                     self.velocityField,
+                                     tracer.name,
+                                     vertices=[vertices[:,0], vertices[:,1]],
+                                     particleEscape=tracer.particleEscape)
+
+            attr_name = tracer.name.lower() + "_tracers"
+            setattr(self, attr_name, obj)
+            self.passive_tracers[index] = obj
+
+        # Restart Badlands if we are running a coupled model
+        if isinstance(self.surfaceProcesses, surfaceProcesses.Badlands):
+            badlands_model = self.surfaceProcesses
+            restartFolder = badlands_model.restartFolder
+            restartStep = badlands_model.restartStep
+
+            # Parse xmf for the last timestep time
+            import xml.etree.ElementTree as etree
+            xmf = restartFolder+"/xmf/tin.time"+str(restartStep)+".xmf"
+            tree = etree.parse(xmf)
+            root = tree.getroot()
+            badlands_time = float(root[0][0][0].attrib["Value"])
+            uw_time = self.time.to(u.years).magnitude
+
+            if np.abs(badlands_time - uw_time) > 1:
+                raise ValueError("""Time in Underworld and Badlands outputs
+                                 differs:\n
+                                 Badlands: {0}\n
+                                 Underworld: {1}""".format(badlands_time,
+                                                           uw_time))
+
+            airIndex = badlands_model.airIndex
+            sedimentIndex = badlands_model.sedimentIndex
+            XML = badlands_model.XML
+            resolution = badlands_model.resolution
+            checkpoint_interval = badlands_model.checkpoint_interval
+
+            self.surfaceProcesses = surfaceProcesses.Badlands(
+                airIndex, sedimentIndex,
+                XML, resolution,
+                checkpoint_interval,
+                restartFolder=restartFolder,
+                restartStep=restartStep
+                )
+
         return
 
     @property
@@ -1263,6 +1323,10 @@ class Model(Material):
             glucifer_outputs: output glucifer figures [False]
         """
 
+        if uw.rank()==0 and not os.path.exists(self.outputDir):
+            os.mkdir(self.outputDir)
+        uw.barrier()
+
         step = self.step
         time = nd(self.time)
         units = duration.units
@@ -1430,6 +1494,10 @@ class Model(Material):
                 Allow or prevent tracers from escaping the boundaries of the
                 Model (default to True)
         """
+        if name in [tracer.name for tracer in self.passive_tracers]:
+            print("{0} tracers exists already".format(name))
+            return
+
         tracers = PassiveTracers(self.mesh,
                                  self.velocityField,
                                  name=name,
@@ -1536,6 +1604,7 @@ class Model(Material):
                 checkpoint ID.
 
         """
+
         if not variables:
             variables = rcParams["default.outputs"]
 
@@ -1735,6 +1804,7 @@ class Model(Material):
     def _save_swarms(self, fields, checkpointID):
 
         swarm_name = 'swarm-%s.h5' % checkpointID
+
         sH = self.swarm.save(os.path.join(self.outputDir,
                              swarm_name),
                              units=u.kilometers,

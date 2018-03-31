@@ -1,5 +1,5 @@
 try:
-    from linkage import SPM
+    from .linkage import SPM
 except:
     pass
 
@@ -19,7 +19,9 @@ class Badlands(object):
 
     def __init__(self, airIndex,
                  sedimentIndex, XML, resolution, checkpoint_interval,
-                 surfElevation=0., verbose=True, Model=None, timeField=None):
+                 surfElevation=0., verbose=True, Model=None, restartFolder=None,
+                 restartStep=None, timeField=None):
+
 
         self.airIndex = airIndex
         self.sedimentIndex = sedimentIndex
@@ -28,6 +30,9 @@ class Badlands(object):
         self.checkpoint_interval = checkpoint_interval
         self.surfElevation = surfElevation
         self.verbose = verbose
+        self.restartFolder = restartFolder
+        self.restartStep = restartStep
+
         self.timeField = timeField
         self.Model = Model
         return
@@ -52,7 +57,8 @@ class Badlands(object):
                                  self.materialField, self.airIndex, self.sedimentIndex,
                                  self.XML, nd(self.resolution),
                                  nd(self.checkpoint_interval),
-                                 nd(self.surfElevation), self.verbose)
+                                 nd(self.surfElevation), self.verbose,
+                                 self.restartFolder, self.restartStep)
         return
 
     def solve(self, dt):
