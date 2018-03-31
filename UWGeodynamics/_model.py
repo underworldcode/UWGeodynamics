@@ -1323,6 +1323,10 @@ class Model(Material):
             glucifer_outputs: output glucifer figures [False]
         """
 
+        if uw.rank()==0 and not os.path.exists(self.outputDir):
+            os.mkdir(self.outputDir)
+        uw.barrier()
+
         step = self.step
         time = nd(self.time)
         units = duration.units
@@ -1600,8 +1604,6 @@ class Model(Material):
                 checkpoint ID.
 
         """
-        if not os.path.exists(self.outputDir):
-            os.mkdir(self.outputDir)
 
         if not variables:
             variables = rcParams["default.outputs"]
