@@ -181,24 +181,6 @@ class PassiveTracers(object):
         xdmfFH.write(string)
         xdmfFH.close()
 
-    def load(self, outputDir, checkpointID):
-        """ Load passive tracers from file """
-
-        swarm_name = self.name + '-%s.h5' % checkpointID
-        sH = self.swarm.load(os.path.join(outputDir, swarm_name))
-
-        for field in self.tracked_field:
-            fn = field["value"]
-            name = field["name"]
-            units = field["units"]
-
-            file_prefix = os.path.join(
-                outputDir,
-                self.name + "_" + name + '-%s' % checkpointID)
-
-            obj = getattr(self, name)
-            obj.data[...] = fn.evaluate(self.swarm)
-
 
 class Balanced_InflowOutflow(object):
 

@@ -326,14 +326,16 @@ class Model(Material):
         if not step or step < 1:
             return
 
-        # get time from swarm-%.h5 file
+        # Get time from swarm-%.h5 file
         import h5py
         f = h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r")
         self.time = u.Quantity(f.attrs.get("time"))
         f.close()
-        print(80*"="+"\n")
-        print("Restarting Model from Step {0} at Time = {1}\n".format(step, self.time))
-        print(80*"="+"\n")
+
+        if uw.rank() == 0:
+            print(80*"="+"\n")
+            print("Restarting Model from Step {0} at Time = {1}\n".format(step, self.time))
+            print(80*"="+"\n")
 
         self.checkpointID = step
         self.mesh.load(os.path.join(restartDir, "mesh.h5"))
@@ -341,15 +343,18 @@ class Model(Material):
         self.swarm.load(os.path.join(restartDir, 'swarm-%s.h5' % step))
         self._initialize()
 
+        # Reload all the restart fields
         for field in rcParams["restart.fields"]:
             "Temporary !!!!"
             if field == "temperature":
                 continue
             obj = getattr(self, field)
             path = os.path.join(restartDir, field + "-%s.h5" % step)
-            print("Reloading field {0} from {1}".format(field, path))
+            if uw.rank() == 0:
+                print("Reloading field {0} from {1}".format(field, path))
             obj.load(str(path))
 
+        # Temperature is a special case...
         if u"temperature" in rcParams["restart.fields"]:
             if not self.temperature:
                 self.temperature = MeshVariable(mesh=self.mesh,
@@ -362,12 +367,31 @@ class Model(Material):
                 self._heatFlux.data[...] = 0.
             obj = getattr(self, "temperature")
             path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
-            print("Reloading field {0} from {1}".format("temperature", path))
+            if uw.rank() == 0:
+                print("Reloading field {0} from {1}".format("temperature", path))
             obj.load(str(path))
 
-        for tracer in self.passive_tracers:
-            tracer.load(restartDir, step)
+        # Reload Passive Tracers
+        for index, tracer in enumerate(self.passive_tracers):
 
+            if uw.rank() == 0:
+                print("Reloading {0} passive tracers".format(tracer.name))
+
+            fname = tracer.name + '-%s.h5' % step
+            fpath = os.path.join(restartDir, fname)
+            with h5py.File(fpath, "r") as h5f:
+                vertices = h5f["data"].value * u.Quantity(h5f.attrs["units"])
+                obj = PassiveTracers(self.mesh,
+                                     self.velocityField,
+                                     tracer.name,
+                                     vertices=[vertices[:,0], vertices[:,1]],
+                                     particleEscape=tracer.particleEscape)
+
+            attr_name = tracer.name.lower() + "_tracers"
+            setattr(self, attr_name, obj)
+            self.passive_tracers[index] = obj
+
+        # Restart Badlands if we are running a coupled model
         if isinstance(self.surfaceProcesses, surfaceProcesses.Badlands):
             badlands_model = self.surfaceProcesses
             restartFolder = badlands_model.restartFolder
@@ -1466,6 +1490,10 @@ class Model(Material):
                 Allow or prevent tracers from escaping the boundaries of the
                 Model (default to True)
         """
+        if name in [tracer.name for tracer in self.passive_tracers]:
+            print("{0} tracers exists already".format(name))
+            return
+
         tracers = PassiveTracers(self.mesh,
                                  self.velocityField,
                                  name=name,
