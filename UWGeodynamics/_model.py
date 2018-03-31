@@ -312,6 +312,9 @@ class Model(Material):
         if not restartDir:
             restartDir = self.outputDir
 
+        if not os.path.exists(restartDir):
+            return
+
         if step is None:
             indices = [int(os.path.splitext(filename)[0].split("-")[-1])
                     for filename in os.listdir(restartDir) if "-" in
@@ -322,6 +325,15 @@ class Model(Material):
 
         if not step or step < 1:
             return
+
+        # get time from swarm-%.h5 file
+        import h5py
+        f = h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r")
+        self.time = u.Quantity(f.attrs.get("time"))
+        f.close()
+        print(80*"="+"\n")
+        print("Restarting Model from Step {0} at Time = {1}\n".format(step, self.time))
+        print(80*"="+"\n")
 
         self.checkpointID = step
         self.mesh.load(os.path.join(restartDir, "mesh.h5"))
@@ -355,13 +367,6 @@ class Model(Material):
 
         for tracer in self.passive_tracers:
             tracer.load(restartDir, step)
-
-        # get time from swarm-%.h5 file
-        import h5py
-        f = h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r")
-        self.time = u.Quantity(f.attrs.get("time"))
-        f.close()
-
 
         if isinstance(self.surfaceProcesses, surfaceProcesses.Badlands):
             badlands_model = self.surfaceProcesses
