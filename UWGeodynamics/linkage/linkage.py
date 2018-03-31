@@ -21,8 +21,8 @@ class SPM(object):
 
     def __init__(self, mesh, velocityField, swarm, materialField, airIndex,
                  sedimentIndex, XML, resolution, checkpoint_interval,
-                 surfElevation=0., verbose=True, restartStep=None,
-                 restartFolder=None):
+                 surfElevation=0., verbose=True, restartFolder=None,
+                 restartStep=None):
 
         self.SECONDS_PER_YEAR = 31556925.9747  # Tropical year in seconds
         self.verbose = verbose
@@ -52,6 +52,7 @@ class SPM(object):
                 self.badlands_model.input.restart = True
                 self.badlands_model.input.rstep = self.restartStep
                 self.badlands_model.input.rfolder = self.restartFolder
+                self.badlands_model.outputStep = self.restartStep
 
         self.minCoord = self.mesh.minCoord
         self.maxCoord = self.mesh.maxCoord
@@ -82,6 +83,7 @@ class SPM(object):
 
             self.badlands_model.input.disp3d = True  # enable 3D displacements
             self.badlands_model.input.region = 0  # TODO: check what this does
+            self.badlands_model.input.tStart = self.time_years
 
             # Override the checkpoint/display interval in the Badlands model to
             # ensure BL and UW are synced
