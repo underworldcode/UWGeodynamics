@@ -22,7 +22,6 @@ class Badlands(object):
                  surfElevation=0., verbose=True, Model=None, restartFolder=None,
                  restartStep=None, timeField=None):
 
-
         self.airIndex = airIndex
         self.sedimentIndex = sedimentIndex
         self.XML = XML
