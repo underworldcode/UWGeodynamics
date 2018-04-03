@@ -654,7 +654,7 @@ class Model(Material):
                 fn_viscosity=self._viscosityFn,
                 fn_bodyforce=self._buoyancyFn,
                 fn_stresshistory=self._elastic_stressFn,
-                fn_one_on_lambda=None)
+                fn_one_on_lambda=self._lambdaFn)
 
             solver = uw.systems.Solver(stokes_object)
             solver.set_inner_method(rcParams["solver"])
@@ -1586,7 +1586,7 @@ class Model(Material):
         if any([material.compressibility for material in self.materials]):
             for material in self.materials:
                 if material.compressibility:
-                    materialMap[material.index] = material.compressibility
+                    materialMap[material.index] = nd(material.compressibility)
 
             return uw.function.branching.map(fn_key=self.materialField,
                                              mapping=materialMap,
