@@ -11,6 +11,7 @@ WORKDIR /opt
 RUN git clone -b development https://github.com/rbeucher/UWGeodynamics.git
 RUN pip install -e /opt/UWGeodynamics
 RUN mkdir /workspace/UWGeodynamics
+RUN mkdir /workspace/MODELS_RESULTS
 RUN rsync -av /opt/UWGeodynamics/examples/* /workspace/UWGeodynamics/examples/
 RUN rsync -av /opt/UWGeodynamics/tutorials/* /workspace/UWGeodynamics/tutorials/
 RUN rsync -av /opt/UWGeodynamics/manual/* /workspace/UWGeodynamics/manual/
