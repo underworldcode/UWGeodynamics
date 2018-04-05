@@ -215,9 +215,9 @@ class VelocityBCs(object):
                 neumann_indices.append(val)
             else:
                 neumann_indices.append(None)
-        neumann_indices = tuple(neumann_indices)
+        self.neumann_indices = tuple(neumann_indices)
 
-        if neumann_indices != tuple([None for val in range(Model.mesh.dim)]):
+        if self.neumann_indices != tuple([None for val in range(Model.mesh.dim)]):
             conditions.append(uw.conditions.NeumannCondition(
                 fn_flux=Model.tractionField,
                 variable=Model.velocityField,
