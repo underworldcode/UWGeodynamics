@@ -50,7 +50,7 @@ class SPM(object):
             self.badlands_model.load_xml(self.XML)
             if self.restartStep:
                 self.badlands_model.input.restart = True
-                self.badlands_model.input.rStep = self.restartStep
+                self.badlands_model.input.rstep = self.restartStep
                 self.badlands_model.input.rfolder = self.restartFolder
                 self.badlands_model.input.outDir = self.restartFolder
                 self.badlands_model.outputStep = self.restartStep

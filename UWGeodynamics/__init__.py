@@ -42,6 +42,7 @@ __author__ = "Romain Beucher"
 
 _id = str(_uuid.uuid4())
 
+uw = underworld
 nd = nonDimensionalize
 u = UnitRegistry
 
