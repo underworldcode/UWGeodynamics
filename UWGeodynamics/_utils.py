@@ -493,7 +493,25 @@ class NonLinearBlock(object):
 class LogFile(object):
     def __init__(self, filename):
         self.filename = filename
-        self.non_linear_blocks = self.get_nonLinear_blocks()
+        self.nonLinear_blocks = self.get_nonLinear_blocks()
+        self.pressure_solve_times = list()
+        for obj in self.nonLinear_blocks:
+            self.pressure_solve_times += obj.data["Pressure Solve times"]
+        self.finalV_solve_times = list()
+        for obj in self.nonLinear_blocks:
+            self.finalV_solve_times += obj.data["Final V Solve times"]
+        self.total_BSSCR_times = list()
+        for obj in self.nonLinear_blocks:
+            self.total_BSSCR_times += obj.data["Total BSSCR times"]
+        self.residuals = list()
+        for obj in self.nonLinear_blocks:
+            self.residuals += obj.data["Residuals"]
+        self.iterations = list()
+        for obj in self.nonLinear_blocks:
+            self.iterations += obj.data["Iterations"]
+        self.solution_times = list()
+        for obj in self.nonLinear_blocks:
+            self.solution_times += obj.data["Solution Time"]
 
     def get_nonLinear_blocks(self):
         non_linear_blocks = list()
@@ -514,5 +532,5 @@ class LogFile(object):
                         block = NonLinearBlock(block)
                         non_linear_blocks.append(block)
                         block=""
-        self.non_linear_blocks = non_linear_blocks
-        return self.non_linear_blocks
+        self.nonLinear_blocks = non_linear_blocks
+        return self.nonLinear_blocks
