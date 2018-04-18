@@ -257,7 +257,7 @@ class Plots(object):
     def velocityField(self, figsize=None, title="Velocity Field",
                       units=u.centimeter / u.year, cullface=False,
                       script=None, show=True, quality=3,
-                      store=None, colours='diverge' visugrid=None, **kwargs):
+                      store=None, colours='diverge', visugrid=None, **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize,
                               quality=quality,
