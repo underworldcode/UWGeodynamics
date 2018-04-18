@@ -257,7 +257,7 @@ class Plots(object):
     def velocityField(self, figsize=None, title="Velocity Field",
                       units=u.centimeter / u.year, cullface=False,
                       script=None, show=True, quality=3,
-                      store=None, visugrid=None, **kwargs):
+                      store=None, colours='diverge' visugrid=None, **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize,
                               quality=quality,
@@ -271,7 +271,7 @@ class Plots(object):
             uw.function.math.dot(self.Model.velocityField,
                                  self.Model.velocityField))
         Fig.Surface(self.Model.mesh, velmagfield * fact,
-                    cullface=cullface, name=Fig["title"], **kwargs)
+                    cullface=cullface, name=Fig["title"], colours, **kwargs)
         Fig.VectorArrows(self.Model.mesh, self.Model.velocityField,
                          **kwargs)
         if visugrid:
