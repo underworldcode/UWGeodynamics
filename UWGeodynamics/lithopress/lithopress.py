@@ -117,6 +117,13 @@ class LithostaticPressure(object):
 
         # Get Dimension of the global domain
         nx, ny, nz = self.mesh.elementRes
+        if self.mesh.elementType == "Q2":
+            fact = 2
+        elif self.mesh.elementType == "Q1":
+            fact = 1
+        nx *= fact
+        ny *= fact
+        nz *= fact
 
         # Create some work arrays.
         local_z  = np.zeros((nz+1, ny+1, nx+1))

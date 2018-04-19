@@ -195,6 +195,12 @@ class LecodeIsostasy(object):
     def _get_sep_velocities2D(self):
 
         ncol, nrow = self.mesh.elementRes
+        if self.mesh.elementType == "Q2":
+            fact = 2
+        elif self.mesh.elementType == "Q1":
+            fact = 1
+        ncol *= fact
+        nrow *= fact
 
         # Create some work arrays.
         local_top_vy = np.zeros((ncol + 1,))
@@ -287,6 +293,13 @@ class LecodeIsostasy(object):
     def _get_sep_velocities3D(self):
 
         nx, ny, nz = self.mesh.elementRes
+        if self.mesh.elementType == "Q2":
+            fact = 2
+        elif self.mesh.elementType == "Q1":
+            fact = 1
+        nx *= fact
+        ny *= fact
+        nz *= fact
         GlobalIndices3d = np.indices((nz + 1, ny + 1, nx + 1))
 
         # Create some work arrays.
@@ -445,6 +458,12 @@ class LecodeIsostasy(object):
     def _get_average_densities2D(self):
 
         ncol, nrow = self.mesh.elementRes
+        if self.mesh.elementType == "Q2":
+            fact = 2
+        elif self.mesh.elementType == "Q1":
+            fact = 1
+        ncol *= fact
+        nrow *= fact
 
         # Create some work arrays.
         global_densities = np.zeros((nrow + 1) * (ncol + 1))
@@ -494,6 +513,13 @@ class LecodeIsostasy(object):
     def _get_average_densities3D(self):
 
         nx, ny, nz = self.mesh.elementRes
+        if self.mesh.elementType == "Q2":
+            fact = 2
+        elif self.mesh.elementType == "Q1":
+            fact = 1
+        nx *= fact
+        ny *= fact
+        nz *= fact
 
         # Create some work arrays.
         global_densities = np.zeros((nx+1)*(ny+1)*(nz+1))
