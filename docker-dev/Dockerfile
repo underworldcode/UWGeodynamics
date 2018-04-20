@@ -51,12 +51,19 @@ RUN pip install memory_profiler
 RUN pip install jupyterlab
 RUN jupyter serverextension enable --py jupyterlab --sys-prefix
 
+# update all permissions for jovyan user
 ENV UW2_DIR /opt/underworld2
+#RUN useradd -m -s /bin/bash -N jovyan
+ENV NB_USER jovyan
 
 # copy this file over so that no password is required
-COPY jupyter_notebook_config.json /home/root/.jupyter/jupyter_notebook_config.json
+COPY jupyter_notebook_config.json /home/$NB_USER/.jupyter/jupyter_notebook_config.json
+
+# update all permissions for user
+RUN chown -R $NB_USER:users /workspace $UW2_DIR /home/$NB_USER /opt/pyBadlands_serial
 
 # change user and update pythonpath
+USER $NB_USER
 ENV PYTHONPATH $PYTHONPATH:$UW2_DIR
 ENV PYTHONPATH /workspace/user_data/UWGeodynamics:$PYTHONPATH
 
@@ -64,5 +71,5 @@ ENV PYTHONPATH /workspace/user_data/UWGeodynamics:$PYTHONPATH
 WORKDIR /workspace
 
 # launch notebook
-CMD ["jupyter", "lab", "--ip='*'", "--no-browser","--allow-root"]
+CMD ["jupyter", "lab", "--ip='*'", "--no-browser"]
 
