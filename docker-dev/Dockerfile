@@ -3,8 +3,8 @@ MAINTAINER romain.beucher@unimelb.edu
 
 USER root
 
-#RUN apt-get update -qq
-#RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommend python-mpltoolkits.basemap
+RUN apt-get update -qq
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommend cgdb sudo #python-mpltoolkits.basemap
 
 # UWGeodynamics
 WORKDIR /opt
@@ -54,6 +54,7 @@ RUN jupyter serverextension enable --py jupyterlab --sys-prefix
 # update all permissions for jovyan user
 ENV UW2_DIR /opt/underworld2
 #RUN useradd -m -s /bin/bash -N jovyan
+RUN echo "jovyan:docker" | chpasswd && adduser jovyan sudo
 ENV NB_USER jovyan
 
 # copy this file over so that no password is required
