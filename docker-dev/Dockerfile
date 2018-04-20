@@ -4,7 +4,7 @@ MAINTAINER romain.beucher@unimelb.edu
 USER root
 
 RUN apt-get update -qq
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommend cgdb sudo #python-mpltoolkits.basemap
+RUN DEBIAN_FRONTEND=noninteractive apt-get install cgdb sudo
 
 # UWGeodynamics
 WORKDIR /opt
