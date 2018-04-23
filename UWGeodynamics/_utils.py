@@ -9,6 +9,7 @@ from .scaling import nonDimensionalize as nd
 from .scaling import Dimensionalize
 from .scaling import UnitRegistry as u
 from ._swarm import Swarm
+from scipy import spatial
 
 class PressureSmoother(object):
 
@@ -179,24 +180,6 @@ class PassiveTracers(object):
         xdmfFH = open(filename, "w")
         xdmfFH.write(string)
         xdmfFH.close()
-
-    def load(self, outputDir, checkpointID):
-        """ Load passive tracers from file """
-
-        swarm_name = self.name + '-%s.h5' % checkpointID
-        sH = self.swarm.load(os.path.join(outputDir, swarm_name))
-
-        for field in self.tracked_field:
-            fn = field["value"]
-            name = field["name"]
-            units = field["units"]
-
-            file_prefix = os.path.join(
-                outputDir,
-                self.name + "_" + name + '-%s' % checkpointID)
-
-            obj = getattr(self, name)
-            obj.data[...] = fn.evaluate(self.swarm)
 
 
 class Balanced_InflowOutflow(object):
@@ -443,6 +426,21 @@ def sphere_points_tracers(radius, centre=tuple([0., 0., 0.]), npoints=30):
     return x, y, z
 
 
+class Nearest_neigbhors_projector(object):
+
+    def __init__(self, mesh, swarm, swarm_variable, mesh_variable, dtype):
+        self.mesh = mesh
+        self.swarm = swarm
+        self.swarm_variable = swarm_variable
+        self.mesh_variable = mesh_variable
+
+    def solve(self):
+        tree = spatial.KDTree(self.swarm.particleCoordinates.data)
+        ids = tree.query(self.mesh.data)
+        pts = self.swarm.particleCoordinates.data[ids, :]
+        self.mesh_variable.data[...] = self.swarm_variable.evaluate(pts)
+
+
 def fn_Tukey_window(r, centre, width, top, bottom):
     """ Define a tuckey window
 
@@ -471,3 +469,68 @@ def fn_Tukey_window(r, centre, width, top, bottom):
 
     y_conditions = fn.branching.conditional([((y >= bottom) & (y <= top), 1.0), (True, 0.0)])
     return x_conditions * y_conditions
+
+
+import pylab as plt
+
+class NonLinearBlock(object):
+    def __init__(self, string):
+        self.string = string
+        self.data = dict()
+        self.data["Pressure Solve times"] = self.get_vals(["Pressure Solve"], 3)
+        self.data["Final V Solve times"] = self.get_vals(["Final V Solve"], 4)
+        self.data["Total BSSCR times"] = self.get_vals(["Total BSSCR Linear solve time"], 5)
+        self.data["Residuals"] = self.get_vals(["Iteration", "Residual", "Tolerance"], 9)
+        self.data["Iterations"] = self.get_vals(["Non linear solver - iteration"], -1, func=int)
+        self.data["Solution Time"] = self.get_vals(["solution time"], 5)
+
+
+    def get_vals(self, FINDSTRING, pos, func=float):
+        f = self.string.splitlines()
+        vals = [func(line.split()[pos]) for line in f if all([F in line for F in FINDSTRING])]
+        return vals
+
+class LogFile(object):
+    def __init__(self, filename):
+        self.filename = filename
+        self.nonLinear_blocks = self.get_nonLinear_blocks()
+        self.pressure_solve_times = list()
+        for obj in self.nonLinear_blocks:
+            self.pressure_solve_times += obj.data["Pressure Solve times"]
+        self.finalV_solve_times = list()
+        for obj in self.nonLinear_blocks:
+            self.finalV_solve_times += obj.data["Final V Solve times"]
+        self.total_BSSCR_times = list()
+        for obj in self.nonLinear_blocks:
+            self.total_BSSCR_times += obj.data["Total BSSCR times"]
+        self.residuals = list()
+        for obj in self.nonLinear_blocks:
+            self.residuals += obj.data["Residuals"]
+        self.iterations = list()
+        for obj in self.nonLinear_blocks:
+            self.iterations += obj.data["Iterations"]
+        self.solution_times = list()
+        for obj in self.nonLinear_blocks:
+            self.solution_times += obj.data["Solution Time"]
+
+    def get_nonLinear_blocks(self):
+        non_linear_blocks = list()
+        with open(self.filename, "r") as f:
+            block = ""
+            inBlock = False
+            step=0
+            for line in f:
+                if "Non linear solver" in line:
+                    inBlock = True
+                    step += 1
+                if inBlock:
+                    if "Converged" not in line:
+                        block += line
+                    else:
+                        block += line
+                        inBlock = False
+                        block = NonLinearBlock(block)
+                        non_linear_blocks.append(block)
+                        block=""
+        self.nonLinear_blocks = non_linear_blocks
+        return self.nonLinear_blocks

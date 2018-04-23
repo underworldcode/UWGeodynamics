@@ -1,9 +1,14 @@
 import underworld as uw
 import underworld.function as fn
+import numpy as np
+from mpi4py import MPI
 from .LecodeIsostasy import LecodeIsostasy
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
 from ._utils import Balanced_InflowOutflow
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
 
 def _is_neumann(val):
     """ Returns true if x as units of stress """
@@ -210,14 +215,26 @@ class VelocityBCs(object):
             indexSetsPerDof=self.dirichlet_indices))
 
         neumann_indices = []
+
+        # Remove empty Sets
         for val in self.neumann_indices:
             if val.data.size > 0:
                 neumann_indices.append(val)
             else:
                 neumann_indices.append(None)
-        neumann_indices = tuple(neumann_indices)
+        self.neumann_indices = tuple(neumann_indices)
 
-        if neumann_indices != tuple([None for val in range(Model.mesh.dim)]):
+        # Now we only create a Neumann condition if we have a stress condition
+        # somewhere, on any of the procs.
+        local_procs_has_neumann = np.zeros((uw.nProcs()))
+        global_procs_has_neumann = np.zeros((uw.nProcs()))
+        if self.neumann_indices != tuple([None for val in range(Model.mesh.dim)]):
+            local_procs_has_neumann[uw.rank()] = 1
+
+        comm.Allreduce(local_procs_has_neumann, global_procs_has_neumann)
+        comm.Barrier()
+
+        if any(global_procs_has_neumann):
             conditions.append(uw.conditions.NeumannCondition(
                 fn_flux=Model.tractionField,
                 variable=Model.velocityField,

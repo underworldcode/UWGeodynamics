@@ -149,7 +149,13 @@ class TemperatureBCs(object):
                     nd(heat_flow))
 
         if self.indexSets:
-            for indexSet, temp in self.indexSets:
+            for elem in self.indexSets:
+                indexSet, temp = elem
+                if not isinstance(indexSet, uw.mesh._mesh.FeMesh_IndexSet):
+                    indexSet = uw.mesh.FeMesh_IndexSet(
+                        self.Model.mesh, topologicalIndex=0,
+                        size=self.Model.mesh.nodesGlobal,
+                        fromObject=indexSet)
                 self._check_temp(temp)
                 Model.temperature.data[indexSet.data] = nd(temp)
                 self.dirichlet_indices[0] += indexSet

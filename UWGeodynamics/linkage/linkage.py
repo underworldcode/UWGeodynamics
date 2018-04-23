@@ -52,6 +52,7 @@ class SPM(object):
                 self.badlands_model.input.restart = True
                 self.badlands_model.input.rstep = self.restartStep
                 self.badlands_model.input.rfolder = self.restartFolder
+                self.badlands_model.input.outDir = self.restartFolder
                 self.badlands_model.outputStep = self.restartStep
 
         self.minCoord = self.mesh.minCoord
@@ -84,6 +85,7 @@ class SPM(object):
             self.badlands_model.input.disp3d = True  # enable 3D displacements
             self.badlands_model.input.region = 0  # TODO: check what this does
             self.badlands_model.input.tStart = self.time_years
+            self.badlands_model.tNow = self.time_years
 
             # Override the checkpoint/display interval in the Badlands model to
             # ensure BL and UW are synced

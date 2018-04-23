@@ -3,14 +3,15 @@ MAINTAINER romain.beucher@unimelb.edu
 
 USER root
 
-#RUN apt-get update -qq
-#RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommend python-mpltoolkits.basemap
+RUN apt-get update -qq
+RUN DEBIAN_FRONTEND=noninteractive apt-get install cgdb sudo
 
 # UWGeodynamics
 WORKDIR /opt
 RUN git clone -b development https://github.com/rbeucher/UWGeodynamics.git
 RUN pip install -e /opt/UWGeodynamics
 RUN mkdir /workspace/UWGeodynamics
+RUN mkdir /workspace/MODELS_RESULTS
 RUN rsync -av /opt/UWGeodynamics/examples/* /workspace/UWGeodynamics/examples/
 RUN rsync -av /opt/UWGeodynamics/tutorials/* /workspace/UWGeodynamics/tutorials/
 RUN rsync -av /opt/UWGeodynamics/manual/* /workspace/UWGeodynamics/manual/
@@ -23,7 +24,7 @@ RUN pip install git+https://github.com/awickert/gFlex.git
 
 # pyBadlands serial
 WORKDIR /opt
-RUN git clone https://github.com/badlands-model/pyBadlands_serial.git
+RUN git clone https://github.com/rbeucher/pyBadlands_serial.git
 RUN pip install -e pyBadlands_serial/
 WORKDIR /opt/pyBadlands_serial/pyBadlands/libUtils
 RUN make
@@ -53,6 +54,7 @@ RUN jupyter serverextension enable --py jupyterlab --sys-prefix
 # update all permissions for jovyan user
 ENV UW2_DIR /opt/underworld2
 #RUN useradd -m -s /bin/bash -N jovyan
+RUN echo "jovyan:docker" | chpasswd && adduser jovyan sudo
 ENV NB_USER jovyan
 
 # copy this file over so that no password is required
