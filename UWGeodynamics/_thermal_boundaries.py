@@ -1,4 +1,5 @@
 import underworld as uw
+import numpy as np
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
 
@@ -151,14 +152,16 @@ class TemperatureBCs(object):
         if self.indexSets:
             for elem in self.indexSets:
                 indexSet, temp = elem
-                if not isinstance(indexSet, uw.mesh._mesh.FeMesh_IndexSet):
+                isThere = np.in1d(Model.mesh.data_nodegId, list(indexSet))
+                if isThere.any():
+                    local_indices = np.arange(Model.mesh.nodesDomain)[isThere]
                     indexSet = uw.mesh.FeMesh_IndexSet(
                         self.Model.mesh, topologicalIndex=0,
                         size=self.Model.mesh.nodesGlobal,
-                        fromObject=indexSet)
-                self._check_temp(temp)
-                Model.temperature.data[indexSet.data] = nd(temp)
-                self.dirichlet_indices[0] += indexSet
+                        fromObject=local_indices)
+                    self._check_temp(temp)
+                    Model.temperature.data[local_indices] = nd(temp)
+                    self.dirichlet_indices[0] += indexSet
 
         if self.materials:
             for (material, temp) in self.materials:
