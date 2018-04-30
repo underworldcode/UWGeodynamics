@@ -1003,8 +1003,8 @@ class Model(Material):
                 if material.plasticity:
 
                     YieldHandler = copy(material.plasticity)
-                    YieldHandler.frictionCoefficient = (
-                        self.frictionalBCs.friction)
+                    YieldHandler.frictionCoefficient = self.frictionalBCs.friction
+                    YieldHandler.frictionAfterSoftening = self.frictionalBCs.friction
                     YieldHandler.pressureField = self.pressureField
                     YieldHandler.plasticStrain = self.plasticStrain
 

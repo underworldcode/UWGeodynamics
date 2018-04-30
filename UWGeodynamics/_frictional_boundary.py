@@ -42,7 +42,7 @@ class FrictionBoundaries(object):
             mask = np.in1d(self.subMesh.data_nodegId.ravel(), intersect)
             self._bottom_mask.data[mask, 0] = 1
             self._mask.data[mask, 0] = 1
-            conditions.append((self._bottom_mask == 1, self.bottomFriction))
+            conditions.append((self._bottom_mask > 0., self.bottomFriction))
 
         if self.topFriction:
             self._top_mask = uw.mesh.MeshVariable(mesh=self.subMesh, nodeDofCount=1)
@@ -53,7 +53,7 @@ class FrictionBoundaries(object):
             mask = np.in1d(self.subMesh.data_nodegId.ravel(), intersect)
             self._top_mask.data[mask, 0] = 1
             self._mask.data[mask, 0] = 1
-            conditions.append((self._top_mask == 1, self.topFriction))
+            conditions.append((self._top_mask > 0., self.topFriction))
 
         if self.rightFriction:
             self._right_mask = uw.mesh.MeshVariable(mesh=self.subMesh, nodeDofCount=1)
@@ -68,7 +68,7 @@ class FrictionBoundaries(object):
             mask = np.in1d(self.subMesh.data_nodegId.ravel(), intersect)
             self._right_mask.data[mask, 0] = 1
             self._mask.data[mask, 0] = 1
-            conditions.append((self._right_mask == 1, self.rightFriction))
+            conditions.append((self._right_mask > 0., self.rightFriction))
 
         if self.leftFriction:
             self._left_mask = uw.mesh.MeshVariable(mesh=self.subMesh, nodeDofCount=1)
@@ -83,7 +83,7 @@ class FrictionBoundaries(object):
             mask = np.in1d(self.subMesh.data_nodegId.ravel(), intersect)
             self._left_mask.data[mask, 0] = 1
             self._mask.data[mask, 0] = 1
-            conditions.append((self._left_mask == 1, self.leftFriction))
+            conditions.append((self._left_mask > 0., self.leftFriction))
 
         if self.frontFriction:
             self._front_mask = uw.mesh.MeshVariable(mesh=self.subMesh, nodeDofCount=1)
@@ -98,7 +98,7 @@ class FrictionBoundaries(object):
             mask = np.in1d(self.subMesh.data_nodegId.ravel(), intersect)
             self._front_mask.data[mask, 0] = 1
             self._mask.data[mask, 0] = 1
-            conditions.append((self._front_mask == 1, self.frontFriction))
+            conditions.append((self._front_mask > 0., self.frontFriction))
 
         if self.backFriction:
             self._back_mask = uw.mesh.MeshVariable(mesh=self.subMesh, nodeDofCount=1)
@@ -113,7 +113,7 @@ class FrictionBoundaries(object):
             mask = np.in1d(self.subMesh.data_nodegId.ravel(), intersect)
             self._back_mask.data[mask, 0] = 1
             self._mask.data[mask, 0] = 1
-            conditions.append((self._back_mask == 1, self.backFriction))
+            conditions.append((self._back_mask > 0., self.backFriction))
 
         conditions.append((True, -1.0))
         self.friction = fn.branching.conditional(conditions)
