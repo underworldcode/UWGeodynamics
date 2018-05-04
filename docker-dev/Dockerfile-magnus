@@ -1,4 +1,4 @@
-FROM underworldcode/underworld2_untested:dev_magnus_test
+FROM underworldcode/underworld2_untested:dev_magnus
 MAINTAINER romain.beucher@unimelb.edu
 
 # UWGeodynamics
