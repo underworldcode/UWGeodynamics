@@ -848,9 +848,9 @@ class Model(Material):
 
         return fn.branching.map(fn_key=self.materialField, mapping=densityMap)
 
-    def set_frictional_boundary(self, right=False, left=False,
-                                top=False, bottom=False, front=False,
-                                back=False, thickness=2, friction=0.0):
+    def set_frictional_boundary(self, right=None, left=None,
+                                top=None, bottom=None, front=None,
+                                back=None, thickness=2):
         """ Set Frictional Boundary conditions
 
         Frictional boundaries are implemented as a thin layer of frictional
@@ -858,21 +858,6 @@ class Model(Material):
 
         Parameters:
         -----------
-
-            right: (bool)
-                if True create a frictional boundary.
-            left: (bool)
-                if True create a frictional boundary.
-            top: (bool)
-                if True create a frictional boundary.
-            bottom: (bool)
-                if True create a frictional boundary.
-            thickness: (int)
-                thickness of the boundaries (in number of
-                elements)
-            friction: (float)
-                Friction coefficient at the boundaries.
-
         Returns:
         --------
             Underworld mesh variable that maps the boundaries.
@@ -880,12 +865,13 @@ class Model(Material):
             a frictional condition, 0 otherwise).
         """
 
-        self.frictionalBCs = FrictionBoundaries(self, right=right,
-                                                left=left,
-                                                top=top,
-                                                bottom=bottom,
-                                                thickness=thickness,
-                                                friction=friction)
+        self.frictionalBCs = FrictionBoundaries(self, rightFriction=right,
+                                                leftFriction=left,
+                                                topFriction=top,
+                                                bottomFriction=bottom,
+                                                frontFriction=front,
+                                                backFriction=back,
+                                                thickness=thickness)
 
         return self.frictionalBCs
 
@@ -1017,8 +1003,8 @@ class Model(Material):
                 if material.plasticity:
 
                     YieldHandler = copy(material.plasticity)
-                    YieldHandler.frictionCoefficient = (
-                        self.frictionalBCs.friction)
+                    YieldHandler.frictionCoefficient = self.frictionalBCs.friction
+                    YieldHandler.frictionAfterSoftening = self.frictionalBCs.friction
                     YieldHandler.pressureField = self.pressureField
                     YieldHandler.plasticStrain = self.plasticStrain
 
@@ -1048,7 +1034,7 @@ class Model(Material):
                                                          maxViscosity)
                     muEff = viscosity_limiter.apply(muEff)
 
-                    conditions = [(self.frictionalBCs._mask == 1, muEff),
+                    conditions = [(self.frictionalBCs._mask > 0.0, muEff),
                                   (True, PlasticityMap[material.index])]
 
                     PlasticityMap[material.index] = fn.branching.conditional(
