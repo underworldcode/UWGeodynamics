@@ -1,6 +1,9 @@
 FROM underworldcode/underworld2_untested:dev_magnus
 MAINTAINER romain.beucher@unimelb.edu
 
+RUN apt-get update -qq
+RUN DEBIAN_FRONTEND=noninteractive apt-get install python-tk
+
 # UWGeodynamics
 WORKDIR /opt
 RUN git clone -b development https://github.com/rbeucher/UWGeodynamics.git
