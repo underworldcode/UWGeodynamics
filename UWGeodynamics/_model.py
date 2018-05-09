@@ -247,8 +247,8 @@ class Model(Material):
         self.add_swarm_field("_viscosityField", dataType="double", count=1)
         self.add_swarm_field("_densityField", dataType="double", count=1)
         self.add_swarm_field("meltField", dataType="double", count=1)
-        self.add_swarm_field("_timeField", dataType="double", count=1)
-        self._timeField.data[...] = 0.0
+        self.add_swarm_field("timeField", dataType="double", count=1)
+        self.timeField.data[...] = 0.0
 
         if self.mesh.dim == 3:
             stress_dim = 6
@@ -498,7 +498,7 @@ class Model(Material):
     def surfaceProcesses(self, value):
         self._surfaceProcesses = value
         if value:
-            self._surfaceProcesses.timeField = self._timeField
+            self._surfaceProcesses.timeField = self.timeField
         if isinstance(value, surfaceProcesses.Badlands):
             self._surfaceProcesses.Model = self
 
@@ -1446,7 +1446,7 @@ class Model(Material):
             self.surfaceProcesses.solve(dt)
 
         # Update Time Field
-        self._timeField.data[...] += dt
+        self.timeField.data[...] += dt
 
         if self._isostasy:
             self._isostasy.solve()
