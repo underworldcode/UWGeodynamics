@@ -126,12 +126,12 @@ class LecodeIsostasy(object):
             # and do not change the velocity on those nodes.
             if self.vertical_walls_conditions:
                 if self.vertical_walls_conditions["left"]:
-                    if self.vertical_walls_conditions["left"][-1]:
+                    if self.vertical_walls_conditions["left"][-1] is not None:
                         left = self.mesh.specialSets["MinI_vertexSet"]
                         if left:
                             base -= left
                 if self.vertical_walls_conditions["right"]:
-                    if self.vertical_walls_conditions["right"][-1]:
+                    if self.vertical_walls_conditions["right"][-1] is not None:
                         right = self.mesh.specialSets["MaxI_vertexSet"]
                         if right:
                             base -= right
@@ -167,22 +167,22 @@ class LecodeIsostasy(object):
             # and do not change the velocity on those nodes.
             if self.vertical_walls_conditions:
                 if self.vertical_walls_conditions["left"]:
-                    if self.vertical_walls_conditions["left"][-1]:
+                    if self.vertical_walls_conditions["left"][-1] is not None:
                         left = self.mesh.specialSets["MinI_vertexSet"]
                         if left:
                             base -= left
                 if self.vertical_walls_conditions["right"]:
-                    if self.vertical_walls_conditions["right"][-1]:
+                    if self.vertical_walls_conditions["right"][-1] is not None:
                         right = self.mesh.specialSets["MaxI_vertexSet"]
                         if right:
                             base -= right
                 if self.vertical_walls_conditions["front"]:
-                    if self.vertical_walls_conditions["front"][-1]:
+                    if self.vertical_walls_conditions["front"][-1] is not None:
                         front = self.mesh.specialSets["MinJ_vertexSet"]
                         if front:
                             base -= front
                 if self.vertical_walls_conditions["back"]:
-                    if self.vertical_walls_conditions["back"][-1]:
+                    if self.vertical_walls_conditions["back"][-1] is not None:
                         back = self.mesh.specialSets["MaxJ_vertexSet"]
                         if back:
                             base -= back
