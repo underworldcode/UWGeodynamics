@@ -29,7 +29,7 @@ from ._swarm import Swarm
 from ._meshvariable import MeshVariable
 from ._swarmvariable import SwarmVariable
 from scipy import interpolate
-from six import string_types
+from six import string_types, iteritems
 
 
 class Model(Material):
@@ -205,7 +205,7 @@ class Model(Material):
         self.pressSmoother = PressureSmoother(self.mesh, self.pressureField)
 
         # Passive Tracers
-        self.passive_tracers = []
+        self.passive_tracers = {}
 
         # Visualisation
         self.plot = Plots(self)
@@ -372,7 +372,7 @@ class Model(Material):
             obj.load(str(path))
 
         # Reload Passive Tracers
-        for index, tracer in enumerate(self.passive_tracers):
+        for (key, tracer) in iteritems(self.passive_tracers):
 
             if uw.rank() == 0:
                 print("Reloading {0} passive tracers".format(tracer.name))
@@ -389,7 +389,7 @@ class Model(Material):
 
             attr_name = tracer.name.lower() + "_tracers"
             setattr(self, attr_name, obj)
-            self.passive_tracers[index] = obj
+            self.passive_tracers[key] = obj
 
         # Restart Badlands if we are running a coupled model
         if isinstance(self.surfaceProcesses, surfaceProcesses.Badlands):
@@ -1265,12 +1265,17 @@ class Model(Material):
 
         if self.step == 0:
             tol = rcParams["initial.nonlinear.tolerance"]
+            minIterations = rcParams["initial.nonlinear.min.iterations"]
+            maxIterations = rcParams["initial.nonlinear.max.iterations"]
         else:
             tol = rcParams["nonlinear.tolerance"]
+            minIterations = rcParams["nonlinear.min.iterations"]
+            maxIterations = rcParams["nonlinear.max.iterations"]
 
         self._stokes().solve(
             nonLinearIterate=True,
-            nonLinearMaxIterations=rcParams["nonlinear.max.iterations"],
+            nonLinearMinIterations=minIterations,
+            nonLinearMaxIterations=maxIterations,
             callback_post_solve=self._calibrate_pressureField,
             nonLinearTolerance=tol)
         self._solution_exist.value = True
@@ -1435,7 +1440,7 @@ class Model(Material):
             self._update_stress_history(dt)
 
         if self.passive_tracers:
-            for tracers in self.passive_tracers:
+            for (key, tracers) in iteritems(self.passive_tracers):
                 tracers.integrate(dt)
 
         # Do pop control
@@ -1480,7 +1485,7 @@ class Model(Material):
                 Allow or prevent tracers from escaping the boundaries of the
                 Model (default to True)
         """
-        if name in [tracer.name for tracer in self.passive_tracers]:
+        if name in self.passive_tracers.keys():
             print("{0} tracers exists already".format(name))
             return
 
@@ -1490,7 +1495,7 @@ class Model(Material):
                                  vertices=vertices,
                                  particleEscape=particleEscape)
 
-        self.passive_tracers.append(tracers)
+        self.passive_tracers[name] = tracers
 
         setattr(self, name.lower() + "_tracers", tracers)
 
@@ -1602,7 +1607,7 @@ class Model(Material):
 
         # Checkpoint passive tracers and associated tracked fields
         if self.passive_tracers:
-            for tracers in self.passive_tracers:
+            for (key, tracers) in iteritems(self.passive_tracers):
                 tracers.save(self.outputDir, checkpointID, self.time)
 
     def profile(self,
@@ -1848,6 +1853,16 @@ class Model(Material):
                               fill=False)
 
         self._fill_model()
+
+
+    def velocity_rms(self):
+        vdotv_fn = uw.function.math.dot(self.velocityField, self.velocityField)
+        fn_2_integrate = (1., vdotv_fn)
+        (v2, vol) = self.mesh.integrate(fn=fn_2_integrate)
+        import math
+        vrms = math.sqrt(v2/vol)
+        os.write(1, "Velocity rms (vrms): {0}".format(vrms))
+        return vrms
 
 
 def save_model(model, filename):

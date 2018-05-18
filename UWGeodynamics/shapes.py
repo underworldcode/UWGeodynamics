@@ -157,6 +157,8 @@ class Disk(Shape):
         coord = fn.input() - center
         self._fn = fn.math.dot(coord, coord) < radius**2
 
+Sphere = Disk
+
 
 class Annulus(Shape):
 
