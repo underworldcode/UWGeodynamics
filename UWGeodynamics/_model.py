@@ -1270,6 +1270,7 @@ class Model(Material):
 
         self._stokes().solve(
             nonLinearIterate=True,
+            nonLinearMinIterations=rcParams["nonlinear.min.iterations"],
             nonLinearMaxIterations=rcParams["nonlinear.max.iterations"],
             callback_post_solve=self._calibrate_pressureField,
             nonLinearTolerance=tol)
@@ -1848,6 +1849,16 @@ class Model(Material):
                               fill=False)
 
         self._fill_model()
+
+
+    def velocity_rms(self):
+        vdotv_fn = uw.function.math.dot(self.velocityField, self.velocityField)
+        fn_2_integrate = (1., vdotv_fn)
+        (v2, vol) = self.mesh.integrate(fn=fn_2_integrate)
+        import math
+        vrms = math.sqrt(v2/vol)
+        os.write(1, "Velocity rms (vrms): {0}".format(vrms))
+        return vrms
 
 
 def save_model(model, filename):
