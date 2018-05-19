@@ -272,8 +272,7 @@ class Plots(object):
                                  self.Model.velocityField))
         Fig.Surface(self.Model.mesh, velmagfield * fact,colours=colours,
                    cullface=cullface, name=Fig["title"], **kwargs)
-
-        Fig.VectorArrows(self.Model.mesh, self.Model.velocityField,length=arrowlength,normalize=arrownorm,resolution=arrowres, 
+        Fig.VectorArrows(self.Model.mesh, self.Model.velocityField,length=arrowlength,normalise=arrownorm,resolution=arrowres, 
                          **kwargs)
         if visugrid:
             clip_X, clip_Y = _visugrid_drawing_object(self.Model, visugrid)
