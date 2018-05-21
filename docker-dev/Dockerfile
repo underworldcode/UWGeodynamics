@@ -66,7 +66,7 @@ RUN chown -R $NB_USER:users /workspace $UW2_DIR /home/$NB_USER /opt/pyBadlands_s
 # change user and update pythonpath
 USER $NB_USER
 ENV PYTHONPATH $PYTHONPATH:$UW2_DIR
-ENV PYTHONPATH /workspace/user_data/UWGeodynamics:$PYTHONPATH
+ENV PYTHONPATH /workspace/user_data/Underworld:/workspace/user_data/UWGeodynamics:$PYTHONPATH
 
 # move back to workspace directory
 WORKDIR /workspace
