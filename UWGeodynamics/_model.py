@@ -654,8 +654,8 @@ class Model(Material):
                 fn_viscosity=self._viscosityFn,
                 fn_bodyforce=self._buoyancyFn,
                 fn_stresshistory=self._elastic_stressFn,
-                fn_one_on_lambda=self._lambdaFn,
-                useEquationResidual=rcParams["useEquationResidual"])
+                fn_one_on_lambda=self._lambdaFn)
+                #useEquationResidual=rcParams["useEquationResidual"])
 
             solver = uw.systems.Solver(stokes_object)
             solver.set_inner_method(rcParams["solver"])
