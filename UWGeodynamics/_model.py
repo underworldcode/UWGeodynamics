@@ -380,10 +380,11 @@ class Model(Material):
             fpath = os.path.join(restartDir, fname)
             with h5py.File(fpath, "r") as h5f:
                 vertices = h5f["data"].value * u.Quantity(h5f.attrs["units"])
+                vertices = [vertices[:, dim] for dim in range(self.mesh.dim)]
                 obj = PassiveTracers(self.mesh,
                                      self.velocityField,
                                      tracer.name,
-                                     vertices=[vertices[:,0], vertices[:,1]],
+                                     vertices=vertices,
                                      particleEscape=tracer.particleEscape)
 
             attr_name = tracer.name.lower() + "_tracers"
