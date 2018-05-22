@@ -260,7 +260,7 @@ class Model(Material):
         self.add_swarm_field("_stressField", dataType="double",
                              count=stress_dim)
 
-        self._add_surface_tracers()
+        #self._add_surface_tracers()
 
     def __getitem__(self, name):
         return self.__dict__[name]
@@ -328,9 +328,8 @@ class Model(Material):
 
         # Get time from swarm-%.h5 file
         import h5py
-        f = h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r")
-        self.time = u.Quantity(f.attrs.get("time"))
-        f.close()
+        with h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r") as h5f:
+            self.time = u.Quantity(h5f.attrs.get("time"))
 
         if uw.rank() == 0:
             print(80*"="+"\n")
@@ -355,7 +354,8 @@ class Model(Material):
             obj.load(str(path))
 
         # Temperature is a special case...
-        if u"temperature" in rcParams["restart.fields"]:
+        path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
+        if os.path.exists(path):
             if not self.temperature:
                 self.temperature = MeshVariable(mesh=self.mesh,
                                                 nodeDofCount=1)
@@ -366,7 +366,6 @@ class Model(Material):
                 self._temperatureDot.data[...] = 0.
                 self._heatFlux.data[...] = 0.
             obj = getattr(self, "temperature")
-            path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
             if uw.rank() == 0:
                 print("Reloading field {0} from {1}".format("temperature", path))
             obj.load(str(path))
@@ -381,10 +380,11 @@ class Model(Material):
             fpath = os.path.join(restartDir, fname)
             with h5py.File(fpath, "r") as h5f:
                 vertices = h5f["data"].value * u.Quantity(h5f.attrs["units"])
+                vertices = [vertices[:, dim] for dim in range(self.mesh.dim)]
                 obj = PassiveTracers(self.mesh,
                                      self.velocityField,
                                      tracer.name,
-                                     vertices=[vertices[:,0], vertices[:,1]],
+                                     vertices=vertices,
                                      particleEscape=tracer.particleEscape)
 
             attr_name = tracer.name.lower() + "_tracers"
@@ -655,6 +655,7 @@ class Model(Material):
                 fn_bodyforce=self._buoyancyFn,
                 fn_stresshistory=self._elastic_stressFn,
                 fn_one_on_lambda=self._lambdaFn)
+                #useEquationResidual=rcParams["useEquationResidual"])
 
             solver = uw.systems.Solver(stokes_object)
             solver.set_inner_method(rcParams["solver"])
@@ -1472,7 +1473,7 @@ class Model(Material):
         self._advector = _mesh_advector(self, axis)
 
     def add_passive_tracers(self, name, vertices=None,
-                            particleEscape=True):
+                            particleEscape=False):
         """ Add a swarm of passive tracers to the Model
 
         Parameters:
