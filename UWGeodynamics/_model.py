@@ -30,6 +30,7 @@ from ._meshvariable import MeshVariable
 from ._swarmvariable import SwarmVariable
 from scipy import interpolate
 from six import string_types, iteritems
+from datetime import datetime
 
 
 class Model(Material):
@@ -1417,8 +1418,10 @@ class Model(Material):
 
             if checkpoint_interval or step % 1 == 0:
                 if uw.rank() == 0:
-                    print("Time: ", str(self.time.to(units)),
-                          'dt:', str(Dimensionalize(self._dt, units)))
+                    print("Model Time: ", str(self.time.to(units)),
+                          'dt:', str(Dimensionalize(self._dt, units)),
+                          'vrms:', str(self.velocity_rms()),
+                          '('+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+')')
 
             self.postSolveHook()
 
@@ -1885,7 +1888,7 @@ class Model(Material):
         (v2, vol) = self.mesh.integrate(fn=fn_2_integrate)
         import math
         vrms = math.sqrt(v2/vol)
-        os.write(1, "Velocity rms (vrms): {0}".format(vrms))
+        #os.write(1, "Velocity rms (vrms): {0}".format(vrms))
         return vrms
 
 
