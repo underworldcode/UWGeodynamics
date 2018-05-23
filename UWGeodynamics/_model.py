@@ -162,9 +162,14 @@ class Model(Material):
 
         # Create the material swarm
         self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
+        if self.mesh.dim == 2:
+            particlesPerCell = rcParams["swarm.particles.per.cell.2D"]
+        else:
+            particlesPerCell = rcParams["swarm.particles.per.cell.3D"]
+
         self._swarmLayout = uw.swarm.layouts.PerCellSpaceFillerLayout(
             swarm=self.swarm,
-            particlesPerCell=rcParams["swarm.particles.per.cell"])
+            particlesPerCell=particlesPerCell)
 
         self.swarm.populate_using_layout(layout=self._swarmLayout)
 
@@ -233,12 +238,17 @@ class Model(Material):
             order=2
         )
 
+        if self.mesh.dim == 2:
+            particlesPerCell = rcParams["popcontrol.particles.per.cell.2D"]
+        else:
+            particlesPerCell = rcParams["popcontrol.particles.per.cell.3D"]
+
         self.population_control = uw.swarm.PopulationControl(
             self.swarm,
             aggressive=rcParams["popcontrol.aggressive"],
             splitThreshold=rcParams["popcontrol.split.threshold"],
             maxSplits=rcParams["popcontrol.max.splits"],
-            particlesPerCell=rcParams["popcontrol.particles.per.cell"])
+            particlesPerCell=particlesPerCell)
 
         # Add Common Swarm Variables
         self.add_swarm_field("materialField", dataType="int", count=1,
