@@ -73,6 +73,7 @@ rcParams = {
     "initial.nonlinear.max.iterations": [500, validate_int],
     "nonlinear.min.iterations": [2, validate_int],
     "nonlinear.max.iterations": [500, validate_int],
+    "mg.levels": [None, validate_int_or_none],
 
     "rheology.default.uppercrust": ["Patterson et al., 1990", validate_viscosity],
     "rheology.default.midcrust": ["Patterson et al., 1990", validate_viscosity],

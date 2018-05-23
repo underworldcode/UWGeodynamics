@@ -508,7 +508,7 @@ class LogFile(object):
             self.residuals += obj.data["Residuals"]
         self.iterations = list()
         for obj in self.nonLinear_blocks:
-            self.iterations += obj.data["Iterations"]
+            self.iterations.append(obj.data["Iterations"][-1])
         self.solution_times = list()
         for obj in self.nonLinear_blocks:
             self.solution_times += obj.data["Solution Time"]

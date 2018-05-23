@@ -663,6 +663,9 @@ class Model(Material):
             if rcParams["penalty"]:
                 solver.set_penalty(rcParams["penalty"])
 
+            if rcParams["mg.levels"]:
+                solver.options.mg.levels = rcParams["mg.levels"]
+
         return solver
 
     def _init_melt_fraction(self):
