@@ -147,6 +147,29 @@ class VelocityBCs(object):
                         obj._get_side_flow())
                     self.dirichlet_indices[dim] += nodes
 
+                if isinstance(condition[dim], LecodeIsostasy):
+                    # Apply support condition
+                    if self.Model.mesh.dim - 1 != dim:
+                        raise ValueError("""Can not apply LecodeIsostasy on that
+                                         dimension""")
+
+                    self.Model._isostasy = condition[dim]
+                    self.Model._isostasy.mesh = self.Model.mesh
+                    self.Model._isostasy.swarm = self.Model.swarm
+                    self.Model._isostasy._mesh_advector = self.Model._advector
+                    self.Model._isostasy.velocityField = self.Model.velocityField
+                    self.Model._isostasy.materialIndexField = self.Model.materialField
+                    self.Model._isostasy._densityFn = self.Model._densityFn
+                    vertical_walls_conditions = {
+                        "left": self.left,
+                        "right": self.right,
+                        "front": self.front,
+                        "back": self.back
+                    }
+                    self.Model._isostasy.vertical_walls_conditions = (
+                        vertical_walls_conditions)
+                    self.dirichlet_indices[dim] += nodes
+
         return
 
     def get_conditions(self):

@@ -29,7 +29,7 @@ from ._swarm import Swarm
 from ._meshvariable import MeshVariable
 from ._swarmvariable import SwarmVariable
 from scipy import interpolate
-from six import string_types
+from six import string_types, iteritems
 
 
 class Model(Material):
@@ -205,7 +205,7 @@ class Model(Material):
         self.pressSmoother = PressureSmoother(self.mesh, self.pressureField)
 
         # Passive Tracers
-        self.passive_tracers = []
+        self.passive_tracers = {}
 
         # Visualisation
         self.plot = Plots(self)
@@ -247,8 +247,8 @@ class Model(Material):
         self.add_swarm_field("_viscosityField", dataType="double", count=1)
         self.add_swarm_field("_densityField", dataType="double", count=1)
         self.add_swarm_field("meltField", dataType="double", count=1)
-        self.add_swarm_field("_timeField", dataType="double", count=1)
-        self._timeField.data[...] = 0.0
+        self.add_swarm_field("timeField", dataType="double", count=1)
+        self.timeField.data[...] = 0.0
 
         if self.mesh.dim == 3:
             stress_dim = 6
@@ -260,7 +260,7 @@ class Model(Material):
         self.add_swarm_field("_stressField", dataType="double",
                              count=stress_dim)
 
-        self._add_surface_tracers()
+        #self._add_surface_tracers()
 
     def __getitem__(self, name):
         return self.__dict__[name]
@@ -328,9 +328,8 @@ class Model(Material):
 
         # Get time from swarm-%.h5 file
         import h5py
-        f = h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r")
-        self.time = u.Quantity(f.attrs.get("time"))
-        f.close()
+        with h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r") as h5f:
+            self.time = u.Quantity(h5f.attrs.get("time"))
 
         if uw.rank() == 0:
             print(80*"="+"\n")
@@ -355,7 +354,8 @@ class Model(Material):
             obj.load(str(path))
 
         # Temperature is a special case...
-        if u"temperature" in rcParams["restart.fields"]:
+        path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
+        if os.path.exists(path):
             if not self.temperature:
                 self.temperature = MeshVariable(mesh=self.mesh,
                                                 nodeDofCount=1)
@@ -366,13 +366,12 @@ class Model(Material):
                 self._temperatureDot.data[...] = 0.
                 self._heatFlux.data[...] = 0.
             obj = getattr(self, "temperature")
-            path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
             if uw.rank() == 0:
                 print("Reloading field {0} from {1}".format("temperature", path))
             obj.load(str(path))
 
         # Reload Passive Tracers
-        for index, tracer in enumerate(self.passive_tracers):
+        for (key, tracer) in iteritems(self.passive_tracers):
 
             if uw.rank() == 0:
                 print("Reloading {0} passive tracers".format(tracer.name))
@@ -381,15 +380,16 @@ class Model(Material):
             fpath = os.path.join(restartDir, fname)
             with h5py.File(fpath, "r") as h5f:
                 vertices = h5f["data"].value * u.Quantity(h5f.attrs["units"])
+                vertices = [vertices[:, dim] for dim in range(self.mesh.dim)]
                 obj = PassiveTracers(self.mesh,
                                      self.velocityField,
                                      tracer.name,
-                                     vertices=[vertices[:,0], vertices[:,1]],
+                                     vertices=vertices,
                                      particleEscape=tracer.particleEscape)
 
             attr_name = tracer.name.lower() + "_tracers"
             setattr(self, attr_name, obj)
-            self.passive_tracers[index] = obj
+            self.passive_tracers[key] = obj
 
         # Restart Badlands if we are running a coupled model
         if isinstance(self.surfaceProcesses, surfaceProcesses.Badlands):
@@ -498,7 +498,7 @@ class Model(Material):
     def surfaceProcesses(self, value):
         self._surfaceProcesses = value
         if value:
-            self._surfaceProcesses.timeField = self._timeField
+            self._surfaceProcesses.timeField = self.timeField
         if isinstance(value, surfaceProcesses.Badlands):
             self._surfaceProcesses.Model = self
 
@@ -655,12 +655,16 @@ class Model(Material):
                 fn_bodyforce=self._buoyancyFn,
                 fn_stresshistory=self._elastic_stressFn,
                 fn_one_on_lambda=self._lambdaFn)
+                #useEquationResidual=rcParams["useEquationResidual"])
 
             solver = uw.systems.Solver(stokes_object)
             solver.set_inner_method(rcParams["solver"])
 
             if rcParams["penalty"]:
                 solver.set_penalty(rcParams["penalty"])
+
+            if rcParams["mg.levels"]:
+                solver.options.mg.levels = rcParams["mg.levels"]
 
         return solver
 
@@ -848,9 +852,9 @@ class Model(Material):
 
         return fn.branching.map(fn_key=self.materialField, mapping=densityMap)
 
-    def set_frictional_boundary(self, right=False, left=False,
-                                top=False, bottom=False, front=False,
-                                back=False, thickness=2, friction=0.0):
+    def set_frictional_boundary(self, right=None, left=None,
+                                top=None, bottom=None, front=None,
+                                back=None, thickness=2):
         """ Set Frictional Boundary conditions
 
         Frictional boundaries are implemented as a thin layer of frictional
@@ -858,21 +862,6 @@ class Model(Material):
 
         Parameters:
         -----------
-
-            right: (bool)
-                if True create a frictional boundary.
-            left: (bool)
-                if True create a frictional boundary.
-            top: (bool)
-                if True create a frictional boundary.
-            bottom: (bool)
-                if True create a frictional boundary.
-            thickness: (int)
-                thickness of the boundaries (in number of
-                elements)
-            friction: (float)
-                Friction coefficient at the boundaries.
-
         Returns:
         --------
             Underworld mesh variable that maps the boundaries.
@@ -880,12 +869,13 @@ class Model(Material):
             a frictional condition, 0 otherwise).
         """
 
-        self.frictionalBCs = FrictionBoundaries(self, right=right,
-                                                left=left,
-                                                top=top,
-                                                bottom=bottom,
-                                                thickness=thickness,
-                                                friction=friction)
+        self.frictionalBCs = FrictionBoundaries(self, rightFriction=right,
+                                                leftFriction=left,
+                                                topFriction=top,
+                                                bottomFriction=bottom,
+                                                frontFriction=front,
+                                                backFriction=back,
+                                                thickness=thickness)
 
         return self.frictionalBCs
 
@@ -1017,8 +1007,8 @@ class Model(Material):
                 if material.plasticity:
 
                     YieldHandler = copy(material.plasticity)
-                    YieldHandler.frictionCoefficient = (
-                        self.frictionalBCs.friction)
+                    YieldHandler.frictionCoefficient = self.frictionalBCs.friction
+                    YieldHandler.frictionAfterSoftening = self.frictionalBCs.friction
                     YieldHandler.pressureField = self.pressureField
                     YieldHandler.plasticStrain = self.plasticStrain
 
@@ -1048,7 +1038,7 @@ class Model(Material):
                                                          maxViscosity)
                     muEff = viscosity_limiter.apply(muEff)
 
-                    conditions = [(self.frictionalBCs._mask == 1, muEff),
+                    conditions = [(self.frictionalBCs._mask > 0.0, muEff),
                                   (True, PlasticityMap[material.index])]
 
                     PlasticityMap[material.index] = fn.branching.conditional(
@@ -1279,14 +1269,29 @@ class Model(Material):
 
         if self.step == 0:
             tol = rcParams["initial.nonlinear.tolerance"]
+            minIterations = rcParams["initial.nonlinear.min.iterations"]
+            maxIterations = rcParams["initial.nonlinear.max.iterations"]
         else:
             tol = rcParams["nonlinear.tolerance"]
+            minIterations = rcParams["nonlinear.min.iterations"]
+            maxIterations = rcParams["nonlinear.max.iterations"]
 
-        self._stokes().solve(
-            nonLinearIterate=True,
-            nonLinearMaxIterations=rcParams["nonlinear.max.iterations"],
-            callback_post_solve=self._calibrate_pressureField,
-            nonLinearTolerance=tol)
+        if uw.__version__.split(".")[1] > 5:
+            # The minimum number of iteration only works with version 2.6
+            # 2.6 is still in development...
+            self._stokes().solve(
+                nonLinearIterate=True,
+                nonLinearMinIterations=minIterations,
+                nonLinearMaxIterations=maxIterations,
+                callback_post_solve=self._calibrate_pressureField,
+                nonLinearTolerance=tol)
+        else:
+            self._stokes().solve(
+                nonLinearIterate=True,
+                nonLinearMaxIterations=maxIterations,
+                callback_post_solve=self._calibrate_pressureField,
+                nonLinearTolerance=tol)
+
         self._solution_exist.value = True
 
     def init_model(self, temperature=True, pressureField=True):
@@ -1449,7 +1454,7 @@ class Model(Material):
             self._update_stress_history(dt)
 
         if self.passive_tracers:
-            for tracers in self.passive_tracers:
+            for (key, tracers) in iteritems(self.passive_tracers):
                 tracers.integrate(dt)
 
         # Do pop control
@@ -1460,7 +1465,7 @@ class Model(Material):
             self.surfaceProcesses.solve(dt)
 
         # Update Time Field
-        self._timeField.data[...] += dt
+        self.timeField.data[...] += dt
 
         if self._isostasy:
             self._isostasy.solve()
@@ -1481,7 +1486,7 @@ class Model(Material):
         self._advector = _mesh_advector(self, axis)
 
     def add_passive_tracers(self, name, vertices=None,
-                            particleEscape=True):
+                            particleEscape=False):
         """ Add a swarm of passive tracers to the Model
 
         Parameters:
@@ -1494,7 +1499,7 @@ class Model(Material):
                 Allow or prevent tracers from escaping the boundaries of the
                 Model (default to True)
         """
-        if name in [tracer.name for tracer in self.passive_tracers]:
+        if name in self.passive_tracers.keys():
             print("{0} tracers exists already".format(name))
             return
 
@@ -1504,7 +1509,7 @@ class Model(Material):
                                  vertices=vertices,
                                  particleEscape=particleEscape)
 
-        self.passive_tracers.append(tracers)
+        self.passive_tracers[name] = tracers
 
         setattr(self, name.lower() + "_tracers", tracers)
 
@@ -1616,7 +1621,7 @@ class Model(Material):
 
         # Checkpoint passive tracers and associated tracked fields
         if self.passive_tracers:
-            for tracers in self.passive_tracers:
+            for (key, tracers) in iteritems(self.passive_tracers):
                 tracers.save(self.outputDir, checkpointID, self.time)
 
     def profile(self,
@@ -1862,6 +1867,16 @@ class Model(Material):
                               fill=False)
 
         self._fill_model()
+
+
+    def velocity_rms(self):
+        vdotv_fn = uw.function.math.dot(self.velocityField, self.velocityField)
+        fn_2_integrate = (1., vdotv_fn)
+        (v2, vol) = self.mesh.integrate(fn=fn_2_integrate)
+        import math
+        vrms = math.sqrt(v2/vol)
+        os.write(1, "Velocity rms (vrms): {0}".format(vrms))
+        return vrms
 
 
 def save_model(model, filename):

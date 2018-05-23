@@ -110,7 +110,7 @@
                 "value": 3.5
             }, 
             "waterFugacity": {
-                "units": "None", 
+                "units": "megapascal", 
                 "value": 1000
             }, 
             "waterFugacityExponent": {

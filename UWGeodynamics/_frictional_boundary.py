@@ -1,72 +1,119 @@
-import underworld as uw
-from .scaling import nonDimensionalize as nd
 import numpy as np
+import underworld as uw
+import underworld.function as fn
 
 class FrictionBoundaries(object):
     """ This class flags elements at the boundaries
 
     """
-    def __init__(self, Model, right=False, left=False,
-                 top=False, bottom=False, front=False,
-                 back=False, friction=0.0, thickness=2):
+    def __init__(self, Model, rightFriction=None, leftFriction=None,
+                 topFriction=None, bottomFriction=None, frontFriction=None,
+                 backFriction=None, thickness=2):
 
         self.Model = Model
-        self.friction = friction
         self.thickness = thickness
 
         # Build borders
         globalIndices = np.arange(np.prod(Model.mesh.elementRes))
         globalIndices = globalIndices.reshape((Model.mesh.elementRes[::-1]))
 
-        self.bottom = bottom
-        self.right = right
-        self.left = left
-        self.top = top
-        self.front = front
-        self.back = back
+        self.bottomFriction = bottomFriction
+        self.rightFriction = rightFriction
+        self.leftFriction = leftFriction
+        self.topFriction = topFriction
+        self.frontFriction = frontFriction
+        self.backFriction = backFriction
 
-        if self.bottom:
-            self.bottom = globalIndices[:thickness].ravel()
+        self.subMesh = Model.mesh.subMesh
+        conditions = list()
 
-        if self.top:
-            self.top = globalIndices[-thickness:].ravel()
-
-        if self.right:
-            if Model.mesh.dim < 3:
-                self.right = globalIndices[:, -thickness:].ravel()
-            else:
-                self.right = globalIndices[:, :, -thickness:].ravel()
-
-        if self.left:
-            if Model.mesh.dim < 3:
-                self.left = globalIndices[:, :thickness].ravel()
-            else:
-                self.left = globalIndices[:, :, :thickness].ravel()
-
-        if self.front:
-            if Model.mesh.dim > 2:
-                self.front = globalIndices[:, :thickness, :].ravel()
-            else:
-                raise ValueError("Mesh is 2D")
-
-        if self.back:
-            if Model.mesh.dim > 2:
-                self.back = globalIndices[:, -thickness:, :].ravel()
-            else:
-                raise ValueError("Mesh is 2D")
-
-        boundaries = [self.bottom, self.right, self.left, self.top, self.back,
-                      self.front]
-        boundaries = [boundary for boundary in boundaries if boundary is not False]
-
-        self.boundaries = np.concatenate(boundaries)
-
-        subMesh = Model.mesh.subMesh
-        self._mask = uw.mesh.MeshVariable(mesh=subMesh, nodeDofCount=1)
+        self._mask = uw.mesh.MeshVariable(mesh=self.subMesh, nodeDofCount=1)
         self._mask.data[:] = 0
-        # Take the intersection between the globalID and the boundaries where
-        # friction is to be applied
-        intersect = np.intersect1d(subMesh.data_nodegId.ravel(), self.boundaries)
-        # Create a mask to highlight those elements in the local domain
-        self._mask.data[:,0] = np.in1d(subMesh.data_nodegId.ravel(), intersect)
 
+        if self.rightFriction:
+            self._right_mask = uw.mesh.MeshVariable(mesh=self.subMesh, nodeDofCount=1)
+            self._right_mask.data[:] = 0
+
+            if Model.mesh.dim < 3:
+                right = globalIndices[:, -thickness:].ravel()
+            else:
+                right = globalIndices[:, :, -thickness:].ravel()
+
+            intersect = np.intersect1d(self.subMesh.data_nodegId.ravel(), right)
+            mask = np.in1d(self.subMesh.data_nodegId.ravel(), intersect)
+            self._right_mask.data[mask, 0] = 1
+            self._mask.data[mask, 0] = 1
+            conditions.append((self._right_mask > 0., self.rightFriction))
+
+        if self.leftFriction:
+            self._left_mask = uw.mesh.MeshVariable(mesh=self.subMesh, nodeDofCount=1)
+            self._left_mask.data[:] = 0
+
+            if Model.mesh.dim < 3:
+                left = globalIndices[:, :thickness].ravel()
+            else:
+                left = globalIndices[:, :, :thickness].ravel()
+
+            intersect = np.intersect1d(self.subMesh.data_nodegId.ravel(), left)
+            mask = np.in1d(self.subMesh.data_nodegId.ravel(), intersect)
+            self._left_mask.data[mask, 0] = 1
+            self._mask.data[mask, 0] = 1
+            conditions.append((self._left_mask > 0., self.leftFriction))
+
+        if self.frontFriction:
+            self._front_mask = uw.mesh.MeshVariable(mesh=self.subMesh, nodeDofCount=1)
+            self._front_mask.data[:] = 0
+
+            if Model.mesh.dim > 2:
+                front = globalIndices[:, :thickness, :].ravel()
+            else:
+                raise ValueError("Mesh is 2D")
+
+            intersect = np.intersect1d(self.subMesh.data_nodegId.ravel(), front)
+            mask = np.in1d(self.subMesh.data_nodegId.ravel(), intersect)
+            self._front_mask.data[mask, 0] = 1
+            self._mask.data[mask, 0] = 1
+            conditions.append((self._front_mask > 0., self.frontFriction))
+
+        if self.backFriction:
+            self._back_mask = uw.mesh.MeshVariable(mesh=self.subMesh, nodeDofCount=1)
+            self._back_mask.data[:] = 0
+
+            if Model.mesh.dim > 2:
+                back = globalIndices[:, -thickness:, :].ravel()
+            else:
+                raise ValueError("Mesh is 2D")
+
+            intersect = np.intersect1d(self.subMesh.data_nodegId.ravel(), back)
+            mask = np.in1d(self.subMesh.data_nodegId.ravel(), intersect)
+            self._back_mask.data[mask, 0] = 1
+            self._mask.data[mask, 0] = 1
+            conditions.append((self._back_mask > 0., self.backFriction))
+
+        if self.bottomFriction:
+            self._bottom_mask = uw.mesh.MeshVariable(mesh=self.subMesh, nodeDofCount=1)
+            self._bottom_mask.data[:] = 0
+
+            bottom = globalIndices[:thickness].ravel()
+            # Take the intersection between the globalID and the boundaries where
+            # friction is to be applied
+            intersect = np.intersect1d(self.subMesh.data_nodegId.ravel(), bottom)
+            # Create a mask to highlight those elements in the local domain
+            mask = np.in1d(self.subMesh.data_nodegId.ravel(), intersect)
+            self._bottom_mask.data[mask, 0] = 1
+            self._mask.data[mask, 0] = 1
+            conditions.append((self._bottom_mask > 0., self.bottomFriction))
+
+        if self.topFriction:
+            self._top_mask = uw.mesh.MeshVariable(mesh=self.subMesh, nodeDofCount=1)
+            self._top_mask.data[:] = 0
+
+            top = globalIndices[-thickness:].ravel()
+            intersect = np.intersect1d(self.subMesh.data_nodegId.ravel(), top)
+            mask = np.in1d(self.subMesh.data_nodegId.ravel(), intersect)
+            self._top_mask.data[mask, 0] = 1
+            self._mask.data[mask, 0] = 1
+            conditions.append((self._top_mask > 0., self.topFriction))
+
+        conditions.append((True, -1.0))
+        self.friction = fn.branching.conditional(conditions)

@@ -126,13 +126,13 @@ class LecodeIsostasy(object):
             # and do not change the velocity on those nodes.
             if self.vertical_walls_conditions:
                 if self.vertical_walls_conditions["left"]:
-                    if self.vertical_walls_conditions["left"][-1]:
-                        left = self.mesh.specialSets["MinI_vertexSet"]
+                    if self.vertical_walls_conditions["left"][-1] is not None:
+                        left = self.mesh.specialSets["MinI_VertexSet"]
                         if left:
                             base -= left
                 if self.vertical_walls_conditions["right"]:
-                    if self.vertical_walls_conditions["right"][-1]:
-                        right = self.mesh.specialSets["MaxI_vertexSet"]
+                    if self.vertical_walls_conditions["right"][-1] is not None:
+                        right = self.mesh.specialSets["MaxI_VertexSet"]
                         if right:
                             base -= right
 
@@ -167,23 +167,23 @@ class LecodeIsostasy(object):
             # and do not change the velocity on those nodes.
             if self.vertical_walls_conditions:
                 if self.vertical_walls_conditions["left"]:
-                    if self.vertical_walls_conditions["left"][-1]:
-                        left = self.mesh.specialSets["MinI_vertexSet"]
+                    if self.vertical_walls_conditions["left"][-1] is not None:
+                        left = self.mesh.specialSets["MinI_VertexSet"]
                         if left:
                             base -= left
                 if self.vertical_walls_conditions["right"]:
-                    if self.vertical_walls_conditions["right"][-1]:
-                        right = self.mesh.specialSets["MaxI_vertexSet"]
+                    if self.vertical_walls_conditions["right"][-1] is not None:
+                        right = self.mesh.specialSets["MaxI_VertexSet"]
                         if right:
                             base -= right
                 if self.vertical_walls_conditions["front"]:
-                    if self.vertical_walls_conditions["front"][-1]:
-                        front = self.mesh.specialSets["MinJ_vertexSet"]
+                    if self.vertical_walls_conditions["front"][-1] is not None:
+                        front = self.mesh.specialSets["MinJ_VertexSet"]
                         if front:
                             base -= front
                 if self.vertical_walls_conditions["back"]:
-                    if self.vertical_walls_conditions["back"][-1]:
-                        back = self.mesh.specialSets["MaxJ_vertexSet"]
+                    if self.vertical_walls_conditions["back"][-1] is not None:
+                        back = self.mesh.specialSets["MaxJ_VertexSet"]
                         if back:
                             base -= back
             bot_ids = base.data[base.data < self.mesh.nodesLocal]
