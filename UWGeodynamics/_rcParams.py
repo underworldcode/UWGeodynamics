@@ -55,12 +55,14 @@ rcParams = {
                           "velocityField"], validate_stringlist],
     
     "gravity": [9.81 * u.meter / u.second**2, validate_quantity],
-    "swarm.particles.per.cell": [20, validate_int],
+    "swarm.particles.per.cell.2D": [40, validate_int],
+    "swarm.particles.per.cell.3D": [120, validate_int],
 
     "popcontrol.aggressive" : [True, validate_bool],
     "popcontrol.split.threshold" : [0.15, validate_float],
     "popcontrol.max.splits" : [10, validate_int],
-    "popcontrol.particles.per.cell" : [20, validate_int],
+    "popcontrol.particles.per.cell.2D" : [40, validate_int],
+    "popcontrol.particles.per.cell.3D" : [120, validate_int],
 
     "CFL": [0.5, validate_float],
 
@@ -73,6 +75,7 @@ rcParams = {
     "initial.nonlinear.max.iterations": [500, validate_int],
     "nonlinear.min.iterations": [2, validate_int],
     "nonlinear.max.iterations": [500, validate_int],
+    "mg.levels": [None, validate_int_or_none],
 
     "rheology.default.uppercrust": ["Patterson et al., 1990", validate_viscosity],
     "rheology.default.midcrust": ["Patterson et al., 1990", validate_viscosity],

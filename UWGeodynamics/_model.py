@@ -30,6 +30,7 @@ from ._meshvariable import MeshVariable
 from ._swarmvariable import SwarmVariable
 from scipy import interpolate
 from six import string_types, iteritems
+from datetime import datetime
 
 
 class Model(Material):
@@ -162,9 +163,14 @@ class Model(Material):
 
         # Create the material swarm
         self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
+        if self.mesh.dim == 2:
+            particlesPerCell = rcParams["swarm.particles.per.cell.2D"]
+        else:
+            particlesPerCell = rcParams["swarm.particles.per.cell.3D"]
+
         self._swarmLayout = uw.swarm.layouts.PerCellSpaceFillerLayout(
             swarm=self.swarm,
-            particlesPerCell=rcParams["swarm.particles.per.cell"])
+            particlesPerCell=particlesPerCell)
 
         self.swarm.populate_using_layout(layout=self._swarmLayout)
 
@@ -233,12 +239,17 @@ class Model(Material):
             order=2
         )
 
+        if self.mesh.dim == 2:
+            particlesPerCell = rcParams["popcontrol.particles.per.cell.2D"]
+        else:
+            particlesPerCell = rcParams["popcontrol.particles.per.cell.3D"]
+
         self.population_control = uw.swarm.PopulationControl(
             self.swarm,
             aggressive=rcParams["popcontrol.aggressive"],
             splitThreshold=rcParams["popcontrol.split.threshold"],
             maxSplits=rcParams["popcontrol.max.splits"],
-            particlesPerCell=rcParams["popcontrol.particles.per.cell"])
+            particlesPerCell=particlesPerCell)
 
         # Add Common Swarm Variables
         self.add_swarm_field("materialField", dataType="int", count=1,
@@ -662,6 +673,9 @@ class Model(Material):
 
             if rcParams["penalty"]:
                 solver.set_penalty(rcParams["penalty"])
+
+            if rcParams["mg.levels"]:
+                solver.options.mg.levels = rcParams["mg.levels"]
 
         return solver
 
@@ -1273,12 +1287,22 @@ class Model(Material):
             minIterations = rcParams["nonlinear.min.iterations"]
             maxIterations = rcParams["nonlinear.max.iterations"]
 
-        self._stokes().solve(
-            nonLinearIterate=True,
-            nonLinearMinIterations=minIterations,
-            nonLinearMaxIterations=maxIterations,
-            callback_post_solve=self._calibrate_pressureField,
-            nonLinearTolerance=tol)
+        if uw.__version__.split(".")[1] > 5:
+            # The minimum number of iteration only works with version 2.6
+            # 2.6 is still in development...
+            self._stokes().solve(
+                nonLinearIterate=True,
+                nonLinearMinIterations=minIterations,
+                nonLinearMaxIterations=maxIterations,
+                callback_post_solve=self._calibrate_pressureField,
+                nonLinearTolerance=tol)
+        else:
+            self._stokes().solve(
+                nonLinearIterate=True,
+                nonLinearMaxIterations=maxIterations,
+                callback_post_solve=self._calibrate_pressureField,
+                nonLinearTolerance=tol)
+
         self._solution_exist.value = True
 
     def init_model(self, temperature=True, pressureField=True):
@@ -1394,8 +1418,10 @@ class Model(Material):
 
             if checkpoint_interval or step % 1 == 0:
                 if uw.rank() == 0:
-                    print("Time: ", str(self.time.to(units)),
-                          'dt:', str(Dimensionalize(self._dt, units)))
+                    print("Model Time: ", str(self.time.to(units)),
+                          'dt:', str(Dimensionalize(self._dt, units)),
+                          'vrms:', str(self.velocity_rms()),
+                          '('+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+')')
 
             self.postSolveHook()
 
@@ -1862,7 +1888,7 @@ class Model(Material):
         (v2, vol) = self.mesh.integrate(fn=fn_2_integrate)
         import math
         vrms = math.sqrt(v2/vol)
-        os.write(1, "Velocity rms (vrms): {0}".format(vrms))
+        #os.write(1, "Velocity rms (vrms): {0}".format(vrms))
         return vrms
 
 
