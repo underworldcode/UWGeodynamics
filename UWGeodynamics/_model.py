@@ -1420,7 +1420,7 @@ class Model(Material):
                 if uw.rank() == 0:
                     print("Model Time: ", str(self.time.to(units)),
                           'dt:', str(Dimensionalize(self._dt, units)),
-                          'vrms:', str(self.velocity_rms()),
+                          #'vrms:', str(self.velocity_rms()),
                           '('+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+')')
 
             self.postSolveHook()
