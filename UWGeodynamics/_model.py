@@ -1276,12 +1276,22 @@ class Model(Material):
             minIterations = rcParams["nonlinear.min.iterations"]
             maxIterations = rcParams["nonlinear.max.iterations"]
 
-        self._stokes().solve(
-            nonLinearIterate=True,
-            nonLinearMinIterations=minIterations,
-            nonLinearMaxIterations=maxIterations,
-            callback_post_solve=self._calibrate_pressureField,
-            nonLinearTolerance=tol)
+        if uw.__version__.split(".")[1] > 5:
+            # The minimum number of iteration only works with version 2.6
+            # 2.6 is still in development...
+            self._stokes().solve(
+                nonLinearIterate=True,
+                nonLinearMinIterations=minIterations,
+                nonLinearMaxIterations=maxIterations,
+                callback_post_solve=self._calibrate_pressureField,
+                nonLinearTolerance=tol)
+        else:
+            self._stokes().solve(
+                nonLinearIterate=True,
+                nonLinearMaxIterations=maxIterations,
+                callback_post_solve=self._calibrate_pressureField,
+                nonLinearTolerance=tol)
+
         self._solution_exist.value = True
 
     def init_model(self, temperature=True, pressureField=True):
