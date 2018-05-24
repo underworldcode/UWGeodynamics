@@ -1632,6 +1632,10 @@ class Model(Material):
         if not checkpointID:
             checkpointID = self.checkpointID
 
+        if uw.rank() == 0 and not os.path.exists(self.outputDir):
+            os.mkdir(self.outputDir)
+        uw.barrier()
+
         self._save_fields(variables, checkpointID)
         self._save_swarms(variables, checkpointID)
 
