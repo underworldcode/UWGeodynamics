@@ -1822,9 +1822,10 @@ class Model(Material):
         string += uw.utils._xdmffooter()
 
         # Write the string to file - only proc 0
-        xdmfFH = open(filename, "w")
-        xdmfFH.write(string)
-        xdmfFH.close()
+        if uw.rank() == 0:
+            with open(filename, "w") as xdmfFH:
+                xdmfFH.write(string)
+        uw.barrier()
 
     def _save_swarms(self, fields, checkpointID):
 
@@ -1861,9 +1862,10 @@ class Model(Material):
         string += uw.utils._xdmffooter()
 
         # Write the string to file - only proc 0
-        xdmfFH = open(filename, "w")
-        xdmfFH.write(string)
-        xdmfFH.close()
+        if uw.rank() == 0:
+            with open(filename, "w") as xdmfFH:
+                xdmfFH.write(string)
+        uw.barrier()
 
     def save(self, filename=None):
         save_model(self, filename)
