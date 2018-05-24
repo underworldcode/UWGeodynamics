@@ -1499,7 +1499,7 @@ class Model(Material):
         self._advector = _mesh_advector(self, axis)
 
     def add_passive_tracers(self, name, vertices=None,
-                            particleEscape=False):
+                            particleEscape=True):
         """ Add a swarm of passive tracers to the Model
 
         Parameters:
