@@ -91,6 +91,7 @@ class VelocityBCs(object):
         self.dirichlet_indices = []
         self.neumann_indices = []
 
+
     def __getitem__(self, name):
         return self.__dict__[name]
 
@@ -121,6 +122,9 @@ class VelocityBCs(object):
                     self.Model.velocityField.data[nodes.data, dim] = (
                         func.evaluate(
                             self.Model.mesh.data[nodes.data])[:, dim])
+                    self.Model.boundariesField.data[nodes.data, dim] = (
+                        func.evaluate(
+                            self.Model.mesh.data[nodes.data])[:, dim])
                     self.dirichlet_indices[dim] += nodes
                     continue
 
@@ -130,6 +134,8 @@ class VelocityBCs(object):
                     # Process dirichlet condition
                     if not _is_neumann(condition[dim]):
                         self.Model.velocityField.data[nodes.data, dim] = (
+                            nd(condition[dim]))
+                        self.Model.boundariesField.data[nodes.data, dim] = (
                             nd(condition[dim]))
                         self.dirichlet_indices[dim] += nodes
                     # Process neumann condition
@@ -145,6 +151,8 @@ class VelocityBCs(object):
                     obj._get_side_flow()
                     self.Model.velocityField.data[nodes.data, dim] = (
                         obj._get_side_flow())
+                    self.Model.boundariesField.data[nodes.data, dim] = (
+                        obj._get_side_flow())
                     self.dirichlet_indices[dim] += nodes
 
                 if isinstance(condition[dim], LecodeIsostasy):
@@ -158,6 +166,7 @@ class VelocityBCs(object):
                     self.Model._isostasy.swarm = self.Model.swarm
                     self.Model._isostasy._mesh_advector = self.Model._advector
                     self.Model._isostasy.velocityField = self.Model.velocityField
+                    self.Model._isostasy.boundariesField = self.Model.boundariesField
                     self.Model._isostasy.materialIndexField = self.Model.materialField
                     self.Model._isostasy._densityFn = self.Model._densityFn
                     vertical_walls_conditions = {
@@ -187,6 +196,7 @@ class VelocityBCs(object):
         """
 
         Model = self.Model
+        Model.boundariesField.data[...] = 0
 
         # Reinitialise neumnann and dirichlet condition
         self.dirichlet_indices = []
