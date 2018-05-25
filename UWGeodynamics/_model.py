@@ -155,6 +155,9 @@ class Model(Material):
         self.add_mesh_field("tractionField", nodeDofCount=self.mesh.dim)
         self.add_submesh_field("_strainRateField", nodeDofCount=1)
 
+        # Create a field to check applied boundary conditions
+        self.add_mesh_field("boundariesField", nodeDofCount=self.mesh.dim)
+
         # symmetric component of the gradient of the flow velocityField.
         self.strainRate = fn.tensor.symmetric(self.velocityField.fn_gradient)
         self._strainRate_2ndInvariant = fn.tensor.second_invariant(
@@ -1420,7 +1423,7 @@ class Model(Material):
                 if uw.rank() == 0:
                     print("Model Time: ", str(self.time.to(units)),
                           'dt:', str(Dimensionalize(self._dt, units)),
-                          'vrms:', str(self.velocity_rms()),
+                          #'vrms:', str(self.velocity_rms()),
                           '('+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+')')
 
             self.postSolveHook()
@@ -1499,7 +1502,7 @@ class Model(Material):
         self._advector = _mesh_advector(self, axis)
 
     def add_passive_tracers(self, name, vertices=None,
-                            particleEscape=False):
+                            particleEscape=True):
         """ Add a swarm of passive tracers to the Model
 
         Parameters:
@@ -1628,6 +1631,10 @@ class Model(Material):
 
         if not checkpointID:
             checkpointID = self.checkpointID
+
+        if uw.rank() == 0 and not os.path.exists(self.outputDir):
+            os.mkdir(self.outputDir)
+        uw.barrier()
 
         self._save_fields(variables, checkpointID)
         self._save_swarms(variables, checkpointID)
@@ -1815,9 +1822,10 @@ class Model(Material):
         string += uw.utils._xdmffooter()
 
         # Write the string to file - only proc 0
-        xdmfFH = open(filename, "w")
-        xdmfFH.write(string)
-        xdmfFH.close()
+        if uw.rank() == 0:
+            with open(filename, "w") as xdmfFH:
+                xdmfFH.write(string)
+        uw.barrier()
 
     def _save_swarms(self, fields, checkpointID):
 
@@ -1854,9 +1862,10 @@ class Model(Material):
         string += uw.utils._xdmffooter()
 
         # Write the string to file - only proc 0
-        xdmfFH = open(filename, "w")
-        xdmfFH.write(string)
-        xdmfFH.close()
+        if uw.rank() == 0:
+            with open(filename, "w") as xdmfFH:
+                xdmfFH.write(string)
+        uw.barrier()
 
     def save(self, filename=None):
         save_model(self, filename)

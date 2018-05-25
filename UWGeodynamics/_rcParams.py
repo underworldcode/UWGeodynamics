@@ -21,6 +21,7 @@ rcParams = {
                           "temperature",
                           "pressureField",
                           "strainRateField",
+                          "boundariesField",
                           "projMaterialField",
                           "projTimeField",
                           "projStressField",
@@ -36,6 +37,7 @@ rcParams = {
                           "velocityField",
                           "viscosityField",
                           "timeField",
+                          "boundariesField",
                           "projStressField",
                           "projTimeField",
                           "projMaterialField",
@@ -61,8 +63,8 @@ rcParams = {
     "popcontrol.aggressive" : [True, validate_bool],
     "popcontrol.split.threshold" : [0.15, validate_float],
     "popcontrol.max.splits" : [10, validate_int],
-    "popcontrol.particles.per.cell.2D" : [40, validate_int],
-    "popcontrol.particles.per.cell.3D" : [120, validate_int],
+    "popcontrol.particles.per.cell.2D" : [20, validate_int],
+    "popcontrol.particles.per.cell.3D" : [60, validate_int],
 
     "CFL": [0.5, validate_float],
 
