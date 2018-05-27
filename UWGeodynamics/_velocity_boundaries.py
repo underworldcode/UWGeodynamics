@@ -6,6 +6,7 @@ from .LecodeIsostasy import LecodeIsostasy
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
 from ._utils import Balanced_InflowOutflow
+from ._utils import MovingWall
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -128,6 +129,12 @@ class VelocityBCs(object):
                 self.order_wall_conditions = ["bottom", "top", "front", "back",
                                               "left", "right"]
 
+        # Link Moving Walls
+        for arg in [self.left, self.right, self.top, self.bottom, self.front,
+                    self.back]:
+            if isinstance(arg, MovingWall):
+                arg.Model = self.Model
+
     def __getitem__(self, name):
         return self.__dict__[name]
 
@@ -171,6 +178,33 @@ class VelocityBCs(object):
             return
         else:
             self.Model._isostasy = None
+
+        #if isinstance(condition, MovingWall):
+        #    condition.wall = nodes
+        #    set_ = condition.get_wall_indices()
+        #    velocity = nd(condition.velocity)
+        #    dim = condition.wall_direction_axis[condition.wall]
+        #    if set_.data.size > 0:
+        #        self.Model.velocityField.data[set_.data, :] = 0.
+        #        self.Model.boundariesField.data[set_.data, :] = 0.
+        #        self.Model.velocityField.data[set_.data, dim] = velocity
+        #        self.Model.boundariesField.data[set_.data, dim] = velocity
+        #        self.dirichlet_indices[0] += set_
+        #        self.dirichlet_indices[1] += set_
+        #    return
+
+        if isinstance(condition, MovingWall):
+            condition.wall = nodes
+            indices = condition.get_wall_indices()
+            velocity = nd(condition.velocity)
+            for dim in range(self.Model.mesh.dim):
+                set_ = indices[dim]
+                if set_.data.size > 0:
+                    self.Model.velocityField.data[set_.data, dim] = velocity
+                    self.Model.boundariesField.data[set_.data, dim] = velocity
+                    self.dirichlet_indices[dim] += set_
+            return
+
 
         # Expect a list or tuple of dimension mesh.dim.
         # Check that the domain actually contains some boundary nodes
