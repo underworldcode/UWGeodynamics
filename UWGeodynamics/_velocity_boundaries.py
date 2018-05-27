@@ -176,8 +176,6 @@ class VelocityBCs(object):
                 vertical_walls_conditions)
             self.dirichlet_indices[-1] += self.Model._bottom_wall
             return
-        else:
-            self.Model._isostasy = None
 
         #if isinstance(condition, MovingWall):
         #    condition.wall = nodes
