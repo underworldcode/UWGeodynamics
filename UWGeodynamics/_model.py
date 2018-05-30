@@ -1327,9 +1327,9 @@ class Model(Material):
             self.get_lithostatic_pressureField()
         return
 
-    def run_for(self, duration=None, checkpoint_interval=None,
+    def run_for(self, duration=None, checkpoint_interval=None, nstep=None,
                 timeCheckpoints=None, swarm_checkpoint=None, dt=None,
-                glucifer_outputs=False):
+                glucifer_outputs=False, restartStep=None, restartDir=None):
         """ Run the Model
 
         Parameters:
@@ -1346,11 +1346,23 @@ class Model(Material):
             os.mkdir(self.outputDir)
         uw.barrier()
 
-        step = self.step
+        if restartStep:
+            restartDir = restartDir if restartDir else self.outputDir
+            self.restart(step=restartStep, restartDir=restartDir)
+
+        stepDone = 0
         time = nd(self.time)
-        units = duration.units
-        duration = time + nd(duration)
-        user_dt = nd(dt)
+
+        if duration:
+            units = duration.units
+            duration = time + nd(duration)
+        else:
+            units = rcParams["time.SIunits"]
+
+        if dt:
+            user_dt = nd(dt)
+        else:
+            user_dt = None
 
         next_checkpoint = None
 
@@ -1370,7 +1382,7 @@ class Model(Material):
         # Comment as it does not work in parallel
         # self.save()
 
-        while time < duration:
+        while time < duration or stepDone < nstep:
 
             self.preSolveHook()
 
@@ -1379,16 +1391,17 @@ class Model(Material):
             # Whats the longest we can run before reaching the end
             # of the model or a checkpoint?
             # Need to generalize that
-            dt = rcParams["CFL"] * self.swarm_advector.get_max_dt()
+            self._dt = rcParams["CFL"] * self.swarm_advector.get_max_dt()
 
             if self.temperature:
-                dt = min(dt, self._advdiffSystem.get_max_dt())
-                dt *= rcParams["CFL"]
+                self._dt = min(self._dt, self._advdiffSystem.get_max_dt())
+                self._dt *= rcParams["CFL"]
 
             if checkpoint_interval:
-                dt = min(dt, next_checkpoint - time)
+                self._dt = min(self._dt, next_checkpoint - time)
 
-            self._dt = min(dt, duration - time)
+            if duration:
+                self._dt = min(self._dt, duration - time)
 
             if user_dt:
                 self._dt = min(self._dt, user_dt)
@@ -1409,6 +1422,7 @@ class Model(Material):
             self._update()
 
             self.step += 1
+            stepDone += 1
             self.time += Dimensionalize(self._dt, units)
             time += self._dt
 
@@ -1419,9 +1433,9 @@ class Model(Material):
                     self.output_glucifer_figures(self.checkpointID)
                 next_checkpoint += nd(checkpoint_interval)
 
-            if checkpoint_interval or step % 1 == 0:
+            if checkpoint_interval or step % 1 == 0 or nstep:
                 if uw.rank() == 0:
-                    print("Model Time: ", str(self.time.to(units)),
+                    print("Step:" + str(stepDone) + " Model Time: ", str(self.time.to(units)),
                           'dt:', str(Dimensionalize(self._dt, units)),
                           #'vrms:', str(self.velocity_rms()),
                           '('+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+')')

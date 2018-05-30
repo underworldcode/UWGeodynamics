@@ -91,6 +91,7 @@ rcParams = {
     "scaling.temperature": [1.0 * u.degK, validate_quantity],
     "scaling.substance": [1.0 * u.mole, validate_quantity],
 
+    "time.SIunits": [u.years, validate_quantity],
     "viscosityField.SIunits" : [u.pascal * u.second, validate_quantity],
     "densityField.SIunits" : [u.kilogram / u.metre**3, validate_quantity],
     "velocityField.SIunits" : [u.centimeter / u.year, validate_quantity],
