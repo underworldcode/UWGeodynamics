@@ -653,7 +653,7 @@ class Model(Material):
         )
         return obj
 
-    def _stokes(self):
+    def stokes_solver(self):
         """ Stokes solver """
 
         gravity = tuple([nd(val) for val in self.gravity])
@@ -661,7 +661,7 @@ class Model(Material):
 
         if any([material.viscosity for material in self.materials]):
 
-            stokes_object = uw.systems.Stokes(
+            self._stokes_SLE = uw.systems.Stokes(
                 velocityField=self.velocityField,
                 pressureField=self.pressureField,
                 conditions=self._velocityBCs,
@@ -671,16 +671,16 @@ class Model(Material):
                 fn_one_on_lambda=self._lambdaFn)
                 #useEquationResidual=rcParams["useEquationResidual"])
 
-            solver = uw.systems.Solver(stokes_object)
-            solver.set_inner_method(rcParams["solver"])
+            self._solver = uw.systems.Solver(self._stokes_SLE)
+            self._solver.set_inner_method(rcParams["solver"])
 
             if rcParams["penalty"]:
-                solver.set_penalty(rcParams["penalty"])
+                self._solver.set_penalty(rcParams["penalty"])
 
             if rcParams["mg.levels"]:
-                solver.options.mg.levels = rcParams["mg.levels"]
+                self._solver.options.mg.levels = rcParams["mg.levels"]
 
-        return solver
+        return self._solver
 
     def _init_melt_fraction(self):
         """ Initialize the Melt Fraction Field """
@@ -1255,6 +1255,13 @@ class Model(Material):
 
         self._solution_exist.value = True
 
+        # The following line are useful to output velocity and pressurefield
+        # from the non-linear loop.
+        #niteration = self._stokes_SLE._cself.nonLinearIteration_I
+        #string = str(self.step) + "-" + str(niteration)
+        #self._save_fields(["velocityField", "pressureField"], checkpointID=string,
+        #                  time=niteration)
+
     def _get_material_indices(self, material):
         """ Get mesh indices of a Material
 
@@ -1293,14 +1300,14 @@ class Model(Material):
         if uw.__version__.split(".")[1] > 5:
             # The minimum number of iteration only works with version 2.6
             # 2.6 is still in development...
-            self._stokes().solve(
+            self.stokes_solver().solve(
                 nonLinearIterate=True,
                 nonLinearMinIterations=minIterations,
                 nonLinearMaxIterations=maxIterations,
                 callback_post_solve=self._calibrate_pressureField,
                 nonLinearTolerance=tol)
         else:
-            self._stokes().solve(
+            self.stokes_solver().solve(
                 nonLinearIterate=True,
                 nonLinearMaxIterations=maxIterations,
                 callback_post_solve=self._calibrate_pressureField,
@@ -1448,6 +1455,9 @@ class Model(Material):
         return
 
     def postSolveHook(self):
+        return
+
+    def nonLinearCallBack(self):
         return
 
     def _update(self):
@@ -1795,7 +1805,9 @@ class Model(Material):
         else:
             raise ValueError(field, ' is not a valid variable name \n')
 
-    def _save_fields(self, fields, checkpointID):
+    def _save_fields(self, fields, checkpointID, time=None):
+
+        time = time if time else self.time
 
         if self._advector:
             mesh_name = 'mesh-%s' % checkpointID
@@ -1805,14 +1817,14 @@ class Model(Material):
             mesh_prefix = os.path.join(self.outputDir, mesh_name)
 
         mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
-                            time=self.time)
+                            time=time)
 
         filename = "XDMF.fields."+str(checkpointID).zfill(5)+".xmf"
         filename = os.path.join(self.outputDir, filename)
 
         # First write the XDMF header
         string = uw.utils._xdmfheader()
-        string += uw.utils._spacetimeschema(mH, mesh_name, self.time)
+        string += uw.utils._spacetimeschema(mH, mesh_name, time)
 
         for field in fields:
             if field == "temperature" and not self.temperature:
@@ -1829,7 +1841,7 @@ class Model(Material):
                 obj = getattr(self, field)
                 file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
                 handle = obj.save('%s.h5' % file_prefix, units=units,
-                                  time=self.time)
+                                  time=time)
                 string += uw.utils._fieldschema(handle, field)
 
         # Write the footer to the xmf
@@ -1841,21 +1853,22 @@ class Model(Material):
                 xdmfFH.write(string)
         uw.barrier()
 
-    def _save_swarms(self, fields, checkpointID):
+    def _save_swarms(self, fields, checkpointID, time=None):
 
+        time = time if time else self.time
         swarm_name = 'swarm-%s.h5' % checkpointID
 
         sH = self.swarm.save(os.path.join(self.outputDir,
                              swarm_name),
                              units=u.kilometers,
-                             time=self.time)
+                             time=time)
 
         filename = "XDMF.swarms."+str(checkpointID).zfill(5)+".xmf"
         filename = os.path.join(self.outputDir, filename)
 
         # First write the XDMF header
         string = uw.utils._xdmfheader()
-        string += uw.utils._swarmspacetimeschema(sH, swarm_name, self.time)
+        string += uw.utils._swarmspacetimeschema(sH, swarm_name, time)
 
         for field in fields:
             if field in rcParams["swarm.variables"]:
@@ -1869,7 +1882,7 @@ class Model(Material):
                 # each one of the field variables
                 obj = getattr(self, field)
                 file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
-                handle = obj.save('%s.h5' % file_prefix, units=units, time=self.time)
+                handle = obj.save('%s.h5' % file_prefix, units=units, time=time)
                 string += uw.utils._swarmvarschema(handle, field)
 
         # Write the footer to the xmf
