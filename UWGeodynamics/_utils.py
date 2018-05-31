@@ -498,8 +498,13 @@ class MovingWall(object):
 
         self._Model = None
         self._wall = None
+
         self.velocity = velocity
         self.material = None
+        if isinstance(velocity, (list, tuple)):
+            self.velocityFn = fn.branching.conditional(velocity)
+        else:
+            self.velocityFn = fn.misc.constant(nd(velocity))
 
         self.wall_operators = {"left": op.le,
                           "right": op.ge,
@@ -564,7 +569,7 @@ class MovingWall(object):
         axis = self.wall_direction_axis[self._wall]
         pos = self.wall_init_pos[self._wall]
         condition = [(operator(fn.input()[axis],(nd(self.Model.time) *
-                                        nd(self.velocity) +
+                                        self.velocityFn +
                                         nd(pos))), True),
                      (True, False)]
 
@@ -634,5 +639,9 @@ class LogFile(object):
                         block = NonLinearBlock(block)
                         non_linear_blocks.append(block)
                         block=""
+            # Process last potentially non-converged block
+            if block:
+                block = NonLinearBlock(block)
+                non_linear_blocks.append(block)
         self.nonLinear_blocks = non_linear_blocks
         return self.nonLinear_blocks
