@@ -1331,7 +1331,7 @@ class Model(Material):
 
     def _nonLinearSolve(self):
 
-        sf self.step == 0:
+        if self.step == 0:
             self._curTolerance = rcParams["initial.nonlinear.tolerance"]
             minIterations = rcParams["initial.nonlinear.min.iterations"]
             maxIterations = rcParams["initial.nonlinear.max.iterations"]
