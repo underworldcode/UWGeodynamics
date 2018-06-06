@@ -31,6 +31,9 @@ from ._swarmvariable import SwarmVariable
 from scipy import interpolate
 from six import string_types, iteritems
 from datetime import datetime
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
 
 
 class Model(Material):
@@ -681,10 +684,6 @@ class Model(Material):
             if rcParams["mg.levels"]:
                 self._solver.options.mg.levels = rcParams["mg.levels"]
 
-        if self._solver._check_linearity(False):
-            self.add_mesh_field("prevVelocityField", nodeDofCount=self.mesh.dim)
-            self.add_submesh_field("prevPressureField", nodeDofCount=1)
-
         return self._solver
 
     def _init_melt_fraction(self):
@@ -1266,12 +1265,6 @@ class Model(Material):
         #string = str(self.step) + "-" + str(niteration)
         #self._save_fields(["velocityField", "pressureField"], checkpointID=string,
         #                  time=niteration)
-    def _apply_alpha(self):
-
-        self.velocityField.data[...] *= (1.0 - rcParams["alpha"])
-        self.velocityField.data[...] += rcParams["alpha"] * self.prevVelocityField.data[...]
-        self.velocityField.syncronise()
-
 
     def _get_material_indices(self, material):
         """ Get mesh indices of a Material
@@ -1325,6 +1318,81 @@ class Model(Material):
                 nonLinearTolerance=self._curTolerance)
 
         self._solution_exist.value = True
+
+    def _solve_tempo(self):
+
+        solver = self.stokes_solver()
+
+        if solver._check_linearity(False):
+            self.add_mesh_field("prevVelocityField", nodeDofCount=self.mesh.dim)
+            self.add_submesh_field("prevPressureField", nodeDofCount=1)
+            self._nonLinearSolve()
+        return
+
+    def _nonLinearSolve(self):
+
+        sf self.step == 0:
+            self._curTolerance = rcParams["initial.nonlinear.tolerance"]
+            minIterations = rcParams["initial.nonlinear.min.iterations"]
+            maxIterations = rcParams["initial.nonlinear.max.iterations"]
+        else:
+            self._curTolerance = rcParams["nonlinear.tolerance"]
+            minIterations = rcParams["nonlinear.min.iterations"]
+            maxIterations = rcParams["nonlinear.max.iterations"]
+
+        it = 0
+        self.stokes_solver().solve(nonLinearIterate=False)
+        it += 1
+
+        while it < maxIterations:
+
+            if uw.rank() == 0:
+                print("Doing iteration {0}\n".format(it), file=open('/dev/stdout', 'w'))
+
+            self.prevVelocityField.data[...] = self.velocityField.data[...]
+            self.prevPressureField.data[...] = self.pressureField.data[...]
+            self.stokes_solver().solve(nonLinearIterate=False)
+            self._callback_post_solve()
+
+            norm1 = np.linalg.norm(self.prevVelocityField.data -
+                                   self.velocityField.data)
+            norm2 = np.linalg.norm(self.prevPressureField.data -
+                                   self.pressureField.data)
+
+            prevVecNorm = norm1**2 + norm2**2
+            recvbuffer = np.zeros((1,))
+            comm.Allreduce(prevVecNorm, recvbuffer, op=MPI.SUM)
+            prevVecNorm = np.sqrt(recvbuffer)[0]
+
+            norm1 = np.linalg.norm(self.velocityField.data)
+            norm2 = np.linalg.norm(self.pressureField.data)
+
+            curVecNorm = norm1**2 + norm2**2
+            recvbuffer = np.zeros((1,))
+            comm.Allreduce(curVecNorm, recvbuffer, op=MPI.SUM)
+            curVecNorm = np.sqrt(recvbuffer)[0]
+
+            residual = prevVecNorm / curVecNorm
+
+            if uw.rank() == 0:
+                print("Residual {0}, Tolerance {1}\n".format(residual,
+                                                       self._curTolerance),
+                      file=open('/dev/stdout', 'w'))
+
+            converged = False
+            if residual < self._curTolerance and it > minIterations:
+                converged = True
+
+            if converged:
+                if uw.rank() == 0:
+                    print("#### Converged ####\n", file=open('/dev/stdout', 'w'))
+                break
+
+            self.velocityField.data[...] *= (1.0 - rcParams["alpha"])
+            self.velocityField.data[...] += rcParams["alpha"] * self.prevVelocityField.data[...]
+            self.velocityField.syncronise()
+
+            it += 1
 
     def init_model(self, temperature=True, pressureField=True):
         """ Initialize the Temperature Field as steady state,
@@ -1404,7 +1472,7 @@ class Model(Material):
 
             self.preSolveHook()
 
-            self.solve()
+            self._solve_tempo()
 
             # Whats the longest we can run before reaching the end
             # of the model or a checkpoint?
@@ -1479,7 +1547,6 @@ class Model(Material):
                 value()
             self._calibrate_pressureField()
             #self._adjust_tolerance()
-            self._apply_alpha()
         self._callback_post_solve = callback
 
 
