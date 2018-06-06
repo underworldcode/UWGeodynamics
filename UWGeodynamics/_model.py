@@ -1451,7 +1451,7 @@ class Model(Material):
                     self.output_glucifer_figures(self.checkpointID)
                 next_checkpoint += nd(checkpoint_interval)
 
-            if checkpoint_interval or step % 1 == 0 or nstep:
+            if checkpoint_interval or self.step % 1 == 0 or nstep:
                 if uw.rank() == 0:
                     print("Step:" + str(stepDone) + " Model Time: ", str(self.time.to(units)),
                           'dt:', str(Dimensionalize(self._dt, units)),
