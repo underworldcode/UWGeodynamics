@@ -681,6 +681,10 @@ class Model(Material):
             if rcParams["mg.levels"]:
                 self._solver.options.mg.levels = rcParams["mg.levels"]
 
+        if self._solver._check_linearity(False):
+            self.add_mesh_field("prevVelocityField", nodeDofCount=self.mesh.dim)
+            self.add_submesh_field("prevPressureField", nodeDofCount=1)
+
         return self._solver
 
     def _init_melt_fraction(self):
@@ -1262,6 +1266,12 @@ class Model(Material):
         #string = str(self.step) + "-" + str(niteration)
         #self._save_fields(["velocityField", "pressureField"], checkpointID=string,
         #                  time=niteration)
+    def _apply_alpha(self):
+
+        self.velocityField.data[...] *= (1.0 - rcParams["alpha"])
+        self.velocityField.data[...] += rcParams["alpha"] * self.prevVelocityField.data[...]
+        self.velocityField.syncronise()
+
 
     def _get_material_indices(self, material):
         """ Get mesh indices of a Material
@@ -1468,7 +1478,8 @@ class Model(Material):
             if callable(value):
                 value()
             self._calibrate_pressureField()
-            self._adjust_tolerance()
+            #self._adjust_tolerance()
+            self._apply_alpha()
         self._callback_post_solve = callback
 
 
