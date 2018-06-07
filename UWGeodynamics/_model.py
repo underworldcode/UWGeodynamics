@@ -232,6 +232,7 @@ class Model(Material):
         self.DiffusivityFn = None
         self.HeatProdFn = None
         self._buoyancyFn = None
+        self.callback_post_solve = None
         self._initialize()
 
     def _initialize(self):
@@ -679,6 +680,10 @@ class Model(Material):
 
             if rcParams["mg.levels"]:
                 self._solver.options.mg.levels = rcParams["mg.levels"]
+
+        if self._solver._check_linearity(False):
+            self.add_mesh_field("prevVelocityField", nodeDofCount=self.mesh.dim)
+            self.add_submesh_field("prevPressureField", nodeDofCount=1)
 
         return self._solver
 
@@ -1261,6 +1266,12 @@ class Model(Material):
         #string = str(self.step) + "-" + str(niteration)
         #self._save_fields(["velocityField", "pressureField"], checkpointID=string,
         #                  time=niteration)
+    def _apply_alpha(self):
+
+        self.velocityField.data[...] *= (1.0 - rcParams["alpha"])
+        self.velocityField.data[...] += rcParams["alpha"] * self.prevVelocityField.data[...]
+        self.velocityField.syncronise()
+
 
     def _get_material_indices(self, material):
         """ Get mesh indices of a Material
@@ -1289,11 +1300,11 @@ class Model(Material):
         """ Solve Stokes """
 
         if self.step == 0:
-            tol = rcParams["initial.nonlinear.tolerance"]
+            self._curTolerance = rcParams["initial.nonlinear.tolerance"]
             minIterations = rcParams["initial.nonlinear.min.iterations"]
             maxIterations = rcParams["initial.nonlinear.max.iterations"]
         else:
-            tol = rcParams["nonlinear.tolerance"]
+            self._curTolerance = rcParams["nonlinear.tolerance"]
             minIterations = rcParams["nonlinear.min.iterations"]
             maxIterations = rcParams["nonlinear.max.iterations"]
 
@@ -1304,14 +1315,14 @@ class Model(Material):
                 nonLinearIterate=True,
                 nonLinearMinIterations=minIterations,
                 nonLinearMaxIterations=maxIterations,
-                callback_post_solve=self._calibrate_pressureField,
-                nonLinearTolerance=tol)
+                callback_post_solve=self.callback_post_solve,
+                nonLinearTolerance=self._curTolerance)
         else:
             self.stokes_solver().solve(
                 nonLinearIterate=True,
                 nonLinearMaxIterations=maxIterations,
-                callback_post_solve=self._calibrate_pressureField,
-                nonLinearTolerance=tol)
+                callback_post_solve=self.callback_post_solve,
+                nonLinearTolerance=self._curTolerance)
 
         self._solution_exist.value = True
 
@@ -1440,7 +1451,7 @@ class Model(Material):
                     self.output_glucifer_figures(self.checkpointID)
                 next_checkpoint += nd(checkpoint_interval)
 
-            if checkpoint_interval or step % 1 == 0 or nstep:
+            if checkpoint_interval or self.step % 1 == 0 or nstep:
                 if uw.rank() == 0:
                     print("Step:" + str(stepDone) + " Model Time: ", str(self.time.to(units)),
                           'dt:', str(Dimensionalize(self._dt, units)),
@@ -1457,8 +1468,20 @@ class Model(Material):
     def postSolveHook(self):
         return
 
-    def nonLinearCallBack(self):
-        return
+    @property
+    def callback_post_solve(self):
+        return self._callback_post_solve
+
+    @callback_post_solve.setter
+    def callback_post_solve(self, value):
+        def callback():
+            if callable(value):
+                value()
+            self._calibrate_pressureField()
+            #self._adjust_tolerance()
+            self._apply_alpha()
+        self._callback_post_solve = callback
+
 
     def _update(self):
         """ Update Function
@@ -1917,6 +1940,16 @@ class Model(Material):
 
         self._fill_model()
 
+    def _adjust_tolerance(self):
+        niteration = self._stokes_SLE._cself.nonLinearIteration_I
+        nsteps = rcParams["nonlinear.tolerance.adjust.nsteps"]
+        curResidual = self._stokes_SLE._cself.curResidual
+
+        if curResidual > self._curTolerance:
+            if (niteration % nsteps == 0 and self.step > 0):
+                fact = rcParams["nonlinear.tolerance.adjust.factor"]
+                self._curTolerance /= fact
+                self._stokes_SLE._cself.nonLinearTolerance = self._curTolerance
 
     def velocity_rms(self):
         vdotv_fn = uw.function.math.dot(self.velocityField, self.velocityField)

@@ -55,7 +55,7 @@ rcParams = {
                           "pressureField",
                           "plasticStrain",
                           "velocityField"], validate_stringlist],
-    
+
     "gravity": [9.81 * u.meter / u.second**2, validate_quantity],
     "swarm.particles.per.cell.2D": [40, validate_int],
     "swarm.particles.per.cell.3D": [120, validate_int],
@@ -101,5 +101,8 @@ rcParams = {
     "projViscosityField.SIunits"  : [u.pascal * u.second, validate_quantity],
     "projDensityField.SIunits" : [u.kilogram / u.metre**3, validate_quantity],
     "projTimeField.SIunits" : [u.megayears, validate_quantity],
+
+    "useEquationResidual" : [False, validate_bool],
+    "alpha": [0., validate_float]
     }
 
