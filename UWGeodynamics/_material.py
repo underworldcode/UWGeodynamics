@@ -18,7 +18,8 @@ class Material(object):
                  minViscosity=None, maxViscosity=None, stressLimiter=None,
                  latentHeatFusion=0.0, meltExpansion=0.0, meltFraction=0.0,
                  meltFractionLimit=1.0, viscosityChangeX1=0.15,
-                 viscosityChangeX2=0.3, viscosityChange=1.0):
+                 viscosityChangeX2=0.3, viscosityChange=1.0,
+                 healingRate=0.0 / u.year):
 
         self.index = self._ids.next()
 
@@ -57,6 +58,7 @@ class Material(object):
         self.plasticity = plasticity
 
         self.elasticity = elasticity
+        self.healingRate = healingRate
 
     def _repr_html_(self):
         return _material_html_repr(self)
