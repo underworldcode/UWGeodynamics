@@ -17,6 +17,7 @@ RUN rsync -av /opt/UWGeodynamics/tutorials/* /workspace/UWGeodynamics/tutorials/
 RUN rsync -av /opt/UWGeodynamics/manual/* /workspace/UWGeodynamics/manual/
 
 # Badlands dependency
+RUN apt-get install zliblg-dev
 RUN pip install pandas
 RUN pip install ez_setup
 RUN pip install git+https://github.com/badlands-model/triangle.git
