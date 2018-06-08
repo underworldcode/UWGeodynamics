@@ -102,7 +102,7 @@ class DruckerPrager(object):
         attributes["Cohesion"] = self.cohesion
         attributes["Cohesion After Softening"] = self.cohesionAfterSoftening
         attributes["Friction Coefficient"] = self.frictionCoefficient
-        attributes["Friction Coefficient after Sotening"] = (
+        attributes["Friction Coefficient after Softening"] = (
             self.frictionAfterSoftening)
         attributes["Epsilon 1"] = self.epsilon1
         attributes["Epsilon 2"] = self.epsilon2
