@@ -1493,6 +1493,19 @@ class Model(Material):
         """
 
         dt = self._dt
+
+        # Heal plastic strain
+        if any([material.healingRate for material in self.materials]):
+            healingRates = {}
+            for material in self.materials:
+                healingRates[material.index] = nd(material.healingRate)
+            HealingRateFn = fn.branching.map(fn_key=self.materialField,
+                                             mapping=healingRates)
+
+            plasticStrainIncHealing = dt * HealingRateFn.evaluate(self.swarm)
+            self.plasticStrain.data[:] -= plasticStrainIncHealing
+            self.plasticStrain.data[self.plasticStrain.data < 0.] = 0.
+
         # Increment plastic strain
         plasticStrainIncrement = dt * self._isYielding.evaluate(self.swarm)
         self.plasticStrain.data[:] += plasticStrainIncrement
