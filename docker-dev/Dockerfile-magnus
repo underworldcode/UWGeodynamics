@@ -5,8 +5,6 @@ RUN apt-get update -qq
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
         python-tk
 
-RUN apt-get install zliblg-dev
-
 # UWGeodynamics
 WORKDIR /opt
 RUN git clone -b development https://github.com/rbeucher/UWGeodynamics.git
