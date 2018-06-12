@@ -514,7 +514,6 @@ class Model(Material):
         self._surfaceProcesses = value
         if value:
             self._surfaceProcesses.timeField = self.timeField
-        if isinstance(value, surfaceProcesses.Badlands):
             self._surfaceProcesses.Model = self
 
     def set_temperatureBCs(self, left=None, right=None,
@@ -1577,7 +1576,7 @@ class Model(Material):
         """
         if name in self.passive_tracers.keys():
             print("{0} tracers exists already".format(name))
-            return
+            return self.passive_tracers[name]
 
         tracers = PassiveTracers(self.mesh,
                                  self.velocityField,

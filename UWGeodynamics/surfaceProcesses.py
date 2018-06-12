@@ -7,13 +7,36 @@ import underworld.function as fn
 from scaling import nonDimensionalize as nd
 
 
-class Badlands(object):
+class SurfaceProcesses(object):
+
+    def __init__(self, Model=None):
+
+        self.Model = Model
+
+    @property
+    def Model(self):
+        return self._Model
+
+    @Model.setter
+    def Model(self, value):
+        self._Model = value
+        if value:
+            self._init_model()
+
+    def _init_model(self):
+        return
+
+    def solve(self):
+        return
+
+
+class Badlands(SurfaceProcesses):
     """ A wrapper class for Badlands Linkage"""
 
     def __init__(self, airIndex,
                  sedimentIndex, XML, resolution, checkpoint_interval,
                  surfElevation=0., verbose=True, Model=None, restartFolder=None,
-                 restartStep=None, timeField=None):
+                 restartStep=None, timeField=None, surfaceTracers=None):
 
         self.airIndex = airIndex
         self.sedimentIndex = sedimentIndex
@@ -24,22 +47,12 @@ class Badlands(object):
         self.verbose = verbose
         self.restartFolder = restartFolder
         self.restartStep = restartStep
+        self.surfaceTracers = surfaceTracers
 
         self.timeField = timeField
         self.Model = Model
-        return
 
-    @property
-    def Model(self):
-        return self._Model
-
-    @Model.setter
-    def Model(self, value):
-        self._Model = value
-        if value:
-            self._init_Badlands()
-
-    def _init_Badlands(self):
+    def _init_model(self):
         self.mesh = self._Model.mesh
         self.velocityField = self._Model.velocityField
         self.swarm = self._Model.swarm
@@ -58,112 +71,117 @@ class Badlands(object):
         return
 
 
-class ErosionThreshold(object):
+class ErosionThreshold(SurfaceProcesses):
 
-    def __init__(self, swarm=None, materialIndexField=None,
-                 air=None, sediment=None, threshold=None):
+    def __init__(self, air=None, threshold=None, surfaceTracers=None, Model=None):
 
-        self.materialIndexField = materialIndexField
-        self.swarm = swarm
+        super(ErosionThreshold, self).__init__(Model=Model)
+
+        self.Model = Model
         self.threshold = threshold
         self.air = air
-        self.sediment = sediment
+        self.surfaceTracers=surfaceTracers
+        self.Model = Model
 
+    def _init_model(self):
+
+        materialField = self.Model.materialField
 
         materialMap = {}
-        for material in air:
+        for material in self.air:
             materialMap[material.index] = 1.0
 
-        isAirMaterial = fn.branching.map(fn_key=materialIndexField, mapping=materialMap, fn_default=0.0)
+        isAirMaterial = fn.branching.map(fn_key=materialField, mapping=materialMap, fn_default=0.0)
 
-        belowthreshold = [(((isAirMaterial < 0.5) & (fn.input()[1] > nd(threshold))), air[0].index),
-                         (True, materialIndexField)]
+        belowthreshold = [(((isAirMaterial < 0.5) & (fn.input()[1] > nd(self.threshold))), self.air[0].index),
+                         (True, materialField)]
 
         self._fn = fn.branching.conditional(belowthreshold)
 
     def solve(self, dt):
-        self.materialIndexField.data[:] = self._fn.evaluate(self.swarm)
+
+        if not self.Model:
+            raise ValueError("Model is not defined")
+
+        self.Model.materialField.data[:] = self._fn.evaluate(self.Model.swarm)
+        if self.surfaceTracers:
+            if self.surfaceTracers.particlesCoordinates.data.size > 0:
+                coords = self.surfaceTracers.particlesCoordinates
+                coords.data[coords.data[:,-1] > nd(self.threshold), -1] = nd(self.threshold)
         return
 
 
-class SedimentationThreshold(object):
+class SedimentationThreshold(SurfaceProcesses):
 
-    def __init__(self, swarm=None, materialIndexField=None,
-                 air=None, sediment=None, threshold=None, timeField=None):
+    def __init__(self, air=None, sediment=None,
+                 threshold=None, timeField=None, Model=None,
+                 surfaceTracers=None):
 
-        self.materialIndexField = materialIndexField
+        super(SedimentationThreshold, self).__init__(Model=Model)
+
         self.timeField = timeField
-        self.swarm = swarm
         self.air = air
         self.sediment = sediment
         self.threshold = threshold
+        self.surfaceTracers = surfaceTracers
+        self.Model = Model
+
+    def _init_model(self):
+
+        materialField = self.Model.materialField
 
         materialMap = {}
-        for material in air:
+        for material in self.air:
             materialMap[material.index] = 1.0
 
-        isAirMaterial = fn.branching.map(fn_key=materialIndexField, mapping=materialMap, fn_default=0.0)
+        isAirMaterial = fn.branching.map(fn_key=materialField, mapping=materialMap, fn_default=0.0)
 
-        belowthreshold = [(((isAirMaterial > 0.5) & (fn.input()[1] < nd(threshold))), 0.),
+        belowthreshold = [(((isAirMaterial > 0.5) & (fn.input()[1] < nd(self.threshold))), 0.),
                          (True, 1.)]
 
         self._change_material = fn.branching.conditional(belowthreshold)
 
-        conditions = [(self._change_material < 0.5, sediment[0].index),
-                      (True, materialIndexField)]
+        conditions = [(self._change_material < 0.5, self.sediment[0].index),
+                      (True, materialField)]
 
         self._fn = fn.branching.conditional(conditions)
 
     def solve(self, dt):
 
+        if not self.Model:
+            raise ValueError("Model is not defined")
+
         if self.timeField:
             fn = self._change_material * self.timeField
-            self.timeField.data[...] = fn.evaluate(self.swarm)
+            self.timeField.data[...] = fn.evaluate(self.Model.swarm)
 
-        self.materialIndexField.data[:] = self._fn.evaluate(self.swarm)
+        self.Model.materialField.data[:] = self._fn.evaluate(self.Model.swarm)
 
-        return
+        if self.surfaceTracers:
+            if self.surfaceTracers.particlesCoordinates.data.size > 0:
+                coords = self.surfaceTracers.particlesCoordinates
+                coords.data[coords.data[:,-1] < nd(self.threshold), -1] = nd(self.threshold)
 
 
-class ErosionAndSedimentationThreshold(object):
+class ErosionAndSedimentationThreshold(SedimentationThreshold, ErosionThreshold):
 
-    def __init__(self, swarm=None, materialIndexField=None,
-                 air=None, sediment=None, threshold=None, timeField=None):
+    def __init__(self, air=None, sediment=None,
+                 threshold=None, timeField=None, Model=None):
 
-        self.materialIndexField = materialIndexField
+        super(ErosionAndSedimentationThreshold, self).__init__(Model=Model)
+
         self.timeField = timeField
-        self.swarm = swarm
         self.air = air
         self.sediment = sediment
         self.threshold = threshold
+        self.Model = Model
 
-        materialMap = {}
-        for material in air:
-            materialMap[material.index] = 1.0
+    def _init_model(self):
 
-        isAirMaterial = fn.branching.map(fn_key=materialIndexField, mapping=materialMap, fn_default=0.0)
-
-        sedimentation = [(((isAirMaterial > 0.5) & (fn.input()[1] < nd(threshold))), 0.),
-                         (True, 1.0)]
-
-        self._sedimented = fn.branching.conditional(sedimentation)
-
-        conditions = [(self._sedimented < 0.5, sediment[0].index),
-                      (True, materialIndexField)]
-
-        erosion = [(((isAirMaterial < 0.5) & (fn.input()[1] > nd(threshold))), sediment[0].index),
-                         (True, materialIndexField)]
-
-        self._fn1 = fn.branching.conditional(conditions)
-        self._fn2 = fn.branching.conditional(erosion)
+        ErosionThreshold._init_model(self)
+        SedimentationThreshold._init_model(self)
 
     def solve(self, dt):
 
-        if self.timeField:
-            fn = self._sedimented * self.timeField
-            self.timeField.data[...] = fn.evaluate(self.swarm)
-
-        self.materialIndexField.data[:] = self._fn1.evaluate(self.swarm)
-        self.materialIndexField.data[:] = self._fn2.evaluate(self.swarm)
-
-        return
+        ErosionThreshold.solve(self, dt)
+        SedimentationThreshold.solve(self, dt)
