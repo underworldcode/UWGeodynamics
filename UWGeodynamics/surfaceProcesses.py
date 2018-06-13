@@ -105,8 +105,8 @@ class ErosionThreshold(SurfaceProcesses):
 
         self.Model.materialField.data[:] = self._fn.evaluate(self.Model.swarm)
         if self.surfaceTracers:
-            if self.surfaceTracers.particlesCoordinates.data.size > 0:
-                coords = self.surfaceTracers.particlesCoordinates
+            if self.surfaceTracers.swarm.particlesCoordinates.data.size > 0:
+                coords = self.surfaceTracers.swarm.particlesCoordinates
                 coords.data[coords.data[:,-1] > nd(self.threshold), -1] = nd(self.threshold)
         return
 
@@ -158,8 +158,8 @@ class SedimentationThreshold(SurfaceProcesses):
         self.Model.materialField.data[:] = self._fn.evaluate(self.Model.swarm)
 
         if self.surfaceTracers:
-            if self.surfaceTracers.particlesCoordinates.data.size > 0:
-                coords = self.surfaceTracers.particlesCoordinates
+            if self.surfaceTracers.swarm.particlesCoordinates.data.size > 0:
+                coords = self.surfaceTracers.swarm.particlesCoordinates
                 coords.data[coords.data[:,-1] < nd(self.threshold), -1] = nd(self.threshold)
 
 
