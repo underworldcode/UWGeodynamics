@@ -166,7 +166,8 @@ class SedimentationThreshold(SurfaceProcesses):
 class ErosionAndSedimentationThreshold(SedimentationThreshold, ErosionThreshold):
 
     def __init__(self, air=None, sediment=None,
-                 threshold=None, timeField=None, Model=None):
+                 threshold=None, timeField=None,
+                 surfaceTracers=None, Model=None):
 
         super(ErosionAndSedimentationThreshold, self).__init__(Model=Model)
 
@@ -174,6 +175,7 @@ class ErosionAndSedimentationThreshold(SedimentationThreshold, ErosionThreshold)
         self.air = air
         self.sediment = sediment
         self.threshold = threshold
+        self.surfaceTracers = surfaceTracers
         self.Model = Model
 
     def _init_model(self):
