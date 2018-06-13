@@ -213,6 +213,16 @@ class VelocityBCs(object):
         if isinstance(condition, (list, tuple)) and nodes.data.size > 0:
             for dim in range(self.Model.mesh.dim):
 
+                if isinstance(condition[dim], fn.Function):
+                    func = condition[dim]
+                    self.Model.velocityField.data[nodes.data, dim] = (
+                        func.evaluate(
+                            self.Model.mesh.data[nodes.data])[:, dim])
+                    self.Model.boundariesField.data[nodes.data, dim] = (
+                        func.evaluate(
+                            self.Model.mesh.data[nodes.data])[:, dim])
+                    self.dirichlet_indices[dim] += nodes
+
                 # User defined function
                 if isinstance(condition[dim], (list, tuple)):
                     func = fn.branching.conditional(condition[dim])
