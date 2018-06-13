@@ -643,6 +643,12 @@ class Model(Material):
         self.HeatProdFn = fn.branching.map(fn_key=self.materialField,
                                            mapping=HeatProdMap)
 
+        # Add Viscous dissipation Heating
+        if rcParams["shearHeating"]:
+            stress = fn.tensor.second_invariant(self._stressFn)
+            strain = self._strainRate_2ndInvariant
+            self.HeatProdFn += stress * strain
+
         obj = uw.systems.AdvectionDiffusion(
             self.temperature,
             self._temperatureDot,

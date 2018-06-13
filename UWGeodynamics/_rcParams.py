@@ -103,6 +103,7 @@ rcParams = {
     "projTimeField.SIunits" : [u.megayears, validate_quantity],
 
     "useEquationResidual" : [False, validate_bool],
-    "alpha": [0., validate_float]
+    "alpha": [0., validate_float],
+    "shearHeating": [False, validate_bool]
     }
 
