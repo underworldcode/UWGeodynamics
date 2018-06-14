@@ -77,6 +77,8 @@ rcParams = {
     "initial.nonlinear.max.iterations": [500, validate_int],
     "nonlinear.min.iterations": [2, validate_int],
     "nonlinear.max.iterations": [500, validate_int],
+    "nonlinear.tolerance.adjust.factor": [2, validate_int],
+    "nonlinear.tolerance.adjust.nsteps": [100, validate_int],
     "mg.levels": [None, validate_int_or_none],
 
     "rheology.default.uppercrust": ["Patterson et al., 1990", validate_viscosity],
@@ -104,6 +106,7 @@ rcParams = {
 
     "useEquationResidual" : [False, validate_bool],
     "alpha": [0., validate_float],
-    "shearHeating": [False, validate_bool]
+    "shearHeating": [False, validate_bool],
+    "surface.pressure.normalization": [True, validate_bool]
     }
 
