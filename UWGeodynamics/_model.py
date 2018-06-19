@@ -30,6 +30,7 @@ from ._meshvariable import MeshVariable
 from ._swarmvariable import SwarmVariable
 from scipy import interpolate
 from six import string_types, iteritems
+from datetime import datetime
 
 
 class Model(Material):
@@ -154,6 +155,9 @@ class Model(Material):
         self.add_mesh_field("tractionField", nodeDofCount=self.mesh.dim)
         self.add_submesh_field("_strainRateField", nodeDofCount=1)
 
+        # Create a field to check applied boundary conditions
+        self.add_mesh_field("boundariesField", nodeDofCount=self.mesh.dim)
+
         # symmetric component of the gradient of the flow velocityField.
         self.strainRate = fn.tensor.symmetric(self.velocityField.fn_gradient)
         self._strainRate_2ndInvariant = fn.tensor.second_invariant(
@@ -162,9 +166,14 @@ class Model(Material):
 
         # Create the material swarm
         self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
+        if self.mesh.dim == 2:
+            particlesPerCell = rcParams["swarm.particles.per.cell.2D"]
+        else:
+            particlesPerCell = rcParams["swarm.particles.per.cell.3D"]
+
         self._swarmLayout = uw.swarm.layouts.PerCellSpaceFillerLayout(
             swarm=self.swarm,
-            particlesPerCell=rcParams["swarm.particles.per.cell"])
+            particlesPerCell=particlesPerCell)
 
         self.swarm.populate_using_layout(layout=self._swarmLayout)
 
@@ -223,6 +232,7 @@ class Model(Material):
         self.DiffusivityFn = None
         self.HeatProdFn = None
         self._buoyancyFn = None
+        self.callback_post_solve = None
         self._initialize()
 
     def _initialize(self):
@@ -233,12 +243,17 @@ class Model(Material):
             order=2
         )
 
+        if self.mesh.dim == 2:
+            particlesPerCell = rcParams["popcontrol.particles.per.cell.2D"]
+        else:
+            particlesPerCell = rcParams["popcontrol.particles.per.cell.3D"]
+
         self.population_control = uw.swarm.PopulationControl(
             self.swarm,
             aggressive=rcParams["popcontrol.aggressive"],
             splitThreshold=rcParams["popcontrol.split.threshold"],
             maxSplits=rcParams["popcontrol.max.splits"],
-            particlesPerCell=rcParams["popcontrol.particles.per.cell"])
+            particlesPerCell=particlesPerCell)
 
         # Add Common Swarm Variables
         self.add_swarm_field("materialField", dataType="int", count=1,
@@ -499,7 +514,6 @@ class Model(Material):
         self._surfaceProcesses = value
         if value:
             self._surfaceProcesses.timeField = self.timeField
-        if isinstance(value, surfaceProcesses.Badlands):
             self._surfaceProcesses.Model = self
 
     def set_temperatureBCs(self, left=None, right=None,
@@ -639,7 +653,7 @@ class Model(Material):
         )
         return obj
 
-    def _stokes(self):
+    def stokes_solver(self):
         """ Stokes solver """
 
         gravity = tuple([nd(val) for val in self.gravity])
@@ -647,7 +661,7 @@ class Model(Material):
 
         if any([material.viscosity for material in self.materials]):
 
-            stokes_object = uw.systems.Stokes(
+            self._stokes_SLE = uw.systems.Stokes(
                 velocityField=self.velocityField,
                 pressureField=self.pressureField,
                 conditions=self._velocityBCs,
@@ -657,16 +671,20 @@ class Model(Material):
                 fn_one_on_lambda=self._lambdaFn)
                 #useEquationResidual=rcParams["useEquationResidual"])
 
-            solver = uw.systems.Solver(stokes_object)
-            solver.set_inner_method(rcParams["solver"])
+            self._solver = uw.systems.Solver(self._stokes_SLE)
+            self._solver.set_inner_method(rcParams["solver"])
 
             if rcParams["penalty"]:
-                solver.set_penalty(rcParams["penalty"])
+                self._solver.set_penalty(rcParams["penalty"])
 
             if rcParams["mg.levels"]:
-                solver.options.mg.levels = rcParams["mg.levels"]
+                self._solver.options.mg.levels = rcParams["mg.levels"]
 
-        return solver
+        if self._solver._check_linearity(False):
+            self.add_mesh_field("prevVelocityField", nodeDofCount=self.mesh.dim)
+            self.add_submesh_field("prevPressureField", nodeDofCount=1)
+
+        return self._solver
 
     def _init_melt_fraction(self):
         """ Initialize the Melt Fraction Field """
@@ -1241,6 +1259,19 @@ class Model(Material):
 
         self._solution_exist.value = True
 
+        # The following line are useful to output velocity and pressurefield
+        # from the non-linear loop.
+        #niteration = self._stokes_SLE._cself.nonLinearIteration_I
+        #string = str(self.step) + "-" + str(niteration)
+        #self._save_fields(["velocityField", "pressureField"], checkpointID=string,
+        #                  time=niteration)
+    def _apply_alpha(self):
+
+        self.velocityField.data[...] *= (1.0 - rcParams["alpha"])
+        self.velocityField.data[...] += rcParams["alpha"] * self.prevVelocityField.data[...]
+        self.velocityField.syncronise()
+
+
     def _get_material_indices(self, material):
         """ Get mesh indices of a Material
 
@@ -1268,29 +1299,29 @@ class Model(Material):
         """ Solve Stokes """
 
         if self.step == 0:
-            tol = rcParams["initial.nonlinear.tolerance"]
+            self._curTolerance = rcParams["initial.nonlinear.tolerance"]
             minIterations = rcParams["initial.nonlinear.min.iterations"]
             maxIterations = rcParams["initial.nonlinear.max.iterations"]
         else:
-            tol = rcParams["nonlinear.tolerance"]
+            self._curTolerance = rcParams["nonlinear.tolerance"]
             minIterations = rcParams["nonlinear.min.iterations"]
             maxIterations = rcParams["nonlinear.max.iterations"]
 
         if uw.__version__.split(".")[1] > 5:
             # The minimum number of iteration only works with version 2.6
             # 2.6 is still in development...
-            self._stokes().solve(
+            self.stokes_solver().solve(
                 nonLinearIterate=True,
                 nonLinearMinIterations=minIterations,
                 nonLinearMaxIterations=maxIterations,
-                callback_post_solve=self._calibrate_pressureField,
-                nonLinearTolerance=tol)
+                callback_post_solve=self.callback_post_solve,
+                nonLinearTolerance=self._curTolerance)
         else:
-            self._stokes().solve(
+            self.stokes_solver().solve(
                 nonLinearIterate=True,
                 nonLinearMaxIterations=maxIterations,
-                callback_post_solve=self._calibrate_pressureField,
-                nonLinearTolerance=tol)
+                callback_post_solve=self.callback_post_solve,
+                nonLinearTolerance=self._curTolerance)
 
         self._solution_exist.value = True
 
@@ -1313,9 +1344,9 @@ class Model(Material):
             self.get_lithostatic_pressureField()
         return
 
-    def run_for(self, duration=None, checkpoint_interval=None,
+    def run_for(self, duration=None, checkpoint_interval=None, nstep=None,
                 timeCheckpoints=None, swarm_checkpoint=None, dt=None,
-                glucifer_outputs=False):
+                glucifer_outputs=False, restartStep=None, restartDir=None):
         """ Run the Model
 
         Parameters:
@@ -1332,11 +1363,23 @@ class Model(Material):
             os.mkdir(self.outputDir)
         uw.barrier()
 
-        step = self.step
+        if restartStep:
+            restartDir = restartDir if restartDir else self.outputDir
+            self.restart(step=restartStep, restartDir=restartDir)
+
+        stepDone = 0
         time = nd(self.time)
-        units = duration.units
-        duration = time + nd(duration)
-        user_dt = nd(dt)
+
+        if duration:
+            units = duration.units
+            duration = time + nd(duration)
+        else:
+            units = rcParams["time.SIunits"]
+
+        if dt:
+            user_dt = nd(dt)
+        else:
+            user_dt = None
 
         next_checkpoint = None
 
@@ -1356,7 +1399,7 @@ class Model(Material):
         # Comment as it does not work in parallel
         # self.save()
 
-        while time < duration:
+        while time < duration or stepDone < nstep:
 
             self.preSolveHook()
 
@@ -1365,16 +1408,17 @@ class Model(Material):
             # Whats the longest we can run before reaching the end
             # of the model or a checkpoint?
             # Need to generalize that
-            dt = rcParams["CFL"] * self.swarm_advector.get_max_dt()
+            self._dt = rcParams["CFL"] * self.swarm_advector.get_max_dt()
 
             if self.temperature:
-                dt = min(dt, self._advdiffSystem.get_max_dt())
-                dt *= rcParams["CFL"]
+                self._dt = min(self._dt, self._advdiffSystem.get_max_dt())
+                self._dt *= rcParams["CFL"]
 
             if checkpoint_interval:
-                dt = min(dt, next_checkpoint - time)
+                self._dt = min(self._dt, next_checkpoint - time)
 
-            self._dt = min(dt, duration - time)
+            if duration:
+                self._dt = min(self._dt, duration - time)
 
             if user_dt:
                 self._dt = min(self._dt, user_dt)
@@ -1395,6 +1439,7 @@ class Model(Material):
             self._update()
 
             self.step += 1
+            stepDone += 1
             self.time += Dimensionalize(self._dt, units)
             time += self._dt
 
@@ -1405,10 +1450,12 @@ class Model(Material):
                     self.output_glucifer_figures(self.checkpointID)
                 next_checkpoint += nd(checkpoint_interval)
 
-            if checkpoint_interval or step % 1 == 0:
+            if checkpoint_interval or self.step % 1 == 0 or nstep:
                 if uw.rank() == 0:
-                    print("Time: ", str(self.time.to(units)),
-                          'dt:', str(Dimensionalize(self._dt, units)))
+                    print("Step:" + str(stepDone) + " Model Time: ", str(self.time.to(units)),
+                          'dt:', str(Dimensionalize(self._dt, units)),
+                          #'vrms:', str(self.velocity_rms()),
+                          '('+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+')')
 
             self.postSolveHook()
 
@@ -1420,6 +1467,21 @@ class Model(Material):
     def postSolveHook(self):
         return
 
+    @property
+    def callback_post_solve(self):
+        return self._callback_post_solve
+
+    @callback_post_solve.setter
+    def callback_post_solve(self, value):
+        def callback():
+            if callable(value):
+                value()
+            self._calibrate_pressureField()
+            #self._adjust_tolerance()
+            self._apply_alpha()
+        self._callback_post_solve = callback
+
+
     def _update(self):
         """ Update Function
 
@@ -1430,6 +1492,19 @@ class Model(Material):
         """
 
         dt = self._dt
+
+        # Heal plastic strain
+        if any([material.healingRate for material in self.materials]):
+            healingRates = {}
+            for material in self.materials:
+                healingRates[material.index] = nd(material.healingRate)
+            HealingRateFn = fn.branching.map(fn_key=self.materialField,
+                                             mapping=healingRates)
+
+            plasticStrainIncHealing = dt * HealingRateFn.evaluate(self.swarm)
+            self.plasticStrain.data[:] -= plasticStrainIncHealing
+            self.plasticStrain.data[self.plasticStrain.data < 0.] = 0.
+
         # Increment plastic strain
         plasticStrainIncrement = dt * self._isYielding.evaluate(self.swarm)
         self.plasticStrain.data[:] += plasticStrainIncrement
@@ -1486,7 +1561,7 @@ class Model(Material):
         self._advector = _mesh_advector(self, axis)
 
     def add_passive_tracers(self, name, vertices=None,
-                            particleEscape=False):
+                            particleEscape=True):
         """ Add a swarm of passive tracers to the Model
 
         Parameters:
@@ -1501,7 +1576,7 @@ class Model(Material):
         """
         if name in self.passive_tracers.keys():
             print("{0} tracers exists already".format(name))
-            return
+            return self.passive_tracers[name]
 
         tracers = PassiveTracers(self.mesh,
                                  self.velocityField,
@@ -1615,6 +1690,10 @@ class Model(Material):
 
         if not checkpointID:
             checkpointID = self.checkpointID
+
+        if uw.rank() == 0 and not os.path.exists(self.outputDir):
+            os.mkdir(self.outputDir)
+        uw.barrier()
 
         self._save_fields(variables, checkpointID)
         self._save_swarms(variables, checkpointID)
@@ -1761,7 +1840,9 @@ class Model(Material):
         else:
             raise ValueError(field, ' is not a valid variable name \n')
 
-    def _save_fields(self, fields, checkpointID):
+    def _save_fields(self, fields, checkpointID, time=None):
+
+        time = time if time else self.time
 
         if self._advector:
             mesh_name = 'mesh-%s' % checkpointID
@@ -1771,14 +1852,14 @@ class Model(Material):
             mesh_prefix = os.path.join(self.outputDir, mesh_name)
 
         mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
-                            time=self.time)
+                            time=time)
 
         filename = "XDMF.fields."+str(checkpointID).zfill(5)+".xmf"
         filename = os.path.join(self.outputDir, filename)
 
         # First write the XDMF header
         string = uw.utils._xdmfheader()
-        string += uw.utils._spacetimeschema(mH, mesh_name, self.time)
+        string += uw.utils._spacetimeschema(mH, mesh_name, time)
 
         for field in fields:
             if field == "temperature" and not self.temperature:
@@ -1795,32 +1876,34 @@ class Model(Material):
                 obj = getattr(self, field)
                 file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
                 handle = obj.save('%s.h5' % file_prefix, units=units,
-                                  time=self.time)
+                                  time=time)
                 string += uw.utils._fieldschema(handle, field)
 
         # Write the footer to the xmf
         string += uw.utils._xdmffooter()
 
         # Write the string to file - only proc 0
-        xdmfFH = open(filename, "w")
-        xdmfFH.write(string)
-        xdmfFH.close()
+        if uw.rank() == 0:
+            with open(filename, "w") as xdmfFH:
+                xdmfFH.write(string)
+        uw.barrier()
 
-    def _save_swarms(self, fields, checkpointID):
+    def _save_swarms(self, fields, checkpointID, time=None):
 
+        time = time if time else self.time
         swarm_name = 'swarm-%s.h5' % checkpointID
 
         sH = self.swarm.save(os.path.join(self.outputDir,
                              swarm_name),
                              units=u.kilometers,
-                             time=self.time)
+                             time=time)
 
         filename = "XDMF.swarms."+str(checkpointID).zfill(5)+".xmf"
         filename = os.path.join(self.outputDir, filename)
 
         # First write the XDMF header
         string = uw.utils._xdmfheader()
-        string += uw.utils._swarmspacetimeschema(sH, swarm_name, self.time)
+        string += uw.utils._swarmspacetimeschema(sH, swarm_name, time)
 
         for field in fields:
             if field in rcParams["swarm.variables"]:
@@ -1834,16 +1917,17 @@ class Model(Material):
                 # each one of the field variables
                 obj = getattr(self, field)
                 file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
-                handle = obj.save('%s.h5' % file_prefix, units=units, time=self.time)
+                handle = obj.save('%s.h5' % file_prefix, units=units, time=time)
                 string += uw.utils._swarmvarschema(handle, field)
 
         # Write the footer to the xmf
         string += uw.utils._xdmffooter()
 
         # Write the string to file - only proc 0
-        xdmfFH = open(filename, "w")
-        xdmfFH.write(string)
-        xdmfFH.close()
+        if uw.rank() == 0:
+            with open(filename, "w") as xdmfFH:
+                xdmfFH.write(string)
+        uw.barrier()
 
     def save(self, filename=None):
         save_model(self, filename)
@@ -1868,6 +1952,16 @@ class Model(Material):
 
         self._fill_model()
 
+    def _adjust_tolerance(self):
+        niteration = self._stokes_SLE._cself.nonLinearIteration_I
+        nsteps = rcParams["nonlinear.tolerance.adjust.nsteps"]
+        curResidual = self._stokes_SLE._cself.curResidual
+
+        if curResidual > self._curTolerance:
+            if (niteration % nsteps == 0 and self.step > 0):
+                fact = rcParams["nonlinear.tolerance.adjust.factor"]
+                self._curTolerance /= fact
+                self._stokes_SLE._cself.nonLinearTolerance = self._curTolerance
 
     def velocity_rms(self):
         vdotv_fn = uw.function.math.dot(self.velocityField, self.velocityField)
@@ -1875,7 +1969,7 @@ class Model(Material):
         (v2, vol) = self.mesh.integrate(fn=fn_2_integrate)
         import math
         vrms = math.sqrt(v2/vol)
-        os.write(1, "Velocity rms (vrms): {0}".format(vrms))
+        #os.write(1, "Velocity rms (vrms): {0}".format(vrms))
         return vrms
 
 

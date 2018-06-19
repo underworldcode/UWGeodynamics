@@ -6,6 +6,7 @@ from .LecodeIsostasy import LecodeIsostasy
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
 from ._utils import Balanced_InflowOutflow
+from ._utils import MovingWall
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -23,7 +24,8 @@ class VelocityBCs(object):
     """ Class to define the mechanical boundary conditions """
 
     def __init__(self, Model, left=None, right=None, top=None, bottom=None,
-                 front=None, back=None, indexSets=None):
+                 front=None, back=None, indexSets=None,
+                 order_wall_conditions=None):
         """ Defines mechanical boundary conditions
 
         The type of conditions is determined through the units used do define
@@ -91,6 +93,48 @@ class VelocityBCs(object):
         self.dirichlet_indices = []
         self.neumann_indices = []
 
+
+        if self.Model.mesh.dim == 2:
+            self._wall_indexSets = {"bottom": (self.bottom,
+                                               self.Model._bottom_wall),
+                                    "top": (self.top,
+                                            self.Model._top_wall),
+                                    "left": (self.left,
+                                             self.Model._left_wall),
+                                    "right": (self.right,
+                                              self.Model._right_wall)}
+            if order_wall_conditions:
+                if len(order_wall_conditions) <= 5:
+                    self.order_wall_conditions = order_wall_conditions
+            else:
+                self.order_wall_conditions = ["bottom", "top", "left", "right"]
+
+        if self.Model.mesh.dim == 3:
+            self._wall_indexSets = {"bottom": (self.bottom,
+                                               self.Model._bottom_wall),
+                                    "top": (self.top,
+                                            self.Model._top_wall),
+                                    "left": (self.left,
+                                             self.Model._left_wall),
+                                    "right": (self.right,
+                                              self.Model._right_wall),
+                                    "front": (self.front,
+                                              self.Model._front_wall),
+                                    "back": (self.back,
+                                             self.Model._back_wall)}
+            if order_wall_conditions:
+                if len(order_wall_conditions) <= 7:
+                    self.order_wall_conditions = order_wall_conditions
+            else:
+                self.order_wall_conditions = ["bottom", "top", "front", "back",
+                                              "left", "right"]
+
+        # Link Moving Walls
+        for arg in [self.left, self.right, self.top, self.bottom, self.front,
+                    self.back]:
+            if isinstance(arg, MovingWall):
+                arg.Model = self.Model
+
     def __getitem__(self, name):
         return self.__dict__[name]
 
@@ -109,11 +153,75 @@ class VelocityBCs(object):
         if not nodes:
             return
 
+        # Special case (Bottom LecodeIsostasy)
+        if (isinstance(condition, LecodeIsostasy) and
+            nodes ==  self.Model._bottom_wall):
+
+            # Apply support condition
+            self.Model._isostasy = self.bottom
+            self.Model._isostasy.mesh = self.Model.mesh
+            self.Model._isostasy.swarm = self.Model.swarm
+            self.Model._isostasy._mesh_advector = self.Model._advector
+            self.Model._isostasy.velocityField = self.Model.velocityField
+            self.Model._isostasy.boundariesField = self.Model.boundariesField
+            self.Model._isostasy.materialIndexField = self.Model.materialField
+            self.Model._isostasy._densityFn = self.Model._densityFn
+            vertical_walls_conditions = {
+                "left": self.left,
+                "right": self.right,
+                "front": self.front,
+                "back": self.back
+            }
+            self.Model._isostasy.vertical_walls_conditions = (
+                vertical_walls_conditions)
+            self.dirichlet_indices[-1] += self.Model._bottom_wall
+            return
+
+        #if isinstance(condition, MovingWall):
+        #    condition.wall = nodes
+        #    set_ = condition.get_wall_indices()
+        #    velocity = nd(condition.velocity)
+        #    dim = condition.wall_direction_axis[condition.wall]
+        #    if set_.data.size > 0:
+        #        self.Model.velocityField.data[set_.data, :] = 0.
+        #        self.Model.boundariesField.data[set_.data, :] = 0.
+        #        self.Model.velocityField.data[set_.data, dim] = velocity
+        #        self.Model.boundariesField.data[set_.data, dim] = velocity
+        #        self.dirichlet_indices[0] += set_
+        #        self.dirichlet_indices[1] += set_
+        #    return
+
+        if isinstance(condition, MovingWall):
+            condition.wall = nodes
+            indices = condition.get_wall_indices()
+            #velocity = nd(condition.velocity)
+            func = condition.velocityFn
+            for dim in range(self.Model.mesh.dim):
+                set_ = indices[dim]
+                if set_.data.size > 0:
+                    self.Model.velocityField.data[set_.data, dim] =(
+                        func.evaluate(set_)[:,0])
+                    self.Model.boundariesField.data[set_.data, dim] =(
+                        func.evaluate(set_)[:, 0])
+                    self.dirichlet_indices[dim] += set_
+            return
+
+
         # Expect a list or tuple of dimension mesh.dim.
         # Check that the domain actually contains some boundary nodes
         # (nodes is not None)
         if isinstance(condition, (list, tuple)) and nodes.data.size > 0:
             for dim in range(self.Model.mesh.dim):
+
+                if isinstance(condition[dim], fn.Function):
+                    func = condition[dim]
+                    self.Model.velocityField.data[nodes.data, dim] = (
+                        func.evaluate(
+                            self.Model.mesh.data[nodes.data])[:, dim])
+                    self.Model.boundariesField.data[nodes.data, dim] = (
+                        func.evaluate(
+                            self.Model.mesh.data[nodes.data])[:, dim])
+                    self.dirichlet_indices[dim] += nodes
 
                 # User defined function
                 if isinstance(condition[dim], (list, tuple)):
@@ -121,8 +229,10 @@ class VelocityBCs(object):
                     self.Model.velocityField.data[nodes.data, dim] = (
                         func.evaluate(
                             self.Model.mesh.data[nodes.data])[:, dim])
+                    self.Model.boundariesField.data[nodes.data, dim] = (
+                        func.evaluate(
+                            self.Model.mesh.data[nodes.data])[:, dim])
                     self.dirichlet_indices[dim] += nodes
-                    continue
 
                 # Scalar condition
                 if isinstance(condition[dim], (u.Quantity, float, int)):
@@ -130,6 +240,8 @@ class VelocityBCs(object):
                     # Process dirichlet condition
                     if not _is_neumann(condition[dim]):
                         self.Model.velocityField.data[nodes.data, dim] = (
+                            nd(condition[dim]))
+                        self.Model.boundariesField.data[nodes.data, dim] = (
                             nd(condition[dim]))
                         self.dirichlet_indices[dim] += nodes
                     # Process neumann condition
@@ -145,6 +257,8 @@ class VelocityBCs(object):
                     obj._get_side_flow()
                     self.Model.velocityField.data[nodes.data, dim] = (
                         obj._get_side_flow())
+                    self.Model.boundariesField.data[nodes.data, dim] = (
+                        obj._get_side_flow())
                     self.dirichlet_indices[dim] += nodes
 
                 if isinstance(condition[dim], LecodeIsostasy):
@@ -158,6 +272,7 @@ class VelocityBCs(object):
                     self.Model._isostasy.swarm = self.Model.swarm
                     self.Model._isostasy._mesh_advector = self.Model._advector
                     self.Model._isostasy.velocityField = self.Model.velocityField
+                    self.Model._isostasy.boundariesField = self.Model.boundariesField
                     self.Model._isostasy.materialIndexField = self.Model.materialField
                     self.Model._isostasy._densityFn = self.Model._densityFn
                     vertical_walls_conditions = {
@@ -187,6 +302,7 @@ class VelocityBCs(object):
         """
 
         Model = self.Model
+        Model.boundariesField.data[...] = np.random.random(Model.boundariesField.data.shape)
 
         # Reinitialise neumnann and dirichlet condition
         self.dirichlet_indices = []
@@ -196,40 +312,9 @@ class VelocityBCs(object):
             self.dirichlet_indices.append(Model.mesh.specialSets["Empty"])
             self.neumann_indices.append(Model.mesh.specialSets["Empty"])
 
-        # Apply condition to the bottom first
-        if isinstance(self.bottom, LecodeIsostasy):
-            # Apply support condition
-            Model._isostasy = self.bottom
-            Model._isostasy.mesh = Model.mesh
-            Model._isostasy.swarm = Model.swarm
-            Model._isostasy._mesh_advector = Model._advector
-            Model._isostasy.velocityField = Model.velocityField
-            Model._isostasy.materialIndexField = Model.materialField
-            Model._isostasy._densityFn = Model._densityFn
-            vertical_walls_conditions = {
-                "left": self.left,
-                "right": self.right,
-                "front": self.front,
-                "back": self.back
-            }
-            Model._isostasy.vertical_walls_conditions = (
-                vertical_walls_conditions)
-            self.dirichlet_indices[-1] += Model._bottom_wall
-        else:
-            Model._isostasy = None
-            self.apply_condition_nodes(self.bottom, Model._bottom_wall)
-
-        # Apply condition at the top.
-        self.apply_condition_nodes(self.top, Model._top_wall)
-
-        # Apply conditions to each wall.
-        self.apply_condition_nodes(self.left, Model._left_wall)
-        self.apply_condition_nodes(self.right, Model._right_wall)
-        self.apply_condition_nodes(self.indexSets, self.indexSets)
-
-        if Model.mesh.dim > 2:
-            self.apply_condition_nodes(self.front, Model._front_wall)
-            self.apply_condition_nodes(self.back, Model._back_wall)
+        for set_ in self.order_wall_conditions:
+            (condition, nodes) = self._wall_indexSets[set_]
+            self.apply_condition_nodes(condition, nodes)
 
         conditions = []
 

@@ -21,6 +21,7 @@ rcParams = {
                           "temperature",
                           "pressureField",
                           "strainRateField",
+                          "boundariesField",
                           "projMaterialField",
                           "projTimeField",
                           "projStressField",
@@ -36,6 +37,7 @@ rcParams = {
                           "velocityField",
                           "viscosityField",
                           "timeField",
+                          "boundariesField",
                           "projStressField",
                           "projTimeField",
                           "projMaterialField",
@@ -53,14 +55,16 @@ rcParams = {
                           "pressureField",
                           "plasticStrain",
                           "velocityField"], validate_stringlist],
-    
+
     "gravity": [9.81 * u.meter / u.second**2, validate_quantity],
-    "swarm.particles.per.cell": [20, validate_int],
+    "swarm.particles.per.cell.2D": [40, validate_int],
+    "swarm.particles.per.cell.3D": [120, validate_int],
 
     "popcontrol.aggressive" : [True, validate_bool],
     "popcontrol.split.threshold" : [0.15, validate_float],
     "popcontrol.max.splits" : [10, validate_int],
-    "popcontrol.particles.per.cell" : [20, validate_int],
+    "popcontrol.particles.per.cell.2D" : [20, validate_int],
+    "popcontrol.particles.per.cell.3D" : [60, validate_int],
 
     "CFL": [0.5, validate_float],
 
@@ -87,6 +91,7 @@ rcParams = {
     "scaling.temperature": [1.0 * u.degK, validate_quantity],
     "scaling.substance": [1.0 * u.mole, validate_quantity],
 
+    "time.SIunits": [u.years, validate_quantity],
     "viscosityField.SIunits" : [u.pascal * u.second, validate_quantity],
     "densityField.SIunits" : [u.kilogram / u.metre**3, validate_quantity],
     "velocityField.SIunits" : [u.centimeter / u.year, validate_quantity],
@@ -96,5 +101,8 @@ rcParams = {
     "projViscosityField.SIunits"  : [u.pascal * u.second, validate_quantity],
     "projDensityField.SIunits" : [u.kilogram / u.metre**3, validate_quantity],
     "projTimeField.SIunits" : [u.megayears, validate_quantity],
+
+    "useEquationResidual" : [False, validate_bool],
+    "alpha": [0., validate_float]
     }
 
