@@ -1116,7 +1116,7 @@ class Model(Material):
         for material in self.materials:
             # Calculate viscous stress
             viscousStressFn = self._viscous_stressFn()
-            elasticStressFn = self._elastic_stressFn
+            elasticStressFn = self._elastic_stressFn()
             stressMap[material.index] = viscousStressFn + elasticStressFn
 
         return fn.branching.map(fn_key=self.materialField,
