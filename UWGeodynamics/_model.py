@@ -518,7 +518,6 @@ class Model(Material):
         self._surfaceProcesses = value
         if value:
             self._surfaceProcesses.timeField = self.timeField
-        if isinstance(value, surfaceProcesses.Badlands):
             self._surfaceProcesses.Model = self
 
     def set_temperatureBCs(self, left=None, right=None,
@@ -647,6 +646,12 @@ class Model(Material):
 
         self.HeatProdFn = fn.branching.map(fn_key=self.materialField,
                                            mapping=HeatProdMap)
+
+        # Add Viscous dissipation Heating
+        if rcParams["shearHeating"]:
+            stress = fn.tensor.second_invariant(self._stressFn)
+            strain = self._strainRate_2ndInvariant
+            self.HeatProdFn += stress * strain
 
         obj = uw.systems.AdvectionDiffusion(
             self.temperature,
@@ -1575,7 +1580,8 @@ class Model(Material):
         def callback():
             if callable(value):
                 value()
-            self._calibrate_pressureField()
+            if rcParams["surface.pressure.normalization"]:
+                self._calibrate_pressureField()
             #self._adjust_tolerance()
         self._callback_post_solve = callback
 
@@ -1590,6 +1596,19 @@ class Model(Material):
         """
 
         dt = self._dt
+
+        # Heal plastic strain
+        if any([material.healingRate for material in self.materials]):
+            healingRates = {}
+            for material in self.materials:
+                healingRates[material.index] = nd(material.healingRate)
+            HealingRateFn = fn.branching.map(fn_key=self.materialField,
+                                             mapping=healingRates)
+
+            plasticStrainIncHealing = dt * HealingRateFn.evaluate(self.swarm)
+            self.plasticStrain.data[:] -= plasticStrainIncHealing
+            self.plasticStrain.data[self.plasticStrain.data < 0.] = 0.
+
         # Increment plastic strain
         plasticStrainIncrement = dt * self._isYielding.evaluate(self.swarm)
         self.plasticStrain.data[:] += plasticStrainIncrement
@@ -1661,7 +1680,7 @@ class Model(Material):
         """
         if name in self.passive_tracers.keys():
             print("{0} tracers exists already".format(name))
-            return
+            return self.passive_tracers[name]
 
         tracers = PassiveTracers(self.mesh,
                                  self.velocityField,

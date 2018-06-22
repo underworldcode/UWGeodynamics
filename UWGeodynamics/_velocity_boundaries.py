@@ -24,7 +24,7 @@ class VelocityBCs(object):
     """ Class to define the mechanical boundary conditions """
 
     def __init__(self, Model, left=None, right=None, top=None, bottom=None,
-                 front=None, back=None, indexSets=None,
+                 front=None, back=None, indexSets=tuple(),
                  order_wall_conditions=None):
         """ Defines mechanical boundary conditions
 
@@ -52,7 +52,7 @@ class VelocityBCs(object):
         bottom:(tuple) with length 2 in 2D, and length 3 in 3D.
             Define mechanical conditions on the bottom side of the Model.
             Conditions are defined for each Model direction (x, y, [z])
-        indexSets: (list)
+        indexSets: [(condition, IndexSet)]
             List of node where to apply predefined velocities.
 
         Only valid for 3D Models:
@@ -213,6 +213,16 @@ class VelocityBCs(object):
         if isinstance(condition, (list, tuple)) and nodes.data.size > 0:
             for dim in range(self.Model.mesh.dim):
 
+                if isinstance(condition[dim], fn.Function):
+                    func = condition[dim]
+                    self.Model.velocityField.data[nodes.data, dim] = (
+                        func.evaluate(
+                            self.Model.mesh.data[nodes.data])[:, dim])
+                    self.Model.boundariesField.data[nodes.data, dim] = (
+                        func.evaluate(
+                            self.Model.mesh.data[nodes.data])[:, dim])
+                    self.dirichlet_indices[dim] += nodes
+
                 # User defined function
                 if isinstance(condition[dim], (list, tuple)):
                     func = fn.branching.conditional(condition[dim])
@@ -305,6 +315,10 @@ class VelocityBCs(object):
         for set_ in self.order_wall_conditions:
             (condition, nodes) = self._wall_indexSets[set_]
             self.apply_condition_nodes(condition, nodes)
+
+        if self.indexSets:
+            for (condition, nodes) in self.indexSets:
+                self.apply_condition_nodes(condition, nodes)
 
         conditions = []
 
