@@ -1358,7 +1358,7 @@ class Model(Material):
         while it < maxIterations:
 
             if uw.rank() == 0:
-                print("Doing iteration {0}\n".format(it), file=open('/dev/stdout', 'w'))
+                print("non-linear solver - iteration {0}\n".format(it), file=open('/dev/stdout', 'w'))
 
             self.prevVelocityField.data[...] = self.velocityField.data[...]
             self.prevPressureField.data[...] = self.pressureField.data[...]
@@ -1405,10 +1405,8 @@ class Model(Material):
 
             if uw.rank() == 0:
                 sys.__stdout__.write(
-                        """Non linear solver - Iteration {0} of {1} - """.format(
-                            it, maxIterations))
-                sys.__stdout__.write("""Residual {2:.8e}; Tolerance {3:.8e}""".format(
-                      it, maxIterations, residual, self._curTolerance))
+                        """Non linear solver - Residual {2:.8e}; Tolerance {3:.8e}""".format(
+                            residual, self._curTolerance))
 
             converged = False
             if residual < self._curTolerance and it > minIterations:
