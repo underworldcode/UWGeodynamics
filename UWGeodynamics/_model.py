@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+import sys
 import json
 import json_encoder
 from collections import Iterable
@@ -1324,8 +1325,9 @@ class Model(Material):
         solver = self.stokes_solver()
 
         if solver._check_linearity(False):
-            self.add_mesh_field("prevVelocityField", nodeDofCount=self.mesh.dim)
-            self.add_submesh_field("prevPressureField", nodeDofCount=1)
+            if self.step == 0:
+                self.add_mesh_field("prevVelocityField", nodeDofCount=self.mesh.dim)
+                self.add_submesh_field("prevPressureField", nodeDofCount=1)
             self._nonLinearSolve()
 
         else:
@@ -1359,27 +1361,27 @@ class Model(Material):
             self._callback_post_solve()
 
 
-            # Calculate L2-Norm of current velocity Field
-            vdot = fn.math.dot(self.velocityField, self.velocityField)
-            vint = uw.utils.Integral(vdot, self.mesh)
-            vL2 = np.sqrt(vint.evaluate()[0])
+            ## Calculate L2-Norm of current velocity Field
+            #vdot = fn.math.dot(self.velocityField, self.velocityField)
+            #vint = uw.utils.Integral(vdot, self.mesh)
+            #vL2 = np.sqrt(vint.evaluate()[0])
 
-            # Calculate L2-Norm of delta velocity
-            dV = self.velocityField - self.prevVelocityField
-            vdot = fn.math.dot(dV, dV)
-            vint = uw.utils.Integral(vdot, self.mesh)
-            dVL2 = np.sqrt(vint.evaluate()[0])
+            ## Calculate L2-Norm of delta velocity
+            #dV = self.velocityField - self.prevVelocityField
+            #vdot = fn.math.dot(dV, dV)
+            #vint = uw.utils.Integral(vdot, self.mesh)
+            #dVL2 = np.sqrt(vint.evaluate()[0])
 
-            # Calculate L2-Norm of current dynamic pressure
-            pdot = fn.math.dot(self.pressureField, self.pressureField)
-            pint = uw.utils.Integral(pdot, self.mesh)
-            pL2 = np.sqrt(pint.evaluate()[0])
+            ## Calculate L2-Norm of current dynamic pressure
+            #pdot = fn.math.dot(self.pressureField, self.pressureField)
+            #pint = uw.utils.Integral(pdot, self.mesh)
+            #pL2 = np.sqrt(pint.evaluate()[0])
 
-            # Calculate L2-Norm of delta pressure
-            dP = self.pressureField - self.prevPressureField
-            dPdot = fn.math.dot(dP, dP)
-            pint = uw.utils.Integral(dPdot, self.mesh)
-            dPL2 = np.sqrt(pint.evaluate()[0])
+            ## Calculate L2-Norm of delta pressure
+            #dP = self.pressureField - self.prevPressureField
+            #dPdot = fn.math.dot(dP, dP)
+            #pint = uw.utils.Integral(dPdot, self.mesh)
+            #dPL2 = np.sqrt(pint.evaluate()[0])
 
             # Full norm of the velocity and pressure
             xdot = (fn.math.dot(self.velocityField, self.velocityField) +
@@ -1397,9 +1399,9 @@ class Model(Material):
             residual = abs(dxL2 / xL2)
 
             if uw.rank() == 0:
-                print("Residual {0}, Tolerance {1}\n".format(residual,
-                                                       self._curTolerance),
-                      file=open('/dev/stdout', 'w'))
+                sys.__stdout__.write("""Non linear solver - Iteration {0} of {1}
+                                         - Residual {2:.8e}; Tolerance {3:.8e}""".format(
+                      it, maxIterations, residual, self._curTolerance))
 
             converged = False
             if residual < self._curTolerance and it > minIterations:
@@ -1407,12 +1409,18 @@ class Model(Material):
 
             if converged:
                 if uw.rank() == 0:
-                    print("#### Converged ####\n", file=open('/dev/stdout', 'w'))
+                    sys.__stdout__.write(" - converged - \n")
+                    sys.__stdout__.flush()
                 break
+            else:
+                if uw.rank() == 0:
+                    sys.__stdout__.write(" - not converged - \n")
+                    sys.__stdout__.flush()
 
-            self.velocityField.data[...] *= (1.0 - rcParams["alpha"])
-            self.velocityField.data[...] += rcParams["alpha"] * self.prevVelocityField.data[...]
-            self.velocityField.syncronise()
+
+            #self.velocityField.data[...] *= (1.0 - rcParams["alpha"])
+            #self.velocityField.data[...] += rcParams["alpha"] * self.prevVelocityField.data[...]
+            #self.velocityField.syncronise()
 
             it += 1
 
