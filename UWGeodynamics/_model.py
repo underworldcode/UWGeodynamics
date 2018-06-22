@@ -1327,6 +1327,10 @@ class Model(Material):
             self.add_mesh_field("prevVelocityField", nodeDofCount=self.mesh.dim)
             self.add_submesh_field("prevPressureField", nodeDofCount=1)
             self._nonLinearSolve()
+
+        else:
+            self.stokes_solver().solve()
+
         return
 
     def _nonLinearSolve(self):
@@ -1354,25 +1358,43 @@ class Model(Material):
             self.stokes_solver().solve(nonLinearIterate=False)
             self._callback_post_solve()
 
-            norm1 = np.linalg.norm(self.prevVelocityField.data -
-                                   self.velocityField.data)
-            norm2 = np.linalg.norm(self.prevPressureField.data -
-                                   self.pressureField.data)
 
-            prevVecNorm = norm1**2 + norm2**2
-            recvbuffer = np.zeros((1,))
-            comm.Allreduce(prevVecNorm, recvbuffer, op=MPI.SUM)
-            prevVecNorm = np.sqrt(recvbuffer)[0]
+            # Calculate L2-Norm of current velocity Field
+            vdot = fn.math.dot(self.velocityField, self.velocityField)
+            vint = uw.utils.Integral(vdot, self.mesh)
+            vL2 = np.sqrt(vint.evaluate()[0])
 
-            norm1 = np.linalg.norm(self.velocityField.data)
-            norm2 = np.linalg.norm(self.pressureField.data)
+            # Calculate L2-Norm of delta velocity
+            dV = self.velocityField - self.prevVelocityField
+            vdot = fn.math.dot(dV, dV)
+            vint = uw.utils.Integral(vdot, self.mesh)
+            dVL2 = np.sqrt(vint.evaluate()[0])
 
-            curVecNorm = norm1**2 + norm2**2
-            recvbuffer = np.zeros((1,))
-            comm.Allreduce(curVecNorm, recvbuffer, op=MPI.SUM)
-            curVecNorm = np.sqrt(recvbuffer)[0]
+            # Calculate L2-Norm of current dynamic pressure
+            pdot = fn.math.dot(self.pressureField, self.pressureField)
+            pint = uw.utils.Integral(pdot, self.mesh)
+            pL2 = np.sqrt(pint.evaluate()[0])
 
-            residual = prevVecNorm / curVecNorm
+            # Calculate L2-Norm of delta pressure
+            dP = self.pressureField - self.prevPressureField
+            dPdot = fn.math.dot(dP, dP)
+            pint = uw.utils.Integral(dPdot, self.mesh)
+            dPL2 = np.sqrt(pint.evaluate()[0])
+
+            # Full norm of the velocity and pressure
+            xdot = (fn.math.dot(self.velocityField, self.velocityField) +
+                    fn.math.dot(self.pressureField, self.pressureField))
+            xint = uw.utils.Integral(xdot, self.mesh)
+            xL2  = np.sqrt(xint.evaluate()[0])
+
+            # Full norm of the change in velocity and pressure
+            dV = self.velocityField - self.prevVelocityField
+            dP = self.pressureField - self.prevPressureField
+            xdot = fn.math.dot(dV, dV) + fn.math.dot(dP, dP)
+            xint = uw.utils.Integral(xdot, self.mesh)
+            dxL2 = np.sqrt(xint.evaluate()[0])
+
+            residual = abs(dxL2 / xL2)
 
             if uw.rank() == 0:
                 print("Residual {0}, Tolerance {1}\n".format(residual,
@@ -1519,7 +1541,7 @@ class Model(Material):
                     self.output_glucifer_figures(self.checkpointID)
                 next_checkpoint += nd(checkpoint_interval)
 
-            if checkpoint_interval or step % 1 == 0 or nstep:
+            if checkpoint_interval or self.step % 1 == 0 or nstep:
                 if uw.rank() == 0:
                     print("Step:" + str(stepDone) + " Model Time: ", str(self.time.to(units)),
                           'dt:', str(Dimensionalize(self._dt, units)),
