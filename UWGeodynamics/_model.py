@@ -1404,8 +1404,10 @@ class Model(Material):
             residual = abs(dxL2 / xL2)
 
             if uw.rank() == 0:
-                sys.__stdout__.write("""Non linear solver - Iteration {0} of {1}
-                                         - Residual {2:.8e}; Tolerance {3:.8e}""".format(
+                sys.__stdout__.write(
+                        """Non linear solver - Iteration {0} of {1} - """.format(
+                            it, maxIterations))
+                sys.__stdout__.write("""Residual {2:.8e}; Tolerance {3:.8e}""".format(
                       it, maxIterations, residual, self._curTolerance))
 
             converged = False
