@@ -481,14 +481,15 @@ class NonLinearBlock(object):
         self.data["Pressure Solve times"] = self.get_vals(["Pressure Solve"], 3)
         self.data["Final V Solve times"] = self.get_vals(["Final V Solve"], 4)
         self.data["Total BSSCR times"] = self.get_vals(["Total BSSCR Linear solve time"], 5)
-        self.data["Residuals"] = self.get_vals(["Iteration", "Residual", "Tolerance"], 9)
+        self.data["Residuals"] = self.get_vals(["converged", "Residual", "Tolerance"], 5, func=str)
+        self.data["Residuals"] = [float(val[:-1]) for val in self.data["Residuals"]]
         self.data["Iterations"] = self.get_vals(["Non linear solver - iteration"], -1, func=int)
         self.data["Solution Time"] = self.get_vals(["solution time"], 5)
 
 
     def get_vals(self, FINDSTRING, pos, func=float):
         f = self.string.splitlines()
-        vals = [func(line.split()[pos]) for line in f if all([F in line for F in FINDSTRING])]
+        vals = [func(line.split()[pos]) for line in f if all([F.lower() in line.lower() for F in FINDSTRING])]
         return vals
 
 
