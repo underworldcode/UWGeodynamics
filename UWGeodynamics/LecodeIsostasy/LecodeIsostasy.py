@@ -17,6 +17,7 @@ class LecodeIsostasy(object):
         self.swarm = None
         self._mesh_advector = None
         self.velocityField = None
+        self.boundariesField = None
         self._densityFn = None
         self.materialIndexField = None
         self.reference_mat = reference_mat
@@ -126,21 +127,26 @@ class LecodeIsostasy(object):
             # and do not change the velocity on those nodes.
             if self.vertical_walls_conditions:
                 if self.vertical_walls_conditions["left"]:
-                    if self.vertical_walls_conditions["left"][-1]:
-                        left = self.mesh.specialSets["MinI_vertexSet"]
+                    if self.vertical_walls_conditions["left"][-1] is not None:
+                        left = self.mesh.specialSets["MinI_VertexSet"]
                         if left:
                             base -= left
                 if self.vertical_walls_conditions["right"]:
-                    if self.vertical_walls_conditions["right"][-1]:
-                        right = self.mesh.specialSets["MaxI_vertexSet"]
+                    if self.vertical_walls_conditions["right"][-1] is not None:
+                        right = self.mesh.specialSets["MaxI_VertexSet"]
                         if right:
                             base -= right
 
             bot_ids = base.data[base.data < self.mesh.nodesLocal]
             node_gids = self.mesh.data_nodegId[bot_ids].flatten()
             self.velocityField.data[bot_ids, 1] = basal_velocities[node_gids]
+            if self.boundariesField:
+                self.boundariesField.data[bot_ids, 1] = basal_velocities[node_gids]
 
         self.velocityField.syncronise()
+
+        if self.boundariesField:
+            self.boundariesField.syncronise()
 
     def _lecode_tools_isostasy3D(self):
 
@@ -167,34 +173,46 @@ class LecodeIsostasy(object):
             # and do not change the velocity on those nodes.
             if self.vertical_walls_conditions:
                 if self.vertical_walls_conditions["left"]:
-                    if self.vertical_walls_conditions["left"][-1]:
-                        left = self.mesh.specialSets["MinI_vertexSet"]
+                    if self.vertical_walls_conditions["left"][-1] is not None:
+                        left = self.mesh.specialSets["MinI_VertexSet"]
                         if left:
                             base -= left
                 if self.vertical_walls_conditions["right"]:
-                    if self.vertical_walls_conditions["right"][-1]:
-                        right = self.mesh.specialSets["MaxI_vertexSet"]
+                    if self.vertical_walls_conditions["right"][-1] is not None:
+                        right = self.mesh.specialSets["MaxI_VertexSet"]
                         if right:
                             base -= right
                 if self.vertical_walls_conditions["front"]:
-                    if self.vertical_walls_conditions["front"][-1]:
-                        front = self.mesh.specialSets["MinJ_vertexSet"]
+                    if self.vertical_walls_conditions["front"][-1] is not None:
+                        front = self.mesh.specialSets["MinJ_VertexSet"]
                         if front:
                             base -= front
                 if self.vertical_walls_conditions["back"]:
-                    if self.vertical_walls_conditions["back"][-1]:
-                        back = self.mesh.specialSets["MaxJ_vertexSet"]
+                    if self.vertical_walls_conditions["back"][-1] is not None:
+                        back = self.mesh.specialSets["MaxJ_VertexSet"]
                         if back:
                             base -= back
             bot_ids = base.data[base.data < self.mesh.nodesLocal]
             node_gids = self.mesh.data_nodegId[bot_ids].flatten()
             self.velocityField.data[bot_ids, -1] = basal_velocities.flatten()[node_gids]
+            if self.boundariesField:
+                self.boundariesField.data[bot_ids, -1] = basal_velocities.flatten()[node_gids]
+
 
         self.velocityField.syncronise()
+
+        if self.boundariesField:
+            self.boundariesField.syncronise()
 
     def _get_sep_velocities2D(self):
 
         ncol, nrow = self.mesh.elementRes
+        if self.mesh.elementType == "Q2":
+            fact = 2
+        elif self.mesh.elementType == "Q1":
+            fact = 1
+        ncol *= fact
+        nrow *= fact
 
         # Create some work arrays.
         local_top_vy = np.zeros((ncol + 1,))
@@ -287,6 +305,13 @@ class LecodeIsostasy(object):
     def _get_sep_velocities3D(self):
 
         nx, ny, nz = self.mesh.elementRes
+        if self.mesh.elementType == "Q2":
+            fact = 2
+        elif self.mesh.elementType == "Q1":
+            fact = 1
+        nx *= fact
+        ny *= fact
+        nz *= fact
         GlobalIndices3d = np.indices((nz + 1, ny + 1, nx + 1))
 
         # Create some work arrays.
@@ -445,6 +470,12 @@ class LecodeIsostasy(object):
     def _get_average_densities2D(self):
 
         ncol, nrow = self.mesh.elementRes
+        if self.mesh.elementType == "Q2":
+            fact = 2
+        elif self.mesh.elementType == "Q1":
+            fact = 1
+        ncol *= fact
+        nrow *= fact
 
         # Create some work arrays.
         global_densities = np.zeros((nrow + 1) * (ncol + 1))
@@ -494,6 +525,13 @@ class LecodeIsostasy(object):
     def _get_average_densities3D(self):
 
         nx, ny, nz = self.mesh.elementRes
+        if self.mesh.elementType == "Q2":
+            fact = 2
+        elif self.mesh.elementType == "Q1":
+            fact = 1
+        nx *= fact
+        ny *= fact
+        nz *= fact
 
         # Create some work arrays.
         global_densities = np.zeros((nx+1)*(ny+1)*(nz+1))

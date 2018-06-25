@@ -35,6 +35,8 @@ from ._density import ConstantDensity, LinearDensity
 from ._melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry
 from ._utils import Balanced_InflowOutflow, MoveImporter
 from ._utils import circles_grid, fn_Tukey_window, circle_points_tracers, sphere_points_tracers
+from ._utils import LogFile
+from ._utils import MovingWall
 import _net
 
 __version__ = "0.2.1"
@@ -42,6 +44,7 @@ __author__ = "Romain Beucher"
 
 _id = str(_uuid.uuid4())
 
+uw = underworld
 nd = nonDimensionalize
 u = UnitRegistry
 

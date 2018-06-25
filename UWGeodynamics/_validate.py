@@ -62,7 +62,14 @@ def validate_int(s):
     try:
         return int(s)
     except:
-        raise ValueError("Could not convert value to int") 
+        raise ValueError("Could not convert value to int")
+
+def validate_int_or_none(s):
+    if s:
+        return validate_int(s)
+    if s is not None:
+        raise ValueError("Must be int or None")
+    return
 
 def validate_path(s):
     return str(s)

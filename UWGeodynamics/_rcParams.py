@@ -15,11 +15,13 @@ rcParams = {
     "swarm.variables" : [["materialField",
                           "plasticStrain",
                           "viscosityField",
+                          "timeField",
                           "densityField"], validate_stringlist],
     "mesh.variables" :  [["velocityField",
                           "temperature",
                           "pressureField",
                           "strainRateField",
+                          "boundariesField",
                           "projMaterialField",
                           "projTimeField",
                           "projStressField",
@@ -34,6 +36,8 @@ rcParams = {
                           "strainRateField",
                           "velocityField",
                           "viscosityField",
+                          "timeField",
+                          "boundariesField",
                           "projStressField",
                           "projTimeField",
                           "projMaterialField",
@@ -51,14 +55,16 @@ rcParams = {
                           "pressureField",
                           "plasticStrain",
                           "velocityField"], validate_stringlist],
-    
+
     "gravity": [9.81 * u.meter / u.second**2, validate_quantity],
-    "swarm.particles.per.cell": [20, validate_int],
+    "swarm.particles.per.cell.2D": [40, validate_int],
+    "swarm.particles.per.cell.3D": [120, validate_int],
 
     "popcontrol.aggressive" : [True, validate_bool],
     "popcontrol.split.threshold" : [0.15, validate_float],
     "popcontrol.max.splits" : [10, validate_int],
-    "popcontrol.particles.per.cell" : [20, validate_int],
+    "popcontrol.particles.per.cell.2D" : [20, validate_int],
+    "popcontrol.particles.per.cell.3D" : [60, validate_int],
 
     "CFL": [0.5, validate_float],
 
@@ -67,8 +73,13 @@ rcParams = {
     "initial.nonlinear.tolerance": [1e-2, validate_float],
     "nonlinear.tolerance": [1e-2, validate_float],
     "maximum.timestep" : [200000, validate_int],
-    "nonlinear.min.iterations": [3, validate_int],
+    "initial.nonlinear.min.iterations": [2, validate_int],
+    "initial.nonlinear.max.iterations": [500, validate_int],
+    "nonlinear.min.iterations": [2, validate_int],
     "nonlinear.max.iterations": [500, validate_int],
+    "nonlinear.tolerance.adjust.factor": [2, validate_int],
+    "nonlinear.tolerance.adjust.nsteps": [100, validate_int],
+    "mg.levels": [None, validate_int_or_none],
 
     "rheology.default.uppercrust": ["Patterson et al., 1990", validate_viscosity],
     "rheology.default.midcrust": ["Patterson et al., 1990", validate_viscosity],
@@ -82,6 +93,7 @@ rcParams = {
     "scaling.temperature": [1.0 * u.degK, validate_quantity],
     "scaling.substance": [1.0 * u.mole, validate_quantity],
 
+    "time.SIunits": [u.years, validate_quantity],
     "viscosityField.SIunits" : [u.pascal * u.second, validate_quantity],
     "densityField.SIunits" : [u.kilogram / u.metre**3, validate_quantity],
     "velocityField.SIunits" : [u.centimeter / u.year, validate_quantity],
@@ -91,5 +103,10 @@ rcParams = {
     "projViscosityField.SIunits"  : [u.pascal * u.second, validate_quantity],
     "projDensityField.SIunits" : [u.kilogram / u.metre**3, validate_quantity],
     "projTimeField.SIunits" : [u.megayears, validate_quantity],
+
+    "useEquationResidual" : [False, validate_bool],
+    "alpha": [0., validate_float],
+    "shearHeating": [False, validate_bool],
+    "surface.pressure.normalization": [True, validate_bool]
     }
 

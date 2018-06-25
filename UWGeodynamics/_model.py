@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+import sys
 import json
 import json_encoder
 from collections import Iterable
@@ -29,7 +30,11 @@ from ._swarm import Swarm
 from ._meshvariable import MeshVariable
 from ._swarmvariable import SwarmVariable
 from scipy import interpolate
-from six import string_types
+from six import string_types, iteritems
+from datetime import datetime
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
 
 
 class Model(Material):
@@ -154,6 +159,9 @@ class Model(Material):
         self.add_mesh_field("tractionField", nodeDofCount=self.mesh.dim)
         self.add_submesh_field("_strainRateField", nodeDofCount=1)
 
+        # Create a field to check applied boundary conditions
+        self.add_mesh_field("boundariesField", nodeDofCount=self.mesh.dim)
+
         # symmetric component of the gradient of the flow velocityField.
         self.strainRate = fn.tensor.symmetric(self.velocityField.fn_gradient)
         self._strainRate_2ndInvariant = fn.tensor.second_invariant(
@@ -162,9 +170,14 @@ class Model(Material):
 
         # Create the material swarm
         self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
+        if self.mesh.dim == 2:
+            particlesPerCell = rcParams["swarm.particles.per.cell.2D"]
+        else:
+            particlesPerCell = rcParams["swarm.particles.per.cell.3D"]
+
         self._swarmLayout = uw.swarm.layouts.PerCellSpaceFillerLayout(
             swarm=self.swarm,
-            particlesPerCell=rcParams["swarm.particles.per.cell"])
+            particlesPerCell=particlesPerCell)
 
         self.swarm.populate_using_layout(layout=self._swarmLayout)
 
@@ -205,7 +218,7 @@ class Model(Material):
         self.pressSmoother = PressureSmoother(self.mesh, self.pressureField)
 
         # Passive Tracers
-        self.passive_tracers = []
+        self.passive_tracers = {}
 
         # Visualisation
         self.plot = Plots(self)
@@ -223,6 +236,7 @@ class Model(Material):
         self.DiffusivityFn = None
         self.HeatProdFn = None
         self._buoyancyFn = None
+        self.callback_post_solve = None
         self._initialize()
 
     def _initialize(self):
@@ -233,12 +247,17 @@ class Model(Material):
             order=2
         )
 
+        if self.mesh.dim == 2:
+            particlesPerCell = rcParams["popcontrol.particles.per.cell.2D"]
+        else:
+            particlesPerCell = rcParams["popcontrol.particles.per.cell.3D"]
+
         self.population_control = uw.swarm.PopulationControl(
             self.swarm,
             aggressive=rcParams["popcontrol.aggressive"],
             splitThreshold=rcParams["popcontrol.split.threshold"],
             maxSplits=rcParams["popcontrol.max.splits"],
-            particlesPerCell=rcParams["popcontrol.particles.per.cell"])
+            particlesPerCell=particlesPerCell)
 
         # Add Common Swarm Variables
         self.add_swarm_field("materialField", dataType="int", count=1,
@@ -247,8 +266,8 @@ class Model(Material):
         self.add_swarm_field("_viscosityField", dataType="double", count=1)
         self.add_swarm_field("_densityField", dataType="double", count=1)
         self.add_swarm_field("meltField", dataType="double", count=1)
-        self.add_swarm_field("_timeField", dataType="double", count=1)
-        self._timeField.data[...] = 0.0
+        self.add_swarm_field("timeField", dataType="double", count=1)
+        self.timeField.data[...] = 0.0
 
         if self.mesh.dim == 3:
             stress_dim = 6
@@ -260,7 +279,7 @@ class Model(Material):
         self.add_swarm_field("_stressField", dataType="double",
                              count=stress_dim)
 
-        self._add_surface_tracers()
+        #self._add_surface_tracers()
 
     def __getitem__(self, name):
         return self.__dict__[name]
@@ -328,9 +347,8 @@ class Model(Material):
 
         # Get time from swarm-%.h5 file
         import h5py
-        f = h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r")
-        self.time = u.Quantity(f.attrs.get("time"))
-        f.close()
+        with h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r") as h5f:
+            self.time = u.Quantity(h5f.attrs.get("time"))
 
         if uw.rank() == 0:
             print(80*"="+"\n")
@@ -355,7 +373,8 @@ class Model(Material):
             obj.load(str(path))
 
         # Temperature is a special case...
-        if u"temperature" in rcParams["restart.fields"]:
+        path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
+        if os.path.exists(path):
             if not self.temperature:
                 self.temperature = MeshVariable(mesh=self.mesh,
                                                 nodeDofCount=1)
@@ -366,13 +385,12 @@ class Model(Material):
                 self._temperatureDot.data[...] = 0.
                 self._heatFlux.data[...] = 0.
             obj = getattr(self, "temperature")
-            path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
             if uw.rank() == 0:
                 print("Reloading field {0} from {1}".format("temperature", path))
             obj.load(str(path))
 
         # Reload Passive Tracers
-        for index, tracer in enumerate(self.passive_tracers):
+        for (key, tracer) in iteritems(self.passive_tracers):
 
             if uw.rank() == 0:
                 print("Reloading {0} passive tracers".format(tracer.name))
@@ -381,15 +399,16 @@ class Model(Material):
             fpath = os.path.join(restartDir, fname)
             with h5py.File(fpath, "r") as h5f:
                 vertices = h5f["data"].value * u.Quantity(h5f.attrs["units"])
+                vertices = [vertices[:, dim] for dim in range(self.mesh.dim)]
                 obj = PassiveTracers(self.mesh,
                                      self.velocityField,
                                      tracer.name,
-                                     vertices=[vertices[:,0], vertices[:,1]],
+                                     vertices=vertices,
                                      particleEscape=tracer.particleEscape)
 
             attr_name = tracer.name.lower() + "_tracers"
             setattr(self, attr_name, obj)
-            self.passive_tracers[index] = obj
+            self.passive_tracers[key] = obj
 
         # Restart Badlands if we are running a coupled model
         if isinstance(self.surfaceProcesses, surfaceProcesses.Badlands):
@@ -498,8 +517,7 @@ class Model(Material):
     def surfaceProcesses(self, value):
         self._surfaceProcesses = value
         if value:
-            self._surfaceProcesses.timeField = self._timeField
-        if isinstance(value, surfaceProcesses.Badlands):
+            self._surfaceProcesses.timeField = self.timeField
             self._surfaceProcesses.Model = self
 
     def set_temperatureBCs(self, left=None, right=None,
@@ -629,6 +647,12 @@ class Model(Material):
         self.HeatProdFn = fn.branching.map(fn_key=self.materialField,
                                            mapping=HeatProdMap)
 
+        # Add Viscous dissipation Heating
+        if rcParams["shearHeating"]:
+            stress = fn.tensor.second_invariant(self._stressFn)
+            strain = self._strainRate_2ndInvariant
+            self.HeatProdFn += stress * strain
+
         obj = uw.systems.AdvectionDiffusion(
             self.temperature,
             self._temperatureDot,
@@ -639,7 +663,7 @@ class Model(Material):
         )
         return obj
 
-    def _stokes(self):
+    def stokes_solver(self):
         """ Stokes solver """
 
         gravity = tuple([nd(val) for val in self.gravity])
@@ -647,7 +671,7 @@ class Model(Material):
 
         if any([material.viscosity for material in self.materials]):
 
-            stokes_object = uw.systems.Stokes(
+            self._stokes_SLE = uw.systems.Stokes(
                 velocityField=self.velocityField,
                 pressureField=self.pressureField,
                 conditions=self._velocityBCs,
@@ -655,14 +679,18 @@ class Model(Material):
                 fn_bodyforce=self._buoyancyFn,
                 fn_stresshistory=self._elastic_stressFn,
                 fn_one_on_lambda=self._lambdaFn)
+                #useEquationResidual=rcParams["useEquationResidual"])
 
-            solver = uw.systems.Solver(stokes_object)
-            solver.set_inner_method(rcParams["solver"])
+            self._solver = uw.systems.Solver(self._stokes_SLE)
+            self._solver.set_inner_method(rcParams["solver"])
 
             if rcParams["penalty"]:
-                solver.set_penalty(rcParams["penalty"])
+                self._solver.set_penalty(rcParams["penalty"])
 
-        return solver
+            if rcParams["mg.levels"]:
+                self._solver.options.mg.levels = rcParams["mg.levels"]
+
+        return self._solver
 
     def _init_melt_fraction(self):
         """ Initialize the Melt Fraction Field """
@@ -848,9 +876,9 @@ class Model(Material):
 
         return fn.branching.map(fn_key=self.materialField, mapping=densityMap)
 
-    def set_frictional_boundary(self, right=False, left=False,
-                                top=False, bottom=False, front=False,
-                                back=False, thickness=2, friction=0.0):
+    def set_frictional_boundary(self, right=None, left=None,
+                                top=None, bottom=None, front=None,
+                                back=None, thickness=2):
         """ Set Frictional Boundary conditions
 
         Frictional boundaries are implemented as a thin layer of frictional
@@ -858,21 +886,6 @@ class Model(Material):
 
         Parameters:
         -----------
-
-            right: (bool)
-                if True create a frictional boundary.
-            left: (bool)
-                if True create a frictional boundary.
-            top: (bool)
-                if True create a frictional boundary.
-            bottom: (bool)
-                if True create a frictional boundary.
-            thickness: (int)
-                thickness of the boundaries (in number of
-                elements)
-            friction: (float)
-                Friction coefficient at the boundaries.
-
         Returns:
         --------
             Underworld mesh variable that maps the boundaries.
@@ -880,12 +893,13 @@ class Model(Material):
             a frictional condition, 0 otherwise).
         """
 
-        self.frictionalBCs = FrictionBoundaries(self, right=right,
-                                                left=left,
-                                                top=top,
-                                                bottom=bottom,
-                                                thickness=thickness,
-                                                friction=friction)
+        self.frictionalBCs = FrictionBoundaries(self, rightFriction=right,
+                                                leftFriction=left,
+                                                topFriction=top,
+                                                bottomFriction=bottom,
+                                                frontFriction=front,
+                                                backFriction=back,
+                                                thickness=thickness)
 
         return self.frictionalBCs
 
@@ -1017,8 +1031,8 @@ class Model(Material):
                 if material.plasticity:
 
                     YieldHandler = copy(material.plasticity)
-                    YieldHandler.frictionCoefficient = (
-                        self.frictionalBCs.friction)
+                    YieldHandler.frictionCoefficient = self.frictionalBCs.friction
+                    YieldHandler.frictionAfterSoftening = self.frictionalBCs.friction
                     YieldHandler.pressureField = self.pressureField
                     YieldHandler.plasticStrain = self.plasticStrain
 
@@ -1048,7 +1062,7 @@ class Model(Material):
                                                          maxViscosity)
                     muEff = viscosity_limiter.apply(muEff)
 
-                    conditions = [(self.frictionalBCs._mask == 1, muEff),
+                    conditions = [(self.frictionalBCs._mask > 0.0, muEff),
                                   (True, PlasticityMap[material.index])]
 
                     PlasticityMap[material.index] = fn.branching.conditional(
@@ -1251,6 +1265,13 @@ class Model(Material):
 
         self._solution_exist.value = True
 
+        # The following line are useful to output velocity and pressurefield
+        # from the non-linear loop.
+        #niteration = self._stokes_SLE._cself.nonLinearIteration_I
+        #string = str(self.step) + "-" + str(niteration)
+        #self._save_fields(["velocityField", "pressureField"], checkpointID=string,
+        #                  time=niteration)
+
     def _get_material_indices(self, material):
         """ Get mesh indices of a Material
 
@@ -1278,16 +1299,135 @@ class Model(Material):
         """ Solve Stokes """
 
         if self.step == 0:
-            tol = rcParams["initial.nonlinear.tolerance"]
+            self._curTolerance = rcParams["initial.nonlinear.tolerance"]
+            minIterations = rcParams["initial.nonlinear.min.iterations"]
+            maxIterations = rcParams["initial.nonlinear.max.iterations"]
         else:
-            tol = rcParams["nonlinear.tolerance"]
+            self._curTolerance = rcParams["nonlinear.tolerance"]
+            minIterations = rcParams["nonlinear.min.iterations"]
+            maxIterations = rcParams["nonlinear.max.iterations"]
 
-        self._stokes().solve(
-            nonLinearIterate=True,
-            nonLinearMaxIterations=rcParams["nonlinear.max.iterations"],
-            callback_post_solve=self._calibrate_pressureField,
-            nonLinearTolerance=tol)
+        if uw.__version__.split(".")[1] > 5:
+            # The minimum number of iteration only works with version 2.6
+            # 2.6 is still in development...
+            self.stokes_solver().solve(
+                nonLinearIterate=True,
+                nonLinearMinIterations=minIterations,
+                nonLinearMaxIterations=maxIterations,
+                callback_post_solve=self.callback_post_solve,
+                nonLinearTolerance=self._curTolerance)
+        else:
+            self.stokes_solver().solve(
+                nonLinearIterate=True,
+                nonLinearMaxIterations=maxIterations,
+                callback_post_solve=self.callback_post_solve,
+                nonLinearTolerance=self._curTolerance)
+
         self._solution_exist.value = True
+
+    def _solve_tempo(self):
+
+        solver = self.stokes_solver()
+
+        if solver._check_linearity(False):
+            if self.step == 0:
+                self.add_mesh_field("prevVelocityField", nodeDofCount=self.mesh.dim)
+                self.add_submesh_field("prevPressureField", nodeDofCount=1)
+            self._nonLinearSolve()
+
+        else:
+            self.stokes_solver().solve()
+
+        return
+
+    def _nonLinearSolve(self):
+
+        if self.step == 0:
+            self._curTolerance = rcParams["initial.nonlinear.tolerance"]
+            minIterations = rcParams["initial.nonlinear.min.iterations"]
+            maxIterations = rcParams["initial.nonlinear.max.iterations"]
+        else:
+            self._curTolerance = rcParams["nonlinear.tolerance"]
+            minIterations = rcParams["nonlinear.min.iterations"]
+            maxIterations = rcParams["nonlinear.max.iterations"]
+
+        it = 0
+        self.stokes_solver().solve(nonLinearIterate=False)
+        it += 1
+
+        while it < maxIterations:
+
+            if uw.rank() == 0:
+                print("non-linear solver - iteration {0}\n".format(it), file=open('/dev/stdout', 'w'))
+
+            self.prevVelocityField.data[...] = self.velocityField.data[...]
+            self.prevPressureField.data[...] = self.pressureField.data[...]
+            self.stokes_solver().solve(nonLinearIterate=False)
+            self._callback_post_solve()
+
+
+            ## Calculate L2-Norm of current velocity Field
+            #vdot = fn.math.dot(self.velocityField, self.velocityField)
+            #vint = uw.utils.Integral(vdot, self.mesh)
+            #vL2 = np.sqrt(vint.evaluate()[0])
+
+            ## Calculate L2-Norm of delta velocity
+            #dV = self.velocityField - self.prevVelocityField
+            #vdot = fn.math.dot(dV, dV)
+            #vint = uw.utils.Integral(vdot, self.mesh)
+            #dVL2 = np.sqrt(vint.evaluate()[0])
+
+            ## Calculate L2-Norm of current dynamic pressure
+            #pdot = fn.math.dot(self.pressureField, self.pressureField)
+            #pint = uw.utils.Integral(pdot, self.mesh)
+            #pL2 = np.sqrt(pint.evaluate()[0])
+
+            ## Calculate L2-Norm of delta pressure
+            #dP = self.pressureField - self.prevPressureField
+            #dPdot = fn.math.dot(dP, dP)
+            #pint = uw.utils.Integral(dPdot, self.mesh)
+            #dPL2 = np.sqrt(pint.evaluate()[0])
+
+            # Full norm of the velocity and pressure
+            xdot = (fn.math.dot(self.velocityField, self.velocityField) +
+                    fn.math.dot(self.pressureField, self.pressureField))
+            xint = uw.utils.Integral(xdot, self.mesh)
+            xL2  = np.sqrt(xint.evaluate()[0])
+
+            # Full norm of the change in velocity and pressure
+            dV = self.velocityField - self.prevVelocityField
+            dP = self.pressureField - self.prevPressureField
+            xdot = fn.math.dot(dV, dV) + fn.math.dot(dP, dP)
+            xint = uw.utils.Integral(xdot, self.mesh)
+            dxL2 = np.sqrt(xint.evaluate()[0])
+
+            residual = abs(dxL2 / xL2)
+
+            if uw.rank() == 0:
+                sys.__stdout__.write(
+                        """Non linear solver - Residual {2:.8e}; Tolerance {3:.8e}""".format(
+                            residual, self._curTolerance))
+
+            converged = False
+            if residual < self._curTolerance and it > minIterations:
+                converged = True
+
+            if converged:
+                if uw.rank() == 0:
+                    sys.__stdout__.write(" - converged - \n")
+                    sys.__stdout__.flush()
+                break
+            else:
+                if uw.rank() == 0:
+                    sys.__stdout__.write(" - not converged - \n")
+                    sys.__stdout__.flush()
+
+
+            #self.velocityField.data[...] *= (1.0 - rcParams["alpha"])
+            #self.velocityField.data[...] += rcParams["alpha"] * self.prevVelocityField.data[...]
+            #self.velocityField.syncronise()
+
+            it += 1
 
     def init_model(self, temperature=True, pressureField=True):
         """ Initialize the Temperature Field as steady state,
@@ -1308,9 +1448,9 @@ class Model(Material):
             self.get_lithostatic_pressureField()
         return
 
-    def run_for(self, duration=None, checkpoint_interval=None,
+    def run_for(self, duration=None, checkpoint_interval=None, nstep=None,
                 timeCheckpoints=None, swarm_checkpoint=None, dt=None,
-                glucifer_outputs=False):
+                glucifer_outputs=False, restartStep=None, restartDir=None):
         """ Run the Model
 
         Parameters:
@@ -1327,11 +1467,23 @@ class Model(Material):
             os.mkdir(self.outputDir)
         uw.barrier()
 
-        step = self.step
+        if restartStep:
+            restartDir = restartDir if restartDir else self.outputDir
+            self.restart(step=restartStep, restartDir=restartDir)
+
+        stepDone = 0
         time = nd(self.time)
-        units = duration.units
-        duration = time + nd(duration)
-        user_dt = nd(dt)
+
+        if duration:
+            units = duration.units
+            duration = time + nd(duration)
+        else:
+            units = rcParams["time.SIunits"]
+
+        if dt:
+            user_dt = nd(dt)
+        else:
+            user_dt = None
 
         next_checkpoint = None
 
@@ -1351,25 +1503,26 @@ class Model(Material):
         # Comment as it does not work in parallel
         # self.save()
 
-        while time < duration:
+        while time < duration or stepDone < nstep:
 
             self.preSolveHook()
 
-            self.solve()
+            self._solve_tempo()
 
             # Whats the longest we can run before reaching the end
             # of the model or a checkpoint?
             # Need to generalize that
-            dt = rcParams["CFL"] * self.swarm_advector.get_max_dt()
+            self._dt = rcParams["CFL"] * self.swarm_advector.get_max_dt()
 
             if self.temperature:
-                dt = min(dt, self._advdiffSystem.get_max_dt())
-                dt *= rcParams["CFL"]
+                self._dt = min(self._dt, self._advdiffSystem.get_max_dt())
+                self._dt *= rcParams["CFL"]
 
             if checkpoint_interval:
-                dt = min(dt, next_checkpoint - time)
+                self._dt = min(self._dt, next_checkpoint - time)
 
-            self._dt = min(dt, duration - time)
+            if duration:
+                self._dt = min(self._dt, duration - time)
 
             if user_dt:
                 self._dt = min(self._dt, user_dt)
@@ -1390,6 +1543,7 @@ class Model(Material):
             self._update()
 
             self.step += 1
+            stepDone += 1
             self.time += Dimensionalize(self._dt, units)
             time += self._dt
 
@@ -1400,10 +1554,12 @@ class Model(Material):
                     self.output_glucifer_figures(self.checkpointID)
                 next_checkpoint += nd(checkpoint_interval)
 
-            if checkpoint_interval or step % 1 == 0:
+            if checkpoint_interval or self.step % 1 == 0 or nstep:
                 if uw.rank() == 0:
-                    print("Time: ", str(self.time.to(units)),
-                          'dt:', str(Dimensionalize(self._dt, units)))
+                    print("Step:" + str(stepDone) + " Model Time: ", str(self.time.to(units)),
+                          'dt:', str(Dimensionalize(self._dt, units)),
+                          #'vrms:', str(self.velocity_rms()),
+                          '('+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+')')
 
             self.postSolveHook()
 
@@ -1415,6 +1571,21 @@ class Model(Material):
     def postSolveHook(self):
         return
 
+    @property
+    def callback_post_solve(self):
+        return self._callback_post_solve
+
+    @callback_post_solve.setter
+    def callback_post_solve(self, value):
+        def callback():
+            if callable(value):
+                value()
+            if rcParams["surface.pressure.normalization"]:
+                self._calibrate_pressureField()
+            #self._adjust_tolerance()
+        self._callback_post_solve = callback
+
+
     def _update(self):
         """ Update Function
 
@@ -1425,6 +1596,19 @@ class Model(Material):
         """
 
         dt = self._dt
+
+        # Heal plastic strain
+        if any([material.healingRate for material in self.materials]):
+            healingRates = {}
+            for material in self.materials:
+                healingRates[material.index] = nd(material.healingRate)
+            HealingRateFn = fn.branching.map(fn_key=self.materialField,
+                                             mapping=healingRates)
+
+            plasticStrainIncHealing = dt * HealingRateFn.evaluate(self.swarm)
+            self.plasticStrain.data[:] -= plasticStrainIncHealing
+            self.plasticStrain.data[self.plasticStrain.data < 0.] = 0.
+
         # Increment plastic strain
         plasticStrainIncrement = dt * self._isYielding.evaluate(self.swarm)
         self.plasticStrain.data[:] += plasticStrainIncrement
@@ -1449,7 +1633,7 @@ class Model(Material):
             self._update_stress_history(dt)
 
         if self.passive_tracers:
-            for tracers in self.passive_tracers:
+            for (key, tracers) in iteritems(self.passive_tracers):
                 tracers.integrate(dt)
 
         # Do pop control
@@ -1460,7 +1644,7 @@ class Model(Material):
             self.surfaceProcesses.solve(dt)
 
         # Update Time Field
-        self._timeField.data[...] += dt
+        self.timeField.data[...] += dt
 
         if self._isostasy:
             self._isostasy.solve()
@@ -1494,9 +1678,9 @@ class Model(Material):
                 Allow or prevent tracers from escaping the boundaries of the
                 Model (default to True)
         """
-        if name in [tracer.name for tracer in self.passive_tracers]:
+        if name in self.passive_tracers.keys():
             print("{0} tracers exists already".format(name))
-            return
+            return self.passive_tracers[name]
 
         tracers = PassiveTracers(self.mesh,
                                  self.velocityField,
@@ -1504,7 +1688,7 @@ class Model(Material):
                                  vertices=vertices,
                                  particleEscape=particleEscape)
 
-        self.passive_tracers.append(tracers)
+        self.passive_tracers[name] = tracers
 
         setattr(self, name.lower() + "_tracers", tracers)
 
@@ -1611,12 +1795,16 @@ class Model(Material):
         if not checkpointID:
             checkpointID = self.checkpointID
 
+        if uw.rank() == 0 and not os.path.exists(self.outputDir):
+            os.mkdir(self.outputDir)
+        uw.barrier()
+
         self._save_fields(variables, checkpointID)
         self._save_swarms(variables, checkpointID)
 
         # Checkpoint passive tracers and associated tracked fields
         if self.passive_tracers:
-            for tracers in self.passive_tracers:
+            for (key, tracers) in iteritems(self.passive_tracers):
                 tracers.save(self.outputDir, checkpointID, self.time)
 
     def profile(self,
@@ -1756,7 +1944,9 @@ class Model(Material):
         else:
             raise ValueError(field, ' is not a valid variable name \n')
 
-    def _save_fields(self, fields, checkpointID):
+    def _save_fields(self, fields, checkpointID, time=None):
+
+        time = time if time else self.time
 
         if self._advector:
             mesh_name = 'mesh-%s' % checkpointID
@@ -1766,14 +1956,14 @@ class Model(Material):
             mesh_prefix = os.path.join(self.outputDir, mesh_name)
 
         mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
-                            time=self.time)
+                            time=time)
 
         filename = "XDMF.fields."+str(checkpointID).zfill(5)+".xmf"
         filename = os.path.join(self.outputDir, filename)
 
         # First write the XDMF header
         string = uw.utils._xdmfheader()
-        string += uw.utils._spacetimeschema(mH, mesh_name, self.time)
+        string += uw.utils._spacetimeschema(mH, mesh_name, time)
 
         for field in fields:
             if field == "temperature" and not self.temperature:
@@ -1790,32 +1980,34 @@ class Model(Material):
                 obj = getattr(self, field)
                 file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
                 handle = obj.save('%s.h5' % file_prefix, units=units,
-                                  time=self.time)
+                                  time=time)
                 string += uw.utils._fieldschema(handle, field)
 
         # Write the footer to the xmf
         string += uw.utils._xdmffooter()
 
         # Write the string to file - only proc 0
-        xdmfFH = open(filename, "w")
-        xdmfFH.write(string)
-        xdmfFH.close()
+        if uw.rank() == 0:
+            with open(filename, "w") as xdmfFH:
+                xdmfFH.write(string)
+        uw.barrier()
 
-    def _save_swarms(self, fields, checkpointID):
+    def _save_swarms(self, fields, checkpointID, time=None):
 
+        time = time if time else self.time
         swarm_name = 'swarm-%s.h5' % checkpointID
 
         sH = self.swarm.save(os.path.join(self.outputDir,
                              swarm_name),
                              units=u.kilometers,
-                             time=self.time)
+                             time=time)
 
         filename = "XDMF.swarms."+str(checkpointID).zfill(5)+".xmf"
         filename = os.path.join(self.outputDir, filename)
 
         # First write the XDMF header
         string = uw.utils._xdmfheader()
-        string += uw.utils._swarmspacetimeschema(sH, swarm_name, self.time)
+        string += uw.utils._swarmspacetimeschema(sH, swarm_name, time)
 
         for field in fields:
             if field in rcParams["swarm.variables"]:
@@ -1829,16 +2021,17 @@ class Model(Material):
                 # each one of the field variables
                 obj = getattr(self, field)
                 file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
-                handle = obj.save('%s.h5' % file_prefix, units=units, time=self.time)
+                handle = obj.save('%s.h5' % file_prefix, units=units, time=time)
                 string += uw.utils._swarmvarschema(handle, field)
 
         # Write the footer to the xmf
         string += uw.utils._xdmffooter()
 
         # Write the string to file - only proc 0
-        xdmfFH = open(filename, "w")
-        xdmfFH.write(string)
-        xdmfFH.close()
+        if uw.rank() == 0:
+            with open(filename, "w") as xdmfFH:
+                xdmfFH.write(string)
+        uw.barrier()
 
     def save(self, filename=None):
         save_model(self, filename)
@@ -1862,6 +2055,26 @@ class Model(Material):
                               fill=False)
 
         self._fill_model()
+
+    def _adjust_tolerance(self):
+        niteration = self._stokes_SLE._cself.nonLinearIteration_I
+        nsteps = rcParams["nonlinear.tolerance.adjust.nsteps"]
+        curResidual = self._stokes_SLE._cself.curResidual
+
+        if curResidual > self._curTolerance:
+            if (niteration % nsteps == 0 and self.step > 0):
+                fact = rcParams["nonlinear.tolerance.adjust.factor"]
+                self._curTolerance /= fact
+                self._stokes_SLE._cself.nonLinearTolerance = self._curTolerance
+
+    def velocity_rms(self):
+        vdotv_fn = uw.function.math.dot(self.velocityField, self.velocityField)
+        fn_2_integrate = (1., vdotv_fn)
+        (v2, vol) = self.mesh.integrate(fn=fn_2_integrate)
+        import math
+        vrms = math.sqrt(v2/vol)
+        #os.write(1, "Velocity rms (vrms): {0}".format(vrms))
+        return vrms
 
 
 def save_model(model, filename):

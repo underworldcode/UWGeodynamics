@@ -9,16 +9,16 @@ from collections import OrderedDict
 
 def linearCohesionWeakening(cumulativeTotalStrain, Cohesion, CohesionSw, epsilon1=0.5, epsilon2=1.5, **kwargs):
 
-    cohesionVal = [(cumulativeTotalStrain < epsilon1, fn.misc.constant(Cohesion)),
-                   (cumulativeTotalStrain > epsilon2, fn.misc.constant(CohesionSw)),
+    cohesionVal = [(cumulativeTotalStrain < epsilon1, Cohesion),
+                   (cumulativeTotalStrain > epsilon2, CohesionSw),
                    (True, Cohesion + ((Cohesion - CohesionSw)/(epsilon1 - epsilon2)) * (cumulativeTotalStrain - epsilon1))]
 
     return fn.branching.conditional(cohesionVal)
 
 def linearFrictionWeakening(cumulativeTotalStrain, FrictionCoef, FrictionCoefSw, epsilon1=0.5, epsilon2=1.5, **kwargs):
 
-    frictionVal = [(cumulativeTotalStrain < epsilon1, fn.misc.constant(FrictionCoef)),
-                   (cumulativeTotalStrain > epsilon2, fn.misc.constant(FrictionCoefSw)),
+    frictionVal = [(cumulativeTotalStrain < epsilon1, FrictionCoef),
+                   (cumulativeTotalStrain > epsilon2, FrictionCoefSw),
                    (True, FrictionCoef + ((FrictionCoef - FrictionCoefSw)/(epsilon1 - epsilon2)) * (cumulativeTotalStrain - epsilon1))]
 
     frictionVal = fn.branching.conditional(frictionVal)
@@ -102,7 +102,7 @@ class DruckerPrager(object):
         attributes["Cohesion"] = self.cohesion
         attributes["Cohesion After Softening"] = self.cohesionAfterSoftening
         attributes["Friction Coefficient"] = self.frictionCoefficient
-        attributes["Friction Coefficient after Sotening"] = (
+        attributes["Friction Coefficient after Softening"] = (
             self.frictionAfterSoftening)
         attributes["Epsilon 1"] = self.epsilon1
         attributes["Epsilon 2"] = self.epsilon2
@@ -156,8 +156,8 @@ class DruckerPrager(object):
         if self.plasticStrain:
             friction = self.frictionWeakeningFn(
                 self.plasticStrain,
-                FrictionCoef=nd(self.frictionCoefficient),
-                FrictionCoefSw=nd(self.frictionAfterSoftening),
+                FrictionCoef=self.frictionCoefficient,
+                FrictionCoefSw=self.frictionAfterSoftening,
                 epsilon1=self.epsilon1,
                 epsilon2=self.epsilon2)
         else:

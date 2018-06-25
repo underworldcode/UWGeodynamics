@@ -5,6 +5,7 @@ import shapefile
 import h5py
 import numpy as np
 import os
+import operator as op
 from .scaling import nonDimensionalize as nd
 from .scaling import Dimensionalize
 from .scaling import UnitRegistry as u
@@ -469,3 +470,179 @@ def fn_Tukey_window(r, centre, width, top, bottom):
 
     y_conditions = fn.branching.conditional([((y >= bottom) & (y <= top), 1.0), (True, 0.0)])
     return x_conditions * y_conditions
+
+
+import pylab as plt
+
+class NonLinearBlock(object):
+    def __init__(self, string):
+        self.string = string
+        self.data = dict()
+        self.data["Pressure Solve times"] = self.get_vals(["Pressure Solve"], 3)
+        self.data["Final V Solve times"] = self.get_vals(["Final V Solve"], 4)
+        self.data["Total BSSCR times"] = self.get_vals(["Total BSSCR Linear solve time"], 5)
+        self.data["Residuals"] = self.get_vals(["converged", "Residual", "Tolerance"], 5, func=str)
+        self.data["Residuals"] = [float(val[:-1]) for val in self.data["Residuals"]]
+        self.data["Iterations"] = self.get_vals(["Non linear solver - iteration"], -1, func=int)
+        self.data["Solution Time"] = self.get_vals(["solution time"], 5)
+
+
+    def get_vals(self, FINDSTRING, pos, func=float):
+        f = self.string.splitlines()
+        vals = [func(line.split()[pos]) for line in f if all([F.lower() in line.lower() for F in FINDSTRING])]
+        return vals
+
+
+class MovingWall(object):
+
+    def __init__(self, velocity):
+
+        self._Model = None
+        self._wall = None
+
+        self.velocity = velocity
+        self.material = None
+        if isinstance(velocity, (list, tuple)):
+            self.velocityFn = fn.branching.conditional(velocity)
+        else:
+            self.velocityFn = fn.misc.constant(nd(velocity))
+
+        self.wall_operators = {"left": op.le,
+                          "right": op.ge,
+                          "top":op.ge,
+                          "bottom": op.le,
+                          "front": op.ge,
+                          "back": op.le}
+
+        self.wall_direction_axis = {"left": 0,
+                               "right": 0,
+                               "front": 1,
+                               "back": 1,
+                               "top": -1,
+                               "bottom": -1}
+
+    @property
+    def Model(self):
+        return self._Model
+
+    @Model.setter
+    def Model(self, value):
+        self._Model = value
+        self.wall_init_pos = {"left": value.minCoord[0],
+                         "right": value.maxCoord[0],
+                         "front": value.minCoord[1],
+                         "back": value.maxCoord[1],
+                         "bottom": value.minCoord[-1],
+                         "top": value.maxCoord[-1]}
+
+        if value.mesh.dim == 2:
+            self.wall_options = {value._left_wall: "left",
+                                 value._right_wall: "right",
+                                 value._top_wall: "top",
+                                 value._bottom_wall: "bottom"}
+        else:
+            self.wall_options = {value._left_wall: "left",
+                                 value._right_wall: "right",
+                                 value._front_wall: "front",
+                                 value._back_wall: "back",
+                                 value._top_wall: "top",
+                                 value._bottom_wall: "bottom"}
+
+        # Create a new viscous material with viscosity set to MaxViscosity:
+        if not self.material:
+            self.material = value.add_material(name="Wall")
+            self.material.viscosity = value.maxViscosity
+            self.material.density = 0.
+
+    @property
+    def wall(self):
+        return self._wall
+
+    @wall.setter
+    def wall(self, value):
+        self._wall = self.wall_options[value]
+        self.wallFn = self._create_function()
+
+    def _create_function(self):
+
+        # Create wall function
+        operator = self.wall_operators[self._wall]
+        axis = self.wall_direction_axis[self._wall]
+        pos = self.wall_init_pos[self._wall]
+        condition = [(operator(fn.input()[axis],(nd(self.Model.time) *
+                                        self.velocityFn +
+                                        nd(pos))), True),
+                     (True, False)]
+
+        return fn.branching.conditional(condition)
+
+
+    def get_wall_indices(self):
+
+        # Return new indexSet for the wall
+        mesh = self.Model.mesh
+        swarm = self.Model.swarm
+
+        nodes = mesh.data_nodegId[self.wallFn.evaluate(mesh)]
+        IndexSet =  uw.mesh.FeMesh_IndexSet(mesh, topologicalIndex=0,
+                                            size=mesh.nodesGlobal, fromObject=nodes)
+
+        # Update Material Field
+        condition = [(self.wallFn, self.material.index), (True, self.Model.materialField)]
+        func = fn.branching.conditional(condition)
+        self.Model.materialField.data[...] =  func.evaluate(swarm)
+
+        components = [self.Model.mesh.specialSets["Empty"] for dim in range(mesh.dim)]
+        components[self.wall_direction_axis[self.wall]] += IndexSet
+
+        return components
+
+
+class LogFile(object):
+    def __init__(self, filename):
+        self.filename = filename
+        self.nonLinear_blocks = self.get_nonLinear_blocks()
+        self.pressure_solve_times = list()
+        for obj in self.nonLinear_blocks:
+            self.pressure_solve_times += obj.data["Pressure Solve times"]
+        self.finalV_solve_times = list()
+        for obj in self.nonLinear_blocks:
+            self.finalV_solve_times += obj.data["Final V Solve times"]
+        self.total_BSSCR_times = list()
+        for obj in self.nonLinear_blocks:
+            self.total_BSSCR_times += obj.data["Total BSSCR times"]
+        self.residuals = list()
+        for obj in self.nonLinear_blocks:
+            self.residuals += obj.data["Residuals"]
+        self.iterations = list()
+        for obj in self.nonLinear_blocks:
+            self.iterations.append(obj.data["Iterations"][-1])
+        self.solution_times = list()
+        for obj in self.nonLinear_blocks:
+            self.solution_times += obj.data["Solution Time"]
+
+    def get_nonLinear_blocks(self):
+        non_linear_blocks = list()
+        with open(self.filename, "r") as f:
+            block = ""
+            inBlock = False
+            step=0
+            for line in f:
+                if "Non linear solver" in line:
+                    inBlock = True
+                    step += 1
+                if inBlock:
+                    if "Converged" not in line:
+                        block += line
+                    else:
+                        block += line
+                        inBlock = False
+                        block = NonLinearBlock(block)
+                        non_linear_blocks.append(block)
+                        block=""
+            # Process last potentially non-converged block
+            if block:
+                block = NonLinearBlock(block)
+                non_linear_blocks.append(block)
+        self.nonLinear_blocks = non_linear_blocks
+        return self.nonLinear_blocks
