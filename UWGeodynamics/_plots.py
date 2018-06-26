@@ -279,7 +279,7 @@ class Plots(object):
                          self.Model.velocityField,
                          length=arrowlength,
                          normalise=arrownorm,
-                         resolution=arrowres,
+                         resolution=arrowres, 
                          **kwargs)
         if visugrid:
             clip_X, clip_Y = _visugrid_drawing_object(self.Model, visugrid)
