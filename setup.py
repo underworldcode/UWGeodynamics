@@ -47,7 +47,11 @@ setup(
     # For a discussion on single-sourcing the version across setup.py and the
     # project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
+<<<<<<< HEAD
     version='0.4.0',  # Required
+=======
+    version='0.5.0',  # Required
+>>>>>>> 596ebdc12435962a1176aef3c1f5d2db9c5bb279
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:

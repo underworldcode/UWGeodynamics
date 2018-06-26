@@ -514,7 +514,6 @@ class Model(Material):
         self._surfaceProcesses = value
         if value:
             self._surfaceProcesses.timeField = self.timeField
-        if isinstance(value, surfaceProcesses.Badlands):
             self._surfaceProcesses.Model = self
 
     def set_temperatureBCs(self, left=None, right=None,
@@ -643,6 +642,12 @@ class Model(Material):
 
         self.HeatProdFn = fn.branching.map(fn_key=self.materialField,
                                            mapping=HeatProdMap)
+
+        # Add Viscous dissipation Heating
+        if rcParams["shearHeating"]:
+            stress = fn.tensor.second_invariant(self._stressFn)
+            strain = self._strainRate_2ndInvariant
+            self.HeatProdFn += stress * strain
 
         obj = uw.systems.AdvectionDiffusion(
             self.temperature,
@@ -780,13 +785,9 @@ class Model(Material):
             mat.capacity = self.capacity
             mat.radiogenicHeatProd = self.radiogenicHeatProd
 
-        if isinstance(shape, shapes.Layer):
+        if isinstance(shape, (shapes.Layer, shapes.Layer2D, shapes.Layer3D)):
             mat.top = shape.top
             mat.bottom = shape.bottom
-
-            if self.mesh.dim == 3:
-                shape.minY = self.minCoord[1]
-                shape.maxY = self.maxCoord[1]
 
         mat.shape = shape
         mat.indices = self._get_material_indices(mat)
@@ -1477,7 +1478,8 @@ class Model(Material):
         def callback():
             if callable(value):
                 value()
-            self._calibrate_pressureField()
+            if rcParams["surface.pressure.normalization"]:
+                self._calibrate_pressureField()
             #self._adjust_tolerance()
             self._apply_alpha()
         self._callback_post_solve = callback
@@ -1577,7 +1579,7 @@ class Model(Material):
         """
         if name in self.passive_tracers.keys():
             print("{0} tracers exists already".format(name))
-            return
+            return self.passive_tracers[name]
 
         tracers = PassiveTracers(self.mesh,
                                  self.velocityField,
