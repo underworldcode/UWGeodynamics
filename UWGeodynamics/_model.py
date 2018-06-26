@@ -2,7 +2,6 @@ from __future__ import print_function
 import os
 import json
 import json_encoder
-from collections import Iterable
 from collections import OrderedDict
 import numpy as np
 import underworld as uw
@@ -10,7 +9,7 @@ import underworld.function as fn
 import UWGeodynamics.shapes as shapes
 import UWGeodynamics.surfaceProcesses as surfaceProcesses
 from . import scaling_coefficients
-from . import rcParams, uwgeodynamics_fname
+from . import rcParams
 from .scaling import Dimensionalize
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
@@ -283,7 +282,6 @@ class Model(Material):
     def _repr_html_(self):
         return _model_html_repr(self)
 
-
     @property
     def x(self):
         return fn.input()[0]
@@ -332,8 +330,8 @@ class Model(Material):
 
         if step is None:
             indices = [int(os.path.splitext(filename)[0].split("-")[-1])
-                    for filename in os.listdir(restartDir) if "-" in
-                    filename]
+                       for filename in os.listdir(restartDir) if "-" in
+                       filename]
 
             if indices:
                 step = max(indices) - 1
@@ -347,9 +345,9 @@ class Model(Material):
             self.time = u.Quantity(h5f.attrs.get("time"))
 
         if uw.rank() == 0:
-            print(80*"="+"\n")
+            print(80 * "=" + "\n")
             print("Restarting Model from Step {0} at Time = {1}\n".format(step, self.time))
-            print(80*"="+"\n")
+            print(80 * "=" + "\n")
 
         self.checkpointID = step
         self.mesh.load(os.path.join(restartDir, "mesh.h5"))
@@ -414,7 +412,7 @@ class Model(Material):
 
             # Parse xmf for the last timestep time
             import xml.etree.ElementTree as etree
-            xmf = restartFolder+"/xmf/tin.time"+str(restartStep)+".xmf"
+            xmf = restartFolder + "/xmf/tin.time" + str(restartStep) + ".xmf"
             tree = etree.parse(xmf)
             root = tree.getroot()
             badlands_time = float(root[0][0][0].attrib["Value"])
@@ -438,8 +436,7 @@ class Model(Material):
                 XML, resolution,
                 checkpoint_interval,
                 restartFolder=restartFolder,
-                restartStep=restartStep
-                )
+                restartStep=restartStep)
 
         return
 
@@ -797,7 +794,6 @@ class Model(Material):
 
         return mat
 
-
     def add_swarm_field(self, name, dataType="double", count=1,
                         init_value=0., **kwargs):
         newField = self.swarm.add_variable(dataType, count, **kwargs)
@@ -855,8 +851,8 @@ class Model(Material):
 
             if material.meltExpansion:
                 fact = material.meltExpansion * self.meltField
-                densityMap[material.index] = (densityMap[material.index] *
-                                              (1.0 - fact))
+                densityMap[material.index] = (
+                    densityMap[material.index] * (1.0 - fact))
 
         return fn.branching.map(fn_key=self.materialField, mapping=densityMap)
 
@@ -1342,7 +1338,7 @@ class Model(Material):
             glucifer_outputs: output glucifer figures [False]
         """
 
-        if uw.rank()==0 and not os.path.exists(self.outputDir):
+        if uw.rank() == 0 and not os.path.exists(self.outputDir):
             os.mkdir(self.outputDir)
         uw.barrier()
 
@@ -1438,7 +1434,7 @@ class Model(Material):
                     print("Step:" + str(stepDone) + " Model Time: ", str(self.time.to(units)),
                           'dt:', str(Dimensionalize(self._dt, units)),
                           #'vrms:', str(self.velocity_rms()),
-                          '('+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+')')
+                          '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
 
             self.postSolveHook()
 
@@ -1464,7 +1460,6 @@ class Model(Material):
             #self._adjust_tolerance()
             self._apply_alpha()
         self._callback_post_solve = callback
-
 
     def _update(self):
         """ Update Function
@@ -1531,7 +1526,6 @@ class Model(Material):
 
         if self._visugrid:
             self._visugrid.advect(dt)
-
 
     def mesh_advector(self, axis):
         """ Initialize the mesh advector
@@ -1699,8 +1693,8 @@ class Model(Material):
            field not in rcParams["swarm.variables"]):
             raise ValueError("""{0} is not a valid field, \n
                                 Valid fields are {1} or {2}""".format(
-                                    field, rcParams["mesh.variables"],
-                                    rcParams["swarm.variables"]))
+                             field, rcParams["mesh.variables"],
+                             rcParams["swarm.variables"]))
 
         start_point = np.array([nd(val) for val in start_point])
         end_point = np.array([nd(val) for val in end_point])
@@ -1780,50 +1774,6 @@ class Model(Material):
         self._visugrid = Visugrid(self, elementRes, minCoord, maxCoord,
                                   self.velocityField)
 
-    def _save_field(self, field, checkpointID, units=None):
-        """ Save Field """
-
-        if field in rcParams["mesh.variables"]:
-            if not units:
-                try:
-                    units = rcParams[field + ".SIunits"]
-                except KeyError:
-                    units = None
-
-            if self._advector:
-                mesh_name = 'mesh-%s' % checkpointID
-                mesh_prefix = os.path.join(self.outputDir, mesh_name)
-            else:
-                mesh_name = 'mesh'
-                mesh_prefix = os.path.join(self.outputDir, mesh_name)
-
-            mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
-                                time=self.time)
-            file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
-            obj = getattr(self, field)
-            handle = obj.save('%s.h5' % file_prefix, units=units, time=self.time)
-            obj.xdmf('%s.xdmf' % file_prefix, handle, field, mH, mesh_name,
-                     modeltime=self.time.magnitude)
-
-        elif field in rcParams["swarm.variables"]:
-            if not units:
-                try:
-                    units = rcParams[field + ".SIunits"]
-                except KeyError:
-                    units = None
-
-            sH = self.swarm.save(os.path.join(self.outputDir,
-                                 'swarm-%s.h5' % checkpointID),
-                                 units=u.kilometers, time=self.time)
-            file_prefix = os.path.join(self.outputDir,
-                                       field + '-%s' % checkpointID)
-            obj = getattr(self, field)
-            handle = obj.save('%s.h5' % file_prefix, units=units, time=self.time)
-            obj.xdmf('%s.xdmf' % file_prefix, handle, field, sH, 'swarm',
-                     modeltime=self.time.magnitude)
-        else:
-            raise ValueError(field, ' is not a valid variable name \n')
-
     def _save_fields(self, fields, checkpointID, time=None):
 
         time = time if time else self.time
@@ -1838,7 +1788,7 @@ class Model(Material):
         mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
                             time=time)
 
-        filename = "XDMF.fields."+str(checkpointID).zfill(5)+".xmf"
+        filename = "XDMF.fields." + str(checkpointID).zfill(5) + ".xmf"
         filename = os.path.join(self.outputDir, filename)
 
         # First write the XDMF header
@@ -1882,7 +1832,7 @@ class Model(Material):
                              units=u.kilometers,
                              time=time)
 
-        filename = "XDMF.swarms."+str(checkpointID).zfill(5)+".xmf"
+        filename = "XDMF.swarms." + str(checkpointID).zfill(5) + ".xmf"
         filename = os.path.join(self.outputDir, filename)
 
         # First write the XDMF header
@@ -1920,7 +1870,7 @@ class Model(Material):
         from ._utils import MoveImporter
         Importer = MoveImporter(filename, units=units)
 
-        shape_dict = {name: []  for name in Importer.names}
+        shape_dict = {name: [] for name in Importer.names}
 
         for polygon in Importer.generator:
             name = polygon["properties"]["Name"]
@@ -1952,7 +1902,7 @@ class Model(Material):
         fn_2_integrate = (1., vdotv_fn)
         (v2, vol) = self.mesh.integrate(fn=fn_2_integrate)
         import math
-        vrms = math.sqrt(v2/vol)
+        vrms = math.sqrt(v2 / vol)
         #os.write(1, "Velocity rms (vrms): {0}".format(vrms))
         return vrms
 
@@ -1964,6 +1914,7 @@ def save_model(model, filename):
     path = os.path.join(model.outputDir, filename)
     with open(path, "w") as f:
         json.dump(model, f, sort_keys=True, indent=4, cls=json_encoder.ObjectEncoder)
+
 
 def load_model(filename, step=None):
     """ Reload Model from json file """

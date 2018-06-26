@@ -21,14 +21,14 @@ GA_TRACKING_ID = "UA-115593169-1"
 GA_CLIENT_ID = uw._id
 
 def PostGAEvent( category, action, label=None, value=None ):
-    """ 
+    """
     Posts an Event Tracking message to Google Analytics.
-    
+
     Full parameter reference may be found here:
     https://developers.google.com/analytics/devguides/collection/protocol/v1/parameters#ev
-    
-    Note, this function will return quietly on any errors. 
-    
+
+    Note, this function will return quietly on any errors.
+
     Parameters
     ----------
     category: str
@@ -39,7 +39,7 @@ def PostGAEvent( category, action, label=None, value=None ):
         Optional label for event.
     value: non-negative integer
         Optional value for event.
-        
+
 
     """
     try:
@@ -57,7 +57,7 @@ def PostGAEvent( category, action, label=None, value=None ):
         "ea" : action,          # Event Action. Required.
         "el" : label,           # Event label.
         "ev" : value,           # Event value.
-        "cm2": uw.nProcs(),     # Number of processes used. Stored into custom metric 2. 
+        "cm2": uw.nProcs(),     # Number of processes used. Stored into custom metric 2.
         "cd5": str(uw.nProcs()),# Number of processes used. Stored into custom dim 2. Not sure if necessary.
         }
         import os
@@ -65,7 +65,7 @@ def PostGAEvent( category, action, label=None, value=None ):
         if "UW_USER_ID" in os.environ:
             form_fields["uid"] = os.environ["UW_USER_ID"]
             form_fields["cd4"] = os.environ["UW_USER_ID"]
-        
+
         if "UW_MACHINE" in os.environ:
             form_fields["cd6"] = os.environ["UW_MACHINE"]
 
