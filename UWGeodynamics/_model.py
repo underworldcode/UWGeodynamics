@@ -785,7 +785,7 @@ class Model(Material):
             mat.capacity = self.capacity
             mat.radiogenicHeatProd = self.radiogenicHeatProd
 
-        if isinstance(shape, (shapes.Layer, shapes.Layer2D, shapes.Layer3D)):
+        if isinstance(shape, (shapes.Layer, shapes.Layer2D, shapes.Layer3D, shapes.Box)):
             mat.top = shape.top
             mat.bottom = shape.bottom
 
