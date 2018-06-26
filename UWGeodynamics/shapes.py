@@ -28,6 +28,10 @@ class Shape(object):
         newShape.fn = self._fn & B._fn
         return newShape
 
+    def __or__(self, B):
+        newShape = Shape()
+        newShape.fn = self._fn | B._fn
+        return newShape
 
 class Polygon(Shape):
 
