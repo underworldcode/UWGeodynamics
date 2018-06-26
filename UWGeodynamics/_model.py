@@ -785,13 +785,9 @@ class Model(Material):
             mat.capacity = self.capacity
             mat.radiogenicHeatProd = self.radiogenicHeatProd
 
-        if isinstance(shape, shapes.Layer):
+        if isinstance(shape, (shapes.Layer, shapes.Layer2D, shapes.Layer3D)):
             mat.top = shape.top
             mat.bottom = shape.bottom
-
-            if self.mesh.dim == 3:
-                shape.minY = self.minCoord[1]
-                shape.maxY = self.maxCoord[1]
 
         mat.shape = shape
         mat.indices = self._get_material_indices(mat)
