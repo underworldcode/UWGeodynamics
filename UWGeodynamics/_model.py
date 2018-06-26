@@ -29,7 +29,7 @@ from ._swarm import Swarm
 from ._meshvariable import MeshVariable
 from ._swarmvariable import SwarmVariable
 from scipy import interpolate
-from six import string_types, iteritems
+from six import iteritems
 from datetime import datetime
 
 
@@ -148,7 +148,6 @@ class Model(Material):
         self.swarm_fields = {}
 
         # Add common mesh variables
-        # Temperature Field is initialised to None
         self.temperature = None
         self.add_submesh_field("pressureField", nodeDofCount=1)
         self.add_mesh_field("velocityField", nodeDofCount=self.mesh.dim)
@@ -264,6 +263,7 @@ class Model(Material):
         self.add_swarm_field("meltField", dataType="double", count=1)
         self.add_swarm_field("timeField", dataType="double", count=1)
         self.timeField.data[...] = 0.0
+        self.materialField.data[...] = self.index
 
         if self.mesh.dim == 3:
             stress_dim = 6
@@ -687,8 +687,10 @@ class Model(Material):
                 self._solver.options.mg.levels = rcParams["mg.levels"]
 
         if self._solver._check_linearity(False):
-            self.add_mesh_field("prevVelocityField", nodeDofCount=self.mesh.dim)
-            self.add_submesh_field("prevPressureField", nodeDofCount=1)
+            if not hasattr(self, "prevVelocityField"):
+                self.add_mesh_field("prevVelocityField", nodeDofCount=self.mesh.dim)
+            if not hasattr(self, "prevPressureField"):
+                self.add_submesh_field("prevPressureField", nodeDofCount=1)
 
         return self._solver
 
@@ -750,8 +752,7 @@ class Model(Material):
             raise ValueError("Set Boundary Conditions")
         return self.velocityBCs.get_conditions()
 
-    def add_material(self, material=None, shape=None, name="unknown",
-                     reset=False, fill=True):
+    def add_material(self, shape=None, name="unknown", fill=True, reset=False):
         """ Add Material to the Model
 
         Parameters:
@@ -766,27 +767,21 @@ class Model(Material):
             reset: (bool)
                 Reset the material Field before adding the new
                 material. Default is False.
+
         """
-
         if reset:
-            self.materialField.data[...] = 0
-            self.materials = [self]
+            self.materialField.data[:] = self.index
 
-        if material is not None:
-            mat = material
-            mat.name = name
-        else:
-            mat = Material()
+        mat = Material()
+        mat.name = name
 
-            mat.name = name
+        mat.diffusivity = self.diffusivity
+        mat.capacity = self.capacity
+        mat.radiogenicHeatProd = self.radiogenicHeatProd
 
-            # Initialize some properties to Model property
-            mat.diffusivity = self.diffusivity
-            mat.capacity = self.capacity
-            mat.radiogenicHeatProd = self.radiogenicHeatProd
-
-        if isinstance(shape, (shapes.Layer, shapes.Layer2D, shapes.Layer3D, shapes.Box)):
+        if hasattr(shape, "top"):
             mat.top = shape.top
+        if hasattr(shape, "bottom"):
             mat.bottom = shape.bottom
 
         mat.shape = shape
@@ -795,20 +790,13 @@ class Model(Material):
         self.materials.append(mat)
         self.materials.reverse()
 
-        if fill:
-            self._fill_model()
+        condition = [(mat.shape.fn, mat.index), (True, self.materialField)]
+        func = fn.branching.conditional(condition)
+
+        self.materialField.data[:] = func.evaluate(self.swarm)
 
         return mat
 
-    def _fill_model(self):
-        """ Initialize the Material Field from the list of materials"""
-
-        conditions = [(obj.shape.fn, obj.index)
-                      for obj in self.materials if obj.shape is not None]
-
-        conditions.append((True, self._defaultMaterial))
-        vals = fn.branching.conditional(conditions).evaluate(self.swarm)
-        self.materialField.data[:] = vals
 
     def add_swarm_field(self, name, dataType="double", count=1,
                         init_value=0., **kwargs):
@@ -1261,18 +1249,11 @@ class Model(Material):
 
         self._solution_exist.value = True
 
-        # The following line are useful to output velocity and pressurefield
-        # from the non-linear loop.
-        #niteration = self._stokes_SLE._cself.nonLinearIteration_I
-        #string = str(self.step) + "-" + str(niteration)
-        #self._save_fields(["velocityField", "pressureField"], checkpointID=string,
-        #                  time=niteration)
     def _apply_alpha(self):
 
         self.velocityField.data[...] *= (1.0 - rcParams["alpha"])
         self.velocityField.data[...] += rcParams["alpha"] * self.prevVelocityField.data[...]
         self.velocityField.syncronise()
-
 
     def _get_material_indices(self, material):
         """ Get mesh indices of a Material

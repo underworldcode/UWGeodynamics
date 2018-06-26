@@ -1,5 +1,3 @@
-import underworld as uw
-import underworld.function as fn
 from scaling import nonDimensionalize as nd
 from scaling import UnitRegistry as u
 from scaling import Dimensionalize
@@ -17,28 +15,35 @@ class _Polynom(object):
         self.A4 = A4
 
     def temperature(self, pressure, units=None):
-        return nd(self.A1) + nd(self.A2) * pressure + nd(self.A3) * pressure**2 + nd(self.A4) * pressure**3
+        T = nd(self.A1)
+        T += nd(self.A2) * pressure
+        T += nd(self.A3) * pressure**2
+        T += nd(self.A4) * pressure**3
+        return T
 
     def plot(self, pressure):
         import pylab as plt
         temperature = Dimensionalize(self.temperature(pressure), u.kelvin)
-        pressure    = Dimensionalize(pressure, u.pascal)
+        pressure = Dimensionalize(pressure, u.pascal)
         plt.plot(temperature, pressure)
         plt.gca().invert_yaxis()
         plt.show()
+
 
 class Solidus(_Polynom):
     """ This class defines a solidus using the
     form suggested by Hirshmann, 2000"""
 
-    pass
+    def __init__(self, A1, A2=0., A3=0., A4=0.):
+        super(Solidus, self).__init__(A1, A2, A3, A4)
 
 
 class Liquidus(_Polynom):
     """ This class defines a liquidus using the
     form suggested by Hirshmann, 2000"""
 
-    pass
+    def __init__(self, A1, A2=0., A3=0., A4=0.):
+        super(Liquidus, self).__init__(A1, A2, A3, A4)
 
 
 class SolidusRegistry(object):
@@ -46,7 +51,8 @@ class SolidusRegistry(object):
 
         if not filename:
             import pkg_resources
-            filename = pkg_resources.resource_filename(__name__, "ressources/Solidus.json")
+            filename = pkg_resources.resource_filename(
+                __name__, "ressources/Solidus.json")
 
         with open(filename, "r") as infile:
             _solidii = json.load(infile)
@@ -63,8 +69,8 @@ class SolidusRegistry(object):
 
         self._dir = {}
         for key in _solidii.keys():
-            name = key.replace(" ","_").replace(",","").replace(".","")
-            name = name.replace(")","").replace("(","")
+            name = key.replace(" ", "_").replace(",", "").replace(".", "")
+            name = name.replace(")", "").replace("(", "")
             self._dir[name] = Solidus(**_solidii[key]["coefficients"])
 
     def __dir__(self):
@@ -75,12 +81,14 @@ class SolidusRegistry(object):
         # Make sure to return a new instance of ViscousCreep
         return copy(self._dir[item])
 
+
 class LiquidusRegistry(object):
     def __init__(self, filename=None):
 
         if not filename:
             import pkg_resources
-            filename = pkg_resources.resource_filename(__name__, "ressources/Liquidus.json")
+            filename = pkg_resources.resource_filename(
+                __name__, "ressources/Liquidus.json")
 
         with open(filename, "r") as infile:
             _liquidii = json.load(infile)
@@ -97,8 +105,8 @@ class LiquidusRegistry(object):
 
         self._dir = {}
         for key in _liquidii.keys():
-            name = key.replace(" ","_").replace(",","").replace(".","")
-            name = name.replace(")","").replace("(","")
+            name = key.replace(" ", "_").replace(",", "").replace(".", "")
+            name = name.replace(")", "").replace("(", "")
             self._dir[name] = Liquidus(**_liquidii[key]["coefficients"])
 
     def __dir__(self):
