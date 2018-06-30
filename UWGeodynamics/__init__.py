@@ -39,7 +39,7 @@ from ._utils import LogFile
 from ._utils import MovingWall
 import _net
 
-__version__ = "0.2.1"
+__version__ = "0.6.1"
 __author__ = "Romain Beucher"
 
 _id = str(_uuid.uuid4())
