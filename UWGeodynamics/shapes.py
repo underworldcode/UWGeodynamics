@@ -1,5 +1,4 @@
 import numpy as np
-import warnings
 import underworld as uw
 import underworld.function as fn
 from .scaling import nonDimensionalize as nd
@@ -24,6 +23,15 @@ class Shape(object):
         newShape.fn = self._fn & B._fn
         return newShape
 
+    def __add__(self, B):
+        newShape = Shape()
+        newShape.fn = self._fn & B._fn
+        return newShape
+
+    def __or__(self, B):
+        newShape = Shape()
+        newShape.fn = self._fn | B._fn
+        return newShape
 
 class Polygon(Shape):
 
@@ -37,8 +45,8 @@ class HalfSpace(Shape):
     """ Class to define a HalfSpace
 
         A plan defined by a normal vector is used to split the space
-        in two half spaces. By default the origin of the coordinate system is at
-        (0., 0.).
+        in two half spaces. By default the origin of the coordinate
+        system is at (0., 0.).
 
         Particles tested against this class are assigned a boolean value.
     """
@@ -63,7 +71,7 @@ class HalfSpace(Shape):
         if isinstance(origin, (tuple, list)):
             self.origin = fn.misc.constant([nd(val) for val in origin])
         else:
-            self.origin = fn.misc.constant([0.]*len(normal))
+            self.origin = fn.misc.constant([0.] * len(normal))
 
         self.reverse = reverse
 
@@ -95,10 +103,11 @@ class MultiShape(Shape):
         for shape in self.shapes:
             self._fnlist.append(shape._fn)
         func = functools.reduce(
-                operator.or_,
-                self._fnlist,
-                fn.misc.constant(False))
+            operator.or_,
+            self._fnlist,
+            fn.misc.constant(False))
         return func
+
 
 class CombinedShape(Shape):
 
@@ -113,9 +122,9 @@ class CombinedShape(Shape):
         for shape in self.shapes:
             self._fnlist.append(shape._fn)
         func = functools.reduce(
-                operator.and_,
-                self._fnlist,
-                fn.misc.constant(True))
+            operator.and_,
+            self._fnlist,
+            fn.misc.constant(True))
         return func
 
 
@@ -129,7 +138,7 @@ class Layer2D(Shape):
     def _fn(self):
         coord = fn.input()
         func = ((coord[1] <= nd(self.top)) &
-               (coord[1] >= nd(self.bottom)))
+                (coord[1] >= nd(self.bottom)))
         return func
 
     @property
@@ -201,16 +210,16 @@ class Box(Shape):
         coord = fn.input()
         if (self.minY is not None) and (self.maxY is not None):
             func = ((coord[1] <= nd(self.maxY)) &
-                   (coord[1] >= nd(self.minY)) &
-                   (coord[0] <= nd(self.maxX)) &
-                   (coord[0] >= nd(self.minX)) &
-                   (coord[2] <= nd(self.top))  &
-                   (coord[2] >= nd(self.bottom)))
+                    (coord[1] >= nd(self.minY)) &
+                    (coord[0] <= nd(self.maxX)) &
+                    (coord[0] >= nd(self.minX)) &
+                    (coord[2] <= nd(self.top)) &
+                    (coord[2] >= nd(self.bottom)))
         else:
             func = ((coord[1] <= nd(self.top)) &
-                   (coord[1] >= nd(self.bottom)) &
-                   (coord[0] <= nd(self.maxX)) &
-                   (coord[0] >= nd(self.minX)))
+                    (coord[1] >= nd(self.bottom)) &
+                    (coord[0] <= nd(self.maxX)) &
+                    (coord[0] >= nd(self.minX)))
         return func
 
     @property
@@ -258,6 +267,7 @@ class Disk(Shape):
         radius = nd(self.radius)
         coord = fn.input() - center
         return fn.math.dot(coord, coord) < radius**2
+
 
 Sphere = Disk
 

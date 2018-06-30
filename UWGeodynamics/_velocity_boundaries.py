@@ -24,7 +24,7 @@ class VelocityBCs(object):
     """ Class to define the mechanical boundary conditions """
 
     def __init__(self, Model, left=None, right=None, top=None, bottom=None,
-                 front=None, back=None, indexSets=None,
+                 front=None, back=None, indexSets=tuple(),
                  order_wall_conditions=None):
         """ Defines mechanical boundary conditions
 
@@ -52,7 +52,7 @@ class VelocityBCs(object):
         bottom:(tuple) with length 2 in 2D, and length 3 in 3D.
             Define mechanical conditions on the bottom side of the Model.
             Conditions are defined for each Model direction (x, y, [z])
-        indexSets: (list)
+        indexSets: [(condition, IndexSet)]
             List of node where to apply predefined velocities.
 
         Only valid for 3D Models:
@@ -92,7 +92,6 @@ class VelocityBCs(object):
 
         self.dirichlet_indices = []
         self.neumann_indices = []
-
 
         if self.Model.mesh.dim == 2:
             self._wall_indexSets = {"bottom": (self.bottom,
@@ -155,7 +154,7 @@ class VelocityBCs(object):
 
         # Special case (Bottom LecodeIsostasy)
         if (isinstance(condition, LecodeIsostasy) and
-            nodes ==  self.Model._bottom_wall):
+                nodes == self.Model._bottom_wall):
 
             # Apply support condition
             self.Model._isostasy = self.bottom
@@ -177,35 +176,19 @@ class VelocityBCs(object):
             self.dirichlet_indices[-1] += self.Model._bottom_wall
             return
 
-        #if isinstance(condition, MovingWall):
-        #    condition.wall = nodes
-        #    set_ = condition.get_wall_indices()
-        #    velocity = nd(condition.velocity)
-        #    dim = condition.wall_direction_axis[condition.wall]
-        #    if set_.data.size > 0:
-        #        self.Model.velocityField.data[set_.data, :] = 0.
-        #        self.Model.boundariesField.data[set_.data, :] = 0.
-        #        self.Model.velocityField.data[set_.data, dim] = velocity
-        #        self.Model.boundariesField.data[set_.data, dim] = velocity
-        #        self.dirichlet_indices[0] += set_
-        #        self.dirichlet_indices[1] += set_
-        #    return
-
         if isinstance(condition, MovingWall):
             condition.wall = nodes
             indices = condition.get_wall_indices()
-            #velocity = nd(condition.velocity)
             func = condition.velocityFn
             for dim in range(self.Model.mesh.dim):
                 set_ = indices[dim]
                 if set_.data.size > 0:
-                    self.Model.velocityField.data[set_.data, dim] =(
-                        func.evaluate(set_)[:,0])
-                    self.Model.boundariesField.data[set_.data, dim] =(
+                    self.Model.velocityField.data[set_.data, dim] = (
+                        func.evaluate(set_)[:, 0])
+                    self.Model.boundariesField.data[set_.data, dim] = (
                         func.evaluate(set_)[:, 0])
                     self.dirichlet_indices[dim] += set_
             return
-
 
         # Expect a list or tuple of dimension mesh.dim.
         # Check that the domain actually contains some boundary nodes
@@ -315,6 +298,10 @@ class VelocityBCs(object):
         for set_ in self.order_wall_conditions:
             (condition, nodes) = self._wall_indexSets[set_]
             self.apply_condition_nodes(condition, nodes)
+
+        if self.indexSets:
+            for (condition, nodes) in self.indexSets:
+                self.apply_condition_nodes(condition, nodes)
 
         conditions = []
 

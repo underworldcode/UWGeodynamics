@@ -15,7 +15,7 @@ class ObjectEncoder(json.JSONEncoder):
     def default(self, obj):
 
         if isinstance(obj, GEO.Model):
-            
+
             model = OrderedDict()
 
             model["Type"] = "Model"
