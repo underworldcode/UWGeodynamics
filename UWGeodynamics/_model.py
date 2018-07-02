@@ -787,10 +787,10 @@ class Model(Material):
         self.materials.append(mat)
         self.materials.reverse()
 
-        condition = [(mat.shape.fn, mat.index), (True, self.materialField)]
-        func = fn.branching.conditional(condition)
-
-        self.materialField.data[:] = func.evaluate(self.swarm)
+        if mat.shape:
+            condition = [(mat.shape.fn, mat.index), (True, self.materialField)]
+            func = fn.branching.conditional(condition)
+            self.materialField.data[:] = func.evaluate(self.swarm)
 
         return mat
 
@@ -1213,7 +1213,7 @@ class Model(Material):
             at the bottom of the Model
         """
 
-        gravity = np.abs(nd(self.gravity[-1]))  # Ugly!!!!!
+        gravity = np.abs(nd(self.gravity[-1]))
         lithoPress = LithostaticPressure(self.mesh, self._densityFn, gravity)
         self.pressureField.data[:], LPressBot = lithoPress.solve()
         self.pressSmoother.smooth()
