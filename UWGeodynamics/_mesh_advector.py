@@ -85,7 +85,6 @@ class _mesh_advector(object):
         maxV = np.ones((1)) * sys.float_info.min
         minV = np.ones((1)) * sys.float_info.max
 
-
         # if local domain has wall, get velocities
         if wall.data.size > 0:
             velocities  = self.Model.velocityField.data[wall.data, axis]
