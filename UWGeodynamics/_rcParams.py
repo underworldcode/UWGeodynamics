@@ -99,6 +99,7 @@ rcParams = {
     "velocityField.SIunits" : [u.centimeter / u.year, validate_quantity],
     "temperature.SIunits" : [u.degK, validate_quantity],
     "pressureField.SIunits" : [u.pascal , validate_quantity],
+    "projStressField.SIunits" : [u.pascal , validate_quantity],
     "strainRateField.SIunits" : [1.0 / u.second, validate_quantity],
     "projViscosityField.SIunits"  : [u.pascal * u.second, validate_quantity],
     "projDensityField.SIunits" : [u.kilogram / u.metre**3, validate_quantity],
