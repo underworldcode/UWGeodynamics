@@ -6,6 +6,7 @@ from collections import OrderedDict
 import numpy as np
 import underworld as uw
 import underworld.function as fn
+from underworld.function.exception import SafeMaths as Safe
 import UWGeodynamics.shapes as shapes
 import UWGeodynamics.surfaceProcesses as surfaceProcesses
 from . import scaling_coefficients
@@ -661,6 +662,7 @@ class Model(Material):
 
         gravity = tuple([nd(val) for val in self.gravity])
         self._buoyancyFn = self._densityFn * gravity
+        self._buoyancyFn = Safe(self._buoyancyFn)
 
         if any([material.viscosity for material in self.materials]):
 
@@ -1087,7 +1089,7 @@ class Model(Material):
         else:
             self._isYielding = fn.misc.constant(0.0)
 
-        return viscosityFn
+        return Safe(viscosityFn)
 
     @property
     def _stressFn(self):
@@ -1120,8 +1122,8 @@ class Model(Material):
                     # has no elasticity
                     elasticStressFn = [0.0] * 3 if self.mesh.dim == 2 else [0.0] * 6
                 stressMap[material.index] = elasticStressFn
-            return fn.branching.map(fn_key=self.materialField,
-                                    mapping=stressMap)
+            return Safe(fn.branching.map(fn_key=self.materialField,
+                                    mapping=stressMap))
         else:
 
             elasticStressFn = [0.0] * 3 if self.mesh.dim == 2 else [0.0] * 6
@@ -1646,9 +1648,9 @@ class Model(Material):
                 if material.compressibility:
                     materialMap[material.index] = nd(material.compressibility)
 
-            return uw.function.branching.map(fn_key=self.materialField,
+            return Safe(uw.function.branching.map(fn_key=self.materialField,
                                              mapping=materialMap,
-                                             fn_default=0.0)
+                                             fn_default=0.0))
         return
 
     def checkpoint(self, variables=None, checkpointID=None):
