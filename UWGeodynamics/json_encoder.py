@@ -228,7 +228,7 @@ class ObjectEncoder(json.JSONEncoder):
             d["shapes"] = obj.shapes
             return d
 
-        if isinstance(obj, GEO.shapes.Layer):
+        if isinstance(obj, [GEO.shapes.Layer2D, GEO.shapes.Layer3D]):
             args, _, _, _ = inspect.getargspec(obj.__init__)
             d = OrderedDict()
             d["Type"] = type(obj).__name__
