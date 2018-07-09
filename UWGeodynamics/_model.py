@@ -31,6 +31,7 @@ from ._swarmvariable import SwarmVariable
 from scipy import interpolate
 from six import iteritems
 from datetime import datetime
+from copy import copy
 
 
 class Model(Material):
@@ -222,7 +223,6 @@ class Model(Material):
         # Initialise remaining attributes
         self._default_strain_rate = 1e-15 / u.second
         self._solution_exist = fn.misc.constant(False)
-        self._isYielding = None
         self._temperatureDot = None
         self._temperature = None
         self.DiffusivityFn = None
@@ -886,26 +886,66 @@ class Model(Material):
     def _viscosityFn(self):
         """ Create the Viscosity Function """
 
-        viscousEta = self._getViscousEta()
-        plasticEta = self._getPlasticEta()
-        elasticEta = self._getElasticEta()
+        n = 1.0
+        eta_eff = 1.0 / self._getViscousEta()
 
-        # Harmonic Average
-        eta_eff = 3.0 * (1.0 / viscousEta +  1.0 / plasticEta + 1.0 / elasticEta)**-1
+        if any([material.plasticity for material in self.materials]):
+            eta_eff +=  1.0 / self._getPlasticEta()
+            n += 1.0
+
+        if any([material.elasticity for material in self.materials]):
+            eta_eff = 1.0 / self._getElasticEta()
+            n += 1.0
+
+        eta_eff = n * eta_eff**-1
 
         # Melt Modifier
-        eta_eff *= self._melt_modifierFn()
+        fac = self._melt_modifierFn()
+        if fac:
+            eta_eff *= fac
 
-        yield_condition = [(eta_eff < viscousEta, self._strainRate_2ndInvariant),
+        # Viscosity Limiter
+        eta_eff = self._viscosity_limiter(eta_eff)
+
+        return Safe(eta_eff)
+
+    @property
+    def _isYielding(self):
+        yield_condition = [(self._viscosityFn < self._getViscousEta(),
+                            self._strainRate_2ndInvariant),
                            (True, 0.0)]
 
         # Do not yield at the very first solve
         if self._solution_exist.value:
-            self._isYielding = fn.branching.conditional(yield_condition)
+            return fn.branching.conditional(yield_condition)
         else:
-            self._isYielding = fn.misc.constant(0.0)
+            return fn.misc.constant(0.0)
 
-        return Safe(eta_eff)
+    def _viscosity_limiter(self, eta):
+
+        default = ViscosityLimiter(self.minViscosity, self.maxViscosity)
+        default = default.apply(eta)
+        limiter_map = {}
+
+        if (any([material.minViscosity for material in self.materials]) or
+            any([material.maxViscosity for material in self.materials])):
+
+            for material in self.materials:
+                minViscosity = self.minViscosity
+                maxViscosity = self.maxViscosity
+                if material.minViscosity:
+                    minViscosity = material.minViscosity
+                if material.maxViscosity:
+                    maxViscosity = material.maxViscosity
+                limiter = ViscosityLimiter(minViscosity, maxViscosity)
+                limiter_map[material.index] = limiter.apply(eta)
+
+        if limiter_map:
+            return fn.branching.map(fn_key=self.materialField,
+                                    mapping=limiter_map,
+                                    fn_default=default)
+        else:
+            return default
 
     @property
     def _stressFn(self):
@@ -939,7 +979,7 @@ class Model(Material):
                     elasticStressFn = [0.0] * 3 if self.mesh.dim == 2 else [0.0] * 6
                 stressMap[material.index] = elasticStressFn
             return Safe(fn.branching.map(fn_key=self.materialField,
-                                    mapping=stressMap))
+                                         mapping=stressMap))
         else:
 
             elasticStressFn = [0.0] * 3 if self.mesh.dim == 2 else [0.0] * 6
@@ -955,7 +995,6 @@ class Model(Material):
         veStressFn_data = self._stressFn.evaluate(self.swarm)
         self._previousStressField.data[:] *= (1. - phi)
         self._previousStressField.data[:] += phi * veStressFn_data[:]
-
 
     @property
     def _strainRate_2ndInvariant(self):
@@ -994,21 +1033,6 @@ class Model(Material):
                     self._strainRate_2ndInvariant
                 )
                 ViscosityHandler.temperatureField = self.temperature
-
-                if not material.minViscosity:
-                    minViscosity = self.minViscosity
-                else:
-                    minViscosity = material.minViscosity
-
-                if not material.maxViscosity:
-                    maxViscosity = self.maxViscosity
-                else:
-                    maxViscosity = material.maxViscosity
-
-                ViscosityHandler._viscosity_limiter = ViscosityLimiter(
-                    minViscosity,
-                    maxViscosity
-                )
                 ViscosityMap[material.index] = ViscosityHandler.muEff
 
         return fn.branching.map(fn_key=self.materialField,
@@ -1016,23 +1040,21 @@ class Model(Material):
 
     def _melt_modifierFn(self):
         melt_modif = {}
-        for material in self.materials:
-            if material.viscosity and material.viscosityChange > 1.0:
-                X1 = material.viscosityChangeX1
-                X2 = material.viscosityChangeX2
-                change = (1.0 + (material.viscosityChange - 1.0) /
-                          (X2 - X1) * (self.meltField - X1))
-                conditions = [(self.meltField < X1, 1.0),
-                              (self.meltField > X2, material.viscosityChange),
-                              (True, change)]
-                melt_modif[material.index] = fn.branching.conditional(conditions)
+        if any([material.melt for material in self.materials]):
+            for material in self.materials:
+                if material.viscosity and material.viscosityChange > 1.0:
+                    X1 = material.viscosityChangeX1
+                    X2 = material.viscosityChangeX2
+                    change = (1.0 + (material.viscosityChange - 1.0) /
+                              (X2 - X1) * (self.meltField - X1))
+                    conditions = [(self.meltField < X1, 1.0),
+                                  (self.meltField > X2, material.viscosityChange),
+                                  (True, change)]
+                    melt_modif[material.index] = fn.branching.conditional(conditions)
 
-        if melt_modif:
             return fn.branching.map(fn_key=self.materialField,
                                     mapping=melt_modif,
                                     fn_default=1.0)
-        else:
-            return 1.0
 
     @property
     def yieldStressFn(self):
@@ -1059,32 +1081,42 @@ class Model(Material):
                     yieldStress = stressLimiter.apply(yieldStress)
 
                 yield_map[material.index] = yieldStress
+
+            else:
+                yield_map[material.index] = 0.0
+
         return fn.branching.map(fn_key=self.materialField,
                                 mapping=yield_map)
 
     def _getPlasticEta(self):
         plasticity_map = {}
 
-        for material in self.materials:
-            if material.plasticity:
+        if any([material.plasticity for material in self.materials]):
+            for material in self.materials:
+                if material.plasticity:
+                    muEff = 0.5 * self.yieldStressFn / self._strainRate_2ndInvariant
+                    plasticity_map[material.index] = muEff
+                if self.frictionalBCs is not None:
+                    YieldHandler = copy(material.plasticity)
+                    YieldHandler.frictionCoefficient = self.frictionalBCs.friction
+                    YieldHandler.frictionAfterSoftening = self.frictionalBCs.friction
+                    YieldHandler.pressureField = self.pressureField
+                    YieldHandler.plasticStrain = self.plasticStrain
 
-                muEff = 0.5 * self.yieldStressFn / self._strainRate_2ndInvariant
-                if not material.minViscosity:
-                    minViscosity = self.minViscosity
-                else:
-                    minViscosity = material.minViscosity
+                    if self.mesh.dim == 2:
+                        yieldStress = YieldHandler._get_yieldStress2D()
 
-                if not material.maxViscosity:
-                    maxViscosity = self.maxViscosity
-                else:
-                    maxViscosity = material.maxViscosity
+                    if self.mesh.dim == 3:
+                        yieldStress = YieldHandler._get_yieldStress3D()
 
-                viscosity_limiter = ViscosityLimiter(minViscosity,
-                                                     maxViscosity)
-                muEff = viscosity_limiter.apply(muEff)
-                plasticity_map[material.index] = muEff
+                    muEff = 0.5 * yieldStress / self._strainRate_2ndInvariant
+                    conditions = [(self.frictionalBCs._mask > 0.0, muEff),
+                                  (True, plasticity_map[material.index])]
 
-        if plasticity_map:
+                    plasticity_map[material.index] = fn.branching.conditional(
+                        conditions
+                    )
+
             return fn.branching.map(fn_key=self.materialField,
                                     mapping=plasticity_map,
                                     fn_default=self._getViscousEta())
@@ -1094,36 +1126,14 @@ class Model(Material):
     def _getElasticEta(self):
 
         ElasticEtaMap = {}
-        # Elasticity
-        for material in self.materials:
-            if material.elasticity:
 
-                # We are dealing with viscous material
-                # Raise an error is no viscosity has been defined.
-                if not material.viscosity:
-                    raise ValueError("""Viscosity undefined for
-                                     {0}""".format(material.name))
+        if any([material.elasticity for material in self.materials]):
+            for material in self.materials:
+                if material.elasticity:
+                    ElasticityHandler = material.elasticity
+                    ElasticityHandler.viscosity = self._getViscousEta()
+                    ElasticEtaMap[material.index] = ElasticityHandler.muEff
 
-                ElasticityHandler = material.elasticity
-                ElasticityHandler.viscosity = self._getViscousEta()
-
-                if not material.minViscosity:
-                    minViscosity = self.minViscosity
-                else:
-                    minViscosity = material.minViscosity
-
-                if not material.maxViscosity:
-                    maxViscosity = self.maxViscosity
-                else:
-                    maxViscosity = material.maxViscosity
-
-                ElasticityHandler._viscosity_limiter = ViscosityLimiter(
-                    minViscosity,
-                    maxViscosity
-                )
-                ElasticEtaMap[material.index] = ElasticityHandler.muEff
-
-        if ElasticEtaMap:
             return fn.branching.map(fn_key=self.materialField,
                                     mapping=ElasticEtaMap,
                                     fn_default=self._getViscousEta())
