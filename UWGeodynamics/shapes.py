@@ -24,8 +24,7 @@ class Shape(object):
         return newShape
 
     def __add__(self, B):
-        newShape = Shape()
-        newShape.fn = self._fn & B._fn
+        newShape = MultiShape([self, B])
         return newShape
 
     def __or__(self, B):
