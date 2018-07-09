@@ -78,7 +78,6 @@ class Model(Material):
 
         super(Model, self).__init__()
 
-        # Process __init__ arguments
         if not name:
             self.name = rcParams["model.name"]
         else:
@@ -921,18 +920,15 @@ class Model(Material):
         default = default.apply(eta)
         limiter_map = {}
 
-        if (any([material.minViscosity for material in self.materials]) or
-            any([material.maxViscosity for material in self.materials])):
-
-            for material in self.materials:
-                minViscosity = self.minViscosity
-                maxViscosity = self.maxViscosity
-                if material.minViscosity:
-                    minViscosity = material.minViscosity
-                if material.maxViscosity:
-                    maxViscosity = material.maxViscosity
-                limiter = ViscosityLimiter(minViscosity, maxViscosity)
-                limiter_map[material.index] = limiter.apply(eta)
+        for material in self.materials:
+            minViscosity = self.minViscosity
+            maxViscosity = self.maxViscosity
+            if material.minViscosity:
+                minViscosity = material.minViscosity
+            if material.maxViscosity:
+                maxViscosity = material.maxViscosity
+            limiter = ViscosityLimiter(minViscosity, maxViscosity)
+            limiter_map[material.index] = limiter.apply(eta)
 
         if limiter_map:
             return fn.branching.map(fn_key=self.materialField,
@@ -960,15 +956,16 @@ class Model(Material):
     @property
     def _elastic_stressFn(self):
         default = [0.0] * 3 if self.mesh.dim == 2 else [0.0] * 6
-        if any([material.elasticity for material in self.materials]):
-            stressMap = {}
-            for material in self.materials:
-                if material.elasticity:
-                    ElasticityHandler = material.elasticity
-                    ElasticityHandler.viscosity = self._viscosityFn
-                    ElasticityHandler.previousStress = self._previousStressField
-                    elasticStressFn = ElasticityHandler.elastic_stress
-                    stressMap[material.index] = elasticStressFn
+        stressMap = {}
+        for material in self.materials:
+            if material.elasticity:
+                ElasticityHandler = material.elasticity
+                ElasticityHandler.viscosity = self._viscosityFn
+                ElasticityHandler.previousStress = self._previousStressField
+                elasticStressFn = ElasticityHandler.elastic_stress
+                stressMap[material.index] = elasticStressFn
+
+        if stressMap:
             return Safe(fn.branching.map(fn_key=self.materialField,
                                          mapping=stressMap,
                                          fn_default=default))
@@ -989,22 +986,23 @@ class Model(Material):
     def _getStrainRate_2ndInvariant(self):
         default = self._strainRate_2ndInvariant
         strain_rate_map = {}
-        if any([material.elasticity for material in self.materials]):
-            for material in self.materials:
-                if material.elasticity:
-                    ElasticityHandler = material.elasticity
-                    mu = nd(ElasticityHandler.shear_modulus)
-                    dt_e = nd(ElasticityHandler.observation_time)
-                    strainRate = fn.tensor.symmetric(
-                        self.velocityField.fn_gradient
-                    )
-                    D_eff = strainRate + 0.5 * self._previousStressField / (mu * dt_e)
-                    SRInv = fn.tensor.second_invariant(D_eff)
-                    strain_rate_map[material.index] = SRInv
+        for material in self.materials:
+            if material.elasticity:
+                ElasticityHandler = material.elasticity
+                mu = nd(ElasticityHandler.shear_modulus)
+                dt_e = nd(ElasticityHandler.observation_time)
+                strainRate = fn.tensor.symmetric(
+                    self.velocityField.fn_gradient
+                )
+                D_eff = strainRate + 0.5 * self._previousStressField / (mu * dt_e)
+                SRInv = fn.tensor.second_invariant(D_eff)
+                strain_rate_map[material.index] = SRInv
+
+        if strain_rate_map:
 
             return fn.branching.map(fn_key=self.materialField,
-                                     mapping=strain_rate_map,
-                                     fn_default=default)
+                                    mapping=strain_rate_map,
+                                    fn_default=default)
         else:
             return default
 
@@ -1026,17 +1024,18 @@ class Model(Material):
 
     def _melt_modifierFn(self):
         melt_modif = {}
-        if any([material.melt for material in self.materials]):
-            for material in self.materials:
-                if material.viscosity and material.viscosityChange > 1.0:
-                    X1 = material.viscosityChangeX1
-                    X2 = material.viscosityChangeX2
-                    change = (1.0 + (material.viscosityChange - 1.0) /
-                              (X2 - X1) * (self.meltField - X1))
-                    conditions = [(self.meltField < X1, 1.0),
-                                  (self.meltField > X2, material.viscosityChange),
-                                  (True, change)]
-                    melt_modif[material.index] = fn.branching.conditional(conditions)
+        for material in self.materials:
+            if material.viscosity and material.viscosityChange > 1.0:
+                X1 = material.viscosityChangeX1
+                X2 = material.viscosityChangeX2
+                change = (1.0 + (material.viscosityChange - 1.0) /
+                          (X2 - X1) * (self.meltField - X1))
+                conditions = [(self.meltField < X1, 1.0),
+                              (self.meltField > X2, material.viscosityChange),
+                              (True, change)]
+                melt_modif[material.index] = fn.branching.conditional(conditions)
+
+        if melt_modif:
 
             return fn.branching.map(fn_key=self.materialField,
                                     mapping=melt_modif,
@@ -1077,33 +1076,34 @@ class Model(Material):
     def _getPlasticEta(self):
         plasticity_map = {}
 
-        if any([material.plasticity for material in self.materials]):
-            for material in self.materials:
-                if material.plasticity:
-                    eij = fn.misc.max(self._getStrainRate_2ndInvariant(), 1e-20)
-                    muEff = 0.5 * self.yieldStressFn / eij
-                    plasticity_map[material.index] = muEff
-                if self.frictionalBCs is not None:
-                    YieldHandler = copy(material.plasticity)
-                    YieldHandler.frictionCoefficient = self.frictionalBCs.friction
-                    YieldHandler.frictionAfterSoftening = self.frictionalBCs.friction
-                    YieldHandler.pressureField = self.pressureField
-                    YieldHandler.plasticStrain = self.plasticStrain
+        for material in self.materials:
+            if material.plasticity:
+                eij = fn.misc.max(self._getStrainRate_2ndInvariant(), 1e-20)
+                muEff = 0.5 * self.yieldStressFn / eij
+                plasticity_map[material.index] = muEff
+            if self.frictionalBCs is not None:
+                YieldHandler = copy(material.plasticity)
+                YieldHandler.frictionCoefficient = self.frictionalBCs.friction
+                YieldHandler.frictionAfterSoftening = self.frictionalBCs.friction
+                YieldHandler.pressureField = self.pressureField
+                YieldHandler.plasticStrain = self.plasticStrain
 
-                    if self.mesh.dim == 2:
-                        yieldStress = YieldHandler._get_yieldStress2D()
+                if self.mesh.dim == 2:
+                    yieldStress = YieldHandler._get_yieldStress2D()
 
-                    if self.mesh.dim == 3:
-                        yieldStress = YieldHandler._get_yieldStress3D()
+                if self.mesh.dim == 3:
+                    yieldStress = YieldHandler._get_yieldStress3D()
 
-                    eij = fn.misc.max(self._getStrainRate_2ndInvariant(), 1e-20)
-                    muEff = 0.5 * yieldStress / eij
-                    conditions = [(self.frictionalBCs._mask > 0.0, muEff),
-                                  (True, plasticity_map[material.index])]
+                eij = fn.misc.max(self._getStrainRate_2ndInvariant(), 1e-20)
+                muEff = 0.5 * yieldStress / eij
+                conditions = [(self.frictionalBCs._mask > 0.0, muEff),
+                              (True, plasticity_map[material.index])]
 
-                    plasticity_map[material.index] = fn.branching.conditional(
-                        conditions
-                    )
+                plasticity_map[material.index] = fn.branching.conditional(
+                    conditions
+                )
+
+        if plasticity_map:
 
             return fn.branching.map(fn_key=self.materialField,
                                     mapping=plasticity_map,
@@ -1115,12 +1115,13 @@ class Model(Material):
 
         ElasticEtaMap = {}
 
-        if any([material.elasticity for material in self.materials]):
-            for material in self.materials:
-                if material.elasticity:
-                    ElasticityHandler = material.elasticity
-                    ElasticityHandler.viscosity = self._getViscousEta()
-                    ElasticEtaMap[material.index] = ElasticityHandler.muEff
+        for material in self.materials:
+            if material.elasticity:
+                ElasticityHandler = material.elasticity
+                ElasticityHandler.viscosity = self._getViscousEta()
+                ElasticEtaMap[material.index] = ElasticityHandler.muEff
+
+        if ElasticEtaMap:
 
             return fn.branching.map(fn_key=self.materialField,
                                     mapping=ElasticEtaMap,
