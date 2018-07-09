@@ -50,7 +50,7 @@ def validate_float(s):
     try:
         return float(s)
     except:
-        raise ValueError("Could not convert value to float") 
+        raise ValueError("Could not convert value to float")
 
 def validate_solver(s):
     if s in ["mg", "mumps", "lu", "superlu", "superludist"]:
@@ -100,11 +100,17 @@ def validate_viscosity(s):
             s = s.replace(" ", "_")
             s = s.replace(",", "")
             s = s.replace(".", "")
-            
+
             if s in rheologies._dir:
                 return rheologies._dir[s]
         except:
             raise ValueError("Can not find {0} rheology in databases".format(s))
+
+def validate_rheology_method(s):
+    options = ["Harmonic Mean", "Min / Max"]
+    if s not in options:
+        raise ValueError("Can not find method ({0}), options are {1}".format(s, options))
+    return s
 
 validate_stringlist = _listify_validator(six.text_type)
 validate_stringlist.__doc__ = 'return a list'

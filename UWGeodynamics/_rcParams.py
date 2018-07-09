@@ -108,6 +108,7 @@ rcParams = {
     "useEquationResidual" : [False, validate_bool],
     "alpha": [0., validate_float],
     "shearHeating": [False, validate_bool],
-    "surface.pressure.normalization": [True, validate_bool]
+    "surface.pressure.normalization": [True, validate_bool],
+    "rheologies.combine.method": ["Min / Max", validate_rheology_method]
     }
 
