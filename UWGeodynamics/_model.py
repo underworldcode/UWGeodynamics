@@ -886,18 +886,20 @@ class Model(Material):
     def _viscosityFn(self):
         """ Create the Viscosity Function """
 
-        n = 1.0
-        eta_eff = 1.0 / self._getViscousEta()
+        #n = 1.0
+        #eta_eff = 1.0 / self._getViscousEta()
 
-        if any([material.plasticity for material in self.materials]):
-            eta_eff +=  1.0 / self._getPlasticEta()
-            n += 1.0
+        #if any([material.plasticity for material in self.materials]):
+        #    eta_eff +=  1.0 / self._getPlasticEta()
+        #    n += 1.0
 
-        if any([material.elasticity for material in self.materials]):
-            eta_eff = 1.0 / self._getElasticEta()
-            n += 1.0
+        #if any([material.elasticity for material in self.materials]):
+        #    eta_eff = 1.0 / self._getElasticEta()
+        #    n += 1.0
 
-        eta_eff = n * eta_eff**-1
+        #eta_eff = n * eta_eff**-1
+
+        eta_eff = fn.misc.min(self._getViscousEta(), self._getPlasticEta())
 
         # Melt Modifier
         fac = self._melt_modifierFn()
