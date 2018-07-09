@@ -890,7 +890,11 @@ class Model(Material):
             eta_eff = n * eta_eff**-1
 
         if rcParams["rheologies.combine.method"] == "Min / Max":
-            eta_eff = fn.misc.min(self._getViscousEta(), self._getPlasticEta())
+            if any([material.elasticity for material in self.materials]):
+                visc = self._getElasticEta()
+            else:
+                visc = self._getViscousEta()
+            eta_eff = fn.misc.min(visc, self._getPlasticEta())
 
         # Melt Modifier
         fac = self._melt_modifierFn()
