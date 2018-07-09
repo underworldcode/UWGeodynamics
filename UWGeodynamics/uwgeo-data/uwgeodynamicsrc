@@ -35,6 +35,9 @@
 # List of fields to output
 #default.outputs  :  materialField ,  temperature ,  pressureField ,  plasticStrain ,  velocityField 
 #
+# List of default glucifer outputs
+#glucifer.outputs  :  materialField ,  temperature ,  pressureField ,  plasticStrain ,  velocityField 
+#
 # swarm-layout number of particle per cell
 #swarm.particles.per.cell : 50
 #
