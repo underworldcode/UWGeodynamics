@@ -35,18 +35,7 @@ from copy import copy
 
 
 class Model(Material):
-    """ This class provides the main UWGeodynamics Model
-
-    Attributes
-    ----------
-
-    materialField:
-    pressureField:
-    velocityField:
-    temperature:
-    tractionField:
-
-    """
+    """ This class provides the main UWGeodynamics Model """
 
     def __init__(self, elementRes, minCoord, maxCoord,
                  name=None, gravity=None, periodic=None, elementType=None,
@@ -273,8 +262,6 @@ class Model(Material):
                              count=stress_dim)
         self.add_swarm_field("_stressField", dataType="double",
                              count=stress_dim)
-
-        #self._add_surface_tracers()
 
     def __getitem__(self, name):
         return self.__dict__[name]
@@ -1455,7 +1442,6 @@ class Model(Material):
                 value()
             if rcParams["surface.pressure.normalization"]:
                 self._calibrate_pressureField()
-            #self._adjust_tolerance()
             self._apply_alpha()
         self._callback_post_solve = callback
 
@@ -1566,25 +1552,6 @@ class Model(Material):
 
         return tracers
 
-    def _add_surface_tracers(self):
-        """ Add tracers at the surface """
-
-        if self.mesh.dim < 3:
-            xcoords = np.linspace(nd(self.minCoord[0]), nd(self.maxCoord[0]), 1000)
-            ycoords = 0.
-            self.add_passive_tracers(name="Surface", vertices=[xcoords, ycoords])
-        else:
-            xcoords = np.linspace(nd(self.minCoord[0]), nd(self.maxCoord[0]), 100)
-            ycoords = np.linspace(nd(self.minCoord[1]), nd(self.maxCoord[1]), 100)
-            xcoords, ycoords = np.meshgrid(xcoords, ycoords)
-            xcoords = xcoords.ravel()
-            ycoords = ycoords.ravel()
-            zcoords = 0.
-            self.add_passive_tracers(name="Surface",
-                                     vertices=[xcoords, ycoords, zcoords])
-
-        return
-
     def _get_melt_fraction(self):
         """ Melt Fraction function
 
@@ -1678,58 +1645,6 @@ class Model(Material):
         if self.passive_tracers:
             for (key, tracers) in iteritems(self.passive_tracers):
                 tracers.save(self.outputDir, checkpointID, self.time)
-
-    def profile(self,
-                start_point,
-                end_point,
-                field,
-                field_units=u.dimensionless,
-                distance_units=u.dimensionless,
-                npoints=1000):
-
-        if (field not in rcParams["mesh.variables"] and
-           field not in rcParams["swarm.variables"]):
-            raise ValueError("""{0} is not a valid field, \n
-                                Valid fields are {1} or {2}""".format(
-                             field, rcParams["mesh.variables"],
-                             rcParams["swarm.variables"]))
-
-        start_point = np.array([nd(val) for val in start_point])
-        end_point = np.array([nd(val) for val in end_point])
-
-        points = [start_point, end_point]
-        x_coords, y_coords = zip(*points)
-
-        x = np.linspace(x_coords[0], x_coords[1], npoints)
-
-        if x_coords[0] == x_coords[1]:
-            y = np.linspace(y_coords[0], y_coords[1], npoints)
-        else:
-            f = interpolate.interp1d(x_coords, y_coords)
-            y = f(x)
-
-        dx = np.diff(x)
-        dy = np.diff(y)
-        distances = np.zeros(x.shape)
-        distances[1:] = np.sqrt(dx**2 + dy**2)
-        distances = np.cumsum(distances)
-
-        obj = getattr(self, field)
-
-        if isinstance(obj, SwarmVariable):
-            obj = getattr(self, "proj" + field[0].upper() + field[1:])
-
-        pts = np.array(zip(x, y))
-
-        values = obj.evaluate(pts)
-
-        distance_fact = Dimensionalize(1.0, distance_units)
-        field_fact = Dimensionalize(1.0, field_units)
-
-        distances *= distance_fact.magnitude
-        values *= field_fact.magnitude
-
-        return distances, values
 
     def output_glucifer_figures(self, step):
         """ Output glucifer Figures to the gldb store """
@@ -1863,37 +1778,6 @@ class Model(Material):
 
     def save(self, filename=None):
         save_model(self, filename)
-
-    def geometry_from_shapefile(self, filename, units=None):
-        from ._utils import MoveImporter
-        Importer = MoveImporter(filename, units=units)
-
-        shape_dict = {name: [] for name in Importer.names}
-
-        for polygon in Importer.generator:
-            name = polygon["properties"]["Name"]
-            vertices = polygon["coordinates"]
-            shape = shapes.Polygon(vertices)
-            shape_dict[name].append(shape)
-
-        for name, shape in shape_dict.iteritems():
-            mshape = shapes.MultiShape(shape)
-            self.add_material(name=name,
-                              shape=mshape,
-                              fill=False)
-
-        self._fill_model()
-
-    def _adjust_tolerance(self):
-        niteration = self._stokes_SLE._cself.nonLinearIteration_I
-        nsteps = rcParams["nonlinear.tolerance.adjust.nsteps"]
-        curResidual = self._stokes_SLE._cself.curResidual
-
-        if curResidual > self._curTolerance:
-            if (niteration % nsteps == 0 and self.step > 0):
-                fact = rcParams["nonlinear.tolerance.adjust.factor"]
-                self._curTolerance /= fact
-                self._stokes_SLE._cself.nonLinearTolerance = self._curTolerance
 
     def velocity_rms(self):
         vdotv_fn = uw.function.math.dot(self.velocityField, self.velocityField)
