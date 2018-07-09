@@ -230,6 +230,7 @@ class Model(Material):
         self._buoyancyFn = None
         self.callback_post_solve = None
         self._initialize()
+        self.solver = None
 
     def _initialize(self):
 
@@ -1000,21 +1001,21 @@ class Model(Material):
 
     @property
     def _strainRate_2ndInvariant(self):
-        strain_rate_map = {}
-        for material in self.materials:
-            if material.elasticity:
-                ElasticityHandler = material.elasticity
-                mu = nd(ElasticityHandler.shear_modulus)
-                dt_e = nd(ElasticityHandler.observation_time)
-                strainRate = fn.tensor.symmetric(
-                    self.velocityField.fn_gradient
-                )
-                D_eff = strainRate + 0.5 * self._previousStressField / (mu * dt_e)
-                SRInv = fn.tensor.second_invariant(D_eff)
-                strain_rate_map[material.index] = SRInv
-
         default = fn.tensor.second_invariant(self.strainRate)
-        if strain_rate_map:
+        strain_rate_map = {}
+        if any([material.elasticity for material in self.materials]):
+            for material in self.materials:
+                if material.elasticity:
+                    ElasticityHandler = material.elasticity
+                    mu = nd(ElasticityHandler.shear_modulus)
+                    dt_e = nd(ElasticityHandler.observation_time)
+                    strainRate = fn.tensor.symmetric(
+                        self.velocityField.fn_gradient
+                    )
+                    D_eff = strainRate + 0.5 * self._previousStressField / (mu * dt_e)
+                    SRInv = fn.tensor.second_invariant(D_eff)
+                    strain_rate_map[material.index] = SRInv
+
             SRInv = fn.branching.map(fn_key=self.materialField,
                                      mapping=strain_rate_map,
                                      fn_default=default)
@@ -1274,6 +1275,8 @@ class Model(Material):
     def solve(self):
         """ Solve Stokes """
 
+        self.solver = self.stokes_solver()
+
         if self.step == 0:
             self._curTolerance = rcParams["initial.nonlinear.tolerance"]
             minIterations = rcParams["initial.nonlinear.min.iterations"]
@@ -1286,14 +1289,14 @@ class Model(Material):
         if uw.__version__.split(".")[1] > 5:
             # The minimum number of iteration only works with version 2.6
             # 2.6 is still in development...
-            self.stokes_solver().solve(
+            self.solver.solve(
                 nonLinearIterate=True,
                 nonLinearMinIterations=minIterations,
                 nonLinearMaxIterations=maxIterations,
                 callback_post_solve=self.callback_post_solve,
                 nonLinearTolerance=self._curTolerance)
         else:
-            self.stokes_solver().solve(
+            self.solver.solve(
                 nonLinearIterate=True,
                 nonLinearMaxIterations=maxIterations,
                 callback_post_solve=self.callback_post_solve,
