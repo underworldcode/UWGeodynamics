@@ -6,6 +6,7 @@ from collections import OrderedDict
 import numpy as np
 import underworld as uw
 import underworld.function as fn
+from underworld.function.exception import SafeMaths as Safe
 import UWGeodynamics.shapes as shapes
 import UWGeodynamics.surfaceProcesses as surfaceProcesses
 from . import scaling_coefficients
@@ -30,6 +31,7 @@ from ._swarmvariable import SwarmVariable
 from scipy import interpolate
 from six import iteritems
 from datetime import datetime
+from .version import full_version
 
 
 class Model(Material):
@@ -271,8 +273,10 @@ class Model(Material):
 
         self.add_swarm_field("_previousStressField", dataType="double",
                              count=stress_dim)
+        self.add_swarm_field("_stressTensor", dataType="double",
+                             count=stress_dim, projected="submesh")
         self.add_swarm_field("_stressField", dataType="double",
-                             count=stress_dim)
+                             count=1, projected="submesh")
 
         #self._add_surface_tracers()
 
@@ -482,9 +486,17 @@ class Model(Material):
         return self._viscosityField
 
     @property
-    def projStressField(self):
+    def projStressTensor(self):
         """ Stress Tensor on mesh """
-        self._stressField.data[...] = self._stressFn.evaluate(self.swarm)
+        self._stressTensor.data[...] = self._stressFn.evaluate(self.swarm)
+        self._stressTensorProjector.solve()
+        return self._projStressTensor
+
+    @property
+    def projStressField(self):
+        """ Second Invariant of the Stress tensor projected on the submesh"""
+        stress = fn.tensor.second_invariant(self._stressFn)
+        self._stressField.data[...] = stress.evaluate(self.swarm)
         self._stressFieldProjector.solve()
         return self._projStressField
 
@@ -661,6 +673,7 @@ class Model(Material):
 
         gravity = tuple([nd(val) for val in self.gravity])
         self._buoyancyFn = self._densityFn * gravity
+        self._buoyancyFn = Safe(self._buoyancyFn)
 
         if any([material.viscosity for material in self.materials]):
 
@@ -795,7 +808,7 @@ class Model(Material):
         return mat
 
     def add_swarm_field(self, name, dataType="double", count=1,
-                        init_value=0., **kwargs):
+                        init_value=0., projected="mesh", **kwargs):
         newField = self.swarm.add_variable(dataType, count, **kwargs)
         setattr(self, name, newField)
         newField.data[...] = init_value
@@ -806,9 +819,17 @@ class Model(Material):
             proj_name = "_proj" + name[1].upper() + name[2:]
         else:
             proj_name = "_proj" + name[0].upper() + name[1:]
-        projected = self.add_mesh_field(proj_name, nodeDofCount=count,
-                                        dataType="double")
-        # Create a projector
+
+        if projected == "mesh":
+            projected = self.add_mesh_field(proj_name,
+                                            nodeDofCount=count,
+                                            dataType="double")
+        else:
+            projected = self.add_submesh_field(proj_name,
+                                               nodeDofCount=count,
+                                               dataType="double")
+
+        # Create a projector 
         if name.startswith("_"):
             projector_name = name + "Projector"
         else:
@@ -834,6 +855,7 @@ class Model(Material):
         setattr(self, name, newField)
         newField.data[...] = init_value
         self.submesh_fields[name] = newField
+        return newField
 
     @property
     def _densityFn(self):
@@ -1087,7 +1109,7 @@ class Model(Material):
         else:
             self._isYielding = fn.misc.constant(0.0)
 
-        return viscosityFn
+        return Safe(viscosityFn)
 
     @property
     def _stressFn(self):
@@ -1120,8 +1142,8 @@ class Model(Material):
                     # has no elasticity
                     elasticStressFn = [0.0] * 3 if self.mesh.dim == 2 else [0.0] * 6
                 stressMap[material.index] = elasticStressFn
-            return fn.branching.map(fn_key=self.materialField,
-                                    mapping=stressMap)
+            return Safe(fn.branching.map(fn_key=self.materialField,
+                                    mapping=stressMap))
         else:
 
             elasticStressFn = [0.0] * 3 if self.mesh.dim == 2 else [0.0] * 6
@@ -1337,6 +1359,9 @@ class Model(Material):
             dt: force time interval.
             glucifer_outputs: output glucifer figures [False]
         """
+
+        if uw.rank() == 0:
+            print("""Running with UWGeodynamics version {0}""".format(full_version))
 
         if uw.rank() == 0 and not os.path.exists(self.outputDir):
             os.mkdir(self.outputDir)
@@ -1646,9 +1671,9 @@ class Model(Material):
                 if material.compressibility:
                     materialMap[material.index] = nd(material.compressibility)
 
-            return uw.function.branching.map(fn_key=self.materialField,
+            return Safe(uw.function.branching.map(fn_key=self.materialField,
                                              mapping=materialMap,
-                                             fn_default=0.0)
+                                             fn_default=0.0))
         return
 
     def checkpoint(self, variables=None, checkpointID=None):
