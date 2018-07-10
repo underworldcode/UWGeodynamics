@@ -211,10 +211,10 @@ class VelocityBCs(object):
                     func = fn.branching.conditional(condition[dim])
                     self.Model.velocityField.data[nodes.data, dim] = (
                         func.evaluate(
-                            self.Model.mesh.data[nodes.data])[:, dim])
+                            self.Model.mesh.data[nodes.data])[:, 0])
                     self.Model.boundariesField.data[nodes.data, dim] = (
                         func.evaluate(
-                            self.Model.mesh.data[nodes.data])[:, dim])
+                            self.Model.mesh.data[nodes.data])[:, 0])
                     self.dirichlet_indices[dim] += nodes
 
                 # Scalar condition
