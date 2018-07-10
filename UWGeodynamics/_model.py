@@ -31,6 +31,7 @@ from ._swarmvariable import SwarmVariable
 from scipy import interpolate
 from six import iteritems
 from datetime import datetime
+from .version import full_version
 
 
 class Model(Material):
@@ -1358,6 +1359,9 @@ class Model(Material):
             dt: force time interval.
             glucifer_outputs: output glucifer figures [False]
         """
+
+        if uw.rank() == 0:
+            print("""Running with UWGeodynamics version {0}""".format(full_version))
 
         if uw.rank() == 0 and not os.path.exists(self.outputDir):
             os.mkdir(self.outputDir)
