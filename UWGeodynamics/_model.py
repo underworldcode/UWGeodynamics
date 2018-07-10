@@ -24,10 +24,10 @@ from ._velocity_boundaries import VelocityBCs
 from ._thermal_boundaries import TemperatureBCs
 from ._mesh_advector import _mesh_advector
 from ._frictional_boundary import FrictionBoundaries
-from ._mesh import FeMesh_Cartesian
-from ._swarm import Swarm
-from ._meshvariable import MeshVariable
-from ._swarmvariable import SwarmVariable
+from .Underworld_extended import FeMesh_Cartesian
+from .Underworld_extended import Swarm
+from .Underworld_extended import MeshVariable
+from .Underworld_extended import SwarmVariable
 from scipy import interpolate
 from six import iteritems
 from datetime import datetime

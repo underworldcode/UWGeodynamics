@@ -9,7 +9,7 @@ import operator as op
 from .scaling import nonDimensionalize as nd
 from .scaling import Dimensionalize
 from .scaling import UnitRegistry as u
-from ._swarm import Swarm
+from .Underworld_extended import Swarm
 from scipy import spatial
 
 class PressureSmoother(object):

@@ -3,9 +3,9 @@ import h5py
 import numpy as np
 import os
 from mpi4py import MPI
-from .scaling import Dimensionalize
-from .scaling import nonDimensionalize
-from .scaling import UnitRegistry as u
+from UWGeodynamics.scaling import Dimensionalize
+from UWGeodynamics.scaling import nonDimensionalize
+from UWGeodynamics.scaling import UnitRegistry as u
 
 
 class MeshVariable(uw.mesh.MeshVariable):
