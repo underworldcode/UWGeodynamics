@@ -1,4 +1,6 @@
 # Always prefer setuptools over distutils
+import underworld as uw
+
 from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
@@ -77,6 +79,7 @@ def write_version_py(filename='UWGeodynamics/version.py'):
     cnt = """
 # THIS FILE IS GENERATED FROM UWGeodynamics SETUP.PY
 #
+underworld_version = '%(UW)s'
 short_version = '%(version)s'
 version = '%(version)s'
 full_version = '%(full_version)s'
@@ -90,7 +93,8 @@ if not release:
 
     a = open(filename, 'w')
     try:
-        a.write(cnt % {'version': VERSION,
+        a.write(cnt % {'UW':uw.__version__,
+                       'version': VERSION,
                        'full_version': FULLVERSION,
                        'git_revision': GIT_REVISION,
                        'isrelease': str(ISRELEASED)})
