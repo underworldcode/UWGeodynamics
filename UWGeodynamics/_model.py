@@ -1091,27 +1091,27 @@ class Model(Material):
                 eij = fn.misc.max(self._getStrainRate_2ndInvariant(), 1e-20)
                 muEff = 0.5 * self.yieldStressFn / eij
                 plasticity_map[material.index] = muEff
-            if self.frictionalBCs is not None:
-                YieldHandler = copy(material.plasticity)
-                YieldHandler.frictionCoefficient = self.frictionalBCs.friction
-                YieldHandler.frictionAfterSoftening = self.frictionalBCs.friction
-                YieldHandler.pressureField = self.pressureField
-                YieldHandler.plasticStrain = self.plasticStrain
+                if self.frictionalBCs is not None:
+                    YieldHandler = copy(material.plasticity)
+                    YieldHandler.frictionCoefficient = self.frictionalBCs.friction
+                    YieldHandler.frictionAfterSoftening = self.frictionalBCs.friction
+                    YieldHandler.pressureField = self.pressureField
+                    YieldHandler.plasticStrain = self.plasticStrain
 
-                if self.mesh.dim == 2:
-                    yieldStress = YieldHandler._get_yieldStress2D()
+                    if self.mesh.dim == 2:
+                        yieldStress = YieldHandler._get_yieldStress2D()
 
-                if self.mesh.dim == 3:
-                    yieldStress = YieldHandler._get_yieldStress3D()
+                    if self.mesh.dim == 3:
+                        yieldStress = YieldHandler._get_yieldStress3D()
 
-                eij = fn.misc.max(self._getStrainRate_2ndInvariant(), 1e-20)
-                muEff = 0.5 * yieldStress / eij
-                conditions = [(self.frictionalBCs._mask > 0.0, muEff),
-                              (True, plasticity_map[material.index])]
+                    eij = fn.misc.max(self._getStrainRate_2ndInvariant(), 1e-20)
+                    muEff = 0.5 * yieldStress / eij
+                    conditions = [(self.frictionalBCs._mask > 0.0, muEff),
+                                  (True, plasticity_map[material.index])]
 
-                plasticity_map[material.index] = fn.branching.conditional(
-                    conditions
-                )
+                    plasticity_map[material.index] = fn.branching.conditional(
+                        conditions
+                    )
 
         if plasticity_map:
 
