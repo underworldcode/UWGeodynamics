@@ -50,27 +50,40 @@ def git_version():
     except OSError:
         GIT_REVISION = "Unknown"
 
-    return GIT_REVISION
+    try:
+        out = _minimal_ext_cmd(['git', 'rev-parse','--abbrev-ref', 'HEAD'])
+        GIT_BRANCH = out.strip().decode('ascii')
+    except OSError:
+        GIT_BRANCH = "Unknown"
+
+    return GIT_REVISION, GIT_BRANCH
 
 def get_version_info():
     # Adding the git rev number needs to be done inside write_version_py(),
     # otherwise the import of numpy.version messes up the build under Python 3.
     FULLVERSION = VERSION
     if os.path.exists('.git'):
-        GIT_REVISION = git_version()
-    elif os.path.exists('numpy/version.py'):
+        GIT_REVISION, GIT_BRANCH = git_version()
+    elif os.path.exists('UWGeodynamics/version.py'):
         # must be a source distribution, use existing version file
         try:
-            from numpy.version import git_revision as GIT_REVISION
+            from UWGeodynamics.version import git_revision as GIT_REVISION
         except ImportError:
             raise ImportError("Unable to import git_revision. Try removing " \
-                              "numpy/version.py and the build directory " \
+                              "UWGeodynamics/version.py and the build directory " \
+                              "before building.")
+        try:
+            from UWGeodynamics.version import git_branch as GIT_BRANCH
+        except ImportError:
+            raise ImportError("Unable to import git_branch. Try removing " \
+                              "UWGeodynamics/version.py and the build directory " \
                               "before building.")
     else:
         GIT_REVISION = "Unknown"
+        GIT_BRANCH = "Unknown"
 
     if not ISRELEASED:
-        FULLVERSION += '.dev0+' + GIT_REVISION[:7]
+        FULLVERSION += "-dev-" + GIT_REVISION[:7] + "(" + GIT_BRANCH + ")"
 
     return FULLVERSION, GIT_REVISION
 
