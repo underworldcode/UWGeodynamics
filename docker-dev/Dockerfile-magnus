@@ -1,4 +1,4 @@
-FROM underworldcode/underworld2_untested:dev_magnus
+FROM underworldcode/underworld2_untested:dev_magnus_newmpi
 MAINTAINER romain.beucher@unimelb.edu
 
 RUN apt-get update -qq
