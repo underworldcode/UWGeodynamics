@@ -37,9 +37,10 @@ from ._utils import Balanced_InflowOutflow, MoveImporter
 from ._utils import circles_grid, fn_Tukey_window, circle_points_tracers, sphere_points_tracers
 from ._utils import LogFile
 from ._utils import MovingWall
+from .version import full_version as __version__
+from .version import git_revision as __git_revision__
 import _net
 
-__version__ = "0.6.1b"
 __author__ = "Romain Beucher"
 
 _id = str(_uuid.uuid4())
