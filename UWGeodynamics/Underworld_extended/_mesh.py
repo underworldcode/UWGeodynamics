@@ -6,7 +6,7 @@ from mpi4py import MPI
 from UWGeodynamics.scaling import Dimensionalize
 from UWGeodynamics.scaling import nonDimensionalize
 from UWGeodynamics.scaling import UnitRegistry as u
-from .version import git_revision as __git_revision__
+from UWGeodynamics.version import git_revision as __git_revision__
 import _meshvariable as var
 
 class FeMesh_Cartesian(uw.mesh.FeMesh_Cartesian):
