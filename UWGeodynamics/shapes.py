@@ -24,8 +24,7 @@ class Shape(object):
         return newShape
 
     def __add__(self, B):
-        newShape = Shape()
-        newShape.fn = self._fn & B._fn
+        newShape = MultiShape([self, B])
         return newShape
 
     def __or__(self, B):
@@ -128,6 +127,12 @@ class CombinedShape(Shape):
         return func
 
 
+class Layer(Shape):
+    def __init__(self, top, bottom):
+        self.top = top
+        self.bottom = bottom
+
+
 class Layer2D(Shape):
 
     def __init__(self, top, bottom):
@@ -186,13 +191,6 @@ class Layer3D(Shape):
     @bottom.setter
     def bottom(self, value):
         self._bottom = value
-
-
-class Layer(Layer2D):
-
-    def __init__(self, top, bottom):
-        super(Layer, self).__init__(top, bottom)
-        raise ValueError("""Layer is deprecated, use Layer2D or Layer3D instead""")
 
 
 class Box(Shape):

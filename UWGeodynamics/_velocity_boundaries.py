@@ -219,7 +219,6 @@ class VelocityBCs(object):
 
                 # Scalar condition
                 if isinstance(condition[dim], (u.Quantity, float, int)):
-
                     # Process dirichlet condition
                     if not _is_neumann(condition[dim]):
                         self.Model.velocityField.data[nodes.data, dim] = (

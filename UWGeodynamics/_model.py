@@ -789,6 +789,12 @@ class Model(Material):
         mat.capacity = self.capacity
         mat.radiogenicHeatProd = self.radiogenicHeatProd
 
+        if isinstance(shape, shapes.Layer):
+            if self.mesh.dim == 2:
+                shape = shapes.Layer2D(top=shape.top, bottom=shape.bottom)
+            if self.mesh.dim == 3:
+                shape = shapes.Layer3D(top=shape.top, bottom=shape.bottom)
+
         if hasattr(shape, "top"):
             mat.top = shape.top
         if hasattr(shape, "bottom"):
