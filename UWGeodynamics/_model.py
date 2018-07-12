@@ -1157,6 +1157,146 @@ class Model(Material):
                                     fn_default=self._getViscousEta())
         else:
             return self._getViscousEta()
+    
+    
+    def _CalcEtas(self):
+        ViscousEtaMap = {}
+        PlasticEtamap = {}
+        ElasticEtaMap = {}
+        MeltModifyMap = {}
+        
+        ViscousEtaFn = None
+        ElasticEtaFn = None
+        PlasticEtaFn = None
+        MeltModifyFn = None
+        
+        for material in self.materials:
+            #ViscousEtaMap
+            if material.viscosity:
+                ViscosityHandler = material.viscosity
+                ViscosityHandler.pressureField = self.pressureField
+                ViscosityHandler.strainRateInvariantField = (
+                    self._getStrainRate_2ndInvariant()
+                )
+                ViscosityHandler.temperatureField = self.temperature
+                ViscousEtaMap[material.index] = ViscosityHandler.muEff
+
+            #ElasticEtaMap
+            if material.elasticity:
+                ElasticityHandler = material.elasticity
+                ElasticityHandler.viscosity = ViscousEtaMap[material.index]
+                ElasticEtaMap[material.index] = ElasticityHandler.muEff
+
+            #PlasticEtamap
+            if material.plasticity:
+                eij = fn.misc.max(self._getStrainRate_2ndInvariant(), 1e-20)
+                muEff = 0.5 * self.yieldStressFn / eij
+                PlasticEtamap[material.index] = muEff
+                if self.frictionalBCs is not None:
+                    YieldHandler = copy(material.plasticity)
+                    YieldHandler.frictionCoefficient = self.frictionalBCs.friction
+                    YieldHandler.frictionAfterSoftening = self.frictionalBCs.friction
+                    YieldHandler.pressureField = self.pressureField
+                    YieldHandler.plasticStrain = self.plasticStrain
+
+                    if self.mesh.dim == 2:
+                        yieldStress = YieldHandler._get_yieldStress2D()
+
+                    if self.mesh.dim == 3:
+                        yieldStress = YieldHandler._get_yieldStress3D()
+
+                    eij = fn.misc.max(self._getStrainRate_2ndInvariant(), 1e-20)
+                    muEff = 0.5 * yieldStress / eij
+                    conditions = [(self.frictionalBCs._mask > 0.0, muEff),
+                                  (True, PlasticEtamap[material.index])]
+
+                    PlasticEtamap[material.index] = fn.branching.conditional(
+                        conditions
+                    )
+            
+            #MeltModifyMap
+            if material.viscosity and material.viscosityChange > 1.0:
+                X1 = material.viscosityChangeX1
+                X2 = material.viscosityChangeX2
+                change = (1.0 + (material.viscosityChange - 1.0) /
+                          (X2 - X1) * (self.meltField - X1))
+                conditions = [(self.meltField < X1, 1.0),
+                              (self.meltField > X2, material.viscosityChange),
+                              (True, change)]
+                MeltModifyMap[material.index] = fn.branching.conditional(conditions)
+
+
+        ViscousEtaFn = fn.branching.map(fn_key=self.materialField,
+                                mapping=ViscousEtaMap)
+
+        self._getViscousEta2 = ViscousEtaFn
+
+
+        if ElasticEtaMap:
+            ElasticEtaFn = fn.branching.map(fn_key=self.materialField,
+                                    mapping=ElasticEtaMap,
+                                    fn_default=ViscousEtaFn)
+        else:
+            ElasticEtaFn = ViscousEtaFn
+
+
+        if PlasticEtamap:
+            PlasticEtaFn = fn.branching.map(fn_key=self.materialField,
+                                    mapping=PlasticEtamap,
+                                    fn_default=ViscousEtaFn)
+        else:
+            PlasticEtaFn = ViscousEtaFn
+
+        if MeltModifyMap:
+
+            MeltModifyFn = fn.branching.map(fn_key=self.materialField,
+                                    mapping=melt_modif,
+                                    fn_default=1.0)
+
+        
+        self._getElasticEta2 = ElasticEtaFn
+        self._getPlasticEta2 = PlasticEtaFn
+        self._getMeltModify2 = MeltModifyFn
+    
+    @property
+    def _viscosityFn2(self):
+        
+        """ Create the Viscosity Function """
+        self._CalcEtas()
+        
+        if rcParams["rheologies.combine.method"] == "Harmonic Mean":
+            # Harmonic mean
+            n = 1.0
+            eta_eff = 1.0 / self._getViscousEta2
+
+            if any([material.plasticity for material in self.materials]):
+                eta_eff +=  1.0 / self._getPlasticEta2
+                n += 1.0
+
+            if any([material.elasticity for material in self.materials]):
+                eta_eff = 1.0 / self._getElasticEta2
+                n += 1.0
+
+            eta_eff = n * eta_eff**-1
+
+        if rcParams["rheologies.combine.method"] == "Min / Max":
+            if any([material.elasticity for material in self.materials]):
+                visc = self._getElasticEta2
+            else:
+                visc = self._getViscousEta2
+            eta_eff = fn.misc.min(visc, self._getPlasticEta2)
+
+        # Melt Modifier
+        fac = self._getMeltModify2
+        if fac:
+            eta_eff *= fac
+
+        # Viscosity Limiter
+        eta_eff = self._viscosity_limiter(eta_eff)
+
+        return Safe(eta_eff)
+
+
 
     def solve_temperature_steady_state(self):
         """ Solve for steady state temperature
