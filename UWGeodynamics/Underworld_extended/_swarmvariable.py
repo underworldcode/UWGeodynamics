@@ -5,6 +5,7 @@ from mpi4py import MPI
 from UWGeodynamics.scaling import Dimensionalize
 from UWGeodynamics.scaling import nonDimensionalize
 from UWGeodynamics.scaling import UnitRegistry as u
+from .version import git_revision as __git_revision__
 
 
 class SwarmVariable(uw.swarm.SwarmVariable):
@@ -113,6 +114,8 @@ class SwarmVariable(uw.swarm.SwarmVariable):
 
         if time is not None:
             h5f.attrs['time'] = str(time)
+
+        h5f.attrs["git commit"] = __git_revision__
 
         if swarm.particleLocalCount > 0: # only add if there are local particles
             dset[offset:offset+swarm.particleLocalCount] = self.data[:] * fact

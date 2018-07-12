@@ -6,6 +6,7 @@ from mpi4py import MPI
 from UWGeodynamics.scaling import Dimensionalize
 from UWGeodynamics.scaling import nonDimensionalize
 from UWGeodynamics.scaling import UnitRegistry as u
+from .version import git_revision as __git_revision__
 
 
 class MeshVariable(uw.mesh.MeshVariable):
@@ -230,6 +231,8 @@ class MeshVariable(uw.mesh.MeshVariable):
 
         if time:
             h5f.attrs['time'] = str(time)
+
+        h5f.attrs["git commit"] = __git_revision__
 
         # write to the dset using the global node ids
         local = mesh.nodesLocal

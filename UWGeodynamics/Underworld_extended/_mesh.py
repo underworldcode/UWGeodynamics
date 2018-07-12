@@ -6,6 +6,7 @@ from mpi4py import MPI
 from UWGeodynamics.scaling import Dimensionalize
 from UWGeodynamics.scaling import nonDimensionalize
 from UWGeodynamics.scaling import UnitRegistry as u
+from .version import git_revision as __git_revision__
 import _meshvariable as var
 
 class FeMesh_Cartesian(uw.mesh.FeMesh_Cartesian):
@@ -128,6 +129,7 @@ class FeMesh_Cartesian(uw.mesh.FeMesh_Cartesian):
         h5f.attrs['regular'] = self._cself.isRegular
         h5f.attrs['elementType'] = self.elementType
         h5f.attrs['time'] = str(time)
+        h5f.attrs["git commit"] = __git_revision__
 
         # write the vertices
         globalShape = ( self.nodesGlobal, self.data.shape[1] )
