@@ -12,9 +12,9 @@ RUN git clone -b development https://github.com/rbeucher/UWGeodynamics.git && \
     pip install -e /opt/UWGeodynamics
 RUN mkdir /workspace/UWGeodynamics && \
     mkdir /workspace/MODELS_RESULTS && \
-    mv /opt/UWGeodynamics/examples/* /workspace/UWGeodynamics/examples/ && \
-    mv /opt/UWGeodynamics/tutorials/* /workspace/UWGeodynamics/tutorials/ && \
-    mv /opt/UWGeodynamics/manual/* /workspace/UWGeodynamics/manual/
+    mv /opt/UWGeodynamics/examples /workspace/UWGeodynamics/. && \
+    mv /opt/UWGeodynamics/tutorials /workspace/UWGeodynamics/. && \
+    mv /opt/UWGeodynamics/manual /workspace/UWGeodynamics/.
 
 # Badlands dependency
 RUN pip install --no-cache-dir pandas \
