@@ -28,7 +28,10 @@ RUN make
 RUN pip install -e /opt/pyBadlands_serial
 
 # pyBadlands dependencies
-RUN pip install cmocean
+# RUN pip install cmocean
+RUN git clone https://github.com/matplotlib/cmocean.git /tmp/cmocean && \
+    pip install /tmp/cmocean/ && \ 
+    rm -rf /tmp/cmocean
 RUN pip install colorlover
 # Force matplotlib 2.1.2 (Bug Badlands), Temporary
 RUN pip install matplotlib==2.1.2
