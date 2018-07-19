@@ -20,13 +20,12 @@ RUN mkdir /workspace/UWGeodynamics && \
 RUN pip install --no-cache-dir pandas \
                 ez_setup \ 
                 git+https://github.com/badlands-model/triangle.git \
-                git+https://github.com/awickert/gFlex.git \
+                git+https://github.com/awickert/gFlex.git
 
 # pyBadlands serial
-RUN git clone https://github.com/rbeucher/pyBadlands_serial.git && \
-    cd /opt/pyBadlands_serial/pyBadlands/libUtils && \
-    make && \
-    pip install -e /opt/pyBadlands_serial
+RUN git clone https://github.com/rbeucher/pyBadlands_serial.git
+RUN cd /opt/pyBadlands_serial/pyBadlands/libUtils && make
+RUN pip install -e /opt/pyBadlands_serial
 
 # pyBadlands dependencies
 RUN git clone https://github.com/matplotlib/cmocean.git /tmp/cmocean && \
