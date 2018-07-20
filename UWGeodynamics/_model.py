@@ -835,7 +835,7 @@ class Model(Material):
                                                nodeDofCount=count,
                                                dataType="double")
 
-        # Create a projector 
+        # Create a projector
         if name.startswith("_"):
             projector_name = name + "Projector"
         else:
@@ -1188,8 +1188,11 @@ class Model(Material):
                 if material.diffusivity:
                     DiffusivityMap[material.index] = nd(material.diffusivity)
 
-            self.DiffusivityFn = fn.branching.map(fn_key=self.materialField,
-                                                  mapping=DiffusivityMap)
+            self.DiffusivityFn = fn.branching.map(
+                fn_key=self.materialField,
+                mapping=DiffusivityMap,
+                fn_default=nd(self.diffusivity)
+            )
 
             HeatProdMap = {}
             for material in self.materials:
