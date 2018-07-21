@@ -63,12 +63,12 @@ class HalfSpace(Shape):
         """
 
         if isinstance(normal, (tuple, list)):
-            self.normal = fn.misc.constant([nd(val) for val in normal])
+            self.normal = fn.misc.constant([float(nd(val)) for val in normal])
         else:
             raise ValueError("{0} must be a list or tuple".format(normal))
 
         if isinstance(origin, (tuple, list)):
-            self.origin = fn.misc.constant([nd(val) for val in origin])
+            self.origin = fn.misc.constant([float(nd(val)) for val in origin])
         else:
             self.origin = fn.misc.constant([0.] * len(normal))
 
