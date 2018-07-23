@@ -1828,7 +1828,7 @@ class Model(Material):
 
         time = time if time else self.time
 
-        if self._advector:
+        if self._advector or self._freeSurface:
             mesh_name = 'mesh-%s' % checkpointID
             mesh_prefix = os.path.join(self.outputDir, mesh_name)
         else:
