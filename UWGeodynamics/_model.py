@@ -32,7 +32,7 @@ from scipy import interpolate
 from six import iteritems
 from datetime import datetime
 from .version import full_version
-
+from ._freesurface import FreeSurfaceProcessor
 
 class Model(Material):
     """ This class provides the main UWGeodynamics Model
@@ -232,6 +232,7 @@ class Model(Material):
         self.DiffusivityFn = None
         self.HeatProdFn = None
         self._buoyancyFn = None
+        self.FreeSurface = False
         self.callback_post_solve = None
         self._initialize()
 
@@ -1416,7 +1417,9 @@ class Model(Material):
 
             self.preSolveHook()
 
+            print("Solving again")
             self.solve()
+            print("Solve Done")
 
             # Whats the longest we can run before reaching the end
             # of the model or a checkpoint?
@@ -1533,6 +1536,10 @@ class Model(Material):
         if self._advector:
             self.swarm_advector.integrate(dt)
             self._advector.advect_mesh(dt)
+        elif self._FreeSurface:
+            self.swarm_advector.integrate(dt, update_owners=False)
+            self._FreeSurface.solve(dt)
+            self.swarm.update_particle_owners()
         else:
             # Integrate Swarms in time
             self.swarm_advector.integrate(dt, update_owners=True)
@@ -1685,7 +1692,16 @@ class Model(Material):
                                              fn_default=0.0))
         return
 
-    def checkpoint(self, variables=None, checkpointID=None):
+    @property
+    def freeSurface(self):
+        return self._FreeSurface
+
+    @freeSurface.setter
+    def freeSurface(self, value):
+        if value:
+            self._FreeSurface = FreeSurfaceProcessor(self)
+
+    def checkpoint(self, checkpointID=None, variables=None):
         """ Do a checkpoint (Save fields)
 
         Parameters:
