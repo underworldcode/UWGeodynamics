@@ -232,7 +232,7 @@ class Model(Material):
         self.DiffusivityFn = None
         self.HeatProdFn = None
         self._buoyancyFn = None
-        self.FreeSurface = False
+        self.freeSurface = False
         self.callback_post_solve = None
         self._initialize()
 
@@ -1417,9 +1417,7 @@ class Model(Material):
 
             self.preSolveHook()
 
-            print("Solving again")
             self.solve()
-            print("Solve Done")
 
             # Whats the longest we can run before reaching the end
             # of the model or a checkpoint?
@@ -1536,9 +1534,9 @@ class Model(Material):
         if self._advector:
             self.swarm_advector.integrate(dt)
             self._advector.advect_mesh(dt)
-        elif self._FreeSurface:
+        elif self._freeSurface:
             self.swarm_advector.integrate(dt, update_owners=False)
-            self._FreeSurface.solve(dt)
+            self._freeSurface.solve(dt)
             self.swarm.update_particle_owners()
         else:
             # Integrate Swarms in time
@@ -1699,7 +1697,7 @@ class Model(Material):
     @freeSurface.setter
     def freeSurface(self, value):
         if value:
-            self._FreeSurface = FreeSurfaceProcessor(self)
+            self._freeSurface = FreeSurfaceProcessor(self)
 
     def checkpoint(self, checkpointID=None, variables=None):
         """ Do a checkpoint (Save fields)

@@ -9,7 +9,7 @@ class FreeSurfaceProcessor(object):
 
         # Create the tools
         self.TField = self.Model.mesh.add_variable( nodeDofCount=1 )
-        self.TField.data[:,0] = self.Model.mesh.data[:,1]
+        self.TField.data[:, 0] = self.Model.mesh.data[:, 1]
 
         self.top = self.Model._top_wall
         self.bottom = self.Model._bottom_wall
@@ -31,10 +31,10 @@ class FreeSurfaceProcessor(object):
 
     def _advect_surface(self, dt):
 
-        if self.Model._top_wall:
+        if self.Model._top_wall.data.size > 0:
             # Extract top surface
-            x = self.Model.mesh.data[self.top.data][:,0]
-            y = self.Model.mesh.data[self.top.data][:,1]
+            x = self.Model.mesh.data[self.top.data][:, 0]
+            y = self.Model.mesh.data[self.top.data][:, 1]
 
             # Extract velocities from top
             vx = self.Model.velocityField.data[self.top.data][:,0]
@@ -47,17 +47,15 @@ class FreeSurfaceProcessor(object):
             # Spline top surface
             f = interp1d(x2, y2, kind='cubic')
 
-            self.TField.data[self.top.data,0] = f(x)
+            self.TField.data[self.top.data, 0] = f(x)
 
     def _update_mesh(self):
 
         with self.Model.mesh.deform_mesh():
             # Last dimension is the vertical dimension
-            self.Model.mesh.data[:,-1] = self.TField.data[:,0]
+            self.Model.mesh.data[:, -1] = self.TField.data[:, 0]
 
     def solve(self, dt):
-
-        print("Solving Mesh")
 
         # First we advect the surface
         self._advect_surface(dt)
