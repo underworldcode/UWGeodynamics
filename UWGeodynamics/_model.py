@@ -1806,8 +1806,9 @@ class Model(Material):
         GluciferStore.step = step
 
         for field in rcParams["glucifer.outputs"]:
+            import ast
             if getattr(self, field):
-                func = eval("self.plot." + field)
+                func = ast.literal.eval("self.plot." + field)
                 fig = func(store=GluciferStore, show=False)
                 fig.save()
 
