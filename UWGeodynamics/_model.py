@@ -1578,7 +1578,7 @@ class Model(Material):
         self._advector = _mesh_advector(self, axis)
 
     def add_passive_tracers(self, name, vertices=None,
-                            particleEscape=True, centroids=list()):
+                            particleEscape=True, centroids=None):
         """ Add a swarm of passive tracers to the Model
 
         Parameters:
@@ -1591,6 +1591,10 @@ class Model(Material):
                 Allow or prevent tracers from escaping the boundaries of the
                 Model (default to True)
         """
+
+        if centroids and not isinstance(centroids, list):
+            centroids = list(centroids)
+
         if name in self.passive_tracers.keys():
             print("{0} tracers exists already".format(name))
             return self.passive_tracers[name]
@@ -1736,7 +1740,7 @@ class Model(Material):
 
         # Checkpoint passive tracers and associated tracked fields
         if self.passive_tracers:
-            for (key, tracers) in iteritems(self.passive_tracers):
+            for (_, tracers) in iteritems(self.passive_tracers):
                 tracers.save(self.outputDir, checkpointID, self.time)
 
     def profile(self,
@@ -1980,9 +1984,6 @@ def load_model(filename, step=None):
 
     with open(filename, "r") as f:
         model = json.load(f)
-
-    # Set rcParams
-    rcParams = model.pop("rcParams")
 
     # Set scaling
     scaling = model.pop("scaling")

@@ -364,7 +364,6 @@ class LecodeIsostasy(object):
             ix = np.in1d(np.arange(self.mesh.nodesGlobal), node_gids)
             Ipositions = GlobalIndices3d[2].flatten()[ix]
             Jpositions = GlobalIndices3d[1].flatten()[ix]
-            Kpositions = GlobalIndices3d[0].flatten()[ix]
 
             # Load the top-velocities in the local array with global dimensions.
             k = 0

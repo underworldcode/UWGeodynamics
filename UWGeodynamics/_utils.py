@@ -39,13 +39,13 @@ class PassiveTracers(object):
         self.name = name
         self.particleEscape = particleEscape
 
-        for dim in range(len(vertices)):
+        for dim, _ in enumerate(vertices):
             vertices[dim] = nd(vertices[dim])
 
         sizes = np.array([np.array(x).size for x in vertices])
         points = np.zeros((sizes.max(), len(vertices)))
 
-        for dim in range(len(vertices)):
+        for dim, _ in enumerate(vertices):
             points[:, dim] = vertices[dim]
 
         self.swarm = Swarm(mesh=mesh, particleEscape=particleEscape)
@@ -294,7 +294,6 @@ class Balanced_InflowOutflow(object):
         pt2 = nd(self.pt2)
         y = nd(self.ynodes)
         tol = self.tol
-        nitmax = self.nitmax
         nitmin = self.nitmin
         default_vel = nd(self.default_vel)
 
@@ -319,7 +318,7 @@ class Balanced_InflowOutflow(object):
 
             Vbot = (Vmin + Vmax) / 2.0
 
-            for i in range(len(y)):
+            for i, _ in enumerate(y):
                 if i > top_idx:
                     velocity[i] = 0.0
                 if i >= pt1_idx and i <= top_idx:
@@ -538,8 +537,6 @@ def fn_Tukey_window(r, centre, width, top, bottom):
     y_conditions = fn.branching.conditional([((y >= bottom) & (y <= top), 1.0), (True, 0.0)])
     return x_conditions * y_conditions
 
-
-import pylab as plt
 
 class NonLinearBlock(object):
     def __init__(self, string):

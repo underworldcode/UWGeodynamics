@@ -31,7 +31,7 @@ def _notebook_run(path):
     return nb, errors
 
 def test_steady_state_example():
-    path = os.path.join(PROJECT_DIR, "examples/1_01_Steady_State_Heat.ipynb") 
+    path = os.path.join(PROJECT_DIR, "examples/1_01_Steady_State_Heat.ipynb")
     _, errors = _notebook_run(path)
     assert errors == []
 

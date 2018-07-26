@@ -11,9 +11,7 @@ This module implements some basic functionality for posting usage metrics
 to google analytics.
 """
 
-import json,httplib,urllib
-import httplib
-import urllib
+import json, httplib, urllib
 import uuid
 import underworld as uw
 

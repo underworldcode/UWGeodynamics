@@ -56,7 +56,7 @@ class MeshVariable(uw.mesh.MeshVariable):
         # get units
         try:
             units = h5f.attrs["units"]
-        except:
+        except KeyError:
             units = None
 
         if units and units != "None":
@@ -243,9 +243,6 @@ class MeshVariable(uw.mesh.MeshVariable):
 
         # save a hdf5 attribute to the elementType used for this field - maybe useful
         h5f.attrs["elementType"] = np.string_(mesh.elementType)
-
-        ## setup reference to mesh - THE GEOMETRY MESH
-        saveDir = os.path.dirname(filename)
 
         if hasattr( mesh.generator, "geometryMesh"):
             mesh = mesh.generator.geometryMesh

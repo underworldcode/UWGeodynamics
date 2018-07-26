@@ -30,7 +30,8 @@ class TemperatureBCs(object):
     def __getitem__(self, name):
         return self.__dict__[name]
 
-    def _get_heat_flux(self, side, heat_flow, material):
+    @staticmethod
+    def _get_heat_flux(side, heat_flow, material):
 
         if not material.capacity:
             raise ValueError("""Material {0} has no capacity
@@ -44,7 +45,8 @@ class TemperatureBCs(object):
         rho = material.density.reference_density
         return heat_flow / (rho * cp)
 
-    def _check_temp(self, val):
+    @staticmethod
+    def _check_temp(val):
         if isinstance(val, u.Quantity):
             check = (val.units == u.degK) or (val.units == u.degC)
         return check
