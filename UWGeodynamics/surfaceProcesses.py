@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 try:
     from .linkage import SPM
 except:
@@ -7,7 +8,7 @@ import underworld.function as fn
 from scaling import nonDimensionalize as nd
 
 
-class SurfaceProcesses(object):
+class SurfaceProcesses(ABC):
 
     def __init__(self, Model=None):
 
@@ -23,11 +24,13 @@ class SurfaceProcesses(object):
         if value:
             self._init_model()
 
+    @abstractmethod
     def _init_model(self):
-        return
+        pass
 
+    @abstractmethod
     def solve(self):
-        return
+        pass
 
 
 class Badlands(SurfaceProcesses):
