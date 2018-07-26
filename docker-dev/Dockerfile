@@ -4,7 +4,9 @@ MAINTAINER romain.beucher@unimelb.edu
 USER root
 
 RUN apt-get update -qq
-RUN DEBIAN_FRONTEND=noninteractive apt-get install cgdb sudo
+RUN DEBIAN_FRONTEND=noninteractive apt-get install cgdb sudo && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # UWGeodynamics
 WORKDIR /opt
