@@ -79,7 +79,7 @@ class Plots(object):
     def materialField(self, figsize=None, title="Material Field",
                       colours=None, script=None, cullface=False,
                       mask=None, visugrid=None, onMesh=False,
-                      tracers=[], show=True, store=None, quality=3,
+                      show=True, store=None, quality=3,
                       **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize,
