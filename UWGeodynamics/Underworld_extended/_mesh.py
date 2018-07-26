@@ -1,7 +1,5 @@
 import underworld as uw
 import h5py
-import numpy as np
-import os
 from mpi4py import MPI
 from UWGeodynamics.scaling import Dimensionalize
 from UWGeodynamics.scaling import nonDimensionalize

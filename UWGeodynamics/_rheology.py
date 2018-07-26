@@ -545,7 +545,6 @@ class Elasticity(Rheology):
         if not self.previousStress:
             raise ValueError("Can not find previous stress field")
 
-        eta_eff = self.muEff
         elasticStressFn = self.viscosity / (nd(self.shear_modulus) *
                                      nd(self.observation_time))
         elasticStressFn *= self.previousStress

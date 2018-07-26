@@ -1,5 +1,4 @@
 import underworld as uw
-import scaling as sca
 from scaling import nonDimensionalize as nd
 import numpy as np
 from scipy import spatial
@@ -40,7 +39,7 @@ class Visugrid(object):
                 try:
                     self.mesh.data[index] += self.velocityField.evaluate(np.array([coords]))[0] * dt
                 except:
-                    d, loc = self.tree.query(self.mesh.data[index])
+                    _, loc = self.tree.query(self.mesh.data[index])
                     loc = self.boundaries[loc]
                     coords = self.Model.mesh.data[loc]
                     self.mesh.data[index] += self.velocityField.data[loc] * dt

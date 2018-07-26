@@ -362,7 +362,6 @@ class Model(Material):
 
         # Reload all the restart fields
         for field in rcParams["restart.fields"]:
-            "Temporary !!!!"
             if field == "temperature":
                 continue
             obj = getattr(self, field)
@@ -1548,8 +1547,8 @@ class Model(Material):
             self._update_stress_history(dt)
 
         if self.passive_tracers:
-            for (key, tracers) in iteritems(self.passive_tracers):
-                tracers.integrate(dt)
+            for key in self.passive_tracers:
+                self.passive_tracers[key].integrate(dt)
 
         # Do pop control
         self.population_control.repopulate()

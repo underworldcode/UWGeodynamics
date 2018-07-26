@@ -42,7 +42,6 @@ class _mesh_advector(object):
 
         minX += vxLeft * dt
         maxX += vxRight * dt
-        length = np.abs(minX - maxX)
 
         if self.Model.mesh.dim <3:
             newValues = np.linspace(minX, maxX, self.Model.mesh.elementRes[axis]+1)

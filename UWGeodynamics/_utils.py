@@ -3,7 +3,6 @@ import underworld as uw
 import underworld.function as fn
 import shapefile
 import h5py
-import numpy as np
 import os
 import operator as op
 from .scaling import nonDimensionalize as nd
@@ -337,7 +336,6 @@ class Balanced_InflowOutflow(object):
                 self.budget = np.sum(budget)
                 return velocity
             else:
-                ctol = np.abs(np.sum(budget) - np.sum(prev))
                 N += 1
                 prev = np.copy(budget)
 

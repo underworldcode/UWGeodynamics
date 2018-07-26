@@ -290,7 +290,7 @@ class VelocityBCs(object):
         self.dirichlet_indices = []
         self.neumann_indices = []
 
-        for dim in range(Model.mesh.dim):
+        for _ in range(Model.mesh.dim):
             self.dirichlet_indices.append(Model.mesh.specialSets["Empty"])
             self.neumann_indices.append(Model.mesh.specialSets["Empty"])
 

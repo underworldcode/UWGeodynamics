@@ -84,7 +84,6 @@ class SwarmVariable(uw.swarm.SwarmVariable):
         # setup mpi basic vars
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
-        nProcs = comm.Get_size()
 
         # allgather the number of particles each proc has
         swarm = self.swarm
@@ -155,7 +154,6 @@ class SwarmVariable(uw.swarm.SwarmVariable):
 
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
-        nProcs = comm.Get_size()
 
         # open hdf5 file
         h5f = h5py.File(name=filename, mode="r", driver='mpio', comm=MPI.COMM_WORLD)

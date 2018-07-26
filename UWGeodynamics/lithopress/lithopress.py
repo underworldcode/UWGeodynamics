@@ -62,7 +62,6 @@ class LithostaticPressure(object):
         local_density  = np.zeros((nrow+1, ncol+1))
         global_density = np.zeros((nrow+1, ncol+1))
         local_pressure  = np.zeros((nrow, ncol))
-        global_pressure = np.zeros((nrow, ncol))
 
         # Now we need to get the dimension as well as the location of the local domain
         # in the global domain.
@@ -131,7 +130,6 @@ class LithostaticPressure(object):
         local_density  = np.zeros((nz+1, ny+1, nx+1))
         global_density = np.zeros((nz+1, ny+1, nx+1))
         local_pressure  = np.zeros((nz, ny, nx))
-        global_pressure = np.zeros((nz, ny, nx))
 
         # Get the global ids, note that we must get rid of the shadow nodes
         all_nodes = self.mesh.data_elgId

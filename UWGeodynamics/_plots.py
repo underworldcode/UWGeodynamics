@@ -55,10 +55,10 @@ def _get_minmax_coordinates_mesh(mesh, axis=0):
     maxVal[0] = mesh.data[:, axis].max()
     minVal[0] = mesh.data[:, axis].min()
 
-    uw.barrier
+    uw.barrier()
     comm.Allreduce(MPI.IN_PLACE, maxVal, op=MPI.MAX)
     comm.Allreduce(MPI.IN_PLACE, minVal, op=MPI.MIN)
-    uw.barrier
+    uw.barrier()
 
     return minVal, maxVal
 

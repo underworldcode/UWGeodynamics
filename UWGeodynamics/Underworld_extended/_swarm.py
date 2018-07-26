@@ -2,7 +2,6 @@ import underworld as uw
 import h5py
 import numpy as np
 from mpi4py import MPI
-from UWGeodynamics.scaling import Dimensionalize
 from UWGeodynamics.scaling import nonDimensionalize
 from UWGeodynamics.scaling import UnitRegistry as u
 import _swarmvariable as svar
@@ -181,7 +180,6 @@ class Swarm(uw.swarm.Swarm):
         # we set the 'offset' & 'size' variables to achieve the above
 
         offset = 0
-        totalsize = size = dset.shape[0] # number of particles in h5 file
 
         if try_optimise:
             procCount = h5f.attrs.get('proc_offset')

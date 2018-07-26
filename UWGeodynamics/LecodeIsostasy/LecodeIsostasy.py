@@ -110,7 +110,7 @@ class LecodeIsostasy(object):
         self.projectorDensity.solve()
         self.projectorMaterial.solve()
 
-        sep_velocities_nodes, heights = self._get_sep_velocities2D()
+        sep_velocities_nodes, _ = self._get_sep_velocities2D()
         botMeanDensities, botMeanDensities0 = self._get_average_densities2D()
 
         basal_velocities = -1.0 * botMeanDensities * sep_velocities_nodes / botMeanDensities0
@@ -157,7 +157,7 @@ class LecodeIsostasy(object):
         self.projectorDensity.solve()
         self.projectorMaterial.solve()
 
-        sep_velocities_nodes, heights = self._get_sep_velocities3D()
+        sep_velocities_nodes, _ = self._get_sep_velocities3D()
         botMeanDensities, botMeanDensities0 = self._get_average_densities3D()
 
         basal_velocities = -1.0 * botMeanDensities * sep_velocities_nodes / botMeanDensities0
@@ -335,7 +335,6 @@ class LecodeIsostasy(object):
                 ix = np.in1d(np.arange(self.mesh.nodesGlobal), surfaceNodes)
                 Ipositions = GlobalIndices3d[2].flatten()[ix]
                 Jpositions = GlobalIndices3d[1].flatten()[ix]
-                Kpositions = GlobalIndices3d[0].flatten()[ix]
 
                 # Load the top-velocities in the local array with global dimensions.
                 k = 0

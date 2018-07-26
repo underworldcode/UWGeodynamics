@@ -5,14 +5,11 @@ def test_module_loading():
 def test_unit_registry():
     import UWGeodynamics as GEO
 
-    u = GEO.u
-
 def test_scaling():
     import UWGeodynamics as GEO
 
     u = GEO.u
     velocity = 1.0 * u.centimeter / u.hour
-    model_length = 2. * u.meter
     model_height = 1. * u.meter
     refViscosity = 1e6 * u.pascal * u.second
     bodyforce = 200 * u.kilogram / u.metre**3 * 9.81 * u.meter / u.second**2
@@ -30,7 +27,6 @@ def test_model_creation():
 
     u = GEO.u
     velocity = 1.0 * u.centimeter / u.hour
-    model_length = 2. * u.meter
     model_height = 1. * u.meter
     refViscosity = 1e6 * u.pascal * u.second
     bodyforce = 200 * u.kilogram / u.metre**3 * 9.81 * u.meter / u.second**2
