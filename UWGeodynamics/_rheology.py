@@ -1,4 +1,5 @@
 import json
+import abc
 from json import JSONEncoder
 import underworld.function as fn
 import numpy as np
@@ -7,6 +8,9 @@ from .scaling import nonDimensionalize as nd
 from copy import copy
 from collections import OrderedDict
 
+ABC = abc.ABCMeta('ABC', (object,), {})
+
+
 def linearCohesionWeakening(cumulativeTotalStrain, Cohesion, CohesionSw, epsilon1=0.5, epsilon2=1.5, **kwargs):
 
     cohesionVal = [(cumulativeTotalStrain < epsilon1, Cohesion),
@@ -14,6 +18,7 @@ def linearCohesionWeakening(cumulativeTotalStrain, Cohesion, CohesionSw, epsilon
                    (True, Cohesion + ((Cohesion - CohesionSw)/(epsilon1 - epsilon2)) * (cumulativeTotalStrain - epsilon1))]
 
     return fn.branching.conditional(cohesionVal)
+
 
 def linearFrictionWeakening(cumulativeTotalStrain, FrictionCoef, FrictionCoefSw, epsilon1=0.5, epsilon2=1.5, **kwargs):
 
@@ -38,6 +43,7 @@ class ViscosityLimiter(object):
         minMaxBound = fn.misc.max(maxBound, nd(self.minViscosity))
         return minMaxBound
 
+
 class StressLimiter(object):
 
     def __init__(self, maxStress):
@@ -48,7 +54,8 @@ class StressLimiter(object):
         maxBound = fn.misc.min(stress, nd(self.maxStress))
         return maxBound
 
-class Rheology(object):
+
+class Rheology(ABC):
 
     def __init__(self, pressureField=None, strainRateInvariantField=None,
                  temperatureField=None, viscosityLimiter=None,
@@ -67,6 +74,10 @@ class Rheology(object):
         self.friction = None
 
         return
+
+    @abc.abstractmethod
+    def muEff(self):
+        pass
 
 
 class DruckerPrager(object):
@@ -95,7 +106,6 @@ class DruckerPrager(object):
 
     def __getitem__(self, name):
         return self.__dict__[name]
-
 
     def _repr_html_(self):
         attributes  = OrderedDict()

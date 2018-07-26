@@ -1,12 +1,13 @@
-from abc import ABC, abstractmethod
+import abc
 try:
     from .linkage import SPM
 except:
     pass
-
 import underworld.function as fn
 from scaling import nonDimensionalize as nd
 
+
+ABC = abc.ABCMeta('ABC', (object,), {})
 
 class SurfaceProcesses(ABC):
 
@@ -24,11 +25,11 @@ class SurfaceProcesses(ABC):
         if value:
             self._init_model()
 
-    @abstractmethod
+    @abc.abstractmethod
     def _init_model(self):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def solve(self):
         pass
 
