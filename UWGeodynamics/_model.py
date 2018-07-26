@@ -50,7 +50,7 @@ class Model(Material):
 
     def __init__(self, elementRes, minCoord, maxCoord,
                  name=None, gravity=None, periodic=None, elementType=None,
-                 temperatureBCs=None, velocityBCs=None, materials=list(),
+                 temperatureBCs=None, velocityBCs=None, materials=None,
                  outputDir=None, frictionalBCs=None, surfaceProcesses=None,
                  isostasy=None, visugrid=None, advector=None):
 
@@ -188,7 +188,7 @@ class Model(Material):
         self.maxViscosity = rcParams["maximum.viscosity"]
 
         self._defaultMaterial = self.index
-        self.materials = materials
+        self.materials = list(materials) if materials is not None else list()
         self.materials.append(self)
 
         # Create a series of aliases for the boundary sets
@@ -1475,11 +1475,13 @@ class Model(Material):
 
         return 1
 
-    def preSolveHook(self):
-        return
+    @staticmethod
+    def preSolveHook():
+        pass
 
-    def postSolveHook(self):
-        return
+    @staticmethod
+    def postSolveHook():
+        pass
 
     @property
     def callback_post_solve(self):
