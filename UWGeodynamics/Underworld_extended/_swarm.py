@@ -180,6 +180,7 @@ class Swarm(uw.swarm.Swarm):
         # we set the 'offset' & 'size' variables to achieve the above
 
         offset = 0
+        size = dset.shape[0] # number of particles in h5 file
 
         if try_optimise:
             procCount = h5f.attrs.get('proc_offset')
