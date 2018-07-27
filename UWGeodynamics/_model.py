@@ -1269,7 +1269,6 @@ class Model(Material):
         p0, = surfacepressureFieldIntegral.evaluate()
         offset = p0 / area
         self.pressureField.data[:] -= offset
-        self.pressSmoother.smooth()
 
         for material in self.materials:
             if material.viscosity:
@@ -1494,6 +1493,8 @@ class Model(Material):
                 value()
             if rcParams["surface.pressure.normalization"]:
                 self._calibrate_pressureField()
+            if rcParams["pressure.smoothing"]:
+                self.pressSmoother.smooth()
             #self._adjust_tolerance()
             self._apply_alpha()
         self._callback_post_solve = callback
