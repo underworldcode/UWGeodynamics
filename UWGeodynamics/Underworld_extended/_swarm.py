@@ -152,7 +152,7 @@ class Swarm(uw.swarm.Swarm):
         # get units
         try:
             units = h5f.attrs["units"]
-        except:
+        except KeyError:
             units = None
 
         if units and units != "None":

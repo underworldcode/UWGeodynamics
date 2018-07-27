@@ -30,7 +30,7 @@ class SurfaceProcesses(ABC):
         pass
 
     @abc.abstractmethod
-    def solve(self):
+    def solve(self, dt):
         pass
 
 

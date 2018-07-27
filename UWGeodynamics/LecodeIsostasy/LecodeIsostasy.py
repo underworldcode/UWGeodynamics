@@ -10,7 +10,7 @@ rank = comm.Get_rank()
 class LecodeIsostasy(object):
 
     def __init__(self, reference_mat=None, average=False,
-                 surface=None, maskedMat=list(),
+                 surface=None, maskedMat=None,
                  vertical_walls_conditions=None):
 
         self.mesh = None
@@ -23,7 +23,7 @@ class LecodeIsostasy(object):
         self.reference_mat = reference_mat
         self.average = average
         self.surface = surface
-        self.maskedMat = maskedMat
+        self.maskedMat = list(maskedMat) if maskedMat else list()
         self.initialized = False
 
         # Make the class aware of the conditions on the vertical walls

@@ -200,7 +200,7 @@ class FeMesh_Cartesian(uw.mesh.FeMesh_Cartesian):
         # get units
         try:
             units = h5f.attrs["units"]
-        except:
+        except KeyError:
             units = None
 
         if units and units != "None":

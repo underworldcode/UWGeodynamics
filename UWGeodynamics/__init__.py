@@ -364,7 +364,7 @@ See rcParams.keys() for a list of valid parameters.' % (key,))
     def __getitem__(self, key):
         inverse_alt = None
         if key in _deprecated_map:
-            alt_key, _, _ = _deprecated_map[key]
+            alt_key, _, inverse_alt = _deprecated_map[key]
             warnings.warn(self.msg_depr % (key, alt_key))
             key = alt_key
 
