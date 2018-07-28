@@ -4,7 +4,6 @@ from scaling import Dimensionalize
 import json
 from copy import copy
 
-
 class _Polynom(object):
 
     def __init__(self, A1, A2=0., A3=0., A4=0.):

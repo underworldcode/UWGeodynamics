@@ -3,8 +3,17 @@ from UWGeodynamics import nd
 from scipy.interpolate import interp1d
 
 class FreeSurfaceProcessor(object):
+    """FreeSurfaceProcessor"""
 
     def __init__(self, Model):
+        """__init__
+
+        Parameters
+        ----------
+
+        Model : UWGeodynamics Model
+
+        """
         self.Model = Model
 
         # Create the tools
