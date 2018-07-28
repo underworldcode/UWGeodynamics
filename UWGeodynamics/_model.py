@@ -232,7 +232,7 @@ class Model(Material):
         self.DiffusivityFn = None
         self.HeatProdFn = None
         self._buoyancyFn = None
-        self.freeSurface = False
+        self._freeSurface = False
         self.callback_post_solve = None
         self._initialize()
 
@@ -1709,7 +1709,7 @@ class Model(Material):
 
     @property
     def freeSurface(self):
-        return self._FreeSurface
+        return self._freeSurface
 
     @freeSurface.setter
     def freeSurface(self, value):
