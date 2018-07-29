@@ -24,8 +24,7 @@ class Shape(object):
         return newShape
 
     def __add__(self, B):
-        newShape = Shape()
-        newShape.fn = self._fn & B._fn
+        newShape = MultiShape([self, B])
         return newShape
 
     def __or__(self, B):
@@ -64,12 +63,12 @@ class HalfSpace(Shape):
         """
 
         if isinstance(normal, (tuple, list)):
-            self.normal = fn.misc.constant([nd(val) for val in normal])
+            self.normal = fn.misc.constant([float(nd(val)) for val in normal])
         else:
             raise ValueError("{0} must be a list or tuple".format(normal))
 
         if isinstance(origin, (tuple, list)):
-            self.origin = fn.misc.constant([nd(val) for val in origin])
+            self.origin = fn.misc.constant([float(nd(val)) for val in origin])
         else:
             self.origin = fn.misc.constant([0.] * len(normal))
 
@@ -126,6 +125,12 @@ class CombinedShape(Shape):
             self._fnlist,
             fn.misc.constant(True))
         return func
+
+
+class Layer(Shape):
+    def __init__(self, top, bottom):
+        self.top = top
+        self.bottom = bottom
 
 
 class Layer2D(Shape):
@@ -186,13 +191,6 @@ class Layer3D(Shape):
     @bottom.setter
     def bottom(self, value):
         self._bottom = value
-
-
-class Layer(Layer2D):
-
-    def __init__(self, top, bottom):
-        super(Layer, self).__init__(top, bottom)
-        raise ValueError("""Layer is deprecated, use Layer2D or Layer3D instead""")
 
 
 class Box(Shape):

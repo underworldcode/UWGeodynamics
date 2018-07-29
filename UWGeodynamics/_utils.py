@@ -3,13 +3,12 @@ import underworld as uw
 import underworld.function as fn
 import shapefile
 import h5py
-import numpy as np
 import os
 import operator as op
 from .scaling import nonDimensionalize as nd
 from .scaling import Dimensionalize
 from .scaling import UnitRegistry as u
-from ._swarm import Swarm
+from .Underworld_extended import Swarm
 from scipy import spatial
 
 class PressureSmoother(object):
@@ -40,13 +39,13 @@ class PassiveTracers(object):
         self.name = name
         self.particleEscape = particleEscape
 
-        for dim in range(len(vertices)):
+        for dim, _ in enumerate(vertices):
             vertices[dim] = nd(vertices[dim])
 
         sizes = np.array([np.array(x).size for x in vertices])
         points = np.zeros((sizes.max(), len(vertices)))
 
-        for dim in range(len(vertices)):
+        for dim, _ in enumerate(vertices):
             points[:, dim] = vertices[dim]
 
         self.swarm = Swarm(mesh=mesh, particleEscape=particleEscape)
@@ -183,6 +182,75 @@ class PassiveTracers(object):
         xdmfFH.close()
 
 
+class PassiveTracersGrid(object):
+
+    def __init__(self, mesh, velocityField, name=None, vertices=None,
+                 centroids=None, particleEscape=True):
+
+        self.mesh = mesh
+        self.velocityField = velocityField
+        self.name = name
+        self.vertices = vertices
+        self.centroids = centroids
+        self.particleEscape = particleEscape
+        self.tracked_field = list()
+
+        self._sets = list()
+
+        for dim in range(len(vertices)):
+            vertices[dim] = nd(vertices[dim])
+
+        for dim in range(len(centroids)):
+            centroids[dim] = nd(centroids[dim])
+
+        if mesh.dim == 2:
+            for index, (x, y) in enumerate(zip(centroids[0], centroids[1])):
+                x_vertices = vertices[0] + x
+                y_vertices = vertices[1] + y
+                p_name = name + "-{0}".format(index)
+                self._sets.append(PassiveTracers(mesh, velocityField, p_name,
+                                                 vertices=[x_vertices,
+                                                           y_vertices],
+                                                 particleEscape=particleEscape))
+
+    def integrate(self, dt, **kwargs):
+        """ Integrate swarm velocity in time """
+        for _set in self._sets:
+            _set.advector.integrate(dt, **kwargs)
+
+    def add_tracked_field(self, value, name, units, dataType, count=1,
+                          overwrite=True):
+        """ Add a field to be tracked """
+        if not isinstance(value, fn.Function):
+            raise ValueError("%s is not an Underworld function")
+
+        # Check that the tracer does not exist already
+        for field in self.tracked_field:
+            if (name == field["name"]) or (value == field["value"]):
+                if not overwrite:
+                    raise ValueError(""" %s name already exist or already tracked
+                                     with a different name """ % name)
+                else:
+
+                    for _set in self._sets:
+                        field["name"] = name
+                        field["units"] = units
+                        field["value"] = value
+                        field["dataType"] = dataType
+                        setattr(_set, name, _set.swarm.add_variable(dataType, count=count))
+                    return
+
+        self.tracked_field.append({"value":value,
+                                   "name": name,
+                                   "units": units,
+                                   "dataType": dataType})
+
+        for _set in self._sets:
+            setattr(_set, name, _set.swarm.add_variable(dataType, count=count))
+
+        return
+
+
 class Balanced_InflowOutflow(object):
 
     def __init__(self, vtop, top, pt1, pt2, ynodes=None,
@@ -226,7 +294,6 @@ class Balanced_InflowOutflow(object):
         pt2 = nd(self.pt2)
         y = nd(self.ynodes)
         tol = self.tol
-        nitmax = self.nitmax
         nitmin = self.nitmin
         default_vel = nd(self.default_vel)
 
@@ -251,7 +318,7 @@ class Balanced_InflowOutflow(object):
 
             Vbot = (Vmin + Vmax) / 2.0
 
-            for i in range(len(y)):
+            for i, _ in enumerate(y):
                 if i > top_idx:
                     velocity[i] = 0.0
                 if i >= pt1_idx and i <= top_idx:
@@ -268,7 +335,6 @@ class Balanced_InflowOutflow(object):
                 self.budget = np.sum(budget)
                 return velocity
             else:
-                ctol = np.abs(np.sum(budget) - np.sum(prev))
                 N += 1
                 prev = np.copy(budget)
 
@@ -471,8 +537,6 @@ def fn_Tukey_window(r, centre, width, top, bottom):
     y_conditions = fn.branching.conditional([((y >= bottom) & (y <= top), 1.0), (True, 0.0)])
     return x_conditions * y_conditions
 
-
-import pylab as plt
 
 class NonLinearBlock(object):
     def __init__(self, string):

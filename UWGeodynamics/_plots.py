@@ -55,10 +55,10 @@ def _get_minmax_coordinates_mesh(mesh, axis=0):
     maxVal[0] = mesh.data[:, axis].max()
     minVal[0] = mesh.data[:, axis].min()
 
-    uw.barrier
+    uw.barrier()
     comm.Allreduce(MPI.IN_PLACE, maxVal, op=MPI.MAX)
     comm.Allreduce(MPI.IN_PLACE, minVal, op=MPI.MIN)
-    uw.barrier
+    uw.barrier()
 
     return minVal, maxVal
 
@@ -79,7 +79,7 @@ class Plots(object):
     def materialField(self, figsize=None, title="Material Field",
                       colours=None, script=None, cullface=False,
                       mask=None, visugrid=None, onMesh=False,
-                      tracers=[], show=True, store=None, quality=3,
+                      show=True, store=None, quality=3,
                       **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize,

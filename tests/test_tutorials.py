@@ -35,13 +35,13 @@ def _notebook_run(path):
 def test_tutorial1():
     path = os.path.join(PROJECT_DIR,
                         "tutorials/Tutorial_1_ThermoMechanical_Model.ipynb")
-    nb, errors = _notebook_run(path)
+    _, errors = _notebook_run(path)
     assert errors == []
 
 
 def test_tutorial2():
     path = os.path.join(PROJECT_DIR, "tutorials/Tutorial_2_Melt.ipynb")
-    nb, errors = _notebook_run(path)
+    _, errors = _notebook_run(path)
     assert errors == []
 
 
@@ -49,7 +49,7 @@ def test_tutorial3():
     path = os.path.join(
         PROJECT_DIR,
         "tutorials/Tutorial_3_SandboxExtension_static_mesh.ipynb")
-    nb, errors = _notebook_run(path)
+    _, errors = _notebook_run(path)
     assert errors == []
 
 
@@ -57,33 +57,33 @@ def test_tutorial4():
     path = os.path.join(
         PROJECT_DIR,
         "tutorials/Tutorial_4_NumericalSandboxCompression.ipynb")
-    nb, errors = _notebook_run(path)
+    _, errors = _notebook_run(path)
     assert errors == []
 
 
 def test_tutorial5():
     path = os.path.join(PROJECT_DIR,
                         "tutorials/Tutorial_5_Convergence_Model.ipynb")
-    nb, errors = _notebook_run(path)
+    _, errors = _notebook_run(path)
     assert errors == []
 
 
 def test_tutorial6():
     path = os.path.join(PROJECT_DIR,
                         "tutorials/Tutorial_6_Simple_Surface_Processes.ipynb")
-    nb, errors = _notebook_run(path)
+    _, errors = _notebook_run(path)
     assert errors == []
 
 
 def test_tutorial7():
     path = os.path.join(PROJECT_DIR,
                         "tutorials/Tutorial_7_3D_Lithospheric_Model.ipynb")
-    nb, errors = _notebook_run(path)
+    _, errors = _notebook_run(path)
     assert errors == []
 
 
 def test_tutorial8():
     path = os.path.join(PROJECT_DIR,
                         "tutorials/Tutorial_8_Subduction_ViscoElastic.ipynb")
-    nb, errors = _notebook_run(path)
+    _, errors = _notebook_run(path)
     assert errors == []

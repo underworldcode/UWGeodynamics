@@ -249,32 +249,6 @@
             }
         }
     }, 
-    "Mackwell et al., 1998": {
-        "Mineral": "Dry Diabase", 
-        "Type": "Strain Rate and Temperature Dependent Rheology", 
-        "coefficients": {
-            "activationEnergy": {
-                "units": "kilojoule / mole", 
-                "value": 485.0
-            }, 
-            "activationVolume": {
-                "units": "meter ** 3 / mole", 
-                "value": 0.0
-            }, 
-            "defaultStrainRateInvariant": {
-                "units": "1 / second", 
-                "value": 1e-15
-            }, 
-            "preExponentialFactor": {
-                "units": "1 / megapascal ** 4.7 / second", 
-                "value": 8.0
-            }, 
-            "stressExponent": {
-                "units": "None", 
-                "value": 4.7
-            }
-        }
-    }, 
     "Patterson et al., 1990": {
         "Mineral": "Wet Quartz", 
         "Type": "Strain Rate and Temperature Dependent Rheology", 

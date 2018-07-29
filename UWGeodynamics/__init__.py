@@ -9,7 +9,6 @@ except ImportError:
 
 import sys
 import os
-import warnings
 import errno
 import tempfile
 import locale
@@ -132,7 +131,6 @@ def _create_tmp_config_dir():
     Returns None if a writable temporary directory could not be created.
     """
     import getpass
-    import tempfile
 
     try:
         tempdir = tempfile.gettempdir()
@@ -346,7 +344,7 @@ class RcParams(dict):
     def __setitem__(self, key, val):
         try:
             if key in _deprecated_map:
-                alt_key, alt_val, inverse_alt = _deprecated_map[key]
+                alt_key, alt_val, _ = _deprecated_map[key]
                 warnings.warn(self.msg_depr % (key, alt_key))
                 key = alt_key
                 val = alt_val(val)
@@ -366,7 +364,7 @@ See rcParams.keys() for a list of valid parameters.' % (key,))
     def __getitem__(self, key):
         inverse_alt = None
         if key in _deprecated_map:
-            alt_key, alt_val, inverse_alt = _deprecated_map[key]
+            alt_key, _, inverse_alt = _deprecated_map[key]
             warnings.warn(self.msg_depr % (key, alt_key))
             key = alt_key
 
@@ -554,7 +552,6 @@ def _in_doctest():
 # send metrics *only* if we are rank=0, and if we are not running inside a doctest.
 if (underworld.rank() == 0) and not _in_doctest():
     def _sendData():
-        import os
         # disable collection of data if requested
         if "UW_NO_USAGE_METRICS" not in os.environ:
             # get platform info

@@ -151,8 +151,6 @@ def _material_html_repr(Material):
             value = Material.__dict__.get("_"+val)
         html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, value)
 
-    filename = None
-
     if Material.viscosity and Material.plasticity:
         type_ = "(Visco-plastic)"
     elif Material.viscosity:

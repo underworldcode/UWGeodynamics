@@ -4,56 +4,51 @@ MAINTAINER romain.beucher@unimelb.edu
 USER root
 
 RUN apt-get update -qq
-RUN DEBIAN_FRONTEND=noninteractive apt-get install cgdb sudo
+RUN DEBIAN_FRONTEND=noninteractive apt-get install cgdb sudo && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # UWGeodynamics
 WORKDIR /opt
-RUN git clone -b development https://github.com/rbeucher/UWGeodynamics.git
-RUN pip install -e /opt/UWGeodynamics
-RUN mkdir /workspace/UWGeodynamics
-RUN mkdir /workspace/MODELS_RESULTS
-RUN rsync -av /opt/UWGeodynamics/examples/* /workspace/UWGeodynamics/examples/
-RUN rsync -av /opt/UWGeodynamics/tutorials/* /workspace/UWGeodynamics/tutorials/
-RUN rsync -av /opt/UWGeodynamics/manual/* /workspace/UWGeodynamics/manual/
+RUN git clone -b development https://github.com/rbeucher/UWGeodynamics.git && \
+    pip install -e /opt/UWGeodynamics
+RUN mkdir /workspace/UWGeodynamics && \
+    mkdir /workspace/MODELS_RESULTS && \
+    mv /opt/UWGeodynamics/examples /workspace/UWGeodynamics/. && \
+    mv /opt/UWGeodynamics/tutorials /workspace/UWGeodynamics/. && \
+    mv /opt/UWGeodynamics/manual /workspace/UWGeodynamics/.
 
 # Badlands dependency
-RUN pip install pandas
-RUN pip install ez_setup
-RUN pip install git+https://github.com/badlands-model/triangle.git
-RUN pip install git+https://github.com/awickert/gFlex.git
+RUN pip install --no-cache-dir pandas \
+                ez_setup \ 
+                git+https://github.com/badlands-model/triangle.git \
+                git+https://github.com/awickert/gFlex.git
 
 # pyBadlands serial
-WORKDIR /opt
 RUN git clone https://github.com/rbeucher/pyBadlands_serial.git
-RUN pip install -e pyBadlands_serial/
-WORKDIR /opt/pyBadlands_serial/pyBadlands/libUtils
-RUN make
+RUN cd /opt/pyBadlands_serial/pyBadlands/libUtils && make
 RUN pip install -e /opt/pyBadlands_serial
 
 # pyBadlands dependencies
-RUN pip install cmocean
-RUN pip install colorlover
-# Force matplotlib 2.1.2 (Bug Badlands), Temporary
-RUN pip install matplotlib==2.1.2
+RUN git clone https://github.com/matplotlib/cmocean.git /tmp/cmocean && \
+    pip install /tmp/cmocean/ && \ 
+    rm -rf /tmp/cmocean
+RUN pip install colorlover matplotlib==2.1.2
 
 # pyBadlands companion
-WORKDIR /opt
-RUN git clone https://github.com/badlands-model/pyBadlands-Companion.git
-RUN pip install -e /opt/pyBadlands-Companion
-RUN mkdir /workspace/BADLANDS
-RUN rsync -av /opt/pyBadlands-Companion/notebooks/* /workspace/BADLANDS/companion/
+RUN git clone https://github.com/badlands-model/pyBadlands-Companion.git && \
+    pip install -e /opt/pyBadlands-Companion && \
+    mkdir /workspace/BADLANDS && \
+    rsync -av /opt/pyBadlands-Companion/notebooks/* /workspace/BADLANDS/companion/
 
 ENV PATH $PATH:/opt/pyBadlands_serial/pyBadlands/libUtils
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/pyBadlands_serial/pyBadlands/libUtils
 
-# memory profiler and jupyterlab
+# memory profiler
 RUN pip install memory_profiler
-RUN pip install jupyterlab
-RUN jupyter serverextension enable --py jupyterlab --sys-prefix
 
 # update all permissions for jovyan user
 ENV UW2_DIR /opt/underworld2
-#RUN useradd -m -s /bin/bash -N jovyan
 RUN echo "jovyan:docker" | chpasswd && adduser jovyan sudo
 ENV NB_USER jovyan
 
@@ -72,5 +67,5 @@ ENV PYTHONPATH /workspace/user_data/Underworld:/workspace/user_data/UWGeodynamic
 WORKDIR /workspace
 
 # launch notebook
-CMD ["jupyter", "lab", "--ip='*'", "--no-browser"]
+CMD ["jupyter", "notebook", "--ip='*'", "--no-browser"]
 

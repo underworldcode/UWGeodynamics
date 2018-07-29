@@ -41,14 +41,6 @@
                 "units": "megapascal", 
                 "value": 20.0
             }, 
-            "epsilon1": {
-                "units": "None", 
-                "value": 0.5
-            }, 
-            "epsilon2": {
-                "units": "None", 
-                "value": 1.5
-            }, 
             "frictionAfterSoftening": {
                 "units": "None", 
                 "value": 0.02

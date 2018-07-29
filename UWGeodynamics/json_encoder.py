@@ -2,7 +2,6 @@ import json
 import inspect
 from collections import OrderedDict
 import UWGeodynamics as GEO
-from .scaling import UnitRegistry as u
 from ._frictional_boundary import FrictionBoundaries
 from ._thermal_boundaries import TemperatureBCs
 from ._velocity_boundaries import VelocityBCs

@@ -1,7 +1,6 @@
 # Utilities to handle Underworld mesh and swarm variables fields...
 # Romain Beucher June 2017
 # romain.beucher@unimelb.edu.au
-import underworld as uw
 import numpy as np
 from mpi4py import MPI
 

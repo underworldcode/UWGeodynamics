@@ -1,8 +1,8 @@
+import abc
 try:
     from .linkage import SPM
 except:
     pass
-
 import underworld.function as fn
 from scaling import nonDimensionalize as nd
 
@@ -14,7 +14,9 @@ from mpi4py import MPI
 comm = MPI.COMM_WORLD
 CPUsize = comm.Get_size()
 
-class SurfaceProcesses(object):
+ABC = abc.ABCMeta('ABC', (object,), {})
+
+class SurfaceProcesses(ABC):
 
     def __init__(self, Model=None):
 
@@ -30,11 +32,13 @@ class SurfaceProcesses(object):
         if value:
             self._init_model()
 
+    @abc.abstractmethod
     def _init_model(self):
-        return
+        pass
 
-    def solve(self):
-        return
+    @abc.abstractmethod
+    def solve(self, dt):
+        pass
 
 
 class Badlands(SurfaceProcesses):

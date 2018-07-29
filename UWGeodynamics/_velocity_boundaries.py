@@ -219,7 +219,6 @@ class VelocityBCs(object):
 
                 # Scalar condition
                 if isinstance(condition[dim], (u.Quantity, float, int)):
-
                     # Process dirichlet condition
                     if not _is_neumann(condition[dim]):
                         self.Model.velocityField.data[nodes.data, dim] = (
@@ -291,7 +290,7 @@ class VelocityBCs(object):
         self.dirichlet_indices = []
         self.neumann_indices = []
 
-        for dim in range(Model.mesh.dim):
+        for _ in range(Model.mesh.dim):
             self.dirichlet_indices.append(Model.mesh.specialSets["Empty"])
             self.neumann_indices.append(Model.mesh.specialSets["Empty"])
 

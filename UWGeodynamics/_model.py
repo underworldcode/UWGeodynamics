@@ -15,7 +15,7 @@ from .scaling import Dimensionalize
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
 from .lithopress import LithostaticPressure
-from ._utils import PressureSmoother, PassiveTracers
+from ._utils import PressureSmoother, PassiveTracers, PassiveTracersGrid
 from ._rheology import ViscosityLimiter, StressLimiter
 from ._material import Material
 from ._plots import Plots
@@ -24,15 +24,15 @@ from ._velocity_boundaries import VelocityBCs
 from ._thermal_boundaries import TemperatureBCs
 from ._mesh_advector import _mesh_advector
 from ._frictional_boundary import FrictionBoundaries
-from ._mesh import FeMesh_Cartesian
-from ._swarm import Swarm
-from ._meshvariable import MeshVariable
-from ._swarmvariable import SwarmVariable
+from .Underworld_extended import FeMesh_Cartesian
+from .Underworld_extended import Swarm
+from .Underworld_extended import MeshVariable
+from .Underworld_extended import SwarmVariable
 from scipy import interpolate
 from six import iteritems
 from datetime import datetime
 from .version import full_version
-
+from ._freesurface import FreeSurfaceProcessor
 
 class Model(Material):
     """ This class provides the main UWGeodynamics Model
@@ -50,7 +50,7 @@ class Model(Material):
 
     def __init__(self, elementRes, minCoord, maxCoord,
                  name=None, gravity=None, periodic=None, elementType=None,
-                 temperatureBCs=None, velocityBCs=None, materials=list(),
+                 temperatureBCs=None, velocityBCs=None, materials=None,
                  outputDir=None, frictionalBCs=None, surfaceProcesses=None,
                  isostasy=None, visugrid=None, advector=None):
 
@@ -188,7 +188,7 @@ class Model(Material):
         self.maxViscosity = rcParams["maximum.viscosity"]
 
         self._defaultMaterial = self.index
-        self.materials = materials
+        self.materials = list(materials) if materials is not None else list()
         self.materials.append(self)
 
         # Create a series of aliases for the boundary sets
@@ -232,6 +232,7 @@ class Model(Material):
         self.DiffusivityFn = None
         self.HeatProdFn = None
         self._buoyancyFn = None
+        self._freeSurface = False
         self.callback_post_solve = None
         self._initialize()
 
@@ -361,7 +362,6 @@ class Model(Material):
 
         # Reload all the restart fields
         for field in rcParams["restart.fields"]:
-            "Temporary !!!!"
             if field == "temperature":
                 continue
             obj = getattr(self, field)
@@ -779,6 +779,7 @@ class Model(Material):
                 material. Default is False.
 
         """
+
         if reset:
             self.materialField.data[:] = self.index
 
@@ -788,6 +789,12 @@ class Model(Material):
         mat.diffusivity = self.diffusivity
         mat.capacity = self.capacity
         mat.radiogenicHeatProd = self.radiogenicHeatProd
+
+        if isinstance(shape, shapes.Layer):
+            if self.mesh.dim == 2:
+                shape = shapes.Layer2D(top=shape.top, bottom=shape.bottom)
+            if self.mesh.dim == 3:
+                shape = shapes.Layer3D(top=shape.top, bottom=shape.bottom)
 
         if hasattr(shape, "top"):
             mat.top = shape.top
@@ -829,7 +836,7 @@ class Model(Material):
                                                nodeDofCount=count,
                                                dataType="double")
 
-        # Create a projector 
+        # Create a projector
         if name.startswith("_"):
             projector_name = name + "Projector"
         else:
@@ -1182,8 +1189,11 @@ class Model(Material):
                 if material.diffusivity:
                     DiffusivityMap[material.index] = nd(material.diffusivity)
 
-            self.DiffusivityFn = fn.branching.map(fn_key=self.materialField,
-                                                  mapping=DiffusivityMap)
+            self.DiffusivityFn = fn.branching.map(
+                fn_key=self.materialField,
+                mapping=DiffusivityMap,
+                fn_default=nd(self.diffusivity)
+            )
 
             HeatProdMap = {}
             for material in self.materials:
@@ -1259,7 +1269,6 @@ class Model(Material):
         p0, = surfacepressureFieldIntegral.evaluate()
         offset = p0 / area
         self.pressureField.data[:] -= offset
-        self.pressSmoother.smooth()
 
         for material in self.materials:
             if material.viscosity:
@@ -1465,11 +1474,13 @@ class Model(Material):
 
         return 1
 
-    def preSolveHook(self):
-        return
+    @staticmethod
+    def preSolveHook():
+        pass
 
-    def postSolveHook(self):
-        return
+    @staticmethod
+    def postSolveHook():
+        pass
 
     @property
     def callback_post_solve(self):
@@ -1482,6 +1493,8 @@ class Model(Material):
                 value()
             if rcParams["surface.pressure.normalization"]:
                 self._calibrate_pressureField()
+            if rcParams["pressure.smoothing"]:
+                self.pressSmoother.smooth()
             #self._adjust_tolerance()
             self._apply_alpha()
         self._callback_post_solve = callback
@@ -1524,6 +1537,10 @@ class Model(Material):
         if self._advector:
             self.swarm_advector.integrate(dt)
             self._advector.advect_mesh(dt)
+        elif self._freeSurface:
+            self.swarm_advector.integrate(dt, update_owners=False)
+            self._freeSurface.solve(dt)
+            self.swarm.update_particle_owners()
         else:
             # Integrate Swarms in time
             self.swarm_advector.integrate(dt, update_owners=True)
@@ -1533,8 +1550,8 @@ class Model(Material):
             self._update_stress_history(dt)
 
         if self.passive_tracers:
-            for (key, tracers) in iteritems(self.passive_tracers):
-                tracers.integrate(dt)
+            for key in self.passive_tracers:
+                self.passive_tracers[key].integrate(dt)
 
         # Do pop control
         self.population_control.repopulate()
@@ -1564,7 +1581,7 @@ class Model(Material):
         self._advector = _mesh_advector(self, axis)
 
     def add_passive_tracers(self, name, vertices=None,
-                            particleEscape=True):
+                            particleEscape=True, centroids=None):
         """ Add a swarm of passive tracers to the Model
 
         Parameters:
@@ -1577,18 +1594,32 @@ class Model(Material):
                 Allow or prevent tracers from escaping the boundaries of the
                 Model (default to True)
         """
+
+        if centroids and not isinstance(centroids, list):
+            centroids = list(centroids)
+
         if name in self.passive_tracers.keys():
             print("{0} tracers exists already".format(name))
             return self.passive_tracers[name]
 
-        tracers = PassiveTracers(self.mesh,
-                                 self.velocityField,
-                                 name=name,
-                                 vertices=vertices,
-                                 particleEscape=particleEscape)
+        if not centroids:
+            tracers = PassiveTracers(self.mesh,
+                                     self.velocityField,
+                                     name=name,
+                                     vertices=vertices,
+                                     particleEscape=particleEscape)
+
+        else:
+
+            tracers = PassiveTracersGrid(self.mesh,
+                                         self.velocityField,
+                                         name=name,
+                                         vertices=vertices,
+                                         centroids=centroids,
+                                         particleEscape=particleEscape)
+
 
         self.passive_tracers[name] = tracers
-
         setattr(self, name.lower() + "_tracers", tracers)
 
         return tracers
@@ -1676,7 +1707,16 @@ class Model(Material):
                                              fn_default=0.0))
         return
 
-    def checkpoint(self, variables=None, checkpointID=None):
+    @property
+    def freeSurface(self):
+        return self._freeSurface
+
+    @freeSurface.setter
+    def freeSurface(self, value):
+        if value:
+            self._freeSurface = FreeSurfaceProcessor(self)
+
+    def checkpoint(self, checkpointID=None, variables=None):
         """ Do a checkpoint (Save fields)
 
         Parameters:
@@ -1703,7 +1743,7 @@ class Model(Material):
 
         # Checkpoint passive tracers and associated tracked fields
         if self.passive_tracers:
-            for (key, tracers) in iteritems(self.passive_tracers):
+            for (_, tracers) in iteritems(self.passive_tracers):
                 tracers.save(self.outputDir, checkpointID, self.time)
 
     def profile(self,
@@ -1767,8 +1807,9 @@ class Model(Material):
         GluciferStore.step = step
 
         for field in rcParams["glucifer.outputs"]:
+            import ast
             if getattr(self, field):
-                func = eval("self.plot." + field)
+                func = ast.literal.eval("self.plot." + field)
                 fig = func(store=GluciferStore, show=False)
                 fig.save()
 
@@ -1803,7 +1844,7 @@ class Model(Material):
 
         time = time if time else self.time
 
-        if self._advector:
+        if self._advector or self._freeSurface:
             mesh_name = 'mesh-%s' % checkpointID
             mesh_prefix = os.path.join(self.outputDir, mesh_name)
         else:
@@ -1947,9 +1988,6 @@ def load_model(filename, step=None):
 
     with open(filename, "r") as f:
         model = json.load(f)
-
-    # Set rcParams
-    rcParams = model.pop("rcParams")
 
     # Set scaling
     scaling = model.pop("scaling")
