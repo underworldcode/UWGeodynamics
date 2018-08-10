@@ -157,7 +157,7 @@ class Model(Material):
         self.swarm_fields = {}
 
         # Add common mesh variables
-        self.temperature = None
+        self.temperature = False
         self.add_submesh_field("pressureField", nodeDofCount=1)
         self.add_mesh_field("velocityField", nodeDofCount=self.mesh.dim)
         self.add_mesh_field("tractionField", nodeDofCount=self.mesh.dim)
@@ -414,14 +414,7 @@ class Model(Material):
         path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
         if os.path.exists(path):
             if not self.temperature:
-                self.temperature = MeshVariable(mesh=self.mesh,
-                                                nodeDofCount=1)
-                self._temperatureDot = MeshVariable(mesh=self.mesh,
-                                                    nodeDofCount=1)
-                self._heatFlux = MeshVariable(mesh=self.mesh,
-                                              nodeDofCount=1)
-                self._temperatureDot.data[...] = 0.
-                self._heatFlux.data[...] = 0.
+                self.temperature = True
             obj = getattr(self, "temperature")
             if uw.rank() == 0:
                 print("Reloading field {0} from {1}".format("temperature", path))
@@ -657,7 +650,17 @@ class Model(Material):
 
     @temperature.setter
     def temperature(self, value):
-        self._temperature = value
+        if value is True:
+            self._temperature = MeshVariable(mesh=self.mesh,
+                                                nodeDofCount=1)
+            self._temperatureDot = MeshVariable(mesh=self.mesh,
+                                                    nodeDofCount=1)
+            self._heatFlux = MeshVariable(mesh=self.mesh,
+                                              nodeDofCount=1)
+            self._temperatureDot.data[...] = 0.
+            self._heatFlux.data[...] = 0.
+        else:
+            self._temperature = False
 
     @property
     def _temperatureBCs(self):
