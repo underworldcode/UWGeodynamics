@@ -185,7 +185,7 @@ class VelocityBCs(object):
             intersect = np.intersect1d(self.Model.mesh.data_nodegId, set_.data)
             IndexSet =  uw.mesh.FeMesh_IndexSet(self.Model.mesh, topologicalIndex=0,
                                                 size=self.Model.mesh.nodesGlobal,
-                                                fromObject=set_)
+                                                fromObject=intersect)
 
             for dim in range(self.Model.mesh.dim):
                 if (dim == axis):
