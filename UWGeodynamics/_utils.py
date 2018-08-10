@@ -640,7 +640,6 @@ class MovingWall(object):
 
         return fn.branching.conditional(condition)
 
-
     def get_wall_indices(self):
 
         # Return new indexSet for the wall
@@ -654,12 +653,11 @@ class MovingWall(object):
         # Update Material Field
         condition = [(self.wallFn, self.material.index), (True, self.Model.materialField)]
         func = fn.branching.conditional(condition)
-        self.Model.materialField.data[...] =  func.evaluate(swarm)
+        self.Model.materialField.data[...] = func.evaluate(swarm)
 
-        components = [self.Model.mesh.specialSets["Empty"] for dim in range(mesh.dim)]
-        components[self.wall_direction_axis[self.wall]] += IndexSet
+        axis = self.wall_direction_axis[self.wall]
 
-        return components
+        return IndexSet, axis
 
 
 class LogFile(object):

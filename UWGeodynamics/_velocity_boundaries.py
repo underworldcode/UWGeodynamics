@@ -178,16 +178,20 @@ class VelocityBCs(object):
 
         if isinstance(condition, MovingWall):
             condition.wall = nodes
-            indices = condition.get_wall_indices()
+            set_, axis = condition.get_wall_indices()
             func = condition.velocityFn
             for dim in range(self.Model.mesh.dim):
-                set_ = indices[dim]
-                if set_.data.size > 0:
+                if (dim == axis) and (set_.data.size > 0):
                     self.Model.velocityField.data[set_.data, dim] = (
                         func.evaluate(set_)[:, 0])
                     self.Model.boundariesField.data[set_.data, dim] = (
                         func.evaluate(set_)[:, 0])
                     self.dirichlet_indices[dim] += set_
+                else:
+                    self.Model.velocityField.data[set_.data, dim] = 0.
+                    self.Model.boundariesField.data[set_.data, dim] = 0.
+                    self.dirichlet_indices[dim] += set_
+
             return
 
         # Expect a list or tuple of dimension mesh.dim.
