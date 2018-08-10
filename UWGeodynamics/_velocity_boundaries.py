@@ -180,17 +180,24 @@ class VelocityBCs(object):
             condition.wall = nodes
             set_, axis = condition.get_wall_indices()
             func = condition.velocityFn
+
+            # Intersect of wall nodes and current local domain
+            intersect = np.intersect1d(self.Model.mesh.data_nodegId, set_.data)
+            IndexSet =  uw.mesh.FeMesh_IndexSet(self.Model.mesh, topologicalIndex=0,
+                                                size=self.Model.mesh.nodesGlobal,
+                                                fromObject=set_)
+
             for dim in range(self.Model.mesh.dim):
-                if (dim == axis) and (set_.data.size > 0):
-                    self.Model.velocityField.data[set_.data, dim] = (
+                if (dim == axis):
+                    self.Model.velocityField.data[IndexSet.data, dim] = (
                         func.evaluate(set_)[:, 0])
-                    self.Model.boundariesField.data[set_.data, dim] = (
+                    self.Model.boundariesField.data[IndexSet.data, dim] = (
                         func.evaluate(set_)[:, 0])
-                    self.dirichlet_indices[dim] += set_
+                    self.dirichlet_indices[dim] += IndexSet
                 else:
-                    self.Model.velocityField.data[set_.data, dim] = 0.
-                    self.Model.boundariesField.data[set_.data, dim] = 0.
-                    self.dirichlet_indices[dim] += set_
+                    self.Model.velocityField.data[IndexSet.data, dim] = 0.
+                    self.Model.boundariesField.data[IndexSet.data, dim] = 0.
+                    self.dirichlet_indices[dim] += IndexSet
 
             return
 

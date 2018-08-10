@@ -647,8 +647,6 @@ class MovingWall(object):
         swarm = self.Model.swarm
 
         nodes = mesh.data_nodegId[self.wallFn.evaluate(mesh)]
-        IndexSet =  uw.mesh.FeMesh_IndexSet(mesh, topologicalIndex=0,
-                                            size=mesh.nodesGlobal, fromObject=nodes)
 
         # Update Material Field
         condition = [(self.wallFn, self.material.index), (True, self.Model.materialField)]
@@ -657,7 +655,7 @@ class MovingWall(object):
 
         axis = self.wall_direction_axis[self.wall]
 
-        return IndexSet, axis
+        return nodes, axis
 
 
 class LogFile(object):
