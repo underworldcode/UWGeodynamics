@@ -216,7 +216,7 @@ class VonMises(object):
         self.epsilon1 = epsilon1
         self.epsilon2 = epsilon2
         self.cohesionWeakeningFn = linearCohesionWeakening
-    
+
     def __getitem__(self, name):
         return self.__dict__[name]
 
@@ -415,6 +415,35 @@ class ViscousCreep(Rheology):
         FirstIterCondition = [(self.firstIter,nd(self.defaultStrainRateInvariant)),
                               (True, self.strainRateInvariantField)]
         return fn.branching.conditional(FirstIterCondition)
+
+
+class CompositeViscosity(Rheology):
+
+    def __init__(self, viscosities):
+
+        if not isinstance(viscosities, (list, tuple)):
+            raise ValueError('viscosities must be a list of viscosities')
+
+        for viscosity in viscosities:
+            if not isinstance(viscosity, ViscousCreep):
+                raise ValueError('The viscosity entered is not of ViscousCreep type')
+
+        self.viscosities = viscosities
+
+        self.pressureField = None
+        self.strainRateInvariantField = None
+        self.temperatureField = None
+
+    @property
+    def muEff(self):
+        muEff = fn.misc.constant(0.0)
+        for viscosity in self.viscosities:
+            viscosity.pressureField = self.pressureField
+            viscosity.strainRateInvariantField = self.strainRateInvariantField
+            viscosity.temperature = self.temperatureField
+            muEff += 1.0 / viscosity.muEff
+
+        return 1.0 / muEff
 
 
 class _TemperatureAndDepthDependentViscosityEncoder(JSONEncoder):
