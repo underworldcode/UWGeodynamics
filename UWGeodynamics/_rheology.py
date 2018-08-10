@@ -287,6 +287,7 @@ class ViscousCreep(Rheology):
                  waterFugacityExponent=0.0,
                  meltFractionFactor=0.0,
                  f=1.0,
+                 BurgersVectorLength=0.5e-9 * u.metre,
                  mineral="unspecified"):
 
         super(ViscousCreep, self).__init__()
@@ -306,6 +307,7 @@ class ViscousCreep(Rheology):
         self.meltFractionFactor = meltFractionFactor
         self.f = f
         self.constantGas = 8.3144621 * u.joule / u.mole / u.degK
+        self.BurgersVectorLength = BurgersVectorLength
 
     def __mul__(self, other):
         self.f = other
@@ -383,6 +385,7 @@ class ViscousCreep(Rheology):
         F = nd(self.meltFraction)
         alpha = nd(self.meltFractionFactor)
         R = nd(self.constantGas)
+        b = nd(self.BurgersVectorLength)
 
         mu_eff = f * 0.5 * A**(-1.0 / n)
 
@@ -391,7 +394,7 @@ class ViscousCreep(Rheology):
 
         # Grain size dependency
         if p and d:
-            mu_eff *= d**(p/n)
+            mu_eff *= (d / b)**(p/n)
 
         # Water dependency
         if r and fH2O:
