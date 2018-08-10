@@ -621,14 +621,7 @@ class Model(Material):
         """
 
         if not self.temperature:
-            self.temperature = MeshVariable(mesh=self.mesh,
-                                            nodeDofCount=1)
-            self._temperatureDot = MeshVariable(mesh=self.mesh,
-                                                nodeDofCount=1)
-            self._heatFlux = MeshVariable(mesh=self.mesh,
-                                          nodeDofCount=1)
-            self._temperatureDot.data[...] = 0.
-            self._heatFlux.data[...] = 0.
+            self.temperature = True
 
         self.temperatureBCs = TemperatureBCs(self, left=left, right=right,
                                              top=top, bottom=bottom,
