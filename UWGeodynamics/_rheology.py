@@ -441,6 +441,7 @@ class CompositeViscosity(Rheology):
             viscosity.pressureField = self.pressureField
             viscosity.strainRateInvariantField = self.strainRateInvariantField
             viscosity.temperature = self.temperatureField
+            viscosity._viscosity_limiter = self._viscosity_limiter
             muEff += 1.0 / viscosity.muEff
 
         return 1.0 / muEff
