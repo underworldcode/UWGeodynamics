@@ -1369,11 +1369,6 @@ class Model(Material):
         offset = p0 / area
         self.pressureField.data[:] -= offset
 
-        for material in self.materials:
-            if material.viscosity:
-                material.viscosity.firstIter.value = False
-
-        self._solution_exist.value = True
 
     def _apply_alpha(self):
 
@@ -1611,6 +1606,11 @@ class Model(Material):
                 self.pressSmoother.smooth()
             # self._adjust_tolerance()
             # self._apply_alpha()
+            for material in self.materials:
+                if material.viscosity:
+                    material.viscosity.firstIter.value = False
+
+            self._solution_exist.value = True
         self._callback_post_solve = callback
 
     def _update(self):
