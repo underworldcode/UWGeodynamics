@@ -755,7 +755,8 @@ class Model(Material):
             self.meltField.data[:] = InitFn.evaluate(self.swarm)
 
     def set_velocityBCs(self, left=None, right=None, top=None, bottom=None,
-                        front=None, back=None, indexSets=None):
+                        front=None, back=None, indexSets=None,
+                        order_wall_conditions=None):
         """ Set Model kinematic conditions
 
         Parameters:
@@ -786,7 +787,8 @@ class Model(Material):
         self.velocityBCs = VelocityBCs(self, left=left,
                                        right=right, top=top,
                                        bottom=bottom, front=front,
-                                       back=back, indexSets=indexSets)
+                                       back=back, indexSets=indexSets,
+                                       order_wall_conditions=order_wall_conditions)
         return self.velocityBCs.get_conditions()
 
     set_mechanicalBCs = set_velocityBCs
