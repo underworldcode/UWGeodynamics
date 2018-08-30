@@ -89,7 +89,7 @@ rcParams = {
 
     "scaling.length": [1.0 * u.meter, validate_quantity],
     "scaling.mass": [1.0 * u.kilogram, validate_quantity],
-    "scaling.time": [1.0 * u.second, validate_quantity],
+    "scaling.time": [1.0 * u.year, validate_quantity],
     "scaling.temperature": [1.0 * u.degK, validate_quantity],
     "scaling.substance": [1.0 * u.mole, validate_quantity],
 
