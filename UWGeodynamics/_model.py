@@ -1275,6 +1275,16 @@ class Model(Material):
         eijdef = nd(self._default_strain_rate)
         return 2.0 * self._viscosityFn * fn.misc.max(eij, eijdef)
 
+    def _phaseChangeFn(self):
+        for material in self.materials:
+            if material.phase_changes:
+                for change in material.phase_changes:
+                    obj = change
+                    mask = obj.fn().evaluate(self.swarm)
+                    conds = ((mask == 1) &
+                             (self.materialField.data == material.index))
+                    self.materialField.data[conds] = obj.result
+
     def solve_temperature_steady_state(self):
         """ Solve for steady state temperature
 
@@ -1684,6 +1694,8 @@ class Model(Material):
 
         if self._visugrid:
             self._visugrid.advect(dt)
+
+        self._phaseChangeFn()
 
     def mesh_advector(self, axis):
         """ Initialize the mesh advector

@@ -4,6 +4,7 @@ from collections import OrderedDict
 import json
 import pkg_resources
 from .scaling import u
+from ._utils import PhaseChange
 from ._rheology import ConstantViscosity
 from ._density import ConstantDensity
 
@@ -59,6 +60,7 @@ class Material(object):
 
         self.elasticity = elasticity
         self.healingRate = healingRate
+        self._phase_changes = list()
 
     def _repr_html_(self):
         return _material_html_repr(self)
@@ -111,6 +113,17 @@ class Material(object):
         self.viscosityChangeX2 = viscosityChangeX2
         self.viscosityChange = viscosityChange
         self.melt = True
+
+    @property
+    def phase_changes(self):
+        return self._phase_changes
+
+    @phase_changes.setter
+    def phase_changes(self, value):
+        if not isinstance(value, PhaseChange):
+            raise ValueError("Must be a PhaseChange object")
+        else:
+            self._phase_changes.append(value)
 
 
 _default = OrderedDict()

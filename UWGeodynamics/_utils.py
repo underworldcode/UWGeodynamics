@@ -11,6 +11,26 @@ from .scaling import UnitRegistry as u
 from .Underworld_extended import Swarm
 from scipy import spatial
 
+
+class PhaseChange(object):
+
+    def __init__(self, condition, result):
+        self.condition = condition
+        self.result = result
+
+    def fn(self):
+        conditions = [(self.condition, 1), (True, 0)]
+        return fn.branching.conditional(conditions)
+
+
+class WaterFill(PhaseChange):
+
+    def __init__(self, sealevel, water_material=None):
+
+        self.condition = fn.input()[1] < nd(sealevel)
+        self.result = water_material.index
+
+
 class PressureSmoother(object):
 
     def __init__(self, mesh, pressureField):
