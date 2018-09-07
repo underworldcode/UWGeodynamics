@@ -671,7 +671,8 @@ class Model(Material):
                 DiffusivityMap[material.index] = nd(material.diffusivity)
 
         self.DiffusivityFn = fn.branching.map(fn_key=self.materialField,
-                                              mapping=DiffusivityMap)
+                                              mapping=DiffusivityMap,
+                                              fn_default=nd(self.diffusivity))
 
         HeatProdMap = {}
         for material in self.materials:
