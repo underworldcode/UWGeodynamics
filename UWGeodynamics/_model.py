@@ -1035,7 +1035,7 @@ class Model(Material):
                     minViscosity,
                     maxViscosity)
 
-                ViscosityMap[material.index] = ViscosityHandler.muEff
+                ViscosityMap[material.index] = Safe(ViscosityHandler.muEff)
 
         # Elasticity
         for material in self.materials:
@@ -1104,7 +1104,7 @@ class Model(Material):
                     dt_e = nd(ElasticityHandler.observation_time)
                     strainRate = fn.tensor.symmetric(
                         self.velocityField.fn_gradient)
-                    D_eff = (strainRate
+                    D_eff = Safe(strainRate
                              + 0.5
                              * self._previousStressField
                              / (mu * dt_e))
@@ -1116,7 +1116,7 @@ class Model(Material):
                     [(SRInv < 1e-20, 1e-20),
                      (True, SRInv)])
 
-                muEff = 0.5 * yieldStress / eij
+                muEff = Safe(0.5 * yieldStress / eij)
                 if not material.minViscosity:
                     minViscosity = self.minViscosity
                 else:
@@ -1173,8 +1173,8 @@ class Model(Material):
                     conditions = [(self.frictionalBCs._mask > 0.0, muEff),
                                   (True, PlasticityMap[material.index])]
 
-                    PlasticityMap[material.index] = fn.branching.conditional(
-                        conditions
+                    PlasticityMap[material.index] = Safe(
+                        fn.branching.conditional(conditions)
                     )
 
         # Combine rheologies
