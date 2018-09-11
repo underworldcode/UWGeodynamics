@@ -695,14 +695,26 @@ class Model(Material):
             strain = self._strainRate_2ndInvariant
             self.HeatProdFn += stress * strain
 
-        obj = uw.systems.AdvectionDiffusion(
-            self.temperature,
-            self._temperatureDot,
-            velocityField=self.velocityField,
-            fn_diffusivity=self.DiffusivityFn,
-            fn_sourceTerm=self.HeatProdFn,
-            conditions=self._temperatureBCs
-        )
+        if rcParams["advection.diffusion.method"] == "SLCN":
+
+            obj = uw.systems.SLCN_AdvectionDiffusion(
+                self.temperature,
+                velocityField=self.velocityField,
+                fn_diffusivity=self.DiffusivityFn,
+                fn_sourceTerm=self.HeatProdFn,
+                conditions=self._temperatureBCs
+            )
+
+        else:
+
+            obj = uw.systems.AdvectionDiffusion(
+                self.temperature,
+                self._temperatureDot,
+                velocityField=self.velocityField,
+                fn_diffusivity=self.DiffusivityFn,
+                fn_sourceTerm=self.HeatProdFn,
+                conditions=self._temperatureBCs
+            )
         return obj
 
     def stokes_solver(self):
@@ -847,7 +859,7 @@ class Model(Material):
         self.materials.reverse()
 
         if mat.shape:
-            if isinstance(mat.shape, shapes.Shape): 
+            if isinstance(mat.shape, shapes.Shape):
                 condition = [(mat.shape.fn, mat.index), (True, self.materialField)]
             elif isinstance(mat.shape, uw.function.Function):
                 condition = [(mat.shape, mat.index), (True, self.materialField)]
@@ -1546,8 +1558,10 @@ class Model(Material):
             self._dt = rcParams["CFL"] * self.swarm_advector.get_max_dt()
 
             if self.temperature:
-                self._dt = min(self._dt, self._advdiffSystem.get_max_dt())
-                self._dt *= rcParams["CFL"]
+                # Only get a condition if using SUPG
+                if rcParams["advection.diffusion.method"] == "SUPG":
+                    self._dt = min(self._dt, self._advdiffSystem.get_max_dt())
+                    self._dt *= rcParams["CFL"]
 
             if checkpoint_interval:
                 self._dt = min(self._dt, next_checkpoint - time)
