@@ -48,14 +48,14 @@ class TemperatureBCs(object):
     @staticmethod
     def _check_temp(val):
         if isinstance(val, u.Quantity):
-            check = (val.units == u.degK) or (val.units == u.degC)
-        return check
+            return (val.units == u.degK) or (val.units == u.degC)
+        return False
 
     def _check_flux(self, heat_flow):
         if isinstance(heat_flow, u.Quantity):
             val = heat_flow.to_base_units()
-            check = (val.units == u.kilogram * u.second**-3)
-        return check
+            return (val.units == u.kilogram * u.second**-3)
+        return False
 
     def get_conditions(self):
 
