@@ -476,7 +476,7 @@ class TemperatureAndDepthDependentViscosity(Rheology):
     @property
     def muEff(self):
         coord = fn.input()
-        return self._eta0 * fn.math.exp(gamma * (coord[-1] - reference))
+        return self._eta0 * fn.math.exp(self._gamma * (coord[-1] - self._reference))
 
 
 class ViscousCreepRegistry(object):
@@ -592,4 +592,3 @@ class Elasticity(Rheology):
                                      nd(self.observation_time))
         elasticStressFn *= self.previousStress
         return elasticStressFn
-
