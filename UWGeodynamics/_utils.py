@@ -11,6 +11,26 @@ from .scaling import UnitRegistry as u
 from .Underworld_extended import Swarm
 from scipy import spatial
 
+
+class PhaseChange(object):
+
+    def __init__(self, condition, result):
+        self.condition = condition
+        self.result = result
+
+    def fn(self):
+        conditions = [(self.condition, 1), (True, 0)]
+        return fn.branching.conditional(conditions)
+
+
+class WaterFill(PhaseChange):
+
+    def __init__(self, sealevel, water_material=None):
+
+        self.condition = fn.input()[1] < nd(sealevel)
+        self.result = water_material.index
+
+
 class PressureSmoother(object):
 
     def __init__(self, mesh, pressureField):
@@ -640,7 +660,6 @@ class MovingWall(object):
 
         return fn.branching.conditional(condition)
 
-
     def get_wall_indices(self):
 
         # Return new indexSet for the wall
@@ -648,18 +667,15 @@ class MovingWall(object):
         swarm = self.Model.swarm
 
         nodes = mesh.data_nodegId[self.wallFn.evaluate(mesh)]
-        IndexSet =  uw.mesh.FeMesh_IndexSet(mesh, topologicalIndex=0,
-                                            size=mesh.nodesGlobal, fromObject=nodes)
 
         # Update Material Field
         condition = [(self.wallFn, self.material.index), (True, self.Model.materialField)]
         func = fn.branching.conditional(condition)
-        self.Model.materialField.data[...] =  func.evaluate(swarm)
+        self.Model.materialField.data[...] = func.evaluate(swarm)
 
-        components = [self.Model.mesh.specialSets["Empty"] for dim in range(mesh.dim)]
-        components[self.wall_direction_axis[self.wall]] += IndexSet
+        axis = self.wall_direction_axis[self.wall]
 
-        return components
+        return nodes, axis
 
 
 class LogFile(object):

@@ -5,6 +5,7 @@ from .scaling import nonDimensionalize as nd
 
 
 class Shape(object):
+    """Shape"""
 
     def __init__(self):
         self._fn = None
@@ -33,6 +34,7 @@ class Shape(object):
         return newShape
 
 class Polygon(Shape):
+    """Polygon"""
 
     def __init__(self, vertices):
         self.vertices = vertices
@@ -90,6 +92,7 @@ class HalfSpace(Shape):
 
 
 class MultiShape(Shape):
+    """MultiShape"""
 
     def __init__(self, shapes):
         self.shapes = shapes
@@ -109,6 +112,7 @@ class MultiShape(Shape):
 
 
 class CombinedShape(Shape):
+    """CombinedShape"""
 
     def __init__(self, shapes):
         self.shapes = shapes
@@ -128,12 +132,14 @@ class CombinedShape(Shape):
 
 
 class Layer(Shape):
+    """Layer"""
     def __init__(self, top, bottom):
         self.top = top
         self.bottom = bottom
 
 
 class Layer2D(Shape):
+    """Layer2D"""
 
     def __init__(self, top, bottom):
         self.top = top
@@ -164,6 +170,7 @@ class Layer2D(Shape):
 
 
 class Layer3D(Shape):
+    """Layer3D"""
 
     def __init__(self, top, bottom):
         self.top = top
@@ -194,6 +201,7 @@ class Layer3D(Shape):
 
 
 class Box(Shape):
+    """Box"""
 
     def __init__(self, top, bottom, minX=0., maxX=0., minY=None, maxY=None):
         self.top = top
@@ -254,6 +262,7 @@ class Box(Shape):
 
 
 class Disk(Shape):
+    """Disk"""
 
     def __init__(self, center, radius):
         self.center = center
@@ -271,6 +280,7 @@ Sphere = Disk
 
 
 class Annulus(Shape):
+    """Annulus"""
 
     def __init__(self, center, r1, r2):
         self.center = center

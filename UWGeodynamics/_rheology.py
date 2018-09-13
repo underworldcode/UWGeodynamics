@@ -216,7 +216,7 @@ class VonMises(object):
         self.epsilon1 = epsilon1
         self.epsilon2 = epsilon2
         self.cohesionWeakeningFn = linearCohesionWeakening
-    
+
     def __getitem__(self, name):
         return self.__dict__[name]
 
@@ -287,6 +287,7 @@ class ViscousCreep(Rheology):
                  waterFugacityExponent=0.0,
                  meltFractionFactor=0.0,
                  f=1.0,
+                 BurgersVectorLength=0.5e-9 * u.metre,
                  mineral="unspecified"):
 
         super(ViscousCreep, self).__init__()
@@ -306,6 +307,7 @@ class ViscousCreep(Rheology):
         self.meltFractionFactor = meltFractionFactor
         self.f = f
         self.constantGas = 8.3144621 * u.joule / u.mole / u.degK
+        self.BurgersVectorLength = BurgersVectorLength
 
     def __mul__(self, other):
         self.f = other
@@ -383,6 +385,7 @@ class ViscousCreep(Rheology):
         F = nd(self.meltFraction)
         alpha = nd(self.meltFractionFactor)
         R = nd(self.constantGas)
+        b = nd(self.BurgersVectorLength)
 
         mu_eff = f * 0.5 * A**(-1.0 / n)
 
@@ -391,7 +394,7 @@ class ViscousCreep(Rheology):
 
         # Grain size dependency
         if p and d:
-            mu_eff *= d**(p/n)
+            mu_eff *= (d / b)**(p/n)
 
         # Water dependency
         if r and fH2O:
@@ -412,6 +415,36 @@ class ViscousCreep(Rheology):
         FirstIterCondition = [(self.firstIter,nd(self.defaultStrainRateInvariant)),
                               (True, self.strainRateInvariantField)]
         return fn.branching.conditional(FirstIterCondition)
+
+
+class CompositeViscosity(Rheology):
+
+    def __init__(self, viscosities):
+
+        if not isinstance(viscosities, (list, tuple)):
+            raise ValueError('viscosities must be a list of viscosities')
+
+        for viscosity in viscosities:
+            if not isinstance(viscosity, ViscousCreep):
+                raise ValueError('The viscosity entered is not of ViscousCreep type')
+
+        self.viscosities = viscosities
+
+        self.pressureField = None
+        self.strainRateInvariantField = None
+        self.temperatureField = None
+
+    @property
+    def muEff(self):
+        muEff = fn.misc.constant(0.0)
+        for viscosity in self.viscosities:
+            viscosity.pressureField = self.pressureField
+            viscosity.strainRateInvariantField = self.strainRateInvariantField
+            viscosity.temperature = self.temperatureField
+            viscosity._viscosity_limiter = self._viscosity_limiter
+            muEff += 1.0 / viscosity.muEff
+
+        return 1.0 / muEff
 
 
 class _TemperatureAndDepthDependentViscosityEncoder(JSONEncoder):

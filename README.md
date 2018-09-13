@@ -19,7 +19,7 @@ We hope that the user will naturally move to the low-level functionalities as he
 or her gets more confident, and by doing so will access the wide range of 
 possibilities offered by Underworld.
 
-![https://github.com/rbeucher/UWGeodynamics/wiki/img/cover.png](https://github.com/rbeucher/UWGeodynamics/wiki/img/cover.png)
+![Sandbox](./manual/SandboxCompression.gif)
 
 
 ## Getting started

@@ -26,7 +26,7 @@ from .scaling import Dimensionalize
 from .LecodeIsostasy import LecodeIsostasy
 from .lithopress import LithostaticPressure
 from ._rheology import Rheology, ConstantViscosity, ViscousCreep, DruckerPrager
-from ._rheology import VonMises
+from ._rheology import VonMises, CompositeViscosity
 from ._rheology import ViscousCreepRegistry, PlasticityRegistry
 from ._rheology import Elasticity
 from ._material import Material
@@ -36,6 +36,7 @@ from ._utils import Balanced_InflowOutflow, MoveImporter
 from ._utils import circles_grid, fn_Tukey_window, circle_points_tracers, sphere_points_tracers
 from ._utils import LogFile
 from ._utils import MovingWall
+from ._utils import PhaseChange, WaterFill
 from .version import full_version as __version__
 from .version import git_revision as __git_revision__
 import _net
