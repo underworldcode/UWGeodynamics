@@ -722,7 +722,7 @@ class Model(Material):
 
         gravity = tuple([nd(val) for val in self.gravity])
         self._buoyancyFn = self._densityFn * gravity
-        self._buoyancyFn = Safe(self._buoyancyFn)
+        self._buoyancyFn = self._buoyancyFn
 
         if any([material.viscosity for material in self.materials]):
 
@@ -1047,7 +1047,7 @@ class Model(Material):
                     minViscosity,
                     maxViscosity)
 
-                ViscosityMap[material.index] = Safe(ViscosityHandler.muEff)
+                ViscosityMap[material.index] = ViscosityHandler.muEff
 
         # Elasticity
         for material in self.materials:
@@ -1116,7 +1116,7 @@ class Model(Material):
                     dt_e = nd(ElasticityHandler.observation_time)
                     strainRate = fn.tensor.symmetric(
                         self.velocityField.fn_gradient)
-                    D_eff = Safe(strainRate
+                    D_eff = (strainRate
                              + 0.5
                              * self._previousStressField
                              / (mu * dt_e))
@@ -1128,7 +1128,7 @@ class Model(Material):
                     [(SRInv < 1e-20, 1e-20),
                      (True, SRInv)])
 
-                muEff = Safe(0.5 * yieldStress / eij)
+                muEff = 0.5 * yieldStress / eij
                 if not material.minViscosity:
                     minViscosity = self.minViscosity
                 else:
@@ -1185,7 +1185,7 @@ class Model(Material):
                     conditions = [(self.frictionalBCs._mask > 0.0, muEff),
                                   (True, PlasticityMap[material.index])]
 
-                    PlasticityMap[material.index] = Safe(
+                    PlasticityMap[material.index] = (
                         fn.branching.conditional(conditions)
                     )
 
@@ -1227,7 +1227,7 @@ class Model(Material):
         else:
             self._isYielding = fn.misc.constant(0.0)
 
-        return Safe(viscosityFn)
+        return viscosityFn
 
     @property
     def _stressFn(self):
@@ -1262,7 +1262,7 @@ class Model(Material):
                     # has no elasticity
                     elasticStressFn = [0.0] * 3 if self.mesh.dim == 2 else [0.0] * 6
                 stressMap[material.index] = elasticStressFn
-            return Safe(fn.branching.map(fn_key=self.materialField,
+            return (fn.branching.map(fn_key=self.materialField,
                                          mapping=stressMap))
         else:
 
@@ -1846,7 +1846,7 @@ class Model(Material):
                 if material.compressibility:
                     materialMap[material.index] = nd(material.compressibility)
 
-            return Safe(uw.function.branching.map(fn_key=self.materialField,
+            return (uw.function.branching.map(fn_key=self.materialField,
                                                   mapping=materialMap,
                                                   fn_default=0.0))
         return
