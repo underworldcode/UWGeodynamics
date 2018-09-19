@@ -41,6 +41,12 @@ class Badlands(SurfaceProcesses):
                  sedimentIndex, XML, resolution, checkpoint_interval,
                  surfElevation=0., verbose=True, Model=None, restartFolder=None,
                  restartStep=None, timeField=None, surfaceTracers=None):
+        try:
+            import pyBadlands
+        except ImportError :
+            raise ImportError("""pyBadlands import as failed. Please check your
+                              installation, PYTHONPATH and PATH environment
+                              variables""")
 
         self.airIndex = airIndex
         self.sedimentIndex = sedimentIndex
