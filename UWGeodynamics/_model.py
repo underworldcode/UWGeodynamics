@@ -391,6 +391,7 @@ class Model(Material):
         if uw.rank() == 0:
             print(80 * "=" + "\n")
             print("Restarting Model from Step {0} at Time = {1}\n".format(step, self.time))
+            print('(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
             print(80 * "=" + "\n")
 
         self.checkpointID = step
@@ -402,9 +403,15 @@ class Model(Material):
         else:
             self.mesh.load(os.path.join(restartDir, "mesh.h5"))
 
+        if uw.rank() == 0:
+            print("Mesh loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+
         self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
         self.swarm.load(os.path.join(restartDir, 'swarm-%s.h5' % step))
         self._initialize()
+
+        if uw.rank() == 0:
+            print("Swarm loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
 
         # Reload all the restart fields
         for field in rcParams["restart.fields"]:
@@ -415,6 +422,8 @@ class Model(Material):
             if uw.rank() == 0:
                 print("Reloading field {0} from {1}".format(field, path))
             obj.load(str(path))
+            if uw.rank() == 0:
+                print("{0} loaded".format(field) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
 
         # Temperature is a special case...
         path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
@@ -425,6 +434,8 @@ class Model(Material):
             if uw.rank() == 0:
                 print("Reloading field {0} from {1}".format("temperature", path))
             obj.load(str(path))
+            if uw.rank() == 0:
+                print("Temperature loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
 
         # Reload Passive Tracers
         for (key, tracer) in iteritems(self.passive_tracers):
@@ -446,6 +457,8 @@ class Model(Material):
             attr_name = tracer.name.lower() + "_tracers"
             setattr(self, attr_name, obj)
             self.passive_tracers[key] = obj
+            if uw.rank() == 0:
+                print("{0} loaded".format(tracer.name) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
 
         # Restart Badlands if we are running a coupled model
         if isinstance(self.surfaceProcesses, surfaceProcesses.Badlands):
@@ -480,6 +493,8 @@ class Model(Material):
                 checkpoint_interval,
                 restartFolder=restartFolder,
                 restartStep=restartStep)
+            if uw.rank() == 0:
+                print("Badlands restarted" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
 
         return
 
