@@ -241,6 +241,7 @@ class Model(Material):
         self._buoyancyFn = None
         self._freeSurface = False
         self.callback_post_solve = None
+        self._mesh_saved = False
         self._initialize()
 
     def _initialize(self):
@@ -1961,12 +1962,18 @@ class Model(Material):
         if self._advector or self._freeSurface:
             mesh_name = 'mesh-%s' % checkpointID
             mesh_prefix = os.path.join(self.outputDir, mesh_name)
+            mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
+                                time=time)
+        elif not self._mesh_saved:
+            mesh_name = 'mesh'
+            mesh_prefix = os.path.join(self.outputDir, mesh_name)
+            mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
+                                time=time)
+            self._mesh_saved = True
         else:
             mesh_name = 'mesh'
             mesh_prefix = os.path.join(self.outputDir, mesh_name)
-
-        mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
-                            time=time)
+            mH = uw.utils.SavedFileData(self.mesh, '%s.h5' % mesh_prefix)
 
         filename = "XDMF.fields." + str(checkpointID).zfill(5) + ".xmf"
         filename = os.path.join(self.outputDir, filename)
