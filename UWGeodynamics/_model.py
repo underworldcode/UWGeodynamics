@@ -462,9 +462,9 @@ class Model(Material):
                 print("{0} loaded".format(tracer.name) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
 
         if isinstance(self.surfaceProcesses,
-                      [surfaceProcesses.SedimentationThreshold,
+                      (surfaceProcesses.SedimentationThreshold,
                        surfaceProcesses.ErosionThreshold,
-                       surfaceProcesses.ErosionAndSedimentationThreshold]):
+                       surfaceProcesses.ErosionAndSedimentationThreshold)):
 
             obj = self.surfaceProcesses
             obj.Model = self
