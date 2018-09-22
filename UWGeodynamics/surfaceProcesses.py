@@ -1,13 +1,14 @@
 import abc
 try:
     from .linkage import SPM
-except:
+except ImportError:
     pass
 import underworld.function as fn
 from scaling import nonDimensionalize as nd
 
 
 ABC = abc.ABCMeta('ABC', (object,), {})
+
 
 class SurfaceProcesses(ABC):
 
@@ -42,7 +43,9 @@ class Badlands(SurfaceProcesses):
                  surfElevation=0., verbose=True, Model=None, restartFolder=None,
                  restartStep=None, timeField=None, surfaceTracers=None):
         try:
+
             import pyBadlands
+
         except ImportError :
             raise ImportError("""pyBadlands import as failed. Please check your
                               installation, PYTHONPATH and PATH environment
@@ -69,11 +72,12 @@ class Badlands(SurfaceProcesses):
         self.materialField = self._Model.materialField
 
         self._BadlandsModel = SPM(self.mesh, self.velocityField, self.swarm,
-                                 self.materialField, self.airIndex, self.sedimentIndex,
-                                 self.XML, nd(self.resolution),
-                                 nd(self.checkpoint_interval),
-                                 nd(self.surfElevation), self.verbose,
-                                 self.restartFolder, self.restartStep)
+                                  self.materialField, self.airIndex,
+                                  self.sedimentIndex,
+                                  self.XML, nd(self.resolution),
+                                  nd(self.checkpoint_interval),
+                                  nd(self.surfElevation), self.verbose,
+                                  self.restartFolder, self.restartStep)
         return
 
     def solve(self, dt):
@@ -83,14 +87,15 @@ class Badlands(SurfaceProcesses):
 
 class ErosionThreshold(SurfaceProcesses):
 
-    def __init__(self, air=None, threshold=None, surfaceTracers=None, Model=None):
+    def __init__(self, air=None, threshold=None, surfaceTracers=None,
+                 Model=None, **kwargs):
 
         super(ErosionThreshold, self).__init__(Model=Model)
 
         self.Model = Model
         self.threshold = threshold
         self.air = air
-        self.surfaceTracers=surfaceTracers
+        self.surfaceTracers = surfaceTracers
         self.Model = Model
 
     def _init_model(self):
@@ -101,10 +106,12 @@ class ErosionThreshold(SurfaceProcesses):
         for material in self.air:
             materialMap[material.index] = 1.0
 
-        isAirMaterial = fn.branching.map(fn_key=materialField, mapping=materialMap, fn_default=0.0)
+        isAirMaterial = fn.branching.map(fn_key=materialField,
+                                         mapping=materialMap,
+                                         fn_default=0.0)
 
         belowthreshold = [(((isAirMaterial < 0.5) & (fn.input()[1] > nd(self.threshold))), self.air[0].index),
-                         (True, materialField)]
+                          (True, materialField)]
 
         self._fn = fn.branching.conditional(belowthreshold)
 
@@ -117,7 +124,7 @@ class ErosionThreshold(SurfaceProcesses):
         if self.surfaceTracers:
             if self.surfaceTracers.swarm.particleCoordinates.data.size > 0:
                 coords = self.surfaceTracers.swarm.particleCoordinates
-                coords.data[coords.data[:,-1] > nd(self.threshold), -1] = nd(self.threshold)
+                coords.data[coords.data[:, -1] > nd(self.threshold), -1] = nd(self.threshold)
         return
 
 
@@ -125,7 +132,7 @@ class SedimentationThreshold(SurfaceProcesses):
 
     def __init__(self, air=None, sediment=None,
                  threshold=None, timeField=None, Model=None,
-                 surfaceTracers=None):
+                 surfaceTracers=None, **kwargs):
 
         super(SedimentationThreshold, self).__init__(Model=Model)
 
@@ -144,10 +151,12 @@ class SedimentationThreshold(SurfaceProcesses):
         for material in self.air:
             materialMap[material.index] = 1.0
 
-        isAirMaterial = fn.branching.map(fn_key=materialField, mapping=materialMap, fn_default=0.0)
+        isAirMaterial = fn.branching.map(fn_key=materialField,
+                                         mapping=materialMap,
+                                         fn_default=0.0)
 
         belowthreshold = [(((isAirMaterial > 0.5) & (fn.input()[1] < nd(self.threshold))), 0.),
-                         (True, 1.)]
+                          (True, 1.)]
 
         self._change_material = fn.branching.conditional(belowthreshold)
 
@@ -170,14 +179,14 @@ class SedimentationThreshold(SurfaceProcesses):
         if self.surfaceTracers:
             if self.surfaceTracers.swarm.particleCoordinates.data.size > 0:
                 coords = self.surfaceTracers.swarm.particleCoordinates
-                coords.data[coords.data[:,-1] < nd(self.threshold), -1] = nd(self.threshold)
+                coords.data[coords.data[:, -1] < nd(self.threshold), -1] = nd(self.threshold)
 
 
 class ErosionAndSedimentationThreshold(SedimentationThreshold, ErosionThreshold):
 
     def __init__(self, air=None, sediment=None,
                  threshold=None, timeField=None,
-                 surfaceTracers=None, Model=None):
+                 surfaceTracers=None, Model=None, **kwargs):
 
         super(ErosionAndSedimentationThreshold, self).__init__(Model=Model)
 

@@ -461,6 +461,15 @@ class Model(Material):
             if uw.rank() == 0:
                 print("{0} loaded".format(tracer.name) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
 
+        if isinstance(self.surfaceProcesses,
+                      [surfaceProcesses.SedimentationThreshold,
+                       surfaceProcesses.ErosionThreshold,
+                       surfaceProcesses.ErosionAndSedimentationThreshold]):
+
+            obj = self.surfaceProcesses
+            obj.Model = self
+            obj.timeField = self.timeField
+
         # Restart Badlands if we are running a coupled model
         if isinstance(self.surfaceProcesses, surfaceProcesses.Badlands):
             badlands_model = self.surfaceProcesses
