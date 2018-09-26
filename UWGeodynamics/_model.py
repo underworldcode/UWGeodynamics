@@ -374,12 +374,16 @@ class Model(Material):
             return
 
         if step is None:
+            # Look for the last saved timestep
             indices = [int(os.path.splitext(filename)[0].split("-")[-1])
                        for filename in os.listdir(restartDir) if "-" in
                        filename]
 
+            # if exists
             if indices:
-                step = max(indices) - 1
+                step = max(indices)
+            else:
+                return
 
         if not step or step < 1:
             return
@@ -1527,8 +1531,8 @@ class Model(Material):
             units of time.
         glucifer_outputs :
             Turn glucifer outputs on (True) or off (False).
-        restartStep :
-            Restart Model from step.
+        restart :
+            Restart Model. True or False, int (step number(
         restartDir :
             Restart Directory.
 
@@ -1541,9 +1545,8 @@ class Model(Material):
             os.mkdir(self.outputDir)
         uw.barrier()
 
-        if restartStep:
-            restartDir = restartDir if restartDir else self.outputDir
-            self.restart(step=restartStep, restartDir=restartDir)
+        restartDir = restartDir if restartDir else self.outputDir
+        self.restart(step=restartStep, restartDir=restartDir)
 
         stepDone = 0
         time = nd(self.time)
