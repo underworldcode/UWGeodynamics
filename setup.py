@@ -9,7 +9,7 @@ import subprocess
 from os import path
 
 MAJOR               = 0
-MINOR               = 7
+MINOR               = 8
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)

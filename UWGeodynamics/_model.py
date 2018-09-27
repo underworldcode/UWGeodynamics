@@ -27,7 +27,6 @@ from .Underworld_extended import FeMesh_Cartesian
 from .Underworld_extended import Swarm
 from .Underworld_extended import MeshVariable
 from .Underworld_extended import SwarmVariable
-from scipy import interpolate
 from six import iteritems
 from datetime import datetime
 from .version import full_version
@@ -225,7 +224,6 @@ class Model(Material):
         self.passive_tracers = {}
 
         # Visualisation
-        self.plot = Plots(self)
         self._visugrid = visugrid
 
         # Mesh advector
@@ -242,6 +240,7 @@ class Model(Material):
         self._buoyancyFn = None
         self._freeSurface = False
         self.callback_post_solve = None
+        self._mesh_saved = False
         self._initialize()
 
     def _initialize(self):
@@ -290,6 +289,7 @@ class Model(Material):
         self.add_swarm_field("_stressField", dataType="double",
                              count=1, projected="submesh")
 
+        self.plot = Plots(self)
         #self._add_surface_tracers()
 
     def __getitem__(self, name):
@@ -374,12 +374,16 @@ class Model(Material):
             return
 
         if step is None:
+            # Look for the last saved timestep
             indices = [int(os.path.splitext(filename)[0].split("-")[-1])
                        for filename in os.listdir(restartDir) if "-" in
                        filename]
 
+            # if exists
             if indices:
-                step = max(indices) - 1
+                step = max(indices)
+            else:
+                return
 
         if not step or step < 1:
             return
@@ -392,13 +396,27 @@ class Model(Material):
         if uw.rank() == 0:
             print(80 * "=" + "\n")
             print("Restarting Model from Step {0} at Time = {1}\n".format(step, self.time))
+            print('(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
             print(80 * "=" + "\n")
 
         self.checkpointID = step
-        self.mesh.load(os.path.join(restartDir, "mesh.h5"))
+
+        # Reload deformed mesh if advector is present
+        if self._advector:
+            self.mesh.load(os.path.join(restartDir, 'mesh-%s.h5' % step))
+        # Load mesh
+        else:
+            self.mesh.load(os.path.join(restartDir, "mesh.h5"))
+
+        if uw.rank() == 0:
+            print("Mesh loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+
         self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
         self.swarm.load(os.path.join(restartDir, 'swarm-%s.h5' % step))
         self._initialize()
+
+        if uw.rank() == 0:
+            print("Swarm loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
 
         # Reload all the restart fields
         for field in rcParams["restart.fields"]:
@@ -409,6 +427,8 @@ class Model(Material):
             if uw.rank() == 0:
                 print("Reloading field {0} from {1}".format(field, path))
             obj.load(str(path))
+            if uw.rank() == 0:
+                print("{0} loaded".format(field) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
 
         # Temperature is a special case...
         path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
@@ -419,6 +439,8 @@ class Model(Material):
             if uw.rank() == 0:
                 print("Reloading field {0} from {1}".format("temperature", path))
             obj.load(str(path))
+            if uw.rank() == 0:
+                print("Temperature loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
 
         # Reload Passive Tracers
         for (key, tracer) in iteritems(self.passive_tracers):
@@ -440,6 +462,17 @@ class Model(Material):
             attr_name = tracer.name.lower() + "_tracers"
             setattr(self, attr_name, obj)
             self.passive_tracers[key] = obj
+            if uw.rank() == 0:
+                print("{0} loaded".format(tracer.name) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+
+        if isinstance(self.surfaceProcesses,
+                      (surfaceProcesses.SedimentationThreshold,
+                       surfaceProcesses.ErosionThreshold,
+                       surfaceProcesses.ErosionAndSedimentationThreshold)):
+
+            obj = self.surfaceProcesses
+            obj.Model = self
+            obj.timeField = self.timeField
 
         # Restart Badlands if we are running a coupled model
         if isinstance(self.surfaceProcesses, surfaceProcesses.Badlands):
@@ -474,6 +507,8 @@ class Model(Material):
                 checkpoint_interval,
                 restartFolder=restartFolder,
                 restartStep=restartStep)
+            if uw.rank() == 0:
+                print("Badlands restarted" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
 
         return
 
@@ -671,7 +706,8 @@ class Model(Material):
                 DiffusivityMap[material.index] = nd(material.diffusivity)
 
         self.DiffusivityFn = fn.branching.map(fn_key=self.materialField,
-                                              mapping=DiffusivityMap)
+                                              mapping=DiffusivityMap,
+                                              fn_default=nd(self.diffusivity))
 
         HeatProdMap = {}
         for material in self.materials:
@@ -694,14 +730,26 @@ class Model(Material):
             strain = self._strainRate_2ndInvariant
             self.HeatProdFn += stress * strain
 
-        obj = uw.systems.AdvectionDiffusion(
-            self.temperature,
-            self._temperatureDot,
-            velocityField=self.velocityField,
-            fn_diffusivity=self.DiffusivityFn,
-            fn_sourceTerm=self.HeatProdFn,
-            conditions=self._temperatureBCs
-        )
+        if rcParams["advection.diffusion.method"] == "SLCN":
+
+            obj = uw.systems.SLCN_AdvectionDiffusion(
+                self.temperature,
+                velocityField=self.velocityField,
+                fn_diffusivity=self.DiffusivityFn,
+                fn_sourceTerm=self.HeatProdFn,
+                conditions=self._temperatureBCs
+            )
+
+        else:
+
+            obj = uw.systems.AdvectionDiffusion(
+                self.temperature,
+                self._temperatureDot,
+                velocityField=self.velocityField,
+                fn_diffusivity=self.DiffusivityFn,
+                fn_sourceTerm=self.HeatProdFn,
+                conditions=self._temperatureBCs
+            )
         return obj
 
     def stokes_solver(self):
@@ -709,7 +757,7 @@ class Model(Material):
 
         gravity = tuple([nd(val) for val in self.gravity])
         self._buoyancyFn = self._densityFn * gravity
-        self._buoyancyFn = Safe(self._buoyancyFn)
+        self._buoyancyFn = self._buoyancyFn
 
         if any([material.viscosity for material in self.materials]):
 
@@ -846,7 +894,7 @@ class Model(Material):
         self.materials.reverse()
 
         if mat.shape:
-            if isinstance(mat.shape, shapes.Shape): 
+            if isinstance(mat.shape, shapes.Shape):
                 condition = [(mat.shape.fn, mat.index), (True, self.materialField)]
             elif isinstance(mat.shape, uw.function.Function):
                 condition = [(mat.shape, mat.index), (True, self.materialField)]
@@ -1172,8 +1220,8 @@ class Model(Material):
                     conditions = [(self.frictionalBCs._mask > 0.0, muEff),
                                   (True, PlasticityMap[material.index])]
 
-                    PlasticityMap[material.index] = fn.branching.conditional(
-                        conditions
+                    PlasticityMap[material.index] = (
+                        fn.branching.conditional(conditions)
                     )
 
         # Combine rheologies
@@ -1214,7 +1262,7 @@ class Model(Material):
         else:
             self._isYielding = fn.misc.constant(0.0)
 
-        return Safe(viscosityFn)
+        return viscosityFn
 
     @property
     def _stressFn(self):
@@ -1249,7 +1297,7 @@ class Model(Material):
                     # has no elasticity
                     elasticStressFn = [0.0] * 3 if self.mesh.dim == 2 else [0.0] * 6
                 stressMap[material.index] = elasticStressFn
-            return Safe(fn.branching.map(fn_key=self.materialField,
+            return (fn.branching.map(fn_key=self.materialField,
                                          mapping=stressMap))
         else:
 
@@ -1483,8 +1531,8 @@ class Model(Material):
             units of time.
         glucifer_outputs :
             Turn glucifer outputs on (True) or off (False).
-        restartStep :
-            Restart Model from step.
+        restart :
+            Restart Model. True or False, int (step number(
         restartDir :
             Restart Directory.
 
@@ -1497,9 +1545,8 @@ class Model(Material):
             os.mkdir(self.outputDir)
         uw.barrier()
 
-        if restartStep:
-            restartDir = restartDir if restartDir else self.outputDir
-            self.restart(step=restartStep, restartDir=restartDir)
+        restartDir = restartDir if restartDir else self.outputDir
+        self.restart(step=restartStep, restartDir=restartDir)
 
         stepDone = 0
         time = nd(self.time)
@@ -1545,8 +1592,10 @@ class Model(Material):
             self._dt = rcParams["CFL"] * self.swarm_advector.get_max_dt()
 
             if self.temperature:
-                self._dt = min(self._dt, self._advdiffSystem.get_max_dt())
-                self._dt *= rcParams["CFL"]
+                # Only get a condition if using SUPG
+                if rcParams["advection.diffusion.method"] == "SUPG":
+                    self._dt = min(self._dt, self._advdiffSystem.get_max_dt())
+                    self._dt *= rcParams["CFL"]
 
             if checkpoint_interval:
                 self._dt = min(self._dt, next_checkpoint - time)
@@ -1831,7 +1880,7 @@ class Model(Material):
                 if material.compressibility:
                     materialMap[material.index] = nd(material.compressibility)
 
-            return Safe(uw.function.branching.map(fn_key=self.materialField,
+            return (uw.function.branching.map(fn_key=self.materialField,
                                                   mapping=materialMap,
                                                   fn_default=0.0))
         return
@@ -1875,57 +1924,6 @@ class Model(Material):
             for (_, tracers) in iteritems(self.passive_tracers):
                 tracers.save(self.outputDir, checkpointID, self.time)
 
-    def profile(self,
-                start_point,
-                end_point,
-                field,
-                field_units=u.dimensionless,
-                distance_units=u.dimensionless,
-                npoints=1000):
-
-        if (field not in rcParams["mesh.variables"] and
-           field not in rcParams["swarm.variables"]):
-            raise ValueError("""{0} is not a valid field, \n
-                                Valid fields are {1} or {2}""".format(
-                             field, rcParams["mesh.variables"],
-                             rcParams["swarm.variables"]))
-
-        start_point = np.array([nd(val) for val in start_point])
-        end_point = np.array([nd(val) for val in end_point])
-
-        points = [start_point, end_point]
-        x_coords, y_coords = zip(*points)
-
-        x = np.linspace(x_coords[0], x_coords[1], npoints)
-
-        if x_coords[0] == x_coords[1]:
-            y = np.linspace(y_coords[0], y_coords[1], npoints)
-        else:
-            f = interpolate.interp1d(x_coords, y_coords)
-            y = f(x)
-
-        dx = np.diff(x)
-        dy = np.diff(y)
-        distances = np.zeros(x.shape)
-        distances[1:] = np.sqrt(dx**2 + dy**2)
-        distances = np.cumsum(distances)
-
-        obj = getattr(self, field)
-
-        if isinstance(obj, SwarmVariable):
-            obj = getattr(self, "proj" + field[0].upper() + field[1:])
-
-        pts = np.array(zip(x, y))
-
-        values = obj.evaluate(pts)
-
-        distance_fact = Dimensionalize(1.0, distance_units)
-        field_fact = Dimensionalize(1.0, field_units)
-
-        distances *= distance_fact.magnitude
-        values *= field_fact.magnitude
-
-        return distances, values
 
     def output_glucifer_figures(self, step):
         """ Output glucifer Figures to the gldb store """
@@ -1976,12 +1974,18 @@ class Model(Material):
         if self._advector or self._freeSurface:
             mesh_name = 'mesh-%s' % checkpointID
             mesh_prefix = os.path.join(self.outputDir, mesh_name)
+            mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
+                                time=time)
+        elif not self._mesh_saved:
+            mesh_name = 'mesh'
+            mesh_prefix = os.path.join(self.outputDir, mesh_name)
+            mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
+                                time=time)
+            self._mesh_saved = True
         else:
             mesh_name = 'mesh'
             mesh_prefix = os.path.join(self.outputDir, mesh_name)
-
-        mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
-                            time=time)
+            mH = uw.utils.SavedFileData(self.mesh, '%s.h5' % mesh_prefix)
 
         filename = "XDMF.fields." + str(checkpointID).zfill(5) + ".xmf"
         filename = os.path.join(self.outputDir, filename)
