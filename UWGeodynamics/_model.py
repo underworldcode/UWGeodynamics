@@ -224,7 +224,6 @@ class Model(Material):
         self.passive_tracers = {}
 
         # Visualisation
-        self.plot = Plots(self)
         self._visugrid = visugrid
 
         # Mesh advector
@@ -290,6 +289,7 @@ class Model(Material):
         self.add_swarm_field("_stressField", dataType="double",
                              count=1, projected="submesh")
 
+        self.plot = Plots(self)
         #self._add_surface_tracers()
 
     def __getitem__(self, name):
