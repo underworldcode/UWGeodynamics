@@ -373,7 +373,7 @@ class Model(Material):
         if not os.path.exists(restartDir):
             return
 
-        if step is True and not isinstance(step, int):
+        if step is True:
             # Look for the last saved timestep
             indices = [int(os.path.splitext(filename)[0].split("-")[-1])
                        for filename in os.listdir(restartDir) if "-" in
