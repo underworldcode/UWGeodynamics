@@ -290,7 +290,6 @@ class Model(Material):
                              count=1, projected="submesh")
 
         self.plot = Plots(self)
-        #self._add_surface_tracers()
 
     def __getitem__(self, name):
         """__getitem__
@@ -728,7 +727,7 @@ class Model(Material):
             strain = self._strainRate_2ndInvariant
             self.HeatProdFn += stress * strain
 
-        if rcParams["advection.diffusion.method"] == "SLCN":
+        if rcParams["advection.diffusion.method"] is "SLCN":
 
             obj = uw.systems.SLCN_AdvectionDiffusion(
                 self.temperature,
@@ -738,7 +737,7 @@ class Model(Material):
                 conditions=self._temperatureBCs
             )
 
-        else:
+        if rcParams["advection.diffusion.method"] is "SUPG":
 
             obj = uw.systems.AdvectionDiffusion(
                 self.temperature,
@@ -1427,13 +1426,6 @@ class Model(Material):
         offset = p0 / area
         self.pressureField.data[:] -= offset
 
-
-    def _apply_alpha(self):
-
-        self.velocityField.data[...] *= (1.0 - rcParams["alpha"])
-        self.velocityField.data[...] += rcParams["alpha"] * self.prevVelocityField.data[...]
-        self.velocityField.syncronise()
-
     def _get_material_indices(self, material):
         """ Get mesh indices of a Material
 
@@ -1648,14 +1640,18 @@ class Model(Material):
 
     @staticmethod
     def preSolveHook():
+        """ Entry point for functions to be run before attempting a solve """
         pass
 
     @staticmethod
     def postSolveHook():
+        """ Entry point for functions to be run after the solve """
         pass
 
     @property
     def callback_post_solve(self):
+        """ Function called right after a non-linear iteration or a linear
+        solve"""
         return self._callback_post_solve
 
     @callback_post_solve.setter
@@ -1667,8 +1663,6 @@ class Model(Material):
                 self._calibrate_pressureField()
             if rcParams["pressure.smoothing"]:
                 self.pressSmoother.smooth()
-            # self._adjust_tolerance()
-            # self._apply_alpha()
             for material in self.materials:
                 if material.viscosity:
                     material.viscosity.firstIter.value = False
@@ -1804,25 +1798,6 @@ class Model(Material):
 
         return tracers
 
-    def _add_surface_tracers(self):
-        """ Add tracers at the surface """
-
-        if self.mesh.dim < 3:
-            xcoords = np.linspace(nd(self.minCoord[0]), nd(self.maxCoord[0]), 1000)
-            ycoords = 0.
-            self.add_passive_tracers(name="Surface", vertices=[xcoords, ycoords])
-        else:
-            xcoords = np.linspace(nd(self.minCoord[0]), nd(self.maxCoord[0]), 100)
-            ycoords = np.linspace(nd(self.minCoord[1]), nd(self.maxCoord[1]), 100)
-            xcoords, ycoords = np.meshgrid(xcoords, ycoords)
-            xcoords = xcoords.ravel()
-            ycoords = ycoords.ravel()
-            zcoords = 0.
-            self.add_passive_tracers(name="Surface",
-                                     vertices=[xcoords, ycoords, zcoords])
-
-        return
-
     def _get_melt_fraction(self):
         """ Melt Fraction function
 
@@ -1849,7 +1824,7 @@ class Model(Material):
                                 mapping=meltMap, fn_default=0.0)
 
     def update_melt_fraction(self):
-        # Calculate New meltField
+        """ Calculate New meltField """
         meltFraction = self._get_melt_fraction()
         self.meltField.data[:] = meltFraction.evaluate(self.swarm)
 
@@ -2086,17 +2061,6 @@ class Model(Material):
                               fill=False)
 
         self._fill_model()
-
-    def _adjust_tolerance(self):
-        niteration = self._stokes_SLE._cself.nonLinearIteration_I
-        nsteps = rcParams["nonlinear.tolerance.adjust.nsteps"]
-        curResidual = self._stokes_SLE._cself.curResidual
-
-        if curResidual > self._curTolerance:
-            if (niteration % nsteps == 0 and self.step > 0):
-                fact = rcParams["nonlinear.tolerance.adjust.factor"]
-                self._curTolerance /= fact
-                self._stokes_SLE._cself.nonLinearTolerance = self._curTolerance
 
     def velocity_rms(self):
         vdotv_fn = uw.function.math.dot(self.velocityField, self.velocityField)
