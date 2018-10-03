@@ -1,4 +1,3 @@
-
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 # To use a consistent encoding
@@ -105,8 +104,13 @@ if not release:
 
     try:
         import underworld as uw
+        uw_version = uw.__version__
+    except ImportError:
+        uw_version = "NOT INSTALLED"
+
+    try:
         a = open(filename, 'w')
-        a.write(cnt % {'UW':uw.__version__,
+        a.write(cnt % {'UW':uw_version,
                        'version': VERSION,
                        'full_version': FULLVERSION,
                        'git_revision': GIT_REVISION,
