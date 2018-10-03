@@ -1500,7 +1500,7 @@ class Model(Material):
 
     def run_for(self, duration=None, checkpoint_interval=None, nstep=None,
                 timeCheckpoints=None, swarm_checkpoint=None, dt=None,
-                glucifer_outputs=False, restartStep=-1, restartDir=None):
+                restartStep=-1, restartDir=None):
         """ Run the Model
 
         Parameters
@@ -1519,8 +1519,6 @@ class Model(Material):
         dt :
             Specify the time interval (dt) to be used in
             units of time.
-        glucifer_outputs :
-            Turn glucifer outputs on (True) or off (False).
         restartStep :
             Restart Model. int (step number)
         restartDir :
@@ -1567,8 +1565,6 @@ class Model(Material):
         if checkpoint_interval or timeCheckpoints:
             # Check point initial set up
             self.checkpoint()
-            if glucifer_outputs:
-                self.output_glucifer_figures(self.checkpointID)
 
         # Save model to json
         # Comment as it does not work in parallel
@@ -1623,8 +1619,6 @@ class Model(Material):
             if time == next_checkpoint:
                 self.checkpointID += 1
                 self.checkpoint()
-                if glucifer_outputs:
-                    self.output_glucifer_figures(self.checkpointID)
                 next_checkpoint += nd(checkpoint_interval)
 
             if checkpoint_interval or self.step % 1 == 0 or nstep:
@@ -1900,22 +1894,6 @@ class Model(Material):
         if self.passive_tracers:
             for (_, tracers) in iteritems(self.passive_tracers):
                 tracers.save(self.outputDir, checkpointID, self.time)
-
-
-    def output_glucifer_figures(self, step):
-        """ Output glucifer Figures to the gldb store """
-
-        import glucifer
-        GluciferStore = glucifer.Store(os.path.join(self.outputDir,
-                                       "glucifer"))
-        GluciferStore.step = step
-
-        for field in rcParams["glucifer.outputs"]:
-            import ast
-            if getattr(self, field):
-                func = ast.literal.eval("self.plot." + field)
-                fig = func(store=GluciferStore, show=False)
-                fig.save()
 
     def add_visugrid(self, elementRes, minCoord=None, maxCoord=None):
         """ Add a tracking grid to the Model
