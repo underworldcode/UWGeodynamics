@@ -344,7 +344,7 @@ class Model(Material):
     def outputDir(self, value):
         self._outputDir = value
 
-    def restart(self, step=None, restartDir=None):
+    def restart(self, step, restartDir):
         """restart
 
         Parameters
@@ -352,6 +352,9 @@ class Model(Material):
 
         step :
                 Step from which you want to restart the model.
+                Must be an int (step number either absolute or relative)
+                if step == -1, run the last available step
+                if step == -2, run the second last etc.
         restartDir :
                 Directory that contains the outputs of the model
                 you want to restart
@@ -361,32 +364,27 @@ class Model(Material):
 
         This function returns None
         """
-        if step and not isinstance(step, int):
-            raise ValueError("step must be an int")
-
-        if restartDir and not isinstance(restartDir, str):
-            raise ValueError("restartDir must be a path to a folder")
-
-        if not restartDir:
-            restartDir = self.outputDir
+        if not isinstance(step, int):
+            raise ValueError("step must be an int or a bool")
 
         if not os.path.exists(restartDir):
+            raise ValueError("restartDir must be a path to an existing folder")
+
+        indices = [int(os.path.splitext(filename)[0].split("-")[-1])
+                   for filename in os.listdir(restartDir) if "-" in
+                   filename]
+        indices.sort()
+
+        if not indices:
             return
 
-        if step is None:
-            # Look for the last saved timestep
-            indices = [int(os.path.splitext(filename)[0].split("-")[-1])
-                       for filename in os.listdir(restartDir) if "-" in
-                       filename]
+        if step < 0:
+            step = indices[step]
 
-            # if exists
-            if indices:
-                step = max(indices)
-            else:
-                return
+        if step not in indices:
+            raise ValueError("Cannot find step in specified folder")
 
-        if not step or step < 1:
-            return
+        # Ready for restart
 
         # Get time from swarm-%.h5 file
         import h5py
@@ -1510,7 +1508,7 @@ class Model(Material):
 
     def run_for(self, duration=None, checkpoint_interval=None, nstep=None,
                 timeCheckpoints=None, swarm_checkpoint=None, dt=None,
-                glucifer_outputs=False, restartStep=None, restartDir=None):
+                glucifer_outputs=False, restartStep=-1, restartDir=None):
         """ Run the Model
 
         Parameters
@@ -1531,8 +1529,8 @@ class Model(Material):
             units of time.
         glucifer_outputs :
             Turn glucifer outputs on (True) or off (False).
-        restart :
-            Restart Model. True or False, int (step number(
+        restartStep :
+            Restart Model. int (step number)
         restartDir :
             Restart Directory.
 
@@ -1545,8 +1543,12 @@ class Model(Material):
             os.mkdir(self.outputDir)
         uw.barrier()
 
-        restartDir = restartDir if restartDir else self.outputDir
-        self.restart(step=restartStep, restartDir=restartDir)
+        if restartStep:
+            try:
+                restartDir = restartDir if restartDir else self.outputDir
+                self.restart(step=restartStep, restartDir=restartDir)
+            except ValueError:
+                pass
 
         stepDone = 0
         time = nd(self.time)
