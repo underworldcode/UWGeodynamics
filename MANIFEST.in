@@ -1,6 +1,7 @@
 # Include the license file
 include LICENSE.txt
 include uwgeodynamicsrc.template  
+recursive-include utils *.sh
 
 prune docs
 prune manual
