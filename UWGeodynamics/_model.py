@@ -375,6 +375,9 @@ class Model(Material):
                    filename]
         indices.sort()
 
+        if not indices:
+            return
+
         if step < 0:
             step = indices[step]
 
