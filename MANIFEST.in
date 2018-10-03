@@ -6,3 +6,5 @@ prune docs
 prune manual
 prune examples
 prune tutorials
+prune docker
+prune docker-dev
