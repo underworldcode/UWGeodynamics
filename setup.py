@@ -1,6 +1,5 @@
-# Always prefer setuptools over distutils
-import underworld as uw
 
+# Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
@@ -104,8 +103,9 @@ if not release:
 """
     FULLVERSION, GIT_REVISION = get_version_info()
 
-    a = open(filename, 'w')
     try:
+        import underworld as uw
+        a = open(filename, 'w')
         a.write(cnt % {'UW':uw.__version__,
                        'version': VERSION,
                        'full_version': FULLVERSION,
