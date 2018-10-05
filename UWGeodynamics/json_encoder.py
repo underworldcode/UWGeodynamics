@@ -35,7 +35,7 @@ class ObjectEncoder(json.JSONEncoder):
 
             # Encode Scaling
             scaling = {}
-            for key, val in GEO.scaling_coefficients.iteritems():
+            for key, val in GEO.scaling_coefficients.items():
                 scaling[key] = val
             model["scaling"] = scaling
 

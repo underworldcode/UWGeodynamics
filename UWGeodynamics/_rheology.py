@@ -119,7 +119,7 @@ class DruckerPrager(object):
         header = "<table>"
         footer = "</table>"
         html = ""
-        for key, val in attributes.iteritems():
+        for key, val in attributes.items():
             html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
 
         return header + html + footer
@@ -341,7 +341,7 @@ class ViscousCreep(Rheology):
         <tr>
           <th colspan="2">Viscous Creep Rheology: {0}</th>
         </tr>""".format(self.name)
-        for key, val in attributes.iteritems():
+        for key, val in attributes.items():
             if val is not None:
                 html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
 

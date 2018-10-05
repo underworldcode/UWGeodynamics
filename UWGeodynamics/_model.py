@@ -27,7 +27,6 @@ from .Underworld_extended import FeMesh_Cartesian
 from .Underworld_extended import Swarm
 from .Underworld_extended import MeshVariable
 from .Underworld_extended import SwarmVariable
-from six import iteritems
 from datetime import datetime
 from .version import full_version
 from ._freesurface import FreeSurfaceProcessor
@@ -440,7 +439,7 @@ class Model(Material):
                 print("Temperature loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
 
         # Reload Passive Tracers
-        for (key, tracer) in iteritems(self.passive_tracers):
+        for key, tracer in self.passive_tracers.items():
 
             if uw.rank() == 0:
                 print("Reloading {0} passive tracers".format(tracer.name))
@@ -1892,7 +1891,7 @@ class Model(Material):
 
         # Checkpoint passive tracers and associated tracked fields
         if self.passive_tracers:
-            for (_, tracers) in iteritems(self.passive_tracers):
+            for (_, tracers) in self.passive_tracers.items():
                 tracers.save(self.outputDir, checkpointID, self.time)
 
     def add_visugrid(self, elementRes, minCoord=None, maxCoord=None):
@@ -2032,7 +2031,7 @@ class Model(Material):
             shape = shapes.Polygon(vertices)
             shape_dict[name].append(shape)
 
-        for name, shape in shape_dict.iteritems():
+        for name, shape in shape_dict.items():
             mshape = shapes.MultiShape(shape)
             self.add_material(name=name,
                               shape=mshape,
@@ -2089,7 +2088,7 @@ def _model_html_repr(Model):
     header = "<table>"
     footer = "</table>"
     html = ""
-    for key, val in _html_global.iteritems():
+    for key, val in _html_global.items():
         value = Model.__dict__.get(val)
         html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, value)
 

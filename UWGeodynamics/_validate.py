@@ -75,9 +75,10 @@ def validate_int(s):
 def validate_int_or_none(s):
     if s:
         return validate_int(s)
-    if s is not None:
+    if s is None:
+        return
+    else:
         raise ValueError("Must be int or None")
-    return
 
 
 def validate_path(s):

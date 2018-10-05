@@ -1,6 +1,5 @@
 from __future__ import print_function
 import warnings
-warnings.filterwarnings("ignore")
 
 try:
     import underworld
@@ -332,14 +331,14 @@ class RcParams(dict):
     """
 
     validate = dict((key, converter) for key, (default, converter) in
-                    six.iteritems(defaultParams)
+                    defaultParams.items()
                     if key not in _all_deprecated)
     msg_depr = "%s is deprecated and replaced with %s; please use the latter."
     msg_depr_ignore = "%s is deprecated and ignored. Use %s"
 
     # validate values on the way in
     def __init__(self, *args, **kwargs):
-        for k, v in six.iteritems(dict(*args, **kwargs)):
+        for k, v in dict(*args, **kwargs).items():
             self[k] = v
 
     def __setitem__(self, key, val):
@@ -387,7 +386,7 @@ See rcParams.keys() for a list of valid parameters.' % (key,))
     # all of the validation over-ride update to force
     # through __setitem__
     def update(self, *args, **kwargs):
-        for k, v in six.iteritems(dict(*args, **kwargs)):
+        for k, v in dict(*args, **kwargs).items():
             self[k] = v
 
     def __repr__(self):
@@ -444,7 +443,7 @@ def rc_params(fail_on_error=False):
         # this should never happen, default in mpl-data should always be found
         message = 'could not find rc file; returning defaults'
         ret = RcParams([(key, default) for key, (default, _) in
-                        six.iteritems(defaultParams)
+                        defaultParams.items()
                         if key not in _all_deprecated])
         warnings.warn(message)
         return ret
@@ -490,7 +489,7 @@ def _rc_params_in_file(fname, fail_on_error=False):
 
     config = RcParams()
 
-    for key, (val, line, cnt) in six.iteritems(rc_temp):
+    for key, (val, line, cnt) in rc_temp.items():
         if key in defaultParams:
             if fail_on_error:
                 config[key] = val  # try to convert to proper type or raise
@@ -530,7 +529,7 @@ def rc_params_from_file(fname, fail_on_error=False, use_default_template=True):
     if not use_default_template:
         return config_from_file
 
-    iter_params = six.iteritems(defaultParams)
+    iter_params = defaultParams.items()
     config = RcParams([(key, default) for key, (default, _) in iter_params
                                       if key not in _all_deprecated])
     config.update(config_from_file)

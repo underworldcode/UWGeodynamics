@@ -158,7 +158,7 @@ def _material_html_repr(Material):
         value = str(Material.density.name)
         html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, value)
 
-    for key, val in _default.iteritems():
+    for key, val in _default.items():
         value = Material.__dict__.get(val)
         if value is None:
             value = Material.__dict__.get("_"+val)
@@ -198,7 +198,7 @@ class MaterialRegistry(object):
             _materials = json.load(infile)
 
         self._dir = {}
-        for material, parameters in _materials.iteritems():
+        for material, parameters in _materials.items():
             name = material.replace(" ", "_").replace(",", "").replace(".", "")
             name = name.replace(")", "").replace("(", "")
 
