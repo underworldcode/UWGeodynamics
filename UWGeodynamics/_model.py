@@ -526,7 +526,7 @@ class Model(Material):
 
     @property
     def projTimeField(self):
-        """ Plastic Strain Field projected on the mesh """
+        """ Time Field projected on the mesh """
         self._timeFieldProjector.solve()
         return self._projTimeField
 
