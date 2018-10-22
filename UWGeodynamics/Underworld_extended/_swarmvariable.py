@@ -117,7 +117,8 @@ class SwarmVariable(uw.swarm.SwarmVariable):
         h5f.attrs["git commit"] = __git_revision__
 
         if swarm.particleLocalCount > 0: # only add if there are local particles
-            dset[offset:offset+swarm.particleLocalCount] = self.data[:] * fact
+            with dset.collective:
+                dset[offset:offset+swarm.particleLocalCount] = self.data[:] * fact
 
         h5f.close()
 

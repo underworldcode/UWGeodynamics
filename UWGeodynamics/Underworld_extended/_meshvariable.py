@@ -236,10 +236,12 @@ class MeshVariable(uw.mesh.MeshVariable):
 
         # write to the dset using the global node ids
         local = mesh.nodesLocal
-        if units == "degC":
-            dset[mesh.data_nodegId[0:local],:] = self.data[0:local] * fact - 273.15
-        else:
-            dset[mesh.data_nodegId[0:local],:] = self.data[0:local] * fact
+
+        with dset.collective:
+            if units == "degC":
+                dset[mesh.data_nodegId[0:local],:] = self.data[0:local] * fact - 273.15
+            else:
+                dset[mesh.data_nodegId[0:local],:] = self.data[0:local] * fact
 
         # save a hdf5 attribute to the elementType used for this field - maybe useful
         h5f.attrs["elementType"] = np.string_(mesh.elementType)

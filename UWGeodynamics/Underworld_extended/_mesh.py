@@ -147,7 +147,8 @@ class FeMesh_Cartesian(uw.mesh.FeMesh_Cartesian):
 
         local = self.elementsLocal
         # write to the dset using the local set of global node ids
-        dset[self.data_elgId[0:local],:] = self.data_elementNodes[0:local]
+        with dset.collective:
+            dset[self.data_elgId[0:local], :] = self.data_elementNodes[0:local]
 
         h5f.close()
 
