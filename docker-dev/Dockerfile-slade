@@ -1,5 +1,4 @@
-FROM underworldcode/underworld2:dev
-
+FROM underworldcode/underworld2_untested:slade
 MAINTAINER romain.beucher@unimelb.edu
 
 USER root
