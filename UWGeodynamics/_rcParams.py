@@ -1,6 +1,6 @@
 # Configuration file
-from scaling import u
-from _validate import *
+from .scaling import u
+from ._validate import *
 
 
 rcParams = {

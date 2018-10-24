@@ -1,6 +1,6 @@
-from scaling import nonDimensionalize as nd
-from scaling import UnitRegistry as u
-from scaling import Dimensionalize
+from .scaling import nonDimensionalize as nd
+from .scaling import UnitRegistry as u
+from .scaling import Dimensionalize
 import json
 from copy import copy
 

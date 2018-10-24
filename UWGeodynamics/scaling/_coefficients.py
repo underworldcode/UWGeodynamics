@@ -1,5 +1,5 @@
 from pint import UnitRegistry
-from _utils import TransformedDict
+from ._utils import TransformedDict
 
 u = UnitRegistry = UnitRegistry()
 

@@ -14,9 +14,9 @@ import locale
 import uuid as _uuid
 from itertools import chain
 import six
-import shapes
-import surfaceProcesses
-import utilities
+from . import shapes
+from . import surfaceProcesses
+from . import utilities
 from ._rcParams import rcParams as defaultParams
 from .scaling import COEFFICIENTS as scaling_coefficients
 from .scaling import UnitRegistry
@@ -38,7 +38,7 @@ from ._utils import MovingWall
 from ._utils import PhaseChange, WaterFill
 from .version import full_version as __version__
 from .version import git_revision as __git_revision__
-import _net
+from . import _net
 
 __author__ = "Romain Beucher"
 

@@ -4,7 +4,7 @@ import numpy as np
 from mpi4py import MPI
 from UWGeodynamics.scaling import nonDimensionalize
 from UWGeodynamics.scaling import UnitRegistry as u
-import _swarmvariable as svar
+from . import _swarmvariable as svar
 
 
 class Swarm(uw.swarm.Swarm):

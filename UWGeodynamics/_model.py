@@ -1,7 +1,7 @@
 from __future__ import print_function
 import os
 import json
-import json_encoder
+from . import json_encoder
 from collections import OrderedDict
 import numpy as np
 import underworld as uw
@@ -1460,7 +1460,7 @@ class Model(Material):
             minIterations = rcParams["nonlinear.min.iterations"]
             maxIterations = rcParams["nonlinear.max.iterations"]
 
-        if uw.__version__.split(".")[1] > 5:
+        if int(uw.__version__.split(".")[1]) > 5:
             # The minimum number of iteration only works with version 2.6
             # 2.6 is still in development...
             self.stokes_solver().solve(
@@ -1547,6 +1547,10 @@ class Model(Material):
             duration = time + nd(duration)
         else:
             units = rcParams["time.SIunits"]
+            duration = time
+
+        if not nstep:
+            nstep = stepDone
 
         if dt:
             user_dt = nd(dt)

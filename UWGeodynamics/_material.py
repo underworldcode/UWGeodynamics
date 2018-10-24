@@ -22,7 +22,7 @@ class Material(object):
                  viscosityChangeX2=0.3, viscosityChange=1.0,
                  healingRate=0.0 / u.year):
 
-        self.index = self._ids.next()
+        self.index = next(self._ids)
 
         self.name = name
         self.top = None

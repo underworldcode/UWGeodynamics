@@ -1,4 +1,4 @@
-from scaling import u
+from .scaling import u
 from pint import UndefinedUnitError
 import six
 try:

@@ -4,7 +4,7 @@ try:
 except ImportError:
     pass
 import underworld.function as fn
-from scaling import nonDimensionalize as nd
+from .scaling import nonDimensionalize as nd
 
 
 ABC = abc.ABCMeta('ABC', (object,), {})

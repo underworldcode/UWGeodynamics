@@ -154,7 +154,7 @@ class Plots(object):
                    cullface=False,
                    logScale=True, colours="coolwarm",
                    script=None, show=True, quality=3,
-                   store=None, visugrid=None, **kwargs):
+                   store=None, visugrid=None, onMesh=False, **kwargs):
 
         Fig = glucifer.Figure(store=store, figsize=figsize,
                               quality=quality,
@@ -167,7 +167,7 @@ class Plots(object):
         Fig.Surface(self.Model.mesh.subMesh,
                     self.Model.strainRateField * fact,
                     cullface=cullface, logScale=logScale, name=Fig["title"],
-                    colours=colours,
+                    colours=colours, onMesh=onMesh,
                     **kwargs)
 
         if visugrid:

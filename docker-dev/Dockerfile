@@ -68,5 +68,5 @@ ENV PYTHONPATH /workspace/user_data/Underworld:/workspace/user_data/UWGeodynamic
 WORKDIR /workspace
 
 # launch notebook
-CMD ["jupyter", "notebook", "--ip='*'", "--no-browser"]
+CMD ["jupyter", "notebook", "--ip='0.0.0.0'", "--no-browser"]
 
