@@ -228,6 +228,10 @@ class Model(Material):
         # Mesh advector
         self._advector = None
 
+        # init solver
+        self._solver = None
+        self._static_solver = False
+
         # Initialise remaining attributes
         self._default_strain_rate = 1e-15 / u.second
         self._solution_exist = fn.misc.constant(False)
@@ -668,6 +672,15 @@ class Model(Material):
         return self.temperatureBCs.get_conditions()
 
     @property
+    def solver(self):
+        return self._solver
+
+    @solver.setter
+    def solver(self, value):
+        self._static_solver = True
+        self._solver = value
+
+    @property
     def temperature(self):
         """ Temperature Field """
         return self._temperature
@@ -751,36 +764,37 @@ class Model(Material):
     def stokes_solver(self):
         """ Stokes solver """
 
-        gravity = tuple([nd(val) for val in self.gravity])
-        self._buoyancyFn = self._densityFn * gravity
-        self._buoyancyFn = self._buoyancyFn
+        if not self._solver or not self._static_solver:
+            gravity = tuple([nd(val) for val in self.gravity])
+            self._buoyancyFn = self._densityFn * gravity
+            self._buoyancyFn = self._buoyancyFn
 
-        if any([material.viscosity for material in self.materials]):
+            if any([material.viscosity for material in self.materials]):
 
-            self._stokes_SLE = uw.systems.Stokes(
-                velocityField=self.velocityField,
-                pressureField=self.pressureField,
-                conditions=self._velocityBCs,
-                fn_viscosity=self._viscosityFn,
-                fn_bodyforce=self._buoyancyFn,
-                fn_stresshistory=self._elastic_stressFn,
-                fn_one_on_lambda=self._lambdaFn)
-                #useEquationResidual=rcParams["useEquationResidual"])
+                self._stokes_SLE = uw.systems.Stokes(
+                    velocityField=self.velocityField,
+                    pressureField=self.pressureField,
+                    conditions=self._velocityBCs,
+                    fn_viscosity=self._viscosityFn,
+                    fn_bodyforce=self._buoyancyFn,
+                    fn_stresshistory=self._elastic_stressFn,
+                    fn_one_on_lambda=self._lambdaFn)
+                    #useEquationResidual=rcParams["useEquationResidual"])
 
-            self._solver = uw.systems.Solver(self._stokes_SLE)
-            self._solver.set_inner_method(rcParams["solver"])
+                self._solver = uw.systems.Solver(self._stokes_SLE)
+                self._solver.set_inner_method(rcParams["solver"])
 
-            if rcParams["penalty"]:
-                self._solver.set_penalty(rcParams["penalty"])
+                if rcParams["penalty"]:
+                    self._solver.set_penalty(rcParams["penalty"])
 
-            if rcParams["mg.levels"]:
-                self._solver.options.mg.levels = rcParams["mg.levels"]
+                if rcParams["mg.levels"]:
+                    self._solver.options.mg.levels = rcParams["mg.levels"]
 
-        if self._solver._check_linearity(False):
-            if not hasattr(self, "prevVelocityField"):
-                self.add_mesh_field("prevVelocityField", nodeDofCount=self.mesh.dim)
-            if not hasattr(self, "prevPressureField"):
-                self.add_submesh_field("prevPressureField", nodeDofCount=1)
+            if self._solver._check_linearity(False):
+                if not hasattr(self, "prevVelocityField"):
+                    self.add_mesh_field("prevVelocityField", nodeDofCount=self.mesh.dim)
+                if not hasattr(self, "prevPressureField"):
+                    self.add_submesh_field("prevPressureField", nodeDofCount=1)
 
         return self._solver
 
