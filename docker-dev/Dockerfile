@@ -12,7 +12,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install cgdb sudo && \
 # UWGeodynamics
 WORKDIR /opt
 RUN git clone -b development https://github.com/rbeucher/UWGeodynamics.git && \
-    pip install -e /opt/UWGeodynamics
+    pip3 install -e /opt/UWGeodynamics
 RUN mkdir /workspace/UWGeodynamics && \
     mkdir /workspace/MODELS_RESULTS && \
     mv /opt/UWGeodynamics/examples /workspace/UWGeodynamics/. && \
@@ -20,7 +20,7 @@ RUN mkdir /workspace/UWGeodynamics && \
     mv /opt/UWGeodynamics/manual /workspace/UWGeodynamics/.
 
 # Badlands dependency
-RUN pip install --no-cache-dir pandas \
+RUN pip3 install --no-cache-dir pandas \
                 ez_setup \ 
                 git+https://github.com/badlands-model/triangle.git \
                 git+https://github.com/awickert/gFlex.git
@@ -28,17 +28,17 @@ RUN pip install --no-cache-dir pandas \
 # pyBadlands serial
 RUN git clone https://github.com/rbeucher/pyBadlands_serial.git
 RUN cd /opt/pyBadlands_serial/pyBadlands/libUtils && make
-RUN pip install -e /opt/pyBadlands_serial
+RUN pip3 install -e /opt/pyBadlands_serial
 
 # pyBadlands dependencies
 RUN git clone https://github.com/matplotlib/cmocean.git /tmp/cmocean && \
-    pip install /tmp/cmocean/ && \ 
+    pip3 install /tmp/cmocean/ && \ 
     rm -rf /tmp/cmocean
-RUN pip install colorlover matplotlib==2.1.2
+RUN pip3 install colorlover matplotlib==2.1.2
 
 # pyBadlands companion
 RUN git clone https://github.com/badlands-model/pyBadlands-Companion.git && \
-    pip install -e /opt/pyBadlands-Companion && \
+    pip3 install -e /opt/pyBadlands-Companion && \
     mkdir /workspace/BADLANDS && \
     rsync -av /opt/pyBadlands-Companion/notebooks/* /workspace/BADLANDS/companion/
 
@@ -46,7 +46,7 @@ ENV PATH $PATH:/opt/pyBadlands_serial/pyBadlands/libUtils
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/pyBadlands_serial/pyBadlands/libUtils
 
 # memory profiler
-RUN pip install memory_profiler
+RUN pip3 install memory_profiler
 
 # update all permissions for jovyan user
 ENV UW2_DIR /opt/underworld2
