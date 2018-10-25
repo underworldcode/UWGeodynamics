@@ -415,7 +415,7 @@ class LecodeIsostasy(object):
         particleGlobalCount = np.sum(procCount)
 
         offset = 0
-        for i in xrange(rank):
+        for i in range(rank):
             offset += procCount[i]
 
         if self.mesh.dim == 2:
