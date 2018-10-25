@@ -28,9 +28,12 @@ class Visugrid(object):
 
         # Build a KDTree to handle boundaries
         self.boundaries = boundaryNodes.data
-        x = Model.mesh.data[self.boundaries,0]
-        y = Model.mesh.data[self.boundaries,1]
-        self.tree = spatial.cKDTree(zip(x.ravel(), y.ravel()))
+        x = Model.mesh.data[self.boundaries, 0]
+        y = Model.mesh.data[self.boundaries, 1]
+        coords = np.zeros((x.size, 2))
+        coords[:, 0] = x.ravel()
+        coords[:, 1] = y.ravel()
+        self.tree = spatial.cKDTree(coords)
 
     def advect(self, dt):
 
