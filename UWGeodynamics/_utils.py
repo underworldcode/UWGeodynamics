@@ -137,9 +137,9 @@ class PassiveTracers(object):
             fact = Dimensionalize(1.0, units=units)
             fact = fact.magnitude
 
-        x = self.swarm.particleCoordinates.data[:,0] * fact
-        y = self.swarm.particleCoordinates.data[:,1] * fact
-        line = zip(x,y)
+        x = self.swarm.particleCoordinates.data[:, 0] * fact
+        y = self.swarm.particleCoordinates.data[:, 1] * fact
+        line = zip(x, y)
         w.poly(parts=[line])
         w.record(self.name, str(units))
         w.save(filename)
@@ -439,7 +439,6 @@ class MoveImporter(object):
 
 def circles_grid(radius, minCoord, maxCoord, npoints=72):
 
-
     if len(minCoord) == 2:
         # Create points on circle
         angles = np.linspace(0, 360, npoints)
@@ -448,15 +447,21 @@ def circles_grid(radius, minCoord, maxCoord, npoints=72):
         y = radius * np.sin(np.radians(angles))
 
         # Calculate centroids
-        xc = np.arange(nd(minCoord[0]), nd(maxCoord[0]) + radius, 2.*radius)
-        yc = np.arange(nd(minCoord[1]) + radius, nd(maxCoord[1]), 2.*radius * np.sqrt(3)/2.)
+        xc = np.arange(nd(minCoord[0]), nd(maxCoord[0]) + radius, 2. * radius)
+        yc = np.arange(nd(minCoord[1]) + radius, nd(maxCoord[1]), 2. * radius * np.sqrt(3) / 2.)
         xc, yc = np.meshgrid(xc, yc)
         # Shift every other row by radius
-        xc[::2,:] = xc[::2, :] + radius
+        xc[::2, :] = xc[::2, :] + radius
 
         # Calculate coordinates of all circles points
-        points = np.array(zip(xc.ravel(), yc.ravel()))[:, np.newaxis] + np.array(zip(x, y))
-        x, y = points[:,:,0].ravel(), points[:,:,1].ravel()
+        points = np.zeros((xc.size, 2))
+        points[:, 0] = xc.ravel()
+        points[:, 1] = yc.ravel()
+        coords = np.zeros((x.size, 2))
+        coords[:, 0] = x
+        coords[:, 1] = y
+        points = points[:, np.newaxis] + coords
+        x, y = points[:, :, 0].ravel(), points[:, :, 1].ravel()
 
         return x, y
 
@@ -477,17 +482,25 @@ def circles_grid(radius, minCoord, maxCoord, npoints=72):
         zc = np.arange(nd(minCoord[2]) + radius, nd(maxCoord[2]) + radius, 2. * radius * np.sqrt(3)/2.)
         xc, yc, zc = np.meshgrid(xc, yc, zc)
         # Shift every other row by radius
-        yc[:,::2,:] += radius
-        zc[::2,:,:] += radius
+        yc[:, ::2, :] += radius
+        zc[::2, :, :] += radius
 
         # Calculate coordinates of all circles points
-        points = np.array(zip(xc.ravel(), yc.ravel(), zc.ravel()))[:, np.newaxis] + np.array(zip(x, y, z))
-        x = points[:,:,0].ravel()
-        y = points[:,:,1].ravel()
-        z = points[:,:,2].ravel()
-
+        points = np.zeros((xc.size, 3))
+        points[:, 0] = xc.ravel()
+        points[:, 1] = yc.ravel()
+        points[:, 2] = zc.ravel()
+        coords = np.zeros((x.size, 3))
+        coords[:, 0] = x
+        coords[:, 1] = y
+        coords[:, 2] = y
+        points = points[:, np.newaxis] + coords
+        x = points[:, :, 0].ravel()
+        y = points[:, :, 1].ravel()
+        z = points[:, :, 2].ravel()
 
         return x, y, z
+
 
 def circle_points_tracers(radius, centre=tuple([0., 0.]), npoints=72):
     angles = np.linspace(0, 360, npoints)
@@ -495,6 +508,7 @@ def circle_points_tracers(radius, centre=tuple([0., 0.]), npoints=72):
     x = radius * np.cos(np.radians(angles)) + nd(centre[0])
     y = radius * np.sin(np.radians(angles)) + nd(centre[1])
     return x, y
+
 
 def sphere_points_tracers(radius, centre=tuple([0., 0., 0.]), npoints=30):
     theta = np.linspace(0, 180, npoints)
