@@ -72,7 +72,7 @@ class TransformedDict(dict):  # dicts take a mapping or iterable as their option
         header = "<table>"
         footer = "</table>"
         html = ""
-        for key, val in attributes.iteritems():
+        for key, val in attributes.items():
             html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
 
         return header + html + footer      
