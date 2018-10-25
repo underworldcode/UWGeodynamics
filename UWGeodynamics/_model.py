@@ -1550,7 +1550,7 @@ class Model(Material):
             try:
                 restartDir = restartDir if restartDir else self.outputDir
                 self.restart(step=restartStep, restartDir=restartDir)
-            except ValueError:
+            except (ValueError, OSError) as e:
                 pass
 
         stepDone = 0

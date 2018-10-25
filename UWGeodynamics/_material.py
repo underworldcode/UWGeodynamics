@@ -87,13 +87,17 @@ class Material(object):
     def density(self, value):
         if isinstance(value, (u.Quantity, float)):
             self._density = ConstantDensity(value)
-        else:
+        elif value.thermalExpansivity:
             self._density = value
             self._thermalExpansivity = value.thermalExpansivity
 
     @property
     def thermalExpansivity(self):
         return self._thermalExpansivity
+
+    @thermalExpansivity.setter
+    def thermalExpansivity(self, value):
+        self._thermalExpansivity = value
 
     def add_melt_modifier(self, solidus, liquidus, latentHeatFusion,
                           meltExpansion,
