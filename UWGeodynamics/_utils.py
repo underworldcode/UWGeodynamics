@@ -139,8 +139,7 @@ class PassiveTracers(object):
 
         x = self.swarm.particleCoordinates.data[:, 0] * fact
         y = self.swarm.particleCoordinates.data[:, 1] * fact
-        line = zip(x, y)
-        w.poly(parts=[line])
+        w.poly(parts=list(zip(x,y)))
         w.record(self.name, str(units))
         w.save(filename)
 
