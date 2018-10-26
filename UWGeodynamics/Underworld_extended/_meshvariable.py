@@ -77,7 +77,8 @@ class MeshVariable(uw.mesh.MeshVariable):
             mesh = self.mesh
             local = mesh.nodesLocal
 
-            self.data[0:local] = dset[mesh.data_nodegId[0:local],:]
+            with dset.collective:
+                self.data[0:local] = dset[mesh.data_nodegId[0:local],:]
 
         else:
             if not interpolate:

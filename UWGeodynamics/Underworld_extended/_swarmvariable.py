@@ -116,9 +116,8 @@ class SwarmVariable(uw.swarm.SwarmVariable):
 
         h5f.attrs["git commit"] = __git_revision__
 
-        if swarm.particleLocalCount > 0: # only add if there are local particles
-            with dset.collective:
-                dset[offset:offset+swarm.particleLocalCount] = self.data[:] * fact
+        with dset.collective:
+            dset[offset:offset+swarm.particleLocalCount] = self.data[:] * fact
 
         h5f.close()
 
@@ -185,42 +184,45 @@ class SwarmVariable(uw.swarm.SwarmVariable):
                 import warnings
                 warnings.warn("Warning, it appears {} particles were loaded, but this h5 variable has {} data points". format(particleGobalCount, dset.shape[0]), RuntimeWarning)
 
-        # for efficiency, we want to load swarmvariable data in the largest stride chunks possible.
-        # we need to determine where required data is contiguous.
-        # first construct an array of gradients. the required data is contiguous
-        # where the indices into the array are increasing by 1, ie have a gradient of 1.
-        gradIds = np.zeros_like(gIds)            # creates array of zeros of same size & type
-        if len(gIds) > 1:
-            gradIds[:-1] = gIds[1:] - gIds[:-1]  # forward difference type gradient
+#        # for efficiency, we want to load swarmvariable data in the largest stride chunks possible.
+#        # we need to determine where required data is contiguous.
+#        # first construct an array of gradients. the required data is contiguous
+#        # where the indices into the array are increasing by 1, ie have a gradient of 1.
+#        gradIds = np.zeros_like(gIds)            # creates array of zeros of same size & type
+#        if len(gIds) > 1:
+#            gradIds[:-1] = gIds[1:] - gIds[:-1]  # forward difference type gradient
+#
+#        guy = 0
+#        while guy < len(gIds):
+#
+#            # do contiguous
+#            start_guy = guy
+#            while gradIds[guy] == 1:  # count run of contiguous. note bounds check not required as last element of gradIds is always zero.
+#                guy += 1
+#            # copy contiguous chunk if found.. note that we are copying 'plus 1' items
+#            if guy > start_guy:
+#                if units:
+#                    vals = dset[gIds[start_guy]:gIds[guy] + 1]
+#                    self.data[start_guy:guy + 1] = nonDimensionalize(vals * units)
+#                else:
+#                    self.data[start_guy:guy + 1] = dset[gIds[start_guy]:gIds[guy] + 1]
+#                guy += 1
+#
+#            # do non-contiguous
+#            start_guy = guy
+#            while guy<len(gIds) and gradIds[guy]!=1:  # count run of non-contiguous
+#                guy += 1
+#            # copy non-contiguous items (if found) using index array slice
+#            if guy > start_guy:
+#                if units:
+#                    vals = dset[gIds[start_guy:guy], :]
+#                    self.data[start_guy:guy, :] = nonDimensionalize(vals * units)
+#                else:
+#                    self.data[start_guy:guy, :] = dset[gIds[start_guy:guy],:]
+#
+#            # repeat process until all done
 
-        guy = 0
-        while guy < len(gIds):
-
-            # do contiguous
-            start_guy = guy
-            while gradIds[guy] == 1:  # count run of contiguous. note bounds check not required as last element of gradIds is always zero.
-                guy += 1
-            # copy contiguous chunk if found.. note that we are copying 'plus 1' items
-            if guy > start_guy:
-                if units:
-                    vals = dset[gIds[start_guy]:gIds[guy] + 1]
-                    self.data[start_guy:guy + 1] = nonDimensionalize(vals * units)
-                else:
-                    self.data[start_guy:guy + 1] = dset[gIds[start_guy]:gIds[guy] + 1]
-                guy += 1
-
-            # do non-contiguous
-            start_guy = guy
-            while guy<len(gIds) and gradIds[guy]!=1:  # count run of non-contiguous
-                guy += 1
-            # copy non-contiguous items (if found) using index array slice
-            if guy > start_guy:
-                if units:
-                    vals = dset[gIds[start_guy:guy], :]
-                    self.data[start_guy:guy, :] = nonDimensionalize(vals * units)
-                else:
-                    self.data[start_guy:guy, :] = dset[gIds[start_guy:guy],:]
-
-            # repeat process until all done
+        with dset.collective:
+            self.data[:,:] = dset[gIds[:],:]
 
         h5f.close()

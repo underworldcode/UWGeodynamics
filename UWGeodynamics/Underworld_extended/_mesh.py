@@ -137,7 +137,8 @@ class FeMesh_Cartesian(uw.mesh.FeMesh_Cartesian):
 
         local = self.nodesLocal
         # write to the dset using the local set of global node ids
-        dset[self.data_nodegId[0:local],:] = self.data[0:local] * fact
+        with dset.collective:
+            dset[self.data_nodegId[0:local],:] = self.data[0:local] * fact
 
         # write the element node connectivity
         globalShape = ( self.elementsGlobal, self.data_elementNodes.shape[1] )
@@ -221,12 +222,11 @@ class FeMesh_Cartesian(uw.mesh.FeMesh_Cartesian):
             raise RuntimeError("Provided data file appears to be for a different resolution mesh.")
 
         with self.deform_mesh(isRegular=h5f.attrs['regular']):
-            if units:
-                vals = dset[self.data_nodegId[0:self.nodesLocal],:]
-                test = vals * units
-                vals = nonDimensionalize(test)
-            else:
-                vals = dset[self.data_nodegId[0:self.nodesLocal],:]
-            self.data[0:self.nodesLocal] = vals
+            with dset.collective:
+                if units:
+                    self.data[0:self.nodesLocal] = nonDimensionalize(
+                        dset[self.data_nodegId[0:self.nodesLocal], :] * units)
+                else:
+                    self.data[0:self.nodesLocal] = dset[self.data_nodegId[0:self.nodesLocal], :]
 
         h5f.close()
