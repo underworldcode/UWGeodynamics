@@ -1,4 +1,4 @@
-FROM underworldcode/underworld2_untested:v2.5
+FROM underworldcode/underworld2:2.6.0b
 MAINTAINER romain.beucher@unimelb.edu
 
 USER root
@@ -27,6 +27,6 @@ WORKDIR /workspace
 RUN find -name \*.ipynb  -print0 | xargs -0 jupyter trust
 
 # launch notebook
-CMD ["jupyter", "notebook", "--ip='*'", "--no-browser"]
+CMD ["jupyter", "notebook", "--ip='0.0.0.0'", "--no-browser"]
 
 
