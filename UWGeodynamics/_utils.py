@@ -739,3 +739,38 @@ class LogFile(object):
                 non_linear_blocks.append(block)
         self.nonLinear_blocks = non_linear_blocks
         return self.nonLinear_blocks
+
+
+def extract_profile(field,
+                    line,
+                    nsamples=1000):
+    """ Extract values along a line
+
+    Parameters:
+        field: The field to extract the data from
+        line: list of (x,y, [z]) coordinates defining the sampling
+              line.
+        nsamples: number of sampling points
+    """
+
+    coords = np.array([(nd(x), nd(y)) for (x, y) in line])
+
+    x = np.linspace(coords[0, 0], coords[-1, 0], nsamples)
+
+    if coords[0, 0] == coords[-1, 0]:
+        y = np.linspace(coords[0, 1], coords[-1, 1], nsamples)
+    else:
+        from scipy import interpolate
+        f = interpolate.interp1d(coords[:, 0], coords[:, 1])
+        y = f(x)
+
+    dx = np.diff(x)
+    dy = np.diff(y)
+    distances = np.zeros(x.shape)
+    distances[1:] = np.sqrt(dx**2 + dy**2)
+    distances = np.cumsum(distances)
+
+    pts = np.array([x, y]).T
+    values = field.evaluate(pts)
+
+    return distances, values

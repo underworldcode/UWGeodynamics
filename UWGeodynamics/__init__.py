@@ -6,6 +6,7 @@ try:
 except ImportError:
     raise ImportError("Can not find Underworld, please check your installation")
 
+import glucifer
 import sys
 import os
 import errno
@@ -36,6 +37,7 @@ from ._utils import circles_grid, fn_Tukey_window, circle_points_tracers, sphere
 from ._utils import LogFile
 from ._utils import MovingWall
 from ._utils import PhaseChange, WaterFill
+from ._utils import extract_profile
 from .version import full_version as __version__
 from .version import git_revision as __git_revision__
 from . import _net
