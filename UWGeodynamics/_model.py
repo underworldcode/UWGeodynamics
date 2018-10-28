@@ -534,6 +534,12 @@ class Model(Material):
         return self._projTimeField
 
     @property
+    def projMeltField(self):
+        """ Melt Field projected on the mesh """
+        self._meltFieldProjector.solve()
+        return self._projMeltField
+
+    @property
     def strainRateField(self):
         """ Strain Rate Field """
         self._strainRateField.data[:] = self._strainRate_2ndInvariant.evaluate(
@@ -1122,7 +1128,7 @@ class Model(Material):
 
         # Melt Modifier
         for material in self.materials:
-            if material.viscosity and material.viscosityChange > 1.0:
+            if material.melt:
                 X1 = material.viscosityChangeX1
                 X2 = material.viscosityChangeX2
                 change = (1.0 + (material.viscosityChange - 1.0)
@@ -1132,6 +1138,22 @@ class Model(Material):
                               (True, change)]
                 ViscosityMap[material.index] *= fn.branching.conditional(
                     conditions)
+
+                if not material.minViscosity:
+                    minViscosity = self.minViscosity
+                else:
+                    minViscosity = material.minViscosity
+
+                if not material.maxViscosity:
+                    maxViscosity = self.maxViscosity
+                else:
+                    maxViscosity = material.maxViscosity
+
+                viscosity_limiter = ViscosityLimiter(
+                    minViscosity,
+                    maxViscosity)
+
+                ViscosityMap[material.index] = viscosity_limiter.apply(ViscosityMap[material.index])
 
         # Plasticity
         PlasticityMap = {}
