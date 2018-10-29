@@ -1086,7 +1086,7 @@ class Model(Material):
                 ViscosityHandler = material.viscosity
                 ViscosityHandler.pressureField = self.pressureField
                 ViscosityHandler.strainRateInvariantField = (
-                    self._strainRate_2ndInvariant)
+                    self.strainRateField)
                 ViscosityHandler.temperatureField = self.temperature
                 ViscosityMap[material.index] = ViscosityHandler.muEff
 
