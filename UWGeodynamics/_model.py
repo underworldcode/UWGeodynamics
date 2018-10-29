@@ -233,7 +233,7 @@ class Model(Material):
         self._static_solver = False
 
         # Initialise remaining attributes
-        self._default_strain_rate = 1e-15 / u.second
+        self.defaultStrainRate = 1e-15 / u.second
         self._solution_exist = fn.misc.constant(False)
         self._isYielding = None
         self._temperatureDot = None
@@ -542,8 +542,13 @@ class Model(Material):
     @property
     def strainRateField(self):
         """ Strain Rate Field """
-        self._strainRateField.data[:] = self._strainRate_2ndInvariant.evaluate(
-            self.mesh.subMesh)
+        # Initialize strain rate field to default
+        if not self._solution_exist.value:
+            self._strainRateField.data[:] = nd(self.defaultStrainRate)
+        else:
+            self._strainRateField.data[:] = (
+                self._strainRate_2ndInvariant.evaluate(self.mesh.subMesh)
+            )
         return self._strainRateField
 
     @property
@@ -1146,10 +1151,10 @@ class Model(Material):
                              / (mu * dt_e))
                     SRInv = fn.tensor.second_invariant(D_eff)
                 else:
-                    SRInv = self._strainRate_2ndInvariant
+                    SRInv = self.strainRateField
 
                 eij = fn.branching.conditional(
-                    [(SRInv < 1e-20, 1e-20),
+                    [(SRInv < nd(1e-20 / u.second), nd(1e-20 / u.second)),
                      (True, SRInv)])
 
                 muEff = 0.5 * yieldStress / eij
@@ -1303,7 +1308,7 @@ class Model(Material):
     def _yieldStressFn(self):
         """ Calculate Yield stress function from viscosity and strain rate"""
         eij = self._strainRate_2ndInvariant
-        eijdef = nd(self._default_strain_rate)
+        eijdef = nd(self.defaultStrainRate)
         return 2.0 * self._viscosityFn * fn.misc.max(eij, eijdef)
 
     def _phaseChangeFn(self):
