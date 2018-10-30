@@ -113,7 +113,7 @@ class Swarm(uw.swarm.Swarm):
 
         return uw.utils.SavedFileData( self, filename )
 
-    def load( self, filename, try_optimise=True, verbose=False):
+    def load( self, filename, try_optimise=True, verbose=False ):
         """
         Load a swarm from disk. Note that this must be called before any SwarmVariable
         members are loaded.
@@ -180,7 +180,7 @@ class Swarm(uw.swarm.Swarm):
         # we set the 'offset' & 'size' variables to achieve the above
 
         offset = 0
-        size = dset.shape[0] # number of particles in h5 file
+        totalsize = size = dset.shape[0] # number of particles in h5 file
 
         if try_optimise:
             procCount = h5f.attrs.get('proc_offset')
@@ -190,7 +190,7 @@ class Swarm(uw.swarm.Swarm):
                 size = procCount[rank]
 
         valid = np.zeros(0, dtype='i') # array for read in
-        chunk = int(1e6) # read in this many points at a time
+        chunk=int(1e6) # read in this many points at a time
 
         firstChunk = True
         (multiples, remainder) = divmod( size, chunk )
@@ -212,7 +212,11 @@ class Swarm(uw.swarm.Swarm):
             # in this step.
             if firstChunk:
                 with dset.collective:
-                    ztmp = self.add_particles_with_coordinates(dset[ chunkStart : chunkEnd ])
+                    if units:
+                        vals = nonDimensionalize(dset[ chunkStart : chunkEnd] * units)
+                        ztmp = self.add_particles_with_coordinates(vals)
+                    else:
+                        ztmp = self.add_particles_with_coordinates(dset[ chunkStart : chunkEnd ])
                     firstChunk = False
             else:
                 ztmp = self.add_particles_with_coordinates(dset[ chunkStart : chunkEnd ])

@@ -185,7 +185,10 @@ class SwarmVariable(uw.swarm.SwarmVariable):
                 warnings.warn("Warning, it appears {} particles were loaded, but this h5 variable has {} data points". format(particleGobalCount, dset.shape[0]), RuntimeWarning)
 
         with dset.collective:
-            self.data[:,:] = dset[gIds[:],:]
+            if units:
+                self.data[:,:] = nonDimensionalize(dset[gIds[:],:] * units)
+            else:
+                self.data[:,:] = dset[gIds[:],:]
 
         h5f.close()
 
