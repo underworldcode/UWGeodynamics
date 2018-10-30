@@ -526,9 +526,9 @@ def sphere_points_tracers(radius, centre=tuple([0., 0., 0.]), npoints=30):
     return x, y, z
 
 
-class Nearest_neigbhors_projector(object):
+class Nearest_neighbors_projector(object):
 
-    def __init__(self, mesh, swarm, swarm_variable, mesh_variable, dtype):
+    def __init__(self, mesh, swarm, swarm_variable, mesh_variable):
         self.mesh = mesh
         self.swarm = swarm
         self.swarm_variable = swarm_variable
