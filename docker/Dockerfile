@@ -1,11 +1,11 @@
-FROM underworldcode/underworld2:2.6.0b
+FROM underworldcode/underworld2:dev
 MAINTAINER romain.beucher@unimelb.edu
 
 USER root
 
 WORKDIR /opt
 RUN git clone --depth 1 https://github.com/rbeucher/UWGeodynamics.git
-RUN pip install -e /opt/UWGeodynamics
+RUN pip3 install -e /opt/UWGeodynamics
 
 RUN mkdir /workspace/UWGeodynamics
 RUN rsync -av /opt/UWGeodynamics/examples/* /workspace/UWGeodynamics/examples/
