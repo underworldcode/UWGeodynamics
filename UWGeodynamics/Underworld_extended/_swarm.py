@@ -180,7 +180,7 @@ class Swarm(uw.swarm.Swarm):
         # we set the 'offset' & 'size' variables to achieve the above
 
         offset = 0
-        totalsize = size = dset.shape[0] # number of particles in h5 file
+        size = dset.shape[0] # number of particles in h5 file
 
         if try_optimise:
             procCount = h5f.attrs.get('proc_offset')
@@ -190,7 +190,7 @@ class Swarm(uw.swarm.Swarm):
                 size = procCount[rank]
 
         valid = np.zeros(0, dtype='i') # array for read in
-        chunk=int(1e6) # read in this many points at a time
+        chunk=int(2e7) # read in this many points at a time
 
         firstChunk = True
         (multiples, remainder) = divmod( size, chunk )
