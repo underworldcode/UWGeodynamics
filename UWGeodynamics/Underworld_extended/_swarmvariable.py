@@ -216,7 +216,6 @@ class SwarmVariable(uw.swarm.SwarmVariable):
                                        dtype=self.data.dtype)
             fact = 1.0
             if units:
-                print(units)
                 fact = Dimensionalize(1.0, units=units).magnitude
                 h5f.attrs['units'] = str(units)
 
