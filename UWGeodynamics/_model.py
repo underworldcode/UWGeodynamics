@@ -1579,13 +1579,14 @@ class Model(Material):
             # Whats the longest we can run before reaching the end
             # of the model or a checkpoint?
             # Need to generalize that
-            self._dt = rcParams["CFL"] * self.swarm_advector.get_max_dt()
+            self._dt = 2.0 * rcParams["CFL"] * self.swarm_advector.get_max_dt()
 
             if self.temperature:
                 # Only get a condition if using SUPG
                 if rcParams["advection.diffusion.method"] == "SUPG":
-                    self._dt = min(self._dt, self._advdiffSystem.get_max_dt())
-                    self._dt *= rcParams["CFL"]
+                    supg_dt = self._advdiffSystem.get_max_dt()
+                    supg_dt *= 2.0 * rcParams["CFL"]
+                    self._dt = min(self._dt, supg_dt)
 
             if checkpoint_interval:
                 self._dt = min(self._dt, next_checkpoint - time)
