@@ -809,7 +809,7 @@ class Model(Material):
                     fn_bodyforce=self._buoyancyFn,
                     fn_stresshistory=self._elastic_stressFn,
                     fn_one_on_lambda=self._lambdaFn)
-                #useEquationResidual=rcParams["useEquationResidual"])
+                # useEquationResidual=rcParams["useEquationResidual"])
 
                 self._solver = uw.systems.Solver(self._stokes_SLE)
                 self._solver.set_inner_method(rcParams["solver"])
@@ -1132,8 +1132,7 @@ class Model(Material):
             if material.melt:
                 X1 = material.viscosityChangeX1
                 X2 = material.viscosityChangeX2
-                change = (1.0 + (material.viscosityChange - 1.0)
-                          / (X2 - X1) * (self.meltField - X1))
+                change = (1.0 + (material.viscosityChange - 1.0) / (X2 - X1) * (self.meltField - X1))
                 conditions = [(self.meltField < X1, 1.0),
                               (self.meltField > X2, material.viscosityChange),
                               (True, change)]
@@ -1168,10 +1167,7 @@ class Model(Material):
                     dt_e = nd(ElasticityHandler.observation_time)
                     strainRate = fn.tensor.symmetric(
                         self.velocityField.fn_gradient)
-                    D_eff = (strainRate
-                             + 0.5
-                             * self._previousStressField
-                             / (mu * dt_e))
+                    D_eff = (strainRate + 0.5 * self._previousStressField / (mu * dt_e))
                     SRInv = fn.tensor.second_invariant(D_eff)
                 else:
                     SRInv = self.strainRateField
@@ -1268,8 +1264,7 @@ class Model(Material):
 
         # Do not yield at the very first solve
         if self._solution_exist.value:
-            self._isYielding = (fn.branching.conditional(yieldConditions)
-                                * self._strainRate_2ndInvariant)
+            self._isYielding = (fn.branching.conditional(yieldConditions) * self._strainRate_2ndInvariant)
         else:
             self._isYielding = fn.misc.constant(0.0)
 
@@ -1340,8 +1335,7 @@ class Model(Material):
                 for change in material.phase_changes:
                     obj = change
                     mask = obj.fn().evaluate(self.swarm)
-                    conds = ((mask == 1) &
-                             (self.materialField.data == material.index))
+                    conds = ((mask == 1) & (self.materialField.data == material.index))
                     self.materialField.data[conds] = obj.result
 
     def solve_temperature_steady_state(self):
@@ -1373,9 +1367,7 @@ class Model(Material):
                         material.radiogenicHeatProd]):
 
                     HeatProdMap[material.index] = (
-                        nd(material.radiogenicHeatProd) /
-                        (self._densityFn *
-                         nd(material.capacity))
+                        nd(material.radiogenicHeatProd) / (self._densityFn * nd(material.capacity))
                         )
 
                 else:
@@ -1413,7 +1405,7 @@ class Model(Material):
         --------
             Pressure Field, array containing the pressures
             at the bottom of the Model
-            
+
         """
         gravity = np.abs(nd(self.gravity[-1]))
         lithoPress = LithostaticPressure(self.mesh, self._densityFn, gravity)
@@ -1639,7 +1631,7 @@ class Model(Material):
                 if uw.rank() == 0:
                     print("Step:" + str(stepDone) + " Model Time: ", str(self.time.to(units)),
                           'dt:', str(Dimensionalize(self._dt, units)),
-                          #'vrms:', str(self.velocity_rms()),
+                          # 'vrms:', str(self.velocity_rms()),
                           '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
 
             self.postSolveHook()
@@ -1820,8 +1812,7 @@ class Model(Material):
                 T_s = material.solidus.temperature(self.pressureField)
                 T_l = material.liquidus.temperature(self.pressureField)
                 T_ss = (self.temperature - 0.5 * (T_s + T_l)) / (T_l - T_s)
-                value = (0.5 + T_ss + (T_ss * T_ss - 0.25) *
-                         (0.4256 + 2.988 * T_ss))
+                value = (0.5 + T_ss + (T_ss * T_ss - 0.25) * (0.4256 + 2.988 * T_ss))
                 conditions = [((-0.5 < T_ss) & (T_ss < 0.5),
                                fn.misc.min(value, material.meltFractionLimit)),
                               (True, 0.0)]
@@ -1847,7 +1838,7 @@ class Model(Material):
 
         if not ratio.dimensionless:
             raise ValueError("""Unit Error in either Latent Heat Fusion or
-                             Capacity (Material: """+ material.name)
+                             Capacity (Material: """ + material.name)
         ratio = ratio.magnitude
 
         dF = (self._get_melt_fraction() - self.meltField) / self._dt
