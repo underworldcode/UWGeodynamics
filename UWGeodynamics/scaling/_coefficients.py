@@ -1,7 +1,5 @@
-from pint import UnitRegistry
 from ._utils import TransformedDict
-
-u = UnitRegistry = UnitRegistry()
+from ._utils import u
 
 COEFFICIENTS = TransformedDict()
 COEFFICIENTS["[length]"] = 1.0 * u.meter

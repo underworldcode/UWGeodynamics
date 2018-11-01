@@ -7,20 +7,86 @@ from .scaling import u
 from ._utils import PhaseChange
 from ._rheology import ConstantViscosity
 from ._density import ConstantDensity
+from pint.errors import DimensionalityError
+
+_dim_density = {'[mass]': 1.0, '[length]': -3.0}
+_dim_diffusivity = {'[length]': 2.0, '[time]': -1.0}
+_dim_capacity = {'[length]': 2.0, '[temperature]': -1.0, '[time]': -2.0}
+_dim_radiogenicHeatProduction = {'[length]': -1.0, '[mass]': 1.0, '[time]': -3.0}
+_dim_viscosity = {'[length]': -1.0, '[mass]': 1.0, '[time]': -1.0}
+_dim_stress = {'[length]': -1.0, '[mass]': 1.0, '[time]': -2.0}
+_dim_rate = {'[time]': -1.0}
 
 
 class Material(object):
+    """ Material class object """
+
     _ids = count(0)
 
-    def __init__(self, name="Undefined", density=0.0,
-                 diffusivity=None, capacity=None,
-                 radiogenicHeatProd=0.0, shape=None, viscosity=None,
-                 plasticity=None, elasticity=None, solidus=None, liquidus=None,
+    @u.check([None, None, _dim_density, _dim_diffusivity, _dim_capacity,
+              _dim_radiogenicHeatProduction, None, None, None, _dim_viscosity,
+              _dim_viscosity, _dim_stress, _dim_rate, None, None, None,
+              None, None, None, None, None, None])
+    def __init__(self, name="Undefined", shape=None,
+                 density=0.*u.kilogram/u.metre**3, diffusivity=None,
+                 capacity=None, radiogenicHeatProd=0.0*u.microwatt/u.meter**3,
+                 viscosity=None, plasticity=None, elasticity=None,
                  minViscosity=None, maxViscosity=None, stressLimiter=None,
+                 healingRate=0.0 / u.year,
+                 solidus=None, liquidus=None,
                  latentHeatFusion=0.0, meltExpansion=0.0, meltFraction=0.0,
                  meltFractionLimit=1.0, viscosityChangeX1=0.15,
-                 viscosityChangeX2=0.3, viscosityChange=1.0,
-                 healingRate=0.0 / u.year):
+                 viscosityChangeX2=0.3, viscosityChange=1.0):
+        """Create a Material
+
+        Parameters
+        ----------
+
+        name : Name of the Material
+        shape : Shape defining the space occupied by the material.
+        density : Density (volumetric mass) of the material ([Mass]/[Length]**3)
+        diffusivity : Diffusivity ([Length]**2 / [Time])
+        capacity : Capacity ([Length]**2 / [Temperature] / [Time]**2)
+        radiogenicHeatProd : Radiogenic Heat Production Value ([Mass]/[Length]/[Time])
+        viscosity : Viscous Law or Value ([Mass]/[Length]/[Time])
+        plasticity : Plastic Law
+        elasticity : Elastic Law
+        minViscosity : Minimum viscosity allowed for the material
+        maxViscosity : Maximum viscosity allowed for the materil
+        stressLimiter : Maximum stress allowed for the material
+        healingRate : Plastic Strain Healing Rate ([Time]**(-1)]
+
+        # Melt Related parameters:
+
+        solidus : UWGeodynamics.Solidus object defining a Solidus
+        liquidus : UWGeodynamics.Liquidus object defining a Liquidus
+        latentHeatFusion : Latent Heat of Fusion (enthalpie)
+        meltExpansion : Melt expansion
+        meltFraction : Initial Fraction of Melt
+        meltFractionLimit : Maximum Fraction of Melt (0-1)
+
+        ## Change in viscosity associated to the presence of melt:
+
+        viscosityChange is a factor representing a linear
+        change in viscosity over a melt fraction interval
+        (ViscosityChangeX1 -- ViscosityChangeX2)
+
+        viscosityChange : Viscosity Change Factor
+        viscosityChangeX1 : Start of the viscosity change interval
+        viscosityChangeX2 : End of the viscosity change interval
+
+        Returns
+        -------
+
+        A UWGeodynamics.Material class object.
+
+        Example
+        -------
+
+        >>>import UWGeodynamics as GEO
+        >>>crust = GEO.Material(name="Crust")
+
+        """
 
         self.index = next(self._ids)
 
@@ -29,7 +95,6 @@ class Material(object):
         self.bottom = None
 
         self.shape = shape
-        self._density = None
         self.density = density
         self.referenceDensity = self.density
         self.diffusivity = diffusivity
@@ -61,6 +126,7 @@ class Material(object):
         self.elasticity = elasticity
         self.healingRate = healingRate
         self._phase_changes = list()
+        self.Model = None
 
     def _repr_html_(self):
         return _material_html_repr(self)
@@ -75,6 +141,14 @@ class Material(object):
     @viscosity.setter
     def viscosity(self, value):
         if isinstance(value, (u.Quantity, float)):
+            # Check dimensionality
+            if (isinstance(value, u.Quantity) and
+               value.dimensionality != _dim_viscosity):
+                _dim_vals = u.get_dimensionality(_dim_viscosity)
+                raise DimensionalityError(value, 'a quantity of',
+                                          value.dimensionality,
+                                          _dim_vals)
+
             self._viscosity = ConstantViscosity(value)
         else:
             self._viscosity = value
@@ -86,6 +160,13 @@ class Material(object):
     @density.setter
     def density(self, value):
         if isinstance(value, (u.Quantity, float)):
+            # Check dimensionality
+            if (isinstance(value, u.Quantity) and
+               value.dimensionality != _dim_density):
+                _dim_vals = u.get_dimensionality(_dim_density)
+                raise DimensionalityError(value, 'a quantity of',
+                                          value.dimensionality,
+                                          _dim_vals)
             self._density = ConstantDensity(value)
         elif value.thermalExpansivity:
             self._density = value
@@ -165,7 +246,11 @@ def _material_html_repr(Material):
     for key, val in _default.items():
         value = Material.__dict__.get(val)
         if value is None:
-            value = Material.__dict__.get("_"+val)
+            value = Material.__dict__.get("_" + val)
+        if value is None and Material.Model:
+            value = Material.Model.__dict__.get(val)
+        if value is None and Material.Model:
+            value = Material.Model.__dict__.get("_" + val)
         html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, value)
 
     if Material.viscosity and Material.plasticity:
@@ -188,15 +273,21 @@ def _material_html_repr(Material):
     if Material.plasticity:
         html += "<tr><td>{0}</td><td>{1}</td></tr>".format(
             "Plasticity", Material.plasticity.name)
+    if not Material.viscosity and not Material.plasticity:
+        html += "<tr><td></td><td>{0}</td></tr>".format(
+            "None")
 
     return header + html + footer
 
+
 class MaterialRegistry(object):
+    """ Library of commonly used Materials """
 
     def __init__(self, filename=None):
 
         if not filename:
-            filename = pkg_resources.resource_filename(__name__, "ressources/Materials.json")
+            filename = pkg_resources.resource_filename(
+                __name__, "ressources/Materials.json")
 
         with open(filename, "r") as infile:
             _materials = json.load(infile)

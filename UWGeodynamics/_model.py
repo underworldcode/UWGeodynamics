@@ -31,11 +31,16 @@ from datetime import datetime
 from .version import full_version
 from ._freesurface import FreeSurfaceProcessor
 
+_dim_gravity = {'[length]': 1.0, '[time]': -2.0}
+
 
 class Model(Material):
-    """Model"""
+    """UWGeodynamic Model Class"""
 
-    def __init__(self, elementRes, minCoord, maxCoord,
+    @u.check([None, (None, None), ("[length]", "[length]"), None,
+              _dim_gravity])
+    def __init__(self, elementRes=(64, 64),
+                 minCoord=(0.,0.), maxCoord=(64.*u.kilometer, 64*u.kilometer),
                  name=None, gravity=None, periodic=None, elementType=None,
                  temperatureBCs=None, velocityBCs=None, materials=None,
                  outputDir=None, frictionalBCs=None, surfaceProcesses=None,
@@ -87,9 +92,10 @@ class Model(Material):
         --------
         >>> import UWGeodynamics as GEO
         >>> u = GEO.UnitRegistry
-        >>> Model = Model = GEO.Model(elementRes=(64, 64),
-                            minCoord=(-1. * u.meter, -50. * u.centimeter),
-                            maxCoord=(1. * u.meter, 50. * u.centimeter))
+        >>> Model = Model = GEO.Model(
+                elementRes=(64, 64),
+                minCoord=(0., 0.),
+                maxCoord=(64. * u.kilometer, 64. * u.kilometer))
 
         """
 
@@ -359,7 +365,7 @@ class Model(Material):
                 if step == -2, run the second last etc.
         restartDir :
                 Directory that contains the outputs of the model
-                you want to restart
+                you want to restart from.
 
         Returns
         -------
@@ -892,7 +898,7 @@ class Model(Material):
 
         mat = Material()
         mat.name = name
-
+        mat.Model = self
         mat.diffusivity = self.diffusivity
         mat.capacity = self.capacity
         mat.radiogenicHeatProd = self.radiogenicHeatProd
@@ -909,7 +915,6 @@ class Model(Material):
             mat.bottom = shape.bottom
 
         mat.shape = shape
-        mat.indices = self._get_material_indices(mat)
         self.materials.reverse()
         self.materials.append(mat)
         self.materials.reverse()

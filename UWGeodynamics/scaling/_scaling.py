@@ -2,8 +2,9 @@
 # Romain BEUCHER, December 2016
 
 import underworld as uw
-from ._coefficients import u
 from ._coefficients import COEFFICIENTS as scaling
+from ._utils import u
+
 
 def nonDimensionalize(dimValue):
     """
