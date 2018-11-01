@@ -191,7 +191,6 @@ class Model(Material):
 
         # timing and checkpointing
         self.checkpointID = 0
-        self.swarmCheckpointID = 0
         self.time = 0.0 * u.megayears
         self.step = 0
         self._dt = None
@@ -374,14 +373,13 @@ class Model(Material):
         This function returns None
         """
 
-        restartDir = os.path.join(restartDir, "restart")
-
         if not isinstance(step, int):
             raise ValueError("step must be an int or a bool")
 
         if not os.path.exists(restartDir):
             raise ValueError("restartDir must be a path to an existing folder")
 
+        # Look for step with swarm available
         indices = [int(os.path.splitext(filename)[0].split("-")[-1])
                    for filename in os.listdir(restartDir) if "swarm" in
                    filename]
@@ -409,10 +407,7 @@ class Model(Material):
             print('(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
             print(80 * "=" + "\n")
 
-        self.swarmCheckpointID = step
-
-        # Also need to update the checkpointID
-
+        self.checkpointID = step
 
         # Reload deformed mesh if advector is present
         if self._advector:
@@ -1502,7 +1497,7 @@ class Model(Material):
         return
 
     def run_for(self, duration=None, checkpoint_interval=None, nstep=None,
-                timeCheckpoints=None, swarm_checkpoint_interval=None, dt=None,
+                timeCheckpoints=None, restart_checkpoint=None, dt=None,
                 restartStep=-1, restartDir=None):
         """ Run the Model
 
@@ -1562,16 +1557,12 @@ class Model(Material):
             user_dt = None
 
         next_checkpoint = None
-        next_swarm_checkpoint = None
 
         if timeCheckpoints:
             timeCheckpoints = [nd(val) for val in timeCheckpoints]
 
         if checkpoint_interval:
             next_checkpoint = time + nd(checkpoint_interval)
-
-        if swarm_checkpoint_interval:
-            next_swarm_checkpoint = time + nd(swarm_checkpoint_interval)
 
         # Save initial state
         self.checkpoint()
@@ -1612,9 +1603,6 @@ class Model(Material):
                 tcheck.sort()
                 self._dt = min(self._dt, tcheck[0])
 
-            if swarm_checkpoint_interval:
-                self._dt = min(self._dt, next_swarm_checkpoint - time)
-
             dte = []
             for material in self.materials:
                 if material.elasticity:
@@ -1635,23 +1623,23 @@ class Model(Material):
             self.time += Dimensionalize(self._dt, units)
             time += self._dt
 
-            if time == next_swarm_checkpoint:
-                self.swarmCheckpointID += 1
-                self.checkpoint(checkpoint=self.swarmCheckpointID,
-                                outputDir=os.path.join(self.outputDir,
-                                                       "restart"))
-                next_swarm_checkpoint += nd(swarm_checkpoint_interval)
-
-            uw.barrier()
-
             if time == next_checkpoint:
                 self.checkpointID += 1
-                self.checkpoint(checkpoint=self.checkpointID)
+                # Save Mesh Variables
+                self.checkpoint_fields(checkpoint=self.checkpointID)
+                # Save Tracers
+                self.checkpoint_tracers(checkpointID=self.checkpointID)
                 next_checkpoint += nd(checkpoint_interval)
 
             uw.barrier()
 
-            if checkpoint_interval or self.step % 1 == 0 or nstep or next_swarm_checkpoint:
+            # if it's time to checkpoint the swarm, do so.
+            if self.checkpointID % restart_checkpoint == 0:
+                self.checkpoint_swarms(checkpoint=self.checkpointID)
+
+            uw.barrier()
+
+            if checkpoint_interval or self.step % 1 == 0 or nstep:
                 if uw.rank() == 0:
                     print("Step:" + str(stepDone) + " Model Time: ", str(self.time.to(units)),
                           'dt:', str(Dimensionalize(self._dt, units)),
@@ -2013,7 +2001,7 @@ class Model(Material):
             fields = rcParams["default.outputs"]
 
         if not checkpointID:
-            checkpointID = self.swarmCheckpointID
+            checkpointID = self.checkpointID
 
         if not outputDir:
             outputDir = self.outputDir
