@@ -1496,8 +1496,9 @@ class Model(Material):
             self.get_lithostatic_pressureField()
         return
 
+    @u.check([None, "[time]", "[time]", None, None, None, "[time]", None, None])
     def run_for(self, duration=None, checkpoint_interval=None, nstep=None,
-                timeCheckpoints=None, restart_checkpoint=None, dt=None,
+                timeCheckpoints=None, restart_checkpoint=1, dt=None,
                 restartStep=-1, restartDir=None):
         """ Run the Model
 
@@ -1511,9 +1512,12 @@ class Model(Material):
         nstep :
             Number of steps to run.`
         timeCheckpoints :
-            Specific Checkpoint times in units of time
-        swarm_checkpoint :
-            Checkpoint times
+            Specify a list of additional Checkpoint times ([Time])
+        restart_checkpoint :
+            This parameter specify how often the swarm and swarm variables
+            are checkpointed. A value of 1 means that the swarm and its
+            associated variables are saved at every checkpoint.
+            A value of 2 results in saving only every second checkpoint.
         dt :
             Specify the time interval (dt) to be used in
             units of time.
@@ -1626,7 +1630,7 @@ class Model(Material):
             if time == next_checkpoint:
                 self.checkpointID += 1
                 # Save Mesh Variables
-                self.checkpoint_fields(checkpoint=self.checkpointID)
+                self.checkpoint_fields(checkpointID=self.checkpointID)
                 # Save Tracers
                 self.checkpoint_tracers(checkpointID=self.checkpointID)
                 next_checkpoint += nd(checkpoint_interval)
@@ -1635,7 +1639,7 @@ class Model(Material):
 
             # if it's time to checkpoint the swarm, do so.
             if self.checkpointID % restart_checkpoint == 0:
-                self.checkpoint_swarms(checkpoint=self.checkpointID)
+                self.checkpoint_swarms(checkpointID=self.checkpointID)
 
             uw.barrier()
 
@@ -1926,8 +1930,20 @@ class Model(Material):
         self._visugrid = Visugrid(self, elementRes, minCoord, maxCoord,
                                   self.velocityField)
 
+    @u.check(None, None, None, "[time]", None)
     def checkpoint_fields(self, fields=None, checkpointID=None, time=None,
                           outputDir=None):
+        """ Save the mesh and the mesh variables to outputDir
+
+        Parameters
+        ----------
+
+        fields : A list of mesh/field variables to be saved.
+        checkpointID : Checkpoint ID
+        time : Model time at checkpoint
+        outputDir : output directory
+
+        """
 
         if not fields:
             fields = rcParams["default.outputs"]
@@ -1994,8 +2010,20 @@ class Model(Material):
                 xdmfFH.write(string)
         uw.barrier()
 
+    @u.check(None, None, None, "[time]", None)
     def checkpoint_swarms(self, fields=None, checkpointID=None, time=None,
                           outputDir=None):
+        """ Save the swarm and the swarm variables to outputDir
+
+        Parameters
+        ----------
+
+        fields : A list of swarm/field variables to be saved.
+        checkpointID : Checkpoint ID
+        time : Model time at checkpoint
+        outputDir : output directory
+
+        """
 
         if not fields:
             fields = rcParams["default.outputs"]
@@ -2049,7 +2077,20 @@ class Model(Material):
                 xdmfFH.write(string)
         uw.barrier()
 
-    def checkpoint_tracers(self, tracers=None, checkpointID=None, time=None):
+    @u.check([None, None, None, "[time]", None])
+    def checkpoint_tracers(self, tracers=None, checkpointID=None,
+                           time=None, outputDir=None):
+        """ Checkpoint the tracers
+
+        Parameters
+        ----------
+
+        tracers : List of tracers to checkpoint.
+        checkpointID : Checkpoint ID.
+        time : Model time at checkpoint.
+        outputDir : output directory
+
+        """
 
         if tracers:
             tracers = [item for item in tracers if item in
@@ -2062,10 +2103,13 @@ class Model(Material):
 
         time = time if time else self.time
 
+        if not outputDir:
+            outputDir = self.outputDir
+
         # Checkpoint passive tracers and associated tracked fields
         if tracers:
             for (_, item) in tracers.items():
-                item.save(self.outputDir, checkpointID, self.time)
+                item.save(outputDir, checkpointID, self.time)
 
     def save(self, filename=None):
         save_model(self, filename)
