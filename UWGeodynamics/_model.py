@@ -1930,7 +1930,6 @@ class Model(Material):
         self._visugrid = Visugrid(self, elementRes, minCoord, maxCoord,
                                   self.velocityField)
 
-    @u.check(None, None, None, "[time]", None)
     def checkpoint_fields(self, fields=None, checkpointID=None, time=None,
                           outputDir=None):
         """ Save the mesh and the mesh variables to outputDir
@@ -2010,7 +2009,6 @@ class Model(Material):
                 xdmfFH.write(string)
         uw.barrier()
 
-    @u.check(None, None, None, "[time]", None)
     def checkpoint_swarms(self, fields=None, checkpointID=None, time=None,
                           outputDir=None):
         """ Save the swarm and the swarm variables to outputDir
