@@ -1498,7 +1498,7 @@ class Model(Material):
 
     @u.check([None, "[time]", "[time]", None, None, None, "[time]", None, None])
     def run_for(self, duration=None, checkpoint_interval=None, nstep=None,
-                timeCheckpoints=None, restart_checkpoint=1, dt=None,
+                checkpoint_times=None, restart_checkpoint=1, dt=None,
                 restartStep=-1, restartDir=None):
         """ Run the Model
 
@@ -1511,7 +1511,7 @@ class Model(Material):
             Checkpoint interval time.
         nstep :
             Number of steps to run.`
-        timeCheckpoints :
+        checkpoint_times :
             Specify a list of additional Checkpoint times ([Time])
         restart_checkpoint :
             This parameter specify how often the swarm and swarm variables
@@ -1562,8 +1562,8 @@ class Model(Material):
 
         next_checkpoint = None
 
-        if timeCheckpoints:
-            timeCheckpoints = [nd(val) for val in timeCheckpoints]
+        if checkpoint_times:
+            checkpoint_times = [nd(val) for val in checkpoint_times]
 
         if checkpoint_interval:
             next_checkpoint = time + nd(checkpoint_interval)
@@ -1602,8 +1602,8 @@ class Model(Material):
             if user_dt:
                 self._dt = min(self._dt, user_dt)
 
-            if timeCheckpoints:
-                tcheck = [val for val in (timeCheckpoints - time) if val >= 0]
+            if checkpoint_times:
+                tcheck = [val for val in (checkpoint_times - time) if val >= 0]
                 tcheck.sort()
                 self._dt = min(self._dt, tcheck[0])
 
@@ -1794,6 +1794,7 @@ class Model(Material):
             return self.passive_tracers[name]
 
         if not centroids:
+
             tracers = PassiveTracers(self.mesh,
                                      self.velocityField,
                                      name=name,
@@ -2107,7 +2108,7 @@ class Model(Material):
         # Checkpoint passive tracers and associated tracked fields
         if tracers:
             for (_, item) in tracers.items():
-                item.save(outputDir, checkpointID, self.time)
+                item.save(outputDir, checkpointID, time)
 
     def save(self, filename=None):
         save_model(self, filename)
