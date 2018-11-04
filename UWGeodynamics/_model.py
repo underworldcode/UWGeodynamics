@@ -1531,13 +1531,14 @@ class Model(Material):
         if uw.rank() == 0:
             print("""Running with UWGeodynamics version {0}""".format(full_version))
 
-        if uw.rank() == 0 and not os.path.exists(self.outputDir):
-            os.mkdir(self.outputDir)
-        uw.barrier()
-
         if restartStep:
             restartDir = restartDir if restartDir else self.outputDir
-            self.restart(step=restartStep, restartDir=restartDir)
+            if os.path.exists(restartDir):
+                self.restart(step=restartStep, restartDir=restartDir)
+
+        if uw.rank() == 0 and not os.path.exists(self.outputDir):
+            os.makedirs(self.outputDir)
+        uw.barrier()
 
         stepDone = 0
         time = nd(self.time)
@@ -2089,12 +2090,6 @@ class Model(Material):
 
         """
 
-        if tracers:
-            tracers = [item for item in tracers if item in
-                       self.passive_tracers]
-        else:
-            tracers = self.passive_tracers
-
         if not checkpointID:
             checkpointID = self.checkpointID
 
@@ -2104,12 +2099,12 @@ class Model(Material):
             outputDir = self.outputDir
 
         if uw.rank() == 0 and not os.path.exists(outputDir):
-            os.mkdir(outputDir)
+            os.makedirs(outputDir)
         uw.barrier()
 
         # Checkpoint passive tracers and associated tracked fields
         if tracers:
-            for (_, item) in tracers.items():
+            for (_, item) in self.passive_tracers.items():
                 item.save(outputDir, checkpointID, time)
 
     def save(self, filename=None):
