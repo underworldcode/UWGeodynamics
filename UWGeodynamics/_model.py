@@ -31,11 +31,16 @@ from datetime import datetime
 from .version import full_version
 from ._freesurface import FreeSurfaceProcessor
 
+_dim_gravity = {'[length]': 1.0, '[time]': -2.0}
+
 
 class Model(Material):
-    """Model"""
+    """UWGeodynamic Model Class"""
 
-    def __init__(self, elementRes, minCoord, maxCoord,
+    @u.check([None, (None, None), ("[length]", "[length]"), None,
+              _dim_gravity])
+    def __init__(self, elementRes=(64, 64),
+                 minCoord=(0.,0.), maxCoord=(64.*u.kilometer, 64*u.kilometer),
                  name=None, gravity=None, periodic=None, elementType=None,
                  temperatureBCs=None, velocityBCs=None, materials=None,
                  outputDir=None, frictionalBCs=None, surfaceProcesses=None,
@@ -87,9 +92,10 @@ class Model(Material):
         --------
         >>> import UWGeodynamics as GEO
         >>> u = GEO.UnitRegistry
-        >>> Model = Model = GEO.Model(elementRes=(64, 64),
-                            minCoord=(-1. * u.meter, -50. * u.centimeter),
-                            maxCoord=(1. * u.meter, 50. * u.centimeter))
+        >>> Model = Model = GEO.Model(
+                elementRes=(64, 64),
+                minCoord=(0., 0.),
+                maxCoord=(64. * u.kilometer, 64. * u.kilometer))
 
         """
 
@@ -233,7 +239,7 @@ class Model(Material):
         self._static_solver = False
 
         # Initialise remaining attributes
-        self._default_strain_rate = 1e-15 / u.second
+        self.defaultStrainRate = 1e-15 / u.second
         self._solution_exist = fn.misc.constant(False)
         self._isYielding = None
         self._temperatureDot = None
@@ -359,26 +365,28 @@ class Model(Material):
                 if step == -2, run the second last etc.
         restartDir :
                 Directory that contains the outputs of the model
-                you want to restart
+                you want to restart from.
 
         Returns
         -------
 
         This function returns None
         """
+
         if not isinstance(step, int):
             raise ValueError("step must be an int or a bool")
 
         if not os.path.exists(restartDir):
             raise ValueError("restartDir must be a path to an existing folder")
 
+        # Look for step with swarm available
         indices = [int(os.path.splitext(filename)[0].split("-")[-1])
                    for filename in os.listdir(restartDir) if "-" in
                    filename]
         indices.sort()
 
         if not indices:
-            return
+            raise ValueError("Your restart Folder is empty")
 
         if step < 0:
             step = indices[step]
@@ -542,8 +550,13 @@ class Model(Material):
     @property
     def strainRateField(self):
         """ Strain Rate Field """
-        self._strainRateField.data[:] = self._strainRate_2ndInvariant.evaluate(
-            self.mesh.subMesh)
+        # Initialize strain rate field to default
+        if not self._solution_exist.value:
+            self._strainRateField.data[:] = nd(self.defaultStrainRate)
+        else:
+            self._strainRateField.data[:] = (
+                self._strainRate_2ndInvariant.evaluate(self.mesh.subMesh)
+            )
         return self._strainRateField
 
     @property
@@ -887,7 +900,7 @@ class Model(Material):
 
         mat = Material()
         mat.name = name
-
+        mat.Model = self
         mat.diffusivity = self.diffusivity
         mat.capacity = self.capacity
         mat.radiogenicHeatProd = self.radiogenicHeatProd
@@ -904,7 +917,6 @@ class Model(Material):
             mat.bottom = shape.bottom
 
         mat.shape = shape
-        mat.indices = self._get_material_indices(mat)
         self.materials.reverse()
         self.materials.append(mat)
         self.materials.reverse()
@@ -1081,23 +1093,8 @@ class Model(Material):
                 ViscosityHandler = material.viscosity
                 ViscosityHandler.pressureField = self.pressureField
                 ViscosityHandler.strainRateInvariantField = (
-                    self._strainRate_2ndInvariant)
+                    self.strainRateField)
                 ViscosityHandler.temperatureField = self.temperature
-
-                if not material.minViscosity:
-                    minViscosity = self.minViscosity
-                else:
-                    minViscosity = material.minViscosity
-
-                if not material.maxViscosity:
-                    maxViscosity = self.maxViscosity
-                else:
-                    maxViscosity = material.maxViscosity
-
-                ViscosityHandler._viscosity_limiter = ViscosityLimiter(
-                    minViscosity,
-                    maxViscosity)
-
                 ViscosityMap[material.index] = ViscosityHandler.muEff
 
         # Elasticity
@@ -1111,19 +1108,6 @@ class Model(Material):
                                      {0}""".format(material.name))
                 ElasticityHandler = material.elasticity
                 ElasticityHandler.viscosity = ViscosityMap[material.index]
-                if not material.minViscosity:
-                    minViscosity = self.minViscosity
-                else:
-                    minViscosity = material.minViscosity
-
-                if not material.maxViscosity:
-                    maxViscosity = self.maxViscosity
-                else:
-                    maxViscosity = material.maxViscosity
-
-                ElasticityHandler._viscosity_limiter = ViscosityLimiter(
-                    minViscosity,
-                    maxViscosity)
                 ViscosityMap[material.index] = ElasticityHandler.muEff
 
         # Melt Modifier
@@ -1139,21 +1123,6 @@ class Model(Material):
                 ViscosityMap[material.index] *= fn.branching.conditional(
                     conditions)
 
-                if not material.minViscosity:
-                    minViscosity = self.minViscosity
-                else:
-                    minViscosity = material.minViscosity
-
-                if not material.maxViscosity:
-                    maxViscosity = self.maxViscosity
-                else:
-                    maxViscosity = material.maxViscosity
-
-                viscosity_limiter = ViscosityLimiter(
-                    minViscosity,
-                    maxViscosity)
-
-                ViscosityMap[material.index] = viscosity_limiter.apply(ViscosityMap[material.index])
 
         # Plasticity
         PlasticityMap = {}
@@ -1189,26 +1158,13 @@ class Model(Material):
                              / (mu * dt_e))
                     SRInv = fn.tensor.second_invariant(D_eff)
                 else:
-                    SRInv = self._strainRate_2ndInvariant
+                    SRInv = self.strainRateField
 
                 eij = fn.branching.conditional(
-                    [(SRInv < 1e-20, 1e-20),
+                    [(SRInv < nd(1e-20 / u.second), nd(1e-20 / u.second)),
                      (True, SRInv)])
 
                 muEff = 0.5 * yieldStress / eij
-                if not material.minViscosity:
-                    minViscosity = self.minViscosity
-                else:
-                    minViscosity = material.minViscosity
-
-                if not material.maxViscosity:
-                    maxViscosity = self.maxViscosity
-                else:
-                    maxViscosity = material.maxViscosity
-
-                viscosity_limiter = ViscosityLimiter(minViscosity,
-                                                     maxViscosity)
-                muEff = viscosity_limiter.apply(muEff)
                 PlasticityMap[material.index] = muEff
 
             if self.frictionalBCs is not None:
@@ -1235,20 +1191,6 @@ class Model(Material):
 
                     muEff = 0.5 * yieldStress / eij
 
-                    if not material.minViscosity:
-                        minViscosity = self.minViscosity
-                    else:
-                        minViscosity = material.minViscosity
-
-                    if not material.maxViscosity:
-                        maxViscosity = self.maxViscosity
-                    else:
-                        maxViscosity = material.maxViscosity
-
-                    viscosity_limiter = ViscosityLimiter(minViscosity,
-                                                         maxViscosity)
-                    muEff = viscosity_limiter.apply(muEff)
-
                     conditions = [(self.frictionalBCs._mask > 0.0, muEff),
                                   (True, PlasticityMap[material.index])]
 
@@ -1274,6 +1216,27 @@ class Model(Material):
                 EffViscosityMap[idx] = PlasticityMap[idx]
                 BGViscosityMap[idx] = PlasticityMap[idx]
                 PlasticMap[idx] = 1.0
+
+        # Apply viscosity Limiter
+        for material in self.materials:
+            idx = material.index
+            if not material.minViscosity:
+                minViscosity = self.minViscosity
+            else:
+                minViscosity = material.minViscosity
+
+            if not material.maxViscosity:
+                maxViscosity = self.maxViscosity
+            else:
+                maxViscosity = material.maxViscosity
+
+            viscosity_limiter = ViscosityLimiter(minViscosity,
+                                                 maxViscosity)
+
+            if material.viscosity or material.plasticity:
+                EffViscosityMap[idx] = (
+                    viscosity_limiter.apply(EffViscosityMap[idx])
+                )
 
         viscosityFn = fn.branching.map(fn_key=self.materialField,
                                        mapping=EffViscosityMap)
@@ -1352,7 +1315,7 @@ class Model(Material):
     def _yieldStressFn(self):
         """ Calculate Yield stress function from viscosity and strain rate"""
         eij = self._strainRate_2ndInvariant
-        eijdef = nd(self._default_strain_rate)
+        eijdef = nd(self.defaultStrainRate)
         return 2.0 * self._viscosityFn * fn.misc.max(eij, eijdef)
 
     def _phaseChangeFn(self):
@@ -1533,8 +1496,9 @@ class Model(Material):
             self.get_lithostatic_pressureField()
         return
 
+    @u.check([None, "[time]", "[time]", None, None, None, "[time]", None, None])
     def run_for(self, duration=None, checkpoint_interval=None, nstep=None,
-                timeCheckpoints=None, swarm_checkpoint=None, dt=None,
+                checkpoint_times=None, restart_checkpoint=1, dt=None,
                 restartStep=-1, restartDir=None):
         """ Run the Model
 
@@ -1547,10 +1511,13 @@ class Model(Material):
             Checkpoint interval time.
         nstep :
             Number of steps to run.`
-        timeCheckpoints :
-            Specific Checkpoint times in units of time
-        swarm_checkpoint :
-            Checkpoint times
+        checkpoint_times :
+            Specify a list of additional Checkpoint times ([Time])
+        restart_checkpoint :
+            This parameter specify how often the swarm and swarm variables
+            are checkpointed. A value of 1 means that the swarm and its
+            associated variables are saved at every checkpoint.
+            A value of 2 results in saving only every second checkpoint.
         dt :
             Specify the time interval (dt) to be used in
             units of time.
@@ -1564,16 +1531,14 @@ class Model(Material):
         if uw.rank() == 0:
             print("""Running with UWGeodynamics version {0}""".format(full_version))
 
-        if uw.rank() == 0 and not os.path.exists(self.outputDir):
-            os.mkdir(self.outputDir)
-        uw.barrier()
-
         if restartStep:
-            try:
-                restartDir = restartDir if restartDir else self.outputDir
+            restartDir = restartDir if restartDir else self.outputDir
+            if os.path.exists(restartDir):
                 self.restart(step=restartStep, restartDir=restartDir)
-            except (ValueError, OSError) as e:
-                pass
+
+        if uw.rank() == 0 and not os.path.exists(self.outputDir):
+            os.makedirs(self.outputDir)
+        uw.barrier()
 
         stepDone = 0
         time = nd(self.time)
@@ -1595,14 +1560,14 @@ class Model(Material):
 
         next_checkpoint = None
 
-        if timeCheckpoints:
-            timeCheckpoints = [nd(val) for val in timeCheckpoints]
+        if checkpoint_times:
+            checkpoint_times = [nd(val) for val in checkpoint_times]
 
         if checkpoint_interval:
             next_checkpoint = time + nd(checkpoint_interval)
 
-        if checkpoint_interval or timeCheckpoints:
-            # Check point initial set up
+        # Save initial state
+        if checkpoint_interval or checkpoint_times:
             self.checkpoint()
 
         # Save model to json
@@ -1618,13 +1583,14 @@ class Model(Material):
             # Whats the longest we can run before reaching the end
             # of the model or a checkpoint?
             # Need to generalize that
-            self._dt = rcParams["CFL"] * self.swarm_advector.get_max_dt()
+            self._dt = 2.0 * rcParams["CFL"] * self.swarm_advector.get_max_dt()
 
             if self.temperature:
                 # Only get a condition if using SUPG
                 if rcParams["advection.diffusion.method"] == "SUPG":
-                    self._dt = min(self._dt, self._advdiffSystem.get_max_dt())
-                    self._dt *= rcParams["CFL"]
+                    supg_dt = self._advdiffSystem.get_max_dt()
+                    supg_dt *= 2.0 * rcParams["CFL"]
+                    self._dt = min(self._dt, supg_dt)
 
             if checkpoint_interval:
                 self._dt = min(self._dt, next_checkpoint - time)
@@ -1634,6 +1600,11 @@ class Model(Material):
 
             if user_dt:
                 self._dt = min(self._dt, user_dt)
+
+            if checkpoint_times:
+                tcheck = [val for val in (checkpoint_times - time) if val >= 0]
+                tcheck.sort()
+                self._dt = min(self._dt, tcheck[0])
 
             dte = []
             for material in self.materials:
@@ -1657,8 +1628,19 @@ class Model(Material):
 
             if time == next_checkpoint:
                 self.checkpointID += 1
-                self.checkpoint()
+                # Save Mesh Variables
+                self.checkpoint_fields(checkpointID=self.checkpointID)
+                # Save Tracers
+                self.checkpoint_tracers(checkpointID=self.checkpointID)
                 next_checkpoint += nd(checkpoint_interval)
+
+            uw.barrier()
+
+            # if it's time to checkpoint the swarm, do so.
+            if self.checkpointID % restart_checkpoint == 0:
+                self.checkpoint_swarms(checkpointID=self.checkpointID)
+
+            uw.barrier()
 
             if checkpoint_interval or self.step % 1 == 0 or nstep:
                 if uw.rank() == 0:
@@ -1811,6 +1793,7 @@ class Model(Material):
             return self.passive_tracers[name]
 
         if not centroids:
+
             tracers = PassiveTracers(self.mesh,
                                      self.velocityField,
                                      name=name,
@@ -1916,23 +1899,9 @@ class Model(Material):
 
         """
 
-        if not variables:
-            variables = rcParams["default.outputs"]
-
-        if not checkpointID:
-            checkpointID = self.checkpointID
-
-        if uw.rank() == 0 and not os.path.exists(self.outputDir):
-            os.mkdir(self.outputDir)
-        uw.barrier()
-
-        self._save_fields(variables, checkpointID)
-        self._save_swarms(variables, checkpointID)
-
-        # Checkpoint passive tracers and associated tracked fields
-        if self.passive_tracers:
-            for (_, tracers) in self.passive_tracers.items():
-                tracers.save(self.outputDir, checkpointID, self.time)
+        self.checkpoint_fields(variables, checkpointID)
+        self.checkpoint_swarms(variables, checkpointID)
+        self.checkpoint_tracers(checkpointID=checkpointID)
 
     def add_visugrid(self, elementRes, minCoord=None, maxCoord=None):
         """ Add a tracking grid to the Model
@@ -1961,28 +1930,53 @@ class Model(Material):
         self._visugrid = Visugrid(self, elementRes, minCoord, maxCoord,
                                   self.velocityField)
 
-    def _save_fields(self, fields, checkpointID, time=None):
+    def checkpoint_fields(self, fields=None, checkpointID=None, time=None,
+                          outputDir=None):
+        """ Save the mesh and the mesh variables to outputDir
+
+        Parameters
+        ----------
+
+        fields : A list of mesh/field variables to be saved.
+        checkpointID : Checkpoint ID
+        time : Model time at checkpoint
+        outputDir : output directory
+
+        """
+
+        if not fields:
+            fields = rcParams["default.outputs"]
+
+        if not checkpointID:
+            checkpointID = self.checkpointID
+
+        if not outputDir:
+            outputDir = self.outputDir
+
+        if uw.rank() == 0 and not os.path.exists(outputDir):
+            os.makdirs(outputDir)
+        uw.barrier()
 
         time = time if time else self.time
 
         if self._advector or self._freeSurface:
             mesh_name = 'mesh-%s' % checkpointID
-            mesh_prefix = os.path.join(self.outputDir, mesh_name)
+            mesh_prefix = os.path.join(outputDir, mesh_name)
             mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
                                 time=time)
         elif not self._mesh_saved:
             mesh_name = 'mesh'
-            mesh_prefix = os.path.join(self.outputDir, mesh_name)
+            mesh_prefix = os.path.join(outputDir, mesh_name)
             mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
                                 time=time)
             self._mesh_saved = True
         else:
             mesh_name = 'mesh'
-            mesh_prefix = os.path.join(self.outputDir, mesh_name)
+            mesh_prefix = os.path.join(outputDir, mesh_name)
             mH = uw.utils.SavedFileData(self.mesh, '%s.h5' % mesh_prefix)
 
         filename = "XDMF.fields." + str(checkpointID).zfill(5) + ".xmf"
-        filename = os.path.join(self.outputDir, filename)
+        filename = os.path.join(outputDir, filename)
 
         # First write the XDMF header
         string = uw.utils._xdmfheader()
@@ -2001,7 +1995,7 @@ class Model(Material):
                 # Save the h5 file and write the field schema for
                 # each one of the field variables
                 obj = getattr(self, field)
-                file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
+                file_prefix = os.path.join(outputDir, field + '-%s' % checkpointID)
                 handle = obj.save('%s.h5' % file_prefix, units=units,
                                   time=time)
                 string += uw.utils._fieldschema(handle, field)
@@ -2015,18 +2009,43 @@ class Model(Material):
                 xdmfFH.write(string)
         uw.barrier()
 
-    def _save_swarms(self, fields, checkpointID, time=None):
+    def checkpoint_swarms(self, fields=None, checkpointID=None, time=None,
+                          outputDir=None):
+        """ Save the swarm and the swarm variables to outputDir
+
+        Parameters
+        ----------
+
+        fields : A list of swarm/field variables to be saved.
+        checkpointID : Checkpoint ID
+        time : Model time at checkpoint
+        outputDir : output directory
+
+        """
+
+        if not fields:
+            fields = rcParams["default.outputs"]
+
+        if not checkpointID:
+            checkpointID = self.checkpointID
+
+        if not outputDir:
+            outputDir = self.outputDir
+
+        if uw.rank() == 0 and not os.path.exists(outputDir):
+            os.makedirs(outputDir)
+        uw.barrier()
 
         time = time if time else self.time
         swarm_name = 'swarm-%s.h5' % checkpointID
 
-        sH = self.swarm.save(os.path.join(self.outputDir,
+        sH = self.swarm.save(os.path.join(outputDir,
                              swarm_name),
                              units=u.kilometers,
                              time=time)
 
         filename = "XDMF.swarms." + str(checkpointID).zfill(5) + ".xmf"
-        filename = os.path.join(self.outputDir, filename)
+        filename = os.path.join(outputDir, filename)
 
         # First write the XDMF header
         string = uw.utils._xdmfheader()
@@ -2043,7 +2062,7 @@ class Model(Material):
                 # Save the h5 file and write the field schema for
                 # each one of the field variables
                 obj = getattr(self, field)
-                file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
+                file_prefix = os.path.join(outputDir, field + '-%s' % checkpointID)
                 handle = obj.save('%s.h5' % file_prefix, units=units, time=time)
                 string += uw.utils._swarmvarschema(handle, field)
 
@@ -2055,6 +2074,38 @@ class Model(Material):
             with open(filename, "w") as xdmfFH:
                 xdmfFH.write(string)
         uw.barrier()
+
+    @u.check([None, None, None, "[time]", None])
+    def checkpoint_tracers(self, tracers=None, checkpointID=None,
+                           time=None, outputDir=None):
+        """ Checkpoint the tracers
+
+        Parameters
+        ----------
+
+        tracers : List of tracers to checkpoint.
+        checkpointID : Checkpoint ID.
+        time : Model time at checkpoint.
+        outputDir : output directory
+
+        """
+
+        if not checkpointID:
+            checkpointID = self.checkpointID
+
+        time = time if time else self.time
+
+        if not outputDir:
+            outputDir = self.outputDir
+
+        if uw.rank() == 0 and not os.path.exists(outputDir):
+            os.makedirs(outputDir)
+        uw.barrier()
+
+        # Checkpoint passive tracers and associated tracked fields
+        if tracers:
+            for (_, item) in self.passive_tracers.items():
+                item.save(outputDir, checkpointID, time)
 
     def save(self, filename=None):
         save_model(self, filename)

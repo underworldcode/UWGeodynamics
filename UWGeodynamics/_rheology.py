@@ -64,7 +64,6 @@ class Rheology(ABC):
         self.pressureField = pressureField
         self.strainRateInvariantField = strainRateInvariantField
         self.temperatureField = temperatureField
-        self._viscosity_limiter = viscosityLimiter
         self.stressLimiter = stressLimiter
         self.firstIter = fn.misc.constant(True)
 
@@ -86,7 +85,7 @@ class DruckerPrager(object):
                  cohesionAfterSoftening = None,
                  frictionAfterSoftening = None,
                  minimumViscosity=None,
-                 epsilon1=0.5, epsilon2=1.0):
+                 epsilon1=0.0, epsilon2=0.2):
 
         self.name = name
         self._cohesion = cohesion
@@ -104,11 +103,19 @@ class DruckerPrager(object):
         self.cohesionWeakeningFn = linearCohesionWeakening
         self.frictionWeakeningFn = linearFrictionWeakening
 
+        self.onlinePDF = None
+        self.citation = None
+
     def __getitem__(self, name):
         return self.__dict__[name]
 
     def _repr_html_(self):
         attributes  = OrderedDict()
+        if isinstance(self.citation, str):
+            attributes["Citation"] = self.citation
+            if isinstance(self.onlinePDF, str):
+                if self.onlinePDF.startswith("http"):
+                    attributes["Citation"] = '<a href="{0}">{1}</a>'.format(self.onlinePDF, self.citation)
         attributes["Cohesion"] = self.cohesion
         attributes["Cohesion After Softening"] = self.cohesionAfterSoftening
         attributes["Friction Coefficient"] = self.frictionCoefficient
@@ -120,7 +127,7 @@ class DruckerPrager(object):
         footer = "</table>"
         html = ""
         for key, val in attributes.items():
-            html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
+            html += '<tr><td style="text-align:left;">{0}</td><td style="text-align:left;">{1}</td></tr>'.format(key, val)
 
         return header + html + footer
 
@@ -131,6 +138,7 @@ class DruckerPrager(object):
     @cohesion.setter
     def cohesion(self, value):
         self._cohesion = value
+        self._cohesionAfterSoftening = value
 
     @property
     def cohesionAfterSoftening(self):
@@ -150,6 +158,7 @@ class DruckerPrager(object):
     @frictionCoefficient.setter
     def frictionCoefficient(self, value):
         self._frictionCoefficient = value
+        self._frictionAfterSoftening = value
 
     @property
     def frictionAfterSoftening(self):
@@ -277,7 +286,6 @@ class ViscousCreep(Rheology):
                  name=None,
                  preExponentialFactor=1.0,
                  stressExponent=1.0,
-                 defaultStrainRateInvariant=1.0e-15 / u.seconds,
                  activationVolume=0.0,
                  activationEnergy=0.0,
                  waterFugacity=None,
@@ -288,7 +296,8 @@ class ViscousCreep(Rheology):
                  meltFractionFactor=0.0,
                  f=1.0,
                  BurgersVectorLength=0.5e-9 * u.metre,
-                 mineral="unspecified"):
+                 mineral="unspecified",
+                 OnlinePDF=None):
 
         super(ViscousCreep, self).__init__()
 
@@ -296,7 +305,6 @@ class ViscousCreep(Rheology):
         self.mineral = mineral
         self.preExponentialFactor = preExponentialFactor
         self.stressExponent = stressExponent
-        self.defaultStrainRateInvariant = defaultStrainRateInvariant
         self.activationVolume = activationVolume
         self.activationEnergy = activationEnergy
         self.waterFugacity = waterFugacity
@@ -308,6 +316,9 @@ class ViscousCreep(Rheology):
         self.f = f
         self.constantGas = 8.3144621 * u.joule / u.mole / u.degK
         self.BurgersVectorLength = BurgersVectorLength
+
+        self.onlinePDF = None
+        self.citation = None
 
     def __mul__(self, other):
         self.f = other
@@ -322,13 +333,17 @@ class ViscousCreep(Rheology):
 
     def _repr_html_(self):
         attributes  = OrderedDict()
+        if isinstance(self.citation, str):
+            attributes["Citation"] = self.citation
+            if isinstance(self.onlinePDF, str):
+                if self.onlinePDF.startswith("http"):
+                    attributes["Citation"] = '<a href="{0}">{1}</a>'.format(self.onlinePDF, self.citation)
         attributes["Mineral"] = self.mineral
         attributes["Pre-exponential factor"] = self.preExponentialFactor
         attributes["Stress Exponent"] = self.stressExponent
         attributes["Activation Volume"] = self.activationVolume
         attributes["Activation Energy"] = self.activationEnergy
         attributes["Factor"] = self.f
-        attributes["Default Strain Rate"] = self.defaultStrainRateInvariant
         attributes["Grain Size"] = self.grainSize
         attributes["Grain Size Exponent"] = self.grainSizeExponent
         attributes["Water Fugacity"] = self.waterFugacity
@@ -339,11 +354,11 @@ class ViscousCreep(Rheology):
         footer = "</table>"
         html = """
         <tr>
-          <th colspan="2">Viscous Creep Rheology: {0}</th>
+            <th colspan="2" style="text-align:center;">Viscous Creep Rheology: {0}</th>
         </tr>""".format(self.name)
         for key, val in attributes.items():
             if val is not None:
-                html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
+                html += '<tr><td style="text-align:left;width:20%;">{0}</td><td style="text-align:left;width:80%">{1}</td></tr>'.format(key, val)
 
         return header + html + footer
 
@@ -380,7 +395,7 @@ class ViscousCreep(Rheology):
         d = nd(self.grainSize)
         r = nd(self.waterFugacityExponent)
         fH2O = nd(self.waterFugacity)
-        I = self._get_second_invariant()
+        I = self.strainRateInvariantField
         f = self.f
         F = nd(self.meltFraction)
         alpha = nd(self.meltFractionFactor)
@@ -406,15 +421,7 @@ class ViscousCreep(Rheology):
         if T:
             mu_eff *= fn.math.exp((Q + P * Va) / (R*T*n))
 
-        if self._viscosity_limiter:
-            mu_eff = self._viscosity_limiter.apply(mu_eff)
-
         return mu_eff
-
-    def _get_second_invariant(self):
-        FirstIterCondition = [(self.firstIter,nd(self.defaultStrainRateInvariant)),
-                              (True, self.strainRateInvariantField)]
-        return fn.branching.conditional(FirstIterCondition)
 
 
 class CompositeViscosity(Rheology):
@@ -441,7 +448,6 @@ class CompositeViscosity(Rheology):
             viscosity.pressureField = self.pressureField
             viscosity.strainRateInvariantField = self.strainRateInvariantField
             viscosity.temperature = self.temperatureField
-            viscosity._viscosity_limiter = self._viscosity_limiter
             muEff += 1.0 / viscosity.muEff
 
         return 1.0 / muEff
@@ -487,10 +493,10 @@ class ViscousCreepRegistry(object):
             filename = pkg_resources.resource_filename(__name__, "ressources/ViscousRheologies.json")
 
         with open(filename, "r") as infile:
-            _viscousLaws = json.load(infile)
+            self._viscousLaws = json.load(infile)
 
-        for key in _viscousLaws.keys():
-            coefficients = _viscousLaws[key]["coefficients"]
+        for key in self._viscousLaws.keys():
+            coefficients = self._viscousLaws[key]["coefficients"]
             for key2 in coefficients.keys():
                 value = coefficients[key2]["value"]
                 units = coefficients[key2]["units"]
@@ -500,11 +506,20 @@ class ViscousCreepRegistry(object):
                     coefficients[key2] = value
 
         self._dir = {}
-        for key in _viscousLaws.keys():
-            mineral = _viscousLaws[key]["Mineral"]
+        for key in self._viscousLaws.keys():
+            mineral = self._viscousLaws[key]["Mineral"]
             name = key.replace(" ","_").replace(",","").replace(".","")
-            self._dir[name] = ViscousCreep(name=key, mineral=mineral, **_viscousLaws[key]["coefficients"])
+            self._dir[name] = ViscousCreep(name=key, mineral=mineral, **self._viscousLaws[key]["coefficients"])
 
+            try:
+                self._dir[name].onlinePDF = self._viscousLaws[key]["onlinePDF"]
+            except KeyError:
+                pass
+
+            try:
+                self._dir[name].citation = self._viscousLaws[key]["citation"]
+            except KeyError:
+                pass
 
     def __dir__(self):
         # Make all the rheology available through autocompletion
@@ -541,6 +556,16 @@ class PlasticityRegistry(object):
             name = name.replace(")","").replace("(","")
             self._dir[name] = DruckerPrager(name=key, **_plasticLaws[key]["coefficients"])
 
+            try:
+                self._dir[name].onlinePDF = _plasticLaws[key]["onlinePDF"]
+            except KeyError:
+                pass
+
+            try:
+                self._dir[name].citation = _plasticLaws[key]["citation"]
+            except KeyError:
+                pass
+
     def __dir__(self):
         # Make all the rheology available through autocompletion
         return list(self._dir.keys())
@@ -572,8 +597,6 @@ class Elasticity(Rheology):
         dt_e = nd(self.observation_time)
         # Calculate effective viscosity
         mu_eff = (self.viscosity * dt_e) / (alpha + dt_e)
-        if self._viscosity_limiter:
-            mu_eff = self._viscosity_limiter.apply(mu_eff)
         return mu_eff
 
     @property

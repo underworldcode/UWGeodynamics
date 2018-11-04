@@ -10,7 +10,7 @@ from .scaling import Dimensionalize
 from .scaling import UnitRegistry as u
 from .Underworld_extended import Swarm
 from scipy import spatial
-
+from mpi4py import MPI
 
 class PhaseChange(object):
 
@@ -70,6 +70,7 @@ class PassiveTracers(object):
 
         self.swarm = Swarm(mesh=mesh, particleEscape=particleEscape)
         self.swarm.add_particles_with_coordinates(points)
+
         self.advector = uw.systems.SwarmAdvector(swarm=self.swarm,
                                                  velocityField=velocityField,
                                                  order=2)
@@ -149,6 +150,7 @@ class PassiveTracers(object):
         # Save the swarm
         swarm_fname = self.name + '-%s.h5' % checkpointID
         swarm_fpath = os.path.join(outputDir, swarm_fname)
+
         sH = self.swarm.save(swarm_fpath, units=u.kilometers)
 
         filename = self.name + '-%s.xdmf' % checkpointID
@@ -526,9 +528,9 @@ def sphere_points_tracers(radius, centre=tuple([0., 0., 0.]), npoints=30):
     return x, y, z
 
 
-class Nearest_neigbhors_projector(object):
+class Nearest_neighbors_projector(object):
 
-    def __init__(self, mesh, swarm, swarm_variable, mesh_variable, dtype):
+    def __init__(self, mesh, swarm, swarm_variable, mesh_variable):
         self.mesh = mesh
         self.swarm = swarm
         self.swarm_variable = swarm_variable
@@ -740,7 +742,6 @@ class LogFile(object):
         self.nonLinear_blocks = non_linear_blocks
         return self.nonLinear_blocks
 
-
 def extract_profile(field,
                     line,
                     nsamples=1000):
@@ -752,6 +753,12 @@ def extract_profile(field,
               line.
         nsamples: number of sampling points
     """
+
+    comm = MPI.COMM_WORLD
+    size = comm.Get_size()
+    if size > 1:
+        raise NotImplementedError("""The extract_profile function will not work
+                                  in parallel""")
 
     coords = np.array([(nd(x), nd(y)) for (x, y) in line])
 

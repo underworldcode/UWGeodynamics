@@ -15,7 +15,7 @@ Underworld function at any step of model design.
 The UWGeodynamics is inspired by the [Lithospheric Modelling Recipe (LMR)](https://github.com/LukeMondy/lithospheric_modelling_recipe) originally developed by
 Luke Mondy, Guillaume Duclaux and Patrice Rey for Underworld 1. 
 Some of the naming conventions have been reused to facilitate the transition from LMR.
-The Rheological libraries are also taken from LMR.
+The Rheological libraries is also taken from LMR.
 
 As we think the low-level interface is more flexible, and in so allows for more complex models,
 we strongly encourage users to explore and break the High Level functions.
