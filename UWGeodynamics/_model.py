@@ -381,12 +381,12 @@ class Model(Material):
 
         # Look for step with swarm available
         indices = [int(os.path.splitext(filename)[0].split("-")[-1])
-                   for filename in os.listdir(restartDir) if "swarm" in
+                   for filename in os.listdir(restartDir) if "-" in
                    filename]
         indices.sort()
 
         if not indices:
-            return
+            raise ValueError("Your restart Folder is empty")
 
         if step < 0:
             step = indices[step]
@@ -1536,11 +1536,8 @@ class Model(Material):
         uw.barrier()
 
         if restartStep:
-            try:
-                restartDir = restartDir if restartDir else self.outputDir
-                self.restart(step=restartStep, restartDir=restartDir)
-            except (ValueError, OSError) as e:
-                pass
+            restartDir = restartDir if restartDir else self.outputDir
+            self.restart(step=restartStep, restartDir=restartDir)
 
         stepDone = 0
         time = nd(self.time)
@@ -1569,7 +1566,8 @@ class Model(Material):
             next_checkpoint = time + nd(checkpoint_interval)
 
         # Save initial state
-        self.checkpoint()
+        if checkpoint_interval or checkpoint_times:
+            self.checkpoint()
 
         # Save model to json
         # Comment as it does not work in parallel
@@ -2104,6 +2102,10 @@ class Model(Material):
 
         if not outputDir:
             outputDir = self.outputDir
+
+        if uw.rank() == 0 and not os.path.exists(outputDir):
+            os.mkdir(outputDir)
+        uw.barrier()
 
         # Checkpoint passive tracers and associated tracked fields
         if tracers:
