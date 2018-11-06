@@ -181,7 +181,8 @@ class PassiveTracers(object):
             string += uw.utils._swarmvarschema(handle, field["name"])
 
         # get swarm parameters - serially read from hdf5 file to get size
-        h5f = h5py.File(name=swarm_fpath, mode="r")
+        h5f = h5py.File(name=swarm_fpath, mode="r", driver="mpio",
+                        comm=MPI.COMM_WORLD)
         dset = h5f.get('data')
         if dset == None:
             raise RuntimeError("Can't find 'data' in file '{}'.\n".format(swarm_fname))

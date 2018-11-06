@@ -30,6 +30,7 @@ from .Underworld_extended import SwarmVariable
 from datetime import datetime
 from .version import full_version
 from ._freesurface import FreeSurfaceProcessor
+from mpi4py import MPI
 
 _dim_gravity = {'[length]': 1.0, '[time]': -2.0}
 
@@ -226,7 +227,9 @@ class Model(Material):
         self.pressSmoother = PressureSmoother(self.mesh, self.pressureField)
 
         # Passive Tracers
-        self.passive_tracers = {}
+        # An ordered dict is required to ensure that all threads process
+        # the same swarm at a time.
+        self.passive_tracers = OrderedDict()
 
         # Visualisation
         self._visugrid = visugrid
@@ -398,7 +401,8 @@ class Model(Material):
 
         # Get time from swarm-%.h5 file
         import h5py
-        with h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r") as h5f:
+        with h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r",
+                       driver="mpio", comm=MPI.COMM_WORLD) as h5f:
             self.time = u.Quantity(h5f.attrs.get("time"))
 
         if uw.rank() == 0:
@@ -458,7 +462,7 @@ class Model(Material):
 
             fname = tracer.name + '-%s.h5' % step
             fpath = os.path.join(restartDir, fname)
-            with h5py.File(fpath, "r") as h5f:
+            with h5py.File(fpath, "r", driver="mpio", comm=MPI.COMM_WORLD) as h5f:
                 vertices = h5f["data"].value * u.Quantity(h5f.attrs["units"])
                 vertices = [vertices[:, dim] for dim in range(self.mesh.dim)]
                 obj = PassiveTracers(self.mesh,
@@ -1954,7 +1958,7 @@ class Model(Material):
             outputDir = self.outputDir
 
         if uw.rank() == 0 and not os.path.exists(outputDir):
-            os.makdirs(outputDir)
+            os.makedirs(outputDir)
         uw.barrier()
 
         time = time if time else self.time
@@ -2103,8 +2107,8 @@ class Model(Material):
         uw.barrier()
 
         # Checkpoint passive tracers and associated tracked fields
-        if tracers:
-            for (_, item) in self.passive_tracers.items():
+        if self.passive_tracers:
+            for (dump, item) in self.passive_tracers.items():
                 item.save(outputDir, checkpointID, time)
 
     def save(self, filename=None):
