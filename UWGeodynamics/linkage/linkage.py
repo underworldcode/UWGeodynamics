@@ -112,7 +112,7 @@ class SPM(object):
         if rank == 0 and self.verbose:
             purple = "\033[0;35m"
             endcol = "\033[00m"
-            print(purple+"Processing surface with Badlands"+endcol)
+            print(purple+"Processing surface with Badlands"+endcol, flush=True)
 
         dt_years = Dimensionalize(dt, UnitRegistry.years).magnitude
 
@@ -152,7 +152,8 @@ class SPM(object):
         if rank == 0 and self.verbose:
             purple = "\033[0;35m"
             endcol = "\033[00m"
-            print(purple + "Processing surface with Badlands...Done" + endcol)
+            print(purple + "Processing surface with Badlands...Done" + endcol,
+                  flush=True)
 
         return
 
