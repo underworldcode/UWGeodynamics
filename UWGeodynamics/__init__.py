@@ -1,4 +1,3 @@
-from __future__ import print_function
 import warnings
 
 try:
@@ -537,7 +536,7 @@ def rc_params_from_file(fname, fail_on_error=False, use_default_template=True):
     config.update(config_from_file)
 
     if underworld.rank() == 0:
-        print('loaded rc file %s' % fname)
+        print('loaded rc file %s' % fname, flush=True)
 
     return config
 
