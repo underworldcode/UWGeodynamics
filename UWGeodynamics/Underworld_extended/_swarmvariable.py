@@ -14,7 +14,7 @@ class SwarmVariable(uw.swarm.SwarmVariable):
         super(SwarmVariable, self).__init__(swarm, dataType, count,
                                             writeable=True, **kwargs)
 
-    def load( self, filename, collective ):
+    def load(self, filename, collective=False):
         """
         Load the swarm variable from disk. This must be called *after* the swarm.load().
 

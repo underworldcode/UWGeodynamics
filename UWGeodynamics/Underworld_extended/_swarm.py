@@ -219,7 +219,11 @@ class Swarm(uw.swarm.Swarm):
                         ztmp = self.add_particles_with_coordinates(dset[ chunkStart : chunkEnd ])
                     firstChunk = False
             else:
-                ztmp = self.add_particles_with_coordinates(dset[ chunkStart : chunkEnd ])
+                if units:
+                    vals = nonDimensionalize(dset[ chunkStart : chunkEnd] * units)
+                    ztmp = self.add_particles_with_coordinates(vals)
+                else:
+                    ztmp = self.add_particles_with_coordinates(dset[ chunkStart : chunkEnd ])
             tmp = np.copy(ztmp) # copy because ztmp is 'readonly'
 
             # slice out -neg bits and make the local indices global
