@@ -33,7 +33,7 @@ from ._freesurface import FreeSurfaceProcessor
 from mpi4py import MPI
 
 _dim_gravity = {'[length]': 1.0, '[time]': -2.0}
-
+_dim_time = {'[time]':1.0}
 
 class Model(Material):
     """UWGeodynamic Model Class"""
@@ -425,10 +425,11 @@ class Model(Material):
 
         self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
         self.swarm.load(os.path.join(restartDir, 'swarm-%s.h5' % step))
-        self._initialize()
 
         if uw.rank() == 0:
             print("Swarm loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+
+        self._initialize()
 
         # Reload all the restart fields
         for field in rcParams["restart.fields"]:
@@ -1537,6 +1538,7 @@ class Model(Material):
 
         if restartStep:
             restartDir = restartDir if restartDir else self.outputDir
+            uw.barrier()
             if os.path.exists(restartDir):
                 self.restart(step=restartStep, restartDir=restartDir)
 
@@ -1567,8 +1569,11 @@ class Model(Material):
         if checkpoint_times:
             checkpoint_times = [nd(val) for val in checkpoint_times]
 
-        if checkpoint_interval:
+        if (isinstance(checkpoint_interval, u.Quantity) and
+           checkpoint_interval.dimensionality == _dim_time):
             next_checkpoint = time + nd(checkpoint_interval)
+        else:
+            next_checkpoint = stepDone + checkpoint_interval
 
         # Save initial state
         if checkpoint_interval or checkpoint_times:
@@ -1596,7 +1601,8 @@ class Model(Material):
                     supg_dt *= 2.0 * rcParams["CFL"]
                     self._dt = min(self._dt, supg_dt)
 
-            if checkpoint_interval:
+            if (isinstance(checkpoint_interval, u.Quantity) and
+               checkpoint_interval.dimensionality == _dim_time):
                 self._dt = min(self._dt, next_checkpoint - time)
 
             if duration:
@@ -1630,13 +1636,15 @@ class Model(Material):
             self.time += Dimensionalize(self._dt, units)
             time += self._dt
 
-            if time == next_checkpoint:
-                self.checkpointID += 1
-                # Save Mesh Variables
-                self.checkpoint_fields(checkpointID=self.checkpointID)
-                # Save Tracers
-                self.checkpoint_tracers(checkpointID=self.checkpointID)
-                next_checkpoint += nd(checkpoint_interval)
+            if ((isinstance(checkpoint_interval, u.Quantity) and
+               checkpoint_interval.dimensionality == _dim_time and
+               time == next_checkpoint) or stepDone == next_checkpoint):
+                    self.checkpointID += 1
+                    # Save Mesh Variables
+                    self.checkpoint_fields(checkpointID=self.checkpointID)
+                    # Save Tracers
+                    self.checkpoint_tracers(checkpointID=self.checkpointID)
+                    next_checkpoint += nd(checkpoint_interval)
 
             uw.barrier()
 
