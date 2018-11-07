@@ -377,14 +377,16 @@ class Model(Material):
         if not os.path.exists(restartDir):
             raise ValueError("restartDir must be a path to an existing folder")
 
+        # Do not raise and error idf directory is empty, just run
+        # the model...
+        if not os.listdir(restartDir):
+            return
+
         # Look for step with swarm available
         indices = [int(os.path.splitext(filename)[0].split("-")[-1])
                    for filename in os.listdir(restartDir) if "-" in
                    filename]
         indices.sort()
-
-        if not indices:
-            raise ValueError("Your restart Folder is empty")
 
         if step < 0:
             step = indices[step]
@@ -615,7 +617,7 @@ class Model(Material):
     def set_temperatureBCs(self, left=None, right=None,
                            top=None, bottom=None,
                            front=None, back=None,
-                           indexSets=None, materials=None,
+                           nodeSets=None, materials=None,
                            bottom_material=None, top_material=None,
                            left_material=None, right_material=None,
                            back_material=None, front_material=None):
@@ -647,8 +649,9 @@ class Model(Material):
                 Temperature or flux along the back wall.
                 Flux must be a vector (Fx, Fy, [Fz])
                 Default is 'None'
-            indexSets: (set, temperature)
-                underworld mesh index set and associate temperature
+            nodeSets: (set, temperature)
+                A list, numpy array which contains the indices (global)
+                of the nodes and the associate temperature.
             materials:
                 list of materials for which temperature need to be
                 fixed. [(material, temperature)]
@@ -680,7 +683,7 @@ class Model(Material):
         self.temperatureBCs = TemperatureBCs(self, left=left, right=right,
                                              top=top, bottom=bottom,
                                              back=back, front=front,
-                                             indexSets=indexSets,
+                                             nodeSets=nodeSets,
                                              materials=materials,
                                              bottom_material=bottom_material,
                                              top_material=top_material,
