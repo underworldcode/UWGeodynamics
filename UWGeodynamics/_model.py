@@ -835,7 +835,7 @@ class Model(Material):
             self.meltField.data[:] = InitFn.evaluate(self.swarm)
 
     def set_velocityBCs(self, left=None, right=None, top=None, bottom=None,
-                        front=None, back=None, indexSets=None,
+                        front=None, back=None, nodeSets=None,
                         order_wall_conditions=None):
         """ Set Model kinematic conditions
 
@@ -858,7 +858,7 @@ class Model(Material):
             back:
                 Velocity along the back wall.
                 Default is 'None'
-            indexSets: (set, velocity)
+            nodeSets: (set, velocity)
                 underworld mesh index set and associate velocity
         """
         self._velocityBCs_saved_args = locals()
@@ -867,7 +867,7 @@ class Model(Material):
         self.velocityBCs = VelocityBCs(self, left=left,
                                        right=right, top=top,
                                        bottom=bottom, front=front,
-                                       back=back, indexSets=indexSets,
+                                       back=back, nodeSets=nodeSets,
                                        order_wall_conditions=order_wall_conditions)
         return self.velocityBCs.get_conditions()
 
