@@ -9,9 +9,6 @@ rcParams = {
     "output.directory": ["outputs", validate_path],
     "element.type" : ["Q1/dQ0", validate_string],
 
-    "minimum.viscosity": [1e19 * u.pascal * u.second, validate_quantity],
-    "maximum.viscosity": [1e25 * u.pascal * u.second, validate_quantity],
-
     "swarm.variables" : [["materialField",
                           "plasticStrain",
                           "viscosityField",

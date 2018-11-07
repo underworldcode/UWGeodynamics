@@ -195,10 +195,6 @@ class Model(Material):
         self.step = 0
         self._dt = None
 
-        # viscosity limiter
-        self.minViscosity = rcParams["minimum.viscosity"]
-        self.maxViscosity = rcParams["maximum.viscosity"]
-
         self._defaultMaterial = self.index
         self.materials = list(materials) if materials is not None else list()
         self.materials.append(self)
@@ -1537,11 +1533,12 @@ class Model(Material):
 
         if restartStep:
             restartDir = restartDir if restartDir else self.outputDir
-            uw.barrier()
             if os.path.exists(restartDir):
                 self.restart(step=restartStep, restartDir=restartDir)
+            uw.barrier()
 
-        if uw.rank() == 0 and not os.path.exists(self.outputDir):
+        if ((checkpoint_interval or checkpoint_times) and
+            uw.rank() == 0 and not os.path.exists(self.outputDir)):
             os.makedirs(self.outputDir)
         uw.barrier()
 
@@ -1571,7 +1568,7 @@ class Model(Material):
         if (isinstance(checkpoint_interval, u.Quantity) and
            checkpoint_interval.dimensionality == _dim_time):
             next_checkpoint = time + nd(checkpoint_interval)
-        else:
+        elif checkpoint_interval:
             next_checkpoint = stepDone + checkpoint_interval
 
         # Save initial state

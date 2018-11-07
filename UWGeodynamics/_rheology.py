@@ -32,6 +32,7 @@ def linearFrictionWeakening(cumulativeTotalStrain, FrictionCoef, FrictionCoefSw,
 
 
 class ViscosityLimiter(object):
+    """ Viscosity Limiter Class """
 
     def __init__(self, minViscosity, maxViscosity):
 
@@ -39,13 +40,16 @@ class ViscosityLimiter(object):
         self.maxViscosity = maxViscosity
 
     def apply(self, viscosityField):
-        maxBound = fn.misc.min(viscosityField, nd(self.maxViscosity))
-        minMaxBound = fn.misc.max(maxBound, nd(self.minViscosity))
-        return minMaxBound
+        if self.maxViscosity and self.minViscosity:
+            maxBound = fn.misc.min(viscosityField, nd(self.maxViscosity))
+            minMaxBound = fn.misc.max(maxBound, nd(self.minViscosity))
+            return minMaxBound
+        else:
+            return viscosityField
 
 
 class StressLimiter(object):
-
+    """ Stress Limiter Class """
     def __init__(self, maxStress):
         # Add unit check
         self.maxStress = maxStress
@@ -281,6 +285,7 @@ class ConstantViscosity(Rheology):
 
 
 class ViscousCreep(Rheology):
+    """ Viscous Creep Class """
 
     def __init__(self,
                  name=None,
@@ -296,8 +301,30 @@ class ViscousCreep(Rheology):
                  meltFractionFactor=0.0,
                  f=1.0,
                  BurgersVectorLength=0.5e-9 * u.metre,
-                 mineral="unspecified",
-                 OnlinePDF=None):
+                 mineral="unspecified"):
+        """ Viscous Creep Rheology 
+
+        Parameters
+        ----------
+
+        name : Name of the Viscous Law
+        preExponentialFactor : 
+        stressExponent :
+        activationVolume :
+        activationEnergy :
+        waterFugacity :
+        grainSize :
+        meltFraction :
+        grainSizeExponent :
+        waterFugacityExponent :
+        meltFractionFactor :
+        f :
+        BurgersVectorLength :
+        mineral :
+
+        Returns
+        -------
+        """
 
         super(ViscousCreep, self).__init__()
 
@@ -332,12 +359,13 @@ class ViscousCreep(Rheology):
         return self.__dict__[name]
 
     def _repr_html_(self):
-        attributes  = OrderedDict()
+        attributes = OrderedDict()
         if isinstance(self.citation, str):
             attributes["Citation"] = self.citation
             if isinstance(self.onlinePDF, str):
                 if self.onlinePDF.startswith("http"):
-                    attributes["Citation"] = '<a href="{0}">{1}</a>'.format(self.onlinePDF, self.citation)
+                    attributes["Citation"] = '<a href="{0}">{1}</a>'.format(
+                        self.onlinePDF, self.citation)
         attributes["Mineral"] = self.mineral
         attributes["Pre-exponential factor"] = self.preExponentialFactor
         attributes["Stress Exponent"] = self.stressExponent
@@ -405,21 +433,21 @@ class ViscousCreep(Rheology):
         mu_eff = f * 0.5 * A**(-1.0 / n)
 
         if np.abs(n - 1.0) > 1e-5:
-            mu_eff *= I**((1.0-n)/n)
+            mu_eff *= I**((1.0 - n) / n)
 
         # Grain size dependency
         if p and d:
-            mu_eff *= (d / b)**(p/n)
+            mu_eff *= (d / b)**(p / n)
 
         # Water dependency
         if r and fH2O:
-            mu_eff *= fH2O**(-r/n)
+            mu_eff *= fH2O**(-r / n)
 
         if F:
-            mu_eff *= fn.math.exp(-1.0*alpha*F/n)
+            mu_eff *= fn.math.exp(-1.0 * alpha * F / n)
 
         if T:
-            mu_eff *= fn.math.exp((Q + P * Va) / (R*T*n))
+            mu_eff *= fn.math.exp((Q + P * Va) / (R * T * n))
 
         return mu_eff
 
@@ -455,11 +483,10 @@ class CompositeViscosity(Rheology):
 
 class _TemperatureAndDepthDependentViscosityEncoder(JSONEncoder):
 
-    attributes = [
-            "eta0",
-            "beta",
-            "gamma",
-            "reference"]
+    attributes = ["eta0",
+                  "beta",
+                  "gamma",
+                  "reference"]
 
     def default(self, obj):
         d = {}
@@ -472,7 +499,7 @@ class _TemperatureAndDepthDependentViscosityEncoder(JSONEncoder):
 
 class TemperatureAndDepthDependentViscosity(Rheology):
 
-    def __init__(self, eta0, beta,  gamma, reference, temperatureField=None):
+    def __init__(self, eta0, beta, gamma, reference, temperatureField=None):
 
         self._eta0 = nd(eta0)
         self._gamma = gamma
@@ -508,7 +535,7 @@ class ViscousCreepRegistry(object):
         self._dir = {}
         for key in self._viscousLaws.keys():
             mineral = self._viscousLaws[key]["Mineral"]
-            name = key.replace(" ","_").replace(",","").replace(".","")
+            name = key.replace(" ", "_").replace(",", "").replace(".", "")
             self._dir[name] = ViscousCreep(name=key, mineral=mineral, **self._viscousLaws[key]["coefficients"])
 
             try:
@@ -535,7 +562,8 @@ class PlasticityRegistry(object):
 
         if not filename:
             import pkg_resources
-            filename = pkg_resources.resource_filename(__name__, "ressources/PlasticRheologies.json")
+            filename = pkg_resources.resource_filename(
+                __name__, "ressources/PlasticRheologies.json")
 
         with open(filename, "r") as infile:
             _plasticLaws = json.load(infile)
@@ -552,8 +580,8 @@ class PlasticityRegistry(object):
 
         self._dir = {}
         for key in _plasticLaws.keys():
-            name = key.replace(" ","_").replace(",","").replace(".","")
-            name = name.replace(")","").replace("(","")
+            name = key.replace(" ", "_").replace(",", "").replace(".", "")
+            name = name.replace(")", "").replace("(", "")
             self._dir[name] = DruckerPrager(name=key, **_plasticLaws[key]["coefficients"])
 
             try:
@@ -612,6 +640,6 @@ class Elasticity(Rheology):
             raise ValueError("Can not find previous stress field")
 
         elasticStressFn = self.viscosity / (nd(self.shear_modulus) *
-                                     nd(self.observation_time))
+                                            nd(self.observation_time))
         elasticStressFn *= self.previousStress
         return elasticStressFn
