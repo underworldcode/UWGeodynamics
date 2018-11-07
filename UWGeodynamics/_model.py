@@ -377,14 +377,16 @@ class Model(Material):
         if not os.path.exists(restartDir):
             raise ValueError("restartDir must be a path to an existing folder")
 
+        # Do not raise and error idf directory is empty, just run
+        # the model...
+        if not os.listdir(restartDir):
+            return
+
         # Look for step with swarm available
         indices = [int(os.path.splitext(filename)[0].split("-")[-1])
                    for filename in os.listdir(restartDir) if "-" in
                    filename]
         indices.sort()
-
-        if not indices:
-            raise ValueError("Your restart Folder is empty")
 
         if step < 0:
             step = indices[step]
@@ -649,6 +651,7 @@ class Model(Material):
                 Default is 'None'
             indexSets: (set, temperature)
                 underworld mesh index set and associate temperature
+                The indexSet is build using global indices.
             materials:
                 list of materials for which temperature need to be
                 fixed. [(material, temperature)]
