@@ -7,7 +7,7 @@ from .scaling import UnitRegistry as u
 class TemperatureBCs(object):
 
     def __init__(self, Model, left=None, right=None, top=None, bottom=None,
-                 front=None, back=None, indexSets=None, materials=None,
+                 front=None, back=None, nodeSets=None, materials=None,
                  bottom_material=None, top_material=None, left_material=None,
                  right_material=None, back_material=None, front_material=None):
 
@@ -18,7 +18,7 @@ class TemperatureBCs(object):
         self.bottom = bottom
         self.front = front
         self.back = back
-        self.indexSets = indexSets
+        self.nodeSets = nodeSets
         self.materials = materials
         self.bottom_material = bottom_material
         self.top_material = top_material
@@ -151,10 +151,10 @@ class TemperatureBCs(object):
                 Model._heatFlux.data[Model._front_wall.data] = (
                     nd(heat_flow))
 
-        if self.indexSets:
-            for elem in self.indexSets:
-                indexSet, temp = elem
-                isThere = np.in1d(Model.mesh.data_nodegId, list(indexSet))
+        if self.nodeSets:
+            for elem in self.nodeSets:
+                nodeSet, temp = elem
+                isThere = np.in1d(Model.mesh.data_nodegId, list(nodeSet))
                 if isThere.any():
                     local_indices = np.arange(Model.mesh.nodesDomain)[isThere]
                     indexSet = uw.mesh.FeMesh_IndexSet(

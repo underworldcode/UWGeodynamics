@@ -24,7 +24,7 @@ class VelocityBCs(object):
     """ Class to define the mechanical boundary conditions """
 
     def __init__(self, Model, left=None, right=None, top=None, bottom=None,
-                 front=None, back=None, indexSets=tuple(),
+                 front=None, back=None, nodeSets=tuple(),
                  order_wall_conditions=None):
         """ Defines mechanical boundary conditions
 
@@ -88,7 +88,7 @@ class VelocityBCs(object):
         self.bottom = bottom
         self.back = back
         self.front = front
-        self.indexSets = indexSets
+        self.nodeSets = nodeSets
 
         self.dirichlet_indices = []
         self.neumann_indices = []
@@ -311,8 +311,8 @@ class VelocityBCs(object):
             (condition, nodes) = self._wall_indexSets[set_]
             self.apply_condition_nodes(condition, nodes)
 
-        if self.indexSets:
-            for (condition, nodes) in self.indexSets:
+        if self.nodeSets:
+            for (condition, nodes) in self.nodeSets:
                 self.apply_condition_nodes(condition, nodes)
 
         conditions = []
