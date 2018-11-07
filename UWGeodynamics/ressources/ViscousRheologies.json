@@ -78,7 +78,7 @@
                 "value": 2.3e-05
             },
             "grainSize": {
-                "units": "micrometer",
+                "units": "None",
                 "value": 10000
             },
             "grainSizeExponent": {
@@ -94,7 +94,7 @@
                 "value": 3.5
             },
             "waterFugacity": {
-                "units": "megapascal",
+                "units": "None",
                 "value": 1000
             },
             "waterFugacityExponent": {
@@ -295,7 +295,7 @@
             },
             "preExponentialFactor": {
                 "units": "1 / megapascal ** 3.2 / second",
-                "value": 1e-2
+                "value": 10e-2
             },
             "stressExponent": {
                 "units": "None",
