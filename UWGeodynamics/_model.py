@@ -683,7 +683,7 @@ class Model(Material):
         self.temperatureBCs = TemperatureBCs(self, left=left, right=right,
                                              top=top, bottom=bottom,
                                              back=back, front=front,
-                                             nodeSets=indexSets,
+                                             nodeSets=nodeSets,
                                              materials=materials,
                                              bottom_material=bottom_material,
                                              top_material=top_material,
