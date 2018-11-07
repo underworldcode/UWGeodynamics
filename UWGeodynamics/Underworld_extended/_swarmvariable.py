@@ -14,7 +14,7 @@ class SwarmVariable(uw.swarm.SwarmVariable):
         super(SwarmVariable, self).__init__(swarm, dataType, count,
                                             writeable=True, **kwargs)
 
-    def load( self, filename ):
+    def load(self, filename, collective=False):
         """
         Load the swarm variable from disk. This must be called *after* the swarm.load().
 
@@ -83,7 +83,7 @@ class SwarmVariable(uw.swarm.SwarmVariable):
                 guy += 1
             # copy contiguous chunk if found.. note that we are copying 'plus 1' items
             if guy > start_guy:
-                if not done_collective:
+                if collective and not done_collective:
                     with dset.collective:
                         self.data[start_guy:guy+1] = dset[gIds[start_guy]:gIds[guy]+1]
                         done_collective = True
@@ -97,7 +97,7 @@ class SwarmVariable(uw.swarm.SwarmVariable):
                 guy += 1
             # copy non-contiguous items (if found) using index array slice
             if guy > start_guy:
-                if not done_collective:
+                if collective and not done_collective:
                     with dset.collective:
                         self.data[start_guy:guy,:] = dset[gIds[start_guy:guy],:]
                         done_collective = True
@@ -106,9 +106,9 @@ class SwarmVariable(uw.swarm.SwarmVariable):
 
         # if we haven't entered a collective call, do so now to
         # avoid deadlock. we just do an empty read/write.
-        if not done_collective:
+        if collective and not done_collective:
             with dset.collective:
-                self.data[0:0,:] = dset[gIds[0:0],:]
+                self.data[0:0, :] = dset[0:0, :]
 
         # get units
         try:
@@ -121,12 +121,12 @@ class SwarmVariable(uw.swarm.SwarmVariable):
         else:
             units = None
 
-        h5f.close();
+        h5f.close()
 
         if units:
             self.data[:] = nonDimensionalize(self.data * units)
 
-    def save( self, filename, units=None, time=None):
+    def save( self, filename, collective=False, units=None, time=None):
         """
         Save the swarm variable to disk.
 
@@ -224,8 +224,11 @@ class SwarmVariable(uw.swarm.SwarmVariable):
 
             h5f.attrs["git commit"] = __git_revision__
 
-            with dset.collective:
-                dset[offset:offset+swarm.particleLocalCount] = self.data[:] * fact
+            if collective:
+                with dset.collective:
+                    dset[offset:offset+swarm.particleLocalCount] = self.data[:] * fact
+            else:
+                dset[offset:offset + swarm.particleLocalCount] = self.data[:] * fact
 
         # let's reopen in serial to write the attrib.
         # not sure if this really is necessary.

@@ -10,7 +10,7 @@ from .scaling import Dimensionalize
 from .scaling import UnitRegistry as u
 from .Underworld_extended import Swarm
 from scipy import spatial
-
+from mpi4py import MPI
 
 class PhaseChange(object):
 
@@ -70,6 +70,7 @@ class PassiveTracers(object):
 
         self.swarm = Swarm(mesh=mesh, particleEscape=particleEscape)
         self.swarm.add_particles_with_coordinates(points)
+
         self.advector = uw.systems.SwarmAdvector(swarm=self.swarm,
                                                  velocityField=velocityField,
                                                  order=2)
@@ -149,6 +150,7 @@ class PassiveTracers(object):
         # Save the swarm
         swarm_fname = self.name + '-%s.h5' % checkpointID
         swarm_fpath = os.path.join(outputDir, swarm_fname)
+
         sH = self.swarm.save(swarm_fpath, units=u.kilometers)
 
         filename = self.name + '-%s.xdmf' % checkpointID
@@ -179,7 +181,8 @@ class PassiveTracers(object):
             string += uw.utils._swarmvarschema(handle, field["name"])
 
         # get swarm parameters - serially read from hdf5 file to get size
-        h5f = h5py.File(name=swarm_fpath, mode="r")
+        h5f = h5py.File(name=swarm_fpath, mode="r", driver="mpio",
+                        comm=MPI.COMM_WORLD)
         dset = h5f.get('data')
         if dset == None:
             raise RuntimeError("Can't find 'data' in file '{}'.\n".format(swarm_fname))
@@ -740,7 +743,6 @@ class LogFile(object):
         self.nonLinear_blocks = non_linear_blocks
         return self.nonLinear_blocks
 
-
 def extract_profile(field,
                     line,
                     nsamples=1000):
@@ -752,6 +754,12 @@ def extract_profile(field,
               line.
         nsamples: number of sampling points
     """
+
+    comm = MPI.COMM_WORLD
+    size = comm.Get_size()
+    if size > 1:
+        raise NotImplementedError("""The extract_profile function will not work
+                                  in parallel""")
 
     coords = np.array([(nd(x), nd(y)) for (x, y) in line])
 

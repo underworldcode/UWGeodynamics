@@ -1,4 +1,3 @@
-from __future__ import print_function
 import os
 import json
 from . import json_encoder
@@ -30,9 +29,10 @@ from .Underworld_extended import SwarmVariable
 from datetime import datetime
 from .version import full_version
 from ._freesurface import FreeSurfaceProcessor
+from mpi4py import MPI
 
 _dim_gravity = {'[length]': 1.0, '[time]': -2.0}
-
+_dim_time = {'[time]':1.0}
 
 class Model(Material):
     """The central element or "object" of the UWGeodynamics module is the Model object.
@@ -239,7 +239,9 @@ class Model(Material):
         self.pressSmoother = PressureSmoother(self.mesh, self.pressureField)
 
         # Passive Tracers
-        self.passive_tracers = {}
+        # An ordered dict is required to ensure that all threads process
+        # the same swarm at a time.
+        self.passive_tracers = OrderedDict()
 
         # Visualisation
         self._visugrid = visugrid
@@ -381,19 +383,21 @@ class Model(Material):
         This function returns None
 
         """
+
         if not isinstance(step, int):
             raise ValueError("step must be an int or a bool")
 
         if not os.path.exists(restartDir):
             raise ValueError("restartDir must be a path to an existing folder")
 
+        # Look for step with swarm available
         indices = [int(os.path.splitext(filename)[0].split("-")[-1])
                    for filename in os.listdir(restartDir) if "-" in
                    filename]
         indices.sort()
 
         if not indices:
-            return
+            raise ValueError("Your restart Folder is empty")
 
         if step < 0:
             step = indices[step]
@@ -405,14 +409,15 @@ class Model(Material):
 
         # Get time from swarm-%.h5 file
         import h5py
-        with h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r") as h5f:
+        with h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r",
+                       driver="mpio", comm=MPI.COMM_WORLD) as h5f:
             self.time = u.Quantity(h5f.attrs.get("time"))
 
         if uw.rank() == 0:
-            print(80 * "=" + "\n")
-            print("Restarting Model from Step {0} at Time = {1}\n".format(step, self.time))
-            print('(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
-            print(80 * "=" + "\n")
+            print(80 * "=" + "\n", flush=True)
+            print("Restarting Model from Step {0} at Time = {1}\n".format(step, self.time), flush=True)
+            print('(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
+            print(80 * "=" + "\n", flush=True)
 
         self.checkpointID = step
 
@@ -424,14 +429,15 @@ class Model(Material):
             self.mesh.load(os.path.join(restartDir, "mesh.h5"))
 
         if uw.rank() == 0:
-            print("Mesh loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+            print("Mesh loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
 
         self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
         self.swarm.load(os.path.join(restartDir, 'swarm-%s.h5' % step))
-        self._initialize()
 
         if uw.rank() == 0:
-            print("Swarm loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+            print("Swarm loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
+
+        self._initialize()
 
         # Reload all the restart fields
         for field in rcParams["restart.fields"]:
@@ -440,10 +446,10 @@ class Model(Material):
             obj = getattr(self, field)
             path = os.path.join(restartDir, field + "-%s.h5" % step)
             if uw.rank() == 0:
-                print("Reloading field {0} from {1}".format(field, path))
+                print("Reloading field {0} from {1}".format(field, path), flush=True)
             obj.load(str(path))
             if uw.rank() == 0:
-                print("{0} loaded".format(field) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+                print("{0} loaded".format(field) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
 
         # Temperature is a special case...
         path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
@@ -452,20 +458,20 @@ class Model(Material):
                 self.temperature = True
             obj = getattr(self, "temperature")
             if uw.rank() == 0:
-                print("Reloading field {0} from {1}".format("temperature", path))
+                print("Reloading field {0} from {1}".format("temperature", path), flush=True)
             obj.load(str(path))
             if uw.rank() == 0:
-                print("Temperature loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+                print("Temperature loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
 
         # Reload Passive Tracers
         for key, tracer in self.passive_tracers.items():
 
             if uw.rank() == 0:
-                print("Reloading {0} passive tracers".format(tracer.name))
+                print("Reloading {0} passive tracers".format(tracer.name), flush=True)
 
             fname = tracer.name + '-%s.h5' % step
             fpath = os.path.join(restartDir, fname)
-            with h5py.File(fpath, "r") as h5f:
+            with h5py.File(fpath, "r", driver="mpio", comm=MPI.COMM_WORLD) as h5f:
                 vertices = h5f["data"].value * u.Quantity(h5f.attrs["units"])
                 vertices = [vertices[:, dim] for dim in range(self.mesh.dim)]
                 obj = PassiveTracers(self.mesh,
@@ -478,7 +484,7 @@ class Model(Material):
             setattr(self, attr_name, obj)
             self.passive_tracers[key] = obj
             if uw.rank() == 0:
-                print("{0} loaded".format(tracer.name) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+                print("{0} loaded".format(tracer.name) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
 
         if isinstance(self.surfaceProcesses,
                       (surfaceProcesses.SedimentationThreshold,
@@ -523,7 +529,7 @@ class Model(Material):
                 restartFolder=restartFolder,
                 restartStep=restartStep)
             if uw.rank() == 0:
-                print("Badlands restarted" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+                print("Badlands restarted" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
 
         return
 
@@ -1501,8 +1507,9 @@ class Model(Material):
             self.get_lithostatic_pressureField()
         return
 
+    @u.check([None, "[time]", "[time]", None, None, None, "[time]", None, None])
     def run_for(self, duration=None, checkpoint_interval=None, nstep=None,
-                timeCheckpoints=None, swarm_checkpoint=None, dt=None,
+                checkpoint_times=None, restart_checkpoint=1, dt=None,
                 restartStep=-1, restartDir=None):
         """Run the Model.
 
@@ -1514,10 +1521,13 @@ class Model(Material):
             Checkpoint interval time.
         nstep :
             Number of steps to run.`
-        timeCheckpoints :
-            Specific Checkpoint times in units of time
-        swarm_checkpoint :
-            Checkpoint times
+        checkpoint_times :
+            Specify a list of additional Checkpoint times ([Time])
+        restart_checkpoint :
+            This parameter specify how often the swarm and swarm variables
+            are checkpointed. A value of 1 means that the swarm and its
+            associated variables are saved at every checkpoint.
+            A value of 2 results in saving only every second checkpoint.
         dt :
             Specify the time interval (dt) to be used in
             units of time.
@@ -1528,18 +1538,17 @@ class Model(Material):
 
         """
         if uw.rank() == 0:
-            print("""Running with UWGeodynamics version {0}""".format(full_version))
-
-        if uw.rank() == 0 and not os.path.exists(self.outputDir):
-            os.mkdir(self.outputDir)
-        uw.barrier()
+            print("""Running with UWGeodynamics version {0}""".format(full_version), flush=True)
 
         if restartStep:
-            try:
-                restartDir = restartDir if restartDir else self.outputDir
+            restartDir = restartDir if restartDir else self.outputDir
+            uw.barrier()
+            if os.path.exists(restartDir):
                 self.restart(step=restartStep, restartDir=restartDir)
-            except (ValueError, OSError) as e:
-                pass
+
+        if uw.rank() == 0 and not os.path.exists(self.outputDir):
+            os.makedirs(self.outputDir)
+        uw.barrier()
 
         stepDone = 0
         time = nd(self.time)
@@ -1561,14 +1570,17 @@ class Model(Material):
 
         next_checkpoint = None
 
-        if timeCheckpoints:
-            timeCheckpoints = [nd(val) for val in timeCheckpoints]
+        if checkpoint_times:
+            checkpoint_times = [nd(val) for val in checkpoint_times]
 
-        if checkpoint_interval:
+        if (isinstance(checkpoint_interval, u.Quantity) and
+           checkpoint_interval.dimensionality == _dim_time):
             next_checkpoint = time + nd(checkpoint_interval)
+        else:
+            next_checkpoint = stepDone + checkpoint_interval
 
-        if checkpoint_interval or timeCheckpoints:
-            # Check point initial set up
+        # Save initial state
+        if checkpoint_interval or checkpoint_times:
             self.checkpoint()
 
         # Save model to json
@@ -1593,7 +1605,8 @@ class Model(Material):
                     supg_dt *= 2.0 * rcParams["CFL"]
                     self._dt = min(self._dt, supg_dt)
 
-            if checkpoint_interval:
+            if (isinstance(checkpoint_interval, u.Quantity) and
+               checkpoint_interval.dimensionality == _dim_time):
                 self._dt = min(self._dt, next_checkpoint - time)
 
             if duration:
@@ -1601,6 +1614,11 @@ class Model(Material):
 
             if user_dt:
                 self._dt = min(self._dt, user_dt)
+
+            if checkpoint_times:
+                tcheck = [val for val in (checkpoint_times - time) if val >= 0]
+                tcheck.sort()
+                self._dt = min(self._dt, tcheck[0])
 
             dte = []
             for material in self.materials:
@@ -1622,17 +1640,30 @@ class Model(Material):
             self.time += Dimensionalize(self._dt, units)
             time += self._dt
 
-            if time == next_checkpoint:
-                self.checkpointID += 1
-                self.checkpoint()
-                next_checkpoint += nd(checkpoint_interval)
+            if ((isinstance(checkpoint_interval, u.Quantity) and
+               checkpoint_interval.dimensionality == _dim_time and
+               time == next_checkpoint) or stepDone == next_checkpoint):
+                    self.checkpointID += 1
+                    # Save Mesh Variables
+                    self.checkpoint_fields(checkpointID=self.checkpointID)
+                    # Save Tracers
+                    self.checkpoint_tracers(checkpointID=self.checkpointID)
+                    next_checkpoint += nd(checkpoint_interval)
+
+            uw.barrier()
+
+            # if it's time to checkpoint the swarm, do so.
+            if self.checkpointID % restart_checkpoint == 0:
+                self.checkpoint_swarms(checkpointID=self.checkpointID)
+
+            uw.barrier()
 
             if checkpoint_interval or self.step % 1 == 0 or nstep:
                 if uw.rank() == 0:
                     print("Step:" + str(stepDone) + " Model Time: ", str(self.time.to(units)),
                           'dt:', str(Dimensionalize(self._dt, units)),
-                          # 'vrms:', str(self.velocity_rms()),
-                          '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+                          #'vrms:', str(self.velocity_rms()),
+                          '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
 
             self.postSolveHook()
 
@@ -1773,10 +1804,11 @@ class Model(Material):
             centroids = list(centroids)
 
         if name in self.passive_tracers.keys():
-            print("{0} tracers exists already".format(name))
+            print("{0} tracers exists already".format(name), flush=True)
             return self.passive_tracers[name]
 
         if not centroids:
+
             tracers = PassiveTracers(self.mesh,
                                      self.velocityField,
                                      name=name,
@@ -1878,23 +1910,9 @@ class Model(Material):
                 checkpoint ID.
 
         """
-        if not variables:
-            variables = rcParams["default.outputs"]
-
-        if not checkpointID:
-            checkpointID = self.checkpointID
-
-        if uw.rank() == 0 and not os.path.exists(self.outputDir):
-            os.mkdir(self.outputDir)
-        uw.barrier()
-
-        self._save_fields(variables, checkpointID)
-        self._save_swarms(variables, checkpointID)
-
-        # Checkpoint passive tracers and associated tracked fields
-        if self.passive_tracers:
-            for (_, tracers) in self.passive_tracers.items():
-                tracers.save(self.outputDir, checkpointID, self.time)
+        self.checkpoint_fields(variables, checkpointID)
+        self.checkpoint_swarms(variables, checkpointID)
+        self.checkpoint_tracers(checkpointID=checkpointID)
 
     def add_visugrid(self, elementRes, minCoord=None, maxCoord=None):
         """Add a tracking grid to the Model.
@@ -1923,28 +1941,53 @@ class Model(Material):
         self._visugrid = Visugrid(self, elementRes, minCoord, maxCoord,
                                   self.velocityField)
 
-    def _save_fields(self, fields, checkpointID, time=None):
+    def checkpoint_fields(self, fields=None, checkpointID=None, time=None,
+                          outputDir=None):
+        """ Save the mesh and the mesh variables to outputDir
+
+        Parameters
+        ----------
+
+        fields : A list of mesh/field variables to be saved.
+        checkpointID : Checkpoint ID
+        time : Model time at checkpoint
+        outputDir : output directory
+
+        """
+
+        if not fields:
+            fields = rcParams["default.outputs"]
+
+        if not checkpointID:
+            checkpointID = self.checkpointID
+
+        if not outputDir:
+            outputDir = self.outputDir
+
+        if uw.rank() == 0 and not os.path.exists(outputDir):
+            os.makedirs(outputDir)
+        uw.barrier()
 
         time = time if time else self.time
 
         if self._advector or self._freeSurface:
             mesh_name = 'mesh-%s' % checkpointID
-            mesh_prefix = os.path.join(self.outputDir, mesh_name)
+            mesh_prefix = os.path.join(outputDir, mesh_name)
             mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
                                 time=time)
         elif not self._mesh_saved:
             mesh_name = 'mesh'
-            mesh_prefix = os.path.join(self.outputDir, mesh_name)
+            mesh_prefix = os.path.join(outputDir, mesh_name)
             mH = self.mesh.save('%s.h5' % mesh_prefix, units=u.kilometers,
                                 time=time)
             self._mesh_saved = True
         else:
             mesh_name = 'mesh'
-            mesh_prefix = os.path.join(self.outputDir, mesh_name)
+            mesh_prefix = os.path.join(outputDir, mesh_name)
             mH = uw.utils.SavedFileData(self.mesh, '%s.h5' % mesh_prefix)
 
         filename = "XDMF.fields." + str(checkpointID).zfill(5) + ".xmf"
-        filename = os.path.join(self.outputDir, filename)
+        filename = os.path.join(outputDir, filename)
 
         # First write the XDMF header
         string = uw.utils._xdmfheader()
@@ -1963,7 +2006,7 @@ class Model(Material):
                 # Save the h5 file and write the field schema for
                 # each one of the field variables
                 obj = getattr(self, field)
-                file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
+                file_prefix = os.path.join(outputDir, field + '-%s' % checkpointID)
                 handle = obj.save('%s.h5' % file_prefix, units=units,
                                   time=time)
                 string += uw.utils._fieldschema(handle, field)
@@ -1977,18 +2020,44 @@ class Model(Material):
                 xdmfFH.write(string)
         uw.barrier()
 
-    def _save_swarms(self, fields, checkpointID, time=None):
+    def checkpoint_swarms(self, fields=None, checkpointID=None, time=None,
+                          outputDir=None):
+        """ Save the swarm and the swarm variables to outputDir
+
+        Parameters
+        ----------
+
+        fields : A list of swarm/field variables to be saved.
+        checkpointID : Checkpoint ID
+        time : Model time at checkpoint
+        outputDir : output directory
+
+        """
+
+        if not fields:
+            fields = rcParams["default.outputs"]
+
+        if not checkpointID:
+            checkpointID = self.checkpointID
+
+        if not outputDir:
+            outputDir = self.outputDir
+
+        if uw.rank() == 0 and not os.path.exists(outputDir):
+            os.makedirs(outputDir)
+        uw.barrier()
 
         time = time if time else self.time
         swarm_name = 'swarm-%s.h5' % checkpointID
 
-        sH = self.swarm.save(os.path.join(self.outputDir,
-                                          swarm_name),
+
+        sH = self.swarm.save(os.path.join(outputDir,
+                             swarm_name),
                              units=u.kilometers,
                              time=time)
 
         filename = "XDMF.swarms." + str(checkpointID).zfill(5) + ".xmf"
-        filename = os.path.join(self.outputDir, filename)
+        filename = os.path.join(outputDir, filename)
 
         # First write the XDMF header
         string = uw.utils._xdmfheader()
@@ -2005,7 +2074,7 @@ class Model(Material):
                 # Save the h5 file and write the field schema for
                 # each one of the field variables
                 obj = getattr(self, field)
-                file_prefix = os.path.join(self.outputDir, field + '-%s' % checkpointID)
+                file_prefix = os.path.join(outputDir, field + '-%s' % checkpointID)
                 handle = obj.save('%s.h5' % file_prefix, units=units, time=time)
                 string += uw.utils._swarmvarschema(handle, field)
 
@@ -2017,6 +2086,38 @@ class Model(Material):
             with open(filename, "w") as xdmfFH:
                 xdmfFH.write(string)
         uw.barrier()
+
+    @u.check([None, None, None, "[time]", None])
+    def checkpoint_tracers(self, tracers=None, checkpointID=None,
+                           time=None, outputDir=None):
+        """ Checkpoint the tracers
+
+        Parameters
+        ----------
+
+        tracers : List of tracers to checkpoint.
+        checkpointID : Checkpoint ID.
+        time : Model time at checkpoint.
+        outputDir : output directory
+
+        """
+
+        if not checkpointID:
+            checkpointID = self.checkpointID
+
+        time = time if time else self.time
+
+        if not outputDir:
+            outputDir = self.outputDir
+
+        if uw.rank() == 0 and not os.path.exists(outputDir):
+            os.makedirs(outputDir)
+        uw.barrier()
+
+        # Checkpoint passive tracers and associated tracked fields
+        if self.passive_tracers:
+            for (dump, item) in self.passive_tracers.items():
+                item.save(outputDir, checkpointID, time)
 
     def save(self, filename=None):
         """Save a JSON of the Model parameters and properties.

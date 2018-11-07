@@ -55,7 +55,7 @@ class Swarm(uw.swarm.Swarm):
         """
         return svar.SwarmVariable( self, dataType, count )
 
-    def save(self, filename, units=None, time=None):
+    def save(self, filename, collective=False, units=None, time=None):
         """
         Save the swarm to disk.
 
@@ -73,7 +73,7 @@ class Swarm(uw.swarm.Swarm):
 
         Notes
         -----
-        This method must be called collectively by all processes.
+        This method must be called collectively by all processes
 
         Example
         -------
@@ -109,11 +109,11 @@ class Swarm(uw.swarm.Swarm):
             raise TypeError("Expected filename to be provided as a string")
 
         # just save the particle coordinates SwarmVariable
-        self.particleCoordinates.save(filename, units=units, time=time)
+        self.particleCoordinates.save(filename, collective, units=units, time=time)
 
         return uw.utils.SavedFileData( self, filename )
 
-    def load( self, filename, try_optimise=True, verbose=False ):
+    def load( self, filename, collective=False, try_optimise=True, verbose=False ):
         """
         Load a swarm from disk. Note that this must be called before any SwarmVariable
         members are loaded.
@@ -210,7 +210,7 @@ class Swarm(uw.swarm.Swarm):
             # is the only time that we can guaranteed that all procs will
             # take part, and usually most (if not all) particles are loaded
             # in this step.
-            if firstChunk:
+            if firstChunk and collective:
                 with dset.collective:
                     if units:
                         vals = nonDimensionalize(dset[ chunkStart : chunkEnd] * units)
@@ -219,7 +219,11 @@ class Swarm(uw.swarm.Swarm):
                         ztmp = self.add_particles_with_coordinates(dset[ chunkStart : chunkEnd ])
                     firstChunk = False
             else:
-                ztmp = self.add_particles_with_coordinates(dset[ chunkStart : chunkEnd ])
+                if units:
+                    vals = nonDimensionalize(dset[ chunkStart : chunkEnd] * units)
+                    ztmp = self.add_particles_with_coordinates(vals)
+                else:
+                    ztmp = self.add_particles_with_coordinates(dset[ chunkStart : chunkEnd ])
             tmp = np.copy(ztmp) # copy because ztmp is 'readonly'
 
             # slice out -neg bits and make the local indices global
