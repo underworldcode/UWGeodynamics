@@ -1,6 +1,5 @@
 import json
 import abc
-from json import JSONEncoder
 import underworld.function as fn
 import numpy as np
 from .scaling import UnitRegistry as u
@@ -479,22 +478,6 @@ class CompositeViscosity(Rheology):
             muEff += 1.0 / viscosity.muEff
 
         return 1.0 / muEff
-
-
-class _TemperatureAndDepthDependentViscosityEncoder(JSONEncoder):
-
-    attributes = ["eta0",
-                  "beta",
-                  "gamma",
-                  "reference"]
-
-    def default(self, obj):
-        d = {}
-
-        for attribute in self.attributes:
-            d[attribute] = str(obj[attribute])
-
-        return d
 
 
 class TemperatureAndDepthDependentViscosity(Rheology):

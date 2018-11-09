@@ -1,6 +1,4 @@
 import os
-import json
-from . import json_encoder
 from collections import OrderedDict
 import numpy as np
 import underworld as uw
@@ -1615,10 +1613,6 @@ class Model(Material):
         if checkpoint_interval or checkpoint_times:
             self.checkpoint()
 
-        # Save model to json
-        # Comment as it does not work in parallel
-        # self.save()
-
         while time < duration or stepDone < nstep:
 
             self.preSolveHook()
@@ -2185,35 +2179,6 @@ class Model(Material):
         vrms = math.sqrt(v2 / vol)
         #os.write(1, "Velocity rms (vrms): {0}".format(vrms))
         return vrms
-
-
-def save_model(model, filename):
-    if not filename:
-        filename = model.name + ".json"
-
-    path = os.path.join(model.outputDir, filename)
-    with open(path, "w") as f:
-        json.dump(model, f, sort_keys=True, indent=4, cls=json_encoder.ObjectEncoder)
-
-
-def load_model(filename, step=None):
-    """ Reload Model from json file """
-    from . import scaling_coefficients
-    global scaling_coefficients
-
-    with open(filename, "r") as f:
-        model = json.load(f)
-
-    # Set scaling
-    scaling = model.pop("scaling")
-    for elem in scaling_coefficients:
-        decoder = json_encoder.ObjectDecoder()
-        scaling_coefficients[elem] = decoder.json_to_model(scaling[elem])
-
-    decoder = json_encoder.ObjectDecoder()
-    Model = decoder.json_to_model(model)
-    return Model
-
 
 _html_global = OrderedDict()
 _html_global["Number of Elements"] = "elementRes"
