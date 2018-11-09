@@ -153,8 +153,7 @@ class VelocityBCs(object):
             return
 
         # Special case (Bottom LecodeIsostasy)
-        if (isinstance(condition, LecodeIsostasy) and
-                nodes == self.Model._bottom_wall):
+        if isinstance(condition, LecodeIsostasy):
 
             # Apply support condition
             self.Model._isostasy = self.bottom
