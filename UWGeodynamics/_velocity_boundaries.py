@@ -95,13 +95,13 @@ class VelocityBCs(object):
 
         if self.Model.mesh.dim == 2:
             self._wall_indexSets = {"bottom": (self.bottom,
-                                               self.Model._bottom_wall),
+                                               self.Model.bottom_wall),
                                     "top": (self.top,
-                                            self.Model._top_wall),
+                                            self.Model.top_wall),
                                     "left": (self.left,
-                                             self.Model._left_wall),
+                                             self.Model.left_wall),
                                     "right": (self.right,
-                                              self.Model._right_wall)}
+                                              self.Model.right_wall)}
             if order_wall_conditions:
                 if len(order_wall_conditions) <= 5:
                     self.order_wall_conditions = order_wall_conditions
@@ -110,17 +110,17 @@ class VelocityBCs(object):
 
         if self.Model.mesh.dim == 3:
             self._wall_indexSets = {"bottom": (self.bottom,
-                                               self.Model._bottom_wall),
+                                               self.Model.bottom_wall),
                                     "top": (self.top,
-                                            self.Model._top_wall),
+                                            self.Model.top_wall),
                                     "left": (self.left,
-                                             self.Model._left_wall),
+                                             self.Model.left_wall),
                                     "right": (self.right,
-                                              self.Model._right_wall),
+                                              self.Model.right_wall),
                                     "front": (self.front,
-                                              self.Model._front_wall),
+                                              self.Model.front_wall),
                                     "back": (self.back,
-                                             self.Model._back_wall)}
+                                             self.Model.back_wall)}
             if order_wall_conditions:
                 if len(order_wall_conditions) <= 7:
                     self.order_wall_conditions = order_wall_conditions
@@ -154,7 +154,7 @@ class VelocityBCs(object):
 
         # Special case (Bottom LecodeIsostasy)
         if (isinstance(condition, LecodeIsostasy) and
-                nodes == self.Model._bottom_wall):
+                nodes == self.Model.bottom_wall):
 
             # Apply support condition
             self.Model._isostasy = self.bottom
@@ -173,7 +173,7 @@ class VelocityBCs(object):
             }
             self.Model._isostasy.vertical_walls_conditions = (
                 vertical_walls_conditions)
-            self.dirichlet_indices[-1] += self.Model._bottom_wall
+            self.dirichlet_indices[-1] += self.Model.bottom_wall
             return
 
         if isinstance(condition, MovingWall):

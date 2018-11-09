@@ -20,8 +20,8 @@ class FreeSurfaceProcessor(object):
         self.TField = self.Model.mesh.add_variable( nodeDofCount=1 )
         self.TField.data[:, 0] = self.Model.mesh.data[:, 1]
 
-        self.top = self.Model._top_wall
-        self.bottom = self.Model._bottom_wall
+        self.top = self.Model.top_wall
+        self.bottom = self.Model.bottom_wall
 
         # Create boundary condition
         self._conditions = uw.conditions.DirichletCondition(
@@ -40,7 +40,7 @@ class FreeSurfaceProcessor(object):
 
     def _advect_surface(self, dt):
 
-        if self.Model._top_wall.data.size > 0:
+        if self.Model.top_wall.data.size > 0:
             # Extract top surface
             x = self.Model.mesh.data[self.top.data][:, 0]
             y = self.Model.mesh.data[self.top.data][:, 1]

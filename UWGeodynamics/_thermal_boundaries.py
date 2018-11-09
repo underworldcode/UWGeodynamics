@@ -73,82 +73,82 @@ class TemperatureBCs(object):
         self.dirichlet_indices = [Model.mesh.specialSets["Empty"]]
         if self.left is not None:
             if self._check_temp(self.left):
-                Model.temperature.data[Model._left_wall.data] = nd(self.left)
-                self.dirichlet_indices[0] += Model._left_wall
+                Model.temperature.data[Model.left_wall.data] = nd(self.left)
+                self.dirichlet_indices[0] += Model.left_wall
             elif self._check_flux(self.left):
                 if not self.left_material:
                     raise ValueError("left_material is missing")
                 material = self.left_material
-                self.neumann_indices[0] += Model._left_wall
+                self.neumann_indices[0] += Model.left_wall
                 heat_flow = self._get_heat_flux("left", self.left, material)
-                Model._heatFlux.data[Model._left_wall.data] = (
+                Model._heatFlux.data[Model.left_wall.data] = (
                     nd(heat_flow))
 
         if self.right is not None:
             if self._check_temp(self.right):
-                Model.temperature.data[Model._right_wall.data] = nd(self.right)
-                self.dirichlet_indices[0] += Model._right_wall
+                Model.temperature.data[Model.right_wall.data] = nd(self.right)
+                self.dirichlet_indices[0] += Model.right_wall
             elif self._check_flux(self.right):
                 if not self.right_material:
                     raise ValueError("right_material is missing")
                 material = self.right_material
-                self.neumann_indices[0] += Model._right_wall
+                self.neumann_indices[0] += Model.right_wall
                 heat_flow = self._get_heat_flux("right", self.right, material)
-                Model._heatFlux.data[Model._right_wall.data] = (
+                Model._heatFlux.data[Model.right_wall.data] = (
                     nd(heat_flow))
 
         if self.top is not None:
             if self._check_temp(self.top):
-                Model.temperature.data[Model._top_wall.data] = nd(self.top)
-                self.dirichlet_indices[0] += Model._top_wall
+                Model.temperature.data[Model.top_wall.data] = nd(self.top)
+                self.dirichlet_indices[0] += Model.top_wall
             elif self._check_flux(self.top):
                 if not self.top_material:
                     raise ValueError("top_material is missing")
                 material = self.top_material
-                self.neumann_indices[0] += Model._top_wall
+                self.neumann_indices[0] += Model.top_wall
                 heat_flow = self._get_heat_flux("top", self.top, material)
-                Model._heatFlux.data[Model._top_wall.data] = (
+                Model._heatFlux.data[Model.top_wall.data] = (
                     nd(heat_flow))
 
         if self.bottom is not None:
             if self._check_temp(self.bottom):
-                Model.temperature.data[Model._bottom_wall.data] = (
+                Model.temperature.data[Model.bottom_wall.data] = (
                     nd(self.bottom))
-                self.dirichlet_indices[0] += Model._bottom_wall
+                self.dirichlet_indices[0] += Model.bottom_wall
             elif self._check_flux(self.bottom):
                 if not self.bottom_material:
                     raise ValueError("bottom_material is missing")
                 material = self.bottom_material
-                self.neumann_indices[0] += Model._bottom_wall
+                self.neumann_indices[0] += Model.bottom_wall
                 heat_flow = self._get_heat_flux(
                     "bottom", self.bottom, material)
-                Model._heatFlux.data[Model._bottom_wall.data] = (
+                Model._heatFlux.data[Model.bottom_wall.data] = (
                     nd(heat_flow))
 
         if self.back is not None and Model.mesh.dim > 2:
             if self._check_temp(self.back):
-                Model.temperature.data[Model._back_wall.data] = nd(self.back)
-                self.dirichlet_indices[0] += Model._back_wall
+                Model.temperature.data[Model.back_wall.data] = nd(self.back)
+                self.dirichlet_indices[0] += Model.back_wall
             elif self._check_flux(self.back):
                 if not self.back_material:
                     raise ValueError("back_material is missing")
                 material = self.back_material
-                self.neumann_indices[0] += Model._back_wall
+                self.neumann_indices[0] += Model.back_wall
                 heat_flow = self._get_heat_flux("back", self.back, material)
-                Model._heatFlux.data[Model._back_wall.data] = (
+                Model._heatFlux.data[Model.back_wall.data] = (
                     nd(heat_flow))
 
         if self.front is not None and Model.mesh.dim > 2:
             if self._check_temp(self.front):
-                Model.temperature.data[Model._front_wall.data] = nd(self.front)
-                self.dirichlet_indices[0] += Model._front_wall
+                Model.temperature.data[Model.front_wall.data] = nd(self.front)
+                self.dirichlet_indices[0] += Model.front_wall
             elif self._check_flux(self.front):
                 if not self.front_material:
                     raise ValueError("front_material is missing")
                 material = self.front_material
-                self.neumann_indices[0] += Model._front_wall
+                self.neumann_indices[0] += Model.front_wall
                 heat_flow = self._get_heat_flux("front", self.front, material)
-                Model._heatFlux.data[Model._front_wall.data] = (
+                Model._heatFlux.data[Model.front_wall.data] = (
                     nd(heat_flow))
 
         if self.nodeSets:

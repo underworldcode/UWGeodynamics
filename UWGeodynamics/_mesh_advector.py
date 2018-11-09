@@ -27,8 +27,8 @@ class _mesh_advector(object):
         # Get minimum and maximum coordinates for the current mesh
         minX, maxX = self._get_minmax_coordinates_mesh(axis)
 
-        minvxLeftWall, maxvxLeftWall   = self._get_minmax_velocity_wall(self.Model._left_wall, axis)
-        minvxRightWall, maxvxRightWall = self._get_minmax_velocity_wall(self.Model._right_wall, axis)
+        minvxLeftWall, maxvxLeftWall   = self._get_minmax_velocity_wall(self.Model.left_wall, axis)
+        minvxRightWall, maxvxRightWall = self._get_minmax_velocity_wall(self.Model.right_wall, axis)
 
         if np.abs(maxvxRightWall) > np.abs(minvxRightWall):
             vxRight = maxvxRightWall
@@ -63,11 +63,11 @@ class _mesh_advector(object):
         self.Model.velocityField.data[...] = np.copy(self.Model.velocityField.evaluate(self.Model.mesh))
         self.Model.pressureField.data[...] = np.copy(self.Model.pressureField.evaluate(self.Model.mesh.subMesh))
 
-        if self.Model._right_wall.data.size > 0:
-            self.Model.velocityField.data[self.Model._right_wall.data, axis] = vxRight
+        if self.Model.right_wall.data.size > 0:
+            self.Model.velocityField.data[self.Model.right_wall.data, axis] = vxRight
 
-        if self.Model._left_wall.data.size > 0:
-            self.Model.velocityField.data[self.Model._left_wall.data, axis]  = vxLeft
+        if self.Model.left_wall.data.size > 0:
+            self.Model.velocityField.data[self.Model.left_wall.data, axis]  = vxLeft
 
     def _get_minmax_velocity_wall(self, wall, axis=0):
         """ Return the minimum and maximum velocity component on the wall

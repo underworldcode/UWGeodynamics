@@ -636,17 +636,17 @@ class MovingWall(object):
                          "top": value.maxCoord[-1]}
 
         if value.mesh.dim == 2:
-            self.wall_options = {value._left_wall: "left",
-                                 value._right_wall: "right",
-                                 value._top_wall: "top",
-                                 value._bottom_wall: "bottom"}
+            self.wall_options = {value.left_wall: "left",
+                                 value.right_wall: "right",
+                                 value.top_wall: "top",
+                                 value.bottom_wall: "bottom"}
         else:
-            self.wall_options = {value._left_wall: "left",
-                                 value._right_wall: "right",
-                                 value._front_wall: "front",
-                                 value._back_wall: "back",
-                                 value._top_wall: "top",
-                                 value._bottom_wall: "bottom"}
+            self.wall_options = {value.left_wall: "left",
+                                 value.right_wall: "right",
+                                 value.front_wall: "front",
+                                 value.back_wall: "back",
+                                 value.top_wall: "top",
+                                 value.bottom_wall: "bottom"}
 
         # Create a new viscous material with viscosity set to MaxViscosity:
         if not self.material:

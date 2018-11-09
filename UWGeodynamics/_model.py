@@ -200,17 +200,17 @@ class Model(Material):
         self.materials.append(self)
 
         # Create a series of aliases for the boundary sets
-        self._left_wall = self.mesh.specialSets["MinI_VertexSet"]
-        self._right_wall = self.mesh.specialSets["MaxI_VertexSet"]
+        self.left_wall = self.mesh.specialSets["MinI_VertexSet"]
+        self.right_wall = self.mesh.specialSets["MaxI_VertexSet"]
 
         if self.mesh.dim == 2:
-            self._top_wall = self.mesh.specialSets["MaxJ_VertexSet"]
-            self._bottom_wall = self.mesh.specialSets["MinJ_VertexSet"]
+            self.top_wall = self.mesh.specialSets["MaxJ_VertexSet"]
+            self.bottom_wall = self.mesh.specialSets["MinJ_VertexSet"]
         else:
-            self._front_wall = self.mesh.specialSets["MinJ_VertexSet"]
-            self._back_wall = self.mesh.specialSets["MaxJ_VertexSet"]
-            self._top_wall = self.mesh.specialSets["MaxK_VertexSet"]
-            self._bottom_wall = self.mesh.specialSets["MinK_VertexSet"]
+            self.front_wall = self.mesh.specialSets["MinJ_VertexSet"]
+            self.back_wall = self.mesh.specialSets["MaxJ_VertexSet"]
+            self.top_wall = self.mesh.specialSets["MaxK_VertexSet"]
+            self.bottom_wall = self.mesh.specialSets["MinK_VertexSet"]
 
         # Boundary Conditions
         self.velocityBCs = velocityBCs
@@ -1414,13 +1414,13 @@ class Model(Material):
 
         surfaceArea = uw.utils.Integral(fn=1.0, mesh=self.mesh,
                                         integrationType='surface',
-                                        surfaceIndexSet=self._top_wall)
+                                        surfaceIndexSet=self.top_wall)
 
         surfacepressureFieldIntegral = uw.utils.Integral(
             fn=self.pressureField,
             mesh=self.mesh,
             integrationType='surface',
-            surfaceIndexSet=self._top_wall
+            surfaceIndexSet=self.top_wall
         )
         area, = surfaceArea.evaluate()
         p0, = surfacepressureFieldIntegral.evaluate()
