@@ -867,7 +867,7 @@ class Model(Material):
         self.velocityBCs = VelocityBCs(self, left=left,
                                        right=right, top=top,
                                        bottom=bottom, front=front,
-                                       back=back, indexSets=indexSets,
+                                       back=back, nodeSets=indexSets,
                                        order_wall_conditions=order_wall_conditions)
         return self.velocityBCs.get_conditions()
 
