@@ -2065,7 +2065,7 @@ class Model(Material):
         """
 
         if not fields:
-            fields = rcParams["default.outputs"]
+            fields = rcParams["restart.fields"]
 
         if not checkpointID:
             checkpointID = self.checkpointID
