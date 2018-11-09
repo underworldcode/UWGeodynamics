@@ -1017,7 +1017,9 @@ class Model(Material):
         else:
             projector_name = "_" + name + "Projector"
         projector = uw.utils.MeshVariable_Projection(projected,
-                                                     newField, type=0)
+                                                     newField,
+                                                     voronoi_swarm=self.swarm,
+                                                     type=0)
         setattr(self, projector_name, projector)
 
         return newField
