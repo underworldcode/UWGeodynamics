@@ -2,23 +2,20 @@ import underworld as uw
 import numpy as np
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
+from ._boundary_conditions import BoundaryConditions
 
 
-class TemperatureBCs(object):
+class TemperatureBCs(BoundaryConditions):
 
     def __init__(self, Model, left=None, right=None, top=None, bottom=None,
                  front=None, back=None, nodeSets=None, materials=None,
                  bottom_material=None, top_material=None, left_material=None,
-                 right_material=None, back_material=None, front_material=None):
+                 right_material=None, back_material=None, front_material=None,
+                 order_wall_conditions=None):
 
-        self.Model = Model
-        self.left = left
-        self.right = right
-        self.top = top
-        self.bottom = bottom
-        self.front = front
-        self.back = back
-        self.nodeSets = nodeSets
+        super().__init__(Model, left, right, top, bottom, front, back,
+                         nodeSets, order_wall_conditions)
+
         self.materials = materials
         self.bottom_material = bottom_material
         self.top_material = top_material

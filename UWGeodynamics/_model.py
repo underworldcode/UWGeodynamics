@@ -19,6 +19,7 @@ from ._material import Material
 from ._plots import Plots
 from ._visugrid import Visugrid
 from ._velocity_boundaries import VelocityBCs
+from ._velocity_boundaries import StressBCs
 from ._thermal_boundaries import TemperatureBCs
 from ._mesh_advector import _mesh_advector
 from ._frictional_boundary import FrictionBoundaries
@@ -32,7 +33,8 @@ from ._freesurface import FreeSurfaceProcessor
 from mpi4py import MPI
 
 _dim_gravity = {'[length]': 1.0, '[time]': -2.0}
-_dim_time = {'[time]':1.0}
+_dim_time = {'[time]': 1.0}
+
 
 class Model(Material):
     """UWGeodynamic Model Class"""
@@ -40,9 +42,9 @@ class Model(Material):
     @u.check([None, (None, None), ("[length]", "[length]"), None,
               _dim_gravity])
     def __init__(self, elementRes=(64, 64),
-                 minCoord=(0.,0.), maxCoord=(64.*u.kilometer, 64*u.kilometer),
+                 minCoord=(0., 0.), maxCoord=(64. * u.kilometer, 64 * u.kilometer),
                  name=None, gravity=None, periodic=None, elementType=None,
-                 temperatureBCs=None, velocityBCs=None, materials=None,
+                 temperatureBCs=None, velocityBCs=None, stressBCs=None, materials=None,
                  outputDir=None, frictionalBCs=None, surfaceProcesses=None,
                  isostasy=None, visugrid=None, advector=None):
         """__init__
@@ -70,6 +72,8 @@ class Model(Material):
             TemperatureBCs
         velocityBCs :
             Velocity Boundary Condtion, must be object of type VelocityBCs
+        stressBCs :
+            Stress Boundary Condtion, must be object of type StressBCs
         materials :
             List of materials, each material must be an object of type:
             Material
@@ -214,6 +218,7 @@ class Model(Material):
 
         # Boundary Conditions
         self.velocityBCs = velocityBCs
+        self.stressBCs = stressBCs
         self.temperatureBCs = temperatureBCs
         self.frictionalBCs = frictionalBCs
         self._isostasy = isostasy
@@ -793,10 +798,16 @@ class Model(Material):
 
             if any([material.viscosity for material in self.materials]):
 
+                conditions = list()
+                conditions.append(self.velocityBCs.get_conditions())
+
+                if self.stressBCs:
+                    conditions.append(self.stressBCs.get_conditions())
+
                 self._stokes_SLE = uw.systems.Stokes(
                     velocityField=self.velocityField,
                     pressureField=self.pressureField,
-                    conditions=self._velocityBCs,
+                    conditions=conditions,
                     fn_viscosity=self._viscosityFn,
                     fn_bodyforce=self._buoyancyFn,
                     fn_stresshistory=self._elastic_stressFn,
@@ -861,24 +872,50 @@ class Model(Material):
             nodeSets: (set, velocity)
                 underworld mesh index set and associate velocity
         """
-        self._velocityBCs_saved_args = locals()
-        del(self._velocityBCs_saved_args["self"])
 
         self.velocityBCs = VelocityBCs(self, left=left,
-                                       right=right, top=top,
-                                       bottom=bottom, front=front,
-                                       back=back, nodeSets=nodeSets,
-                                       order_wall_conditions=order_wall_conditions)
-        return self.velocityBCs.get_conditions()
+                                        right=right, top=top,
+                                        bottom=bottom, front=front,
+                                        back=back, nodeSets=nodeSets,
+                                        order_wall_conditions=order_wall_conditions)
+        return self.velocityBCs
 
-    set_mechanicalBCs = set_velocityBCs
+    set_kinematicBCs = set_velocityBCs
 
-    @property
-    def _velocityBCs(self):
-        """ Retrieve kinematic boundary conditions """
-        if not self.velocityBCs:
-            raise ValueError("Set Boundary Conditions")
-        return self.velocityBCs.get_conditions()
+    def set_stressBCs(self, left=None, right=None, top=None, bottom=None,
+                      front=None, back=None, nodeSets=None,
+                      order_wall_conditions=None):
+        """ Set Model kinematic conditions
+
+        Parameters:
+            left:
+                Velocity along the left wall.
+                Default is 'None'
+            right:
+                Velocity along the right wall.
+                Default is 'None'
+            top:
+                Velocity along the top wall.
+                Default is 'None'
+            bottom:
+                Velocity along the bottom wall.
+                Default is 'None'
+            front:
+                Velocity along the front wall.
+                Default is 'None'
+            back:
+                Velocity along the back wall.
+                Default is 'None'
+            nodeSets: (set, velocity)
+                underworld mesh index set and associate velocity
+        """
+
+        self.stressBCs = StressBCs(self, left=left,
+                                   right=right, top=top,
+                                   bottom=bottom, front=front,
+                                   back=back, nodeSets=nodeSets,
+                                   order_wall_conditions=order_wall_conditions)
+        return self.stressBCs
 
     def add_material(self, shape=None, name="unknown", fill=True, reset=False):
         """ Add Material to the Model
@@ -1296,7 +1333,7 @@ class Model(Material):
                     elasticStressFn = [0.0] * 3 if self.mesh.dim == 2 else [0.0] * 6
                 stressMap[material.index] = elasticStressFn
             return (fn.branching.map(fn_key=self.materialField,
-                                         mapping=stressMap))
+                                     mapping=stressMap))
         else:
 
             elasticStressFn = [0.0] * 3 if self.mesh.dim == 2 else [0.0] * 6
@@ -1657,7 +1694,6 @@ class Model(Material):
                 if uw.rank() == 0:
                     print("Step:" + str(stepDone) + " Model Time: ", str(self.time.to(units)),
                           'dt:', str(Dimensionalize(self._dt, units)),
-                          #'vrms:', str(self.velocity_rms()),
                           '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
 
             self.postSolveHook()
