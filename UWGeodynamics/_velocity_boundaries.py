@@ -97,9 +97,6 @@ class VelocityBCs(BoundaryConditions):
 
         """
 
-        if not nodes:
-            return
-
         # Special case (Bottom LecodeIsostasy)
         if isinstance(condition, LecodeIsostasy):
 
