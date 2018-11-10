@@ -3,6 +3,8 @@
 [![DOI](https://zenodo.org/badge/114189389.svg)](https://zenodo.org/badge/latestdoi/114189389)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/85b5f7736d03441db786549d6e357c9e)](https://www.codacy.com/app/romainbeucher/UWGeodynamics?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=rbeucher/UWGeodynamics&amp;utm_campaign=Badge_Grade)
 
+![Tutorial1](./tutorials/images/Tutorial1.gif)
+
 The UWGeodynamics module intents to facilitate rapid prototyping of geodynamics models using Underworld. 
 It can be seen as a set of high-level functions within the Underworld ecosystem. 
 It is a means to quickly get the user into Underworld modelling and assumes very
