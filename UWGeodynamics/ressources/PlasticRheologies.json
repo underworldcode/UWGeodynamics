@@ -19,10 +19,6 @@
                 "units": "None",
                 "value": 0.123
             },
-            "minimumViscosity": {
-                "units": "pascal * second",
-                "value": 1e+19
-            },
             "epsilon1": {
                 "units": "None",
                 "value": 0.5
@@ -50,10 +46,6 @@
             "frictionCoefficient": {
                 "units": "None",
                 "value": 0.12
-            },
-            "minimumViscosity": {
-                "units": "pascal * second",
-                "value": 1e+19
             },
             "epsilon1": {
                 "units": "None",
@@ -85,10 +77,6 @@
                 "units": "None",
                 "value": 0.577
             },
-            "minimumViscosity": {
-                "units": "pascal * second",
-                "value": 1e+19
-            },
             "epsilon1": {
                 "units": "None",
                 "value": 0.0
@@ -118,10 +106,6 @@
             "frictionCoefficient": {
                 "units": "None",
                 "value": 0.577
-            },
-            "minimumViscosity": {
-                "units": "pascal * second",
-                "value": 1e+19
             },
             "epsilon1": {
                 "units": "None",
@@ -153,10 +137,6 @@
                 "units": "None",
                 "value": 0.577
             },
-            "minimumViscosity": {
-                "units": "pascal * second",
-                "value": 1e+19
-            },
             "epsilon1": {
                 "units": "None",
                 "value": 0.0
@@ -187,10 +167,6 @@
                 "units": "None",
                 "value": 0.577
             },
-            "minimumViscosity": {
-                "units": "pascal * second",
-                "value": 1e+19
-            },
             "epsilon1": {
                 "units": "None",
                 "value": 0.0
@@ -212,10 +188,6 @@
             "frictionCoefficient": {
                 "units": "None",
                 "value": 0.0349
-            },
-            "minimumViscosity": {
-                "units": "pascal * second",
-                "value": 1e+19
             }
         }
     },
@@ -238,10 +210,6 @@
             "frictionCoefficient": {
                 "units": "None",
                 "value": 0.577
-            },
-            "minimumViscosity": {
-                "units": "pascal * second",
-                "value": 1e+19
             },
             "epsilon1": {
                 "units": "None",
@@ -273,10 +241,6 @@
             "frictionCoefficient": {
                 "units": "None",
                 "value": 0.577
-            },
-            "minimumViscosity": {
-                "units": "pascal * second",
-                "value": 1e+19
             },
             "epsilon1": {
                 "units": "None",
