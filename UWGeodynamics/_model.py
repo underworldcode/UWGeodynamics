@@ -14,7 +14,6 @@ from .lithopress import LithostaticPressure
 from ._utils import PressureSmoother, PassiveTracers, PassiveTracersGrid
 from ._rheology import ViscosityLimiter, StressLimiter
 from ._material import Material
-from ._plots import Plots
 from ._visugrid import Visugrid
 from ._velocity_boundaries import VelocityBCs
 from ._velocity_boundaries import StressBCs
@@ -298,8 +297,6 @@ class Model(Material):
                              count=stress_dim, projected="submesh")
         self.add_swarm_field("_stressField", dataType="double",
                              count=1, projected="submesh")
-
-        self.plot = Plots(self)
 
     def __getitem__(self, name):
         """__getitem__
@@ -786,7 +783,7 @@ class Model(Material):
             )
         return obj
 
-    def stokes_solver(self):
+    def get_stokes_solver(self):
         """ Stokes solver """
 
         if not self._solver or not self._static_solver:
@@ -1499,21 +1496,12 @@ class Model(Material):
             minIterations = rcParams["nonlinear.min.iterations"]
             maxIterations = rcParams["nonlinear.max.iterations"]
 
-        if int(uw.__version__.split(".")[1]) > 5:
-            # The minimum number of iteration only works with version 2.6
-            # 2.6 is still in development...
-            self.stokes_solver().solve(
-                nonLinearIterate=True,
-                nonLinearMinIterations=minIterations,
-                nonLinearMaxIterations=maxIterations,
-                callback_post_solve=self.callback_post_solve,
-                nonLinearTolerance=self._curTolerance)
-        else:
-            self.stokes_solver().solve(
-                nonLinearIterate=True,
-                nonLinearMaxIterations=maxIterations,
-                callback_post_solve=self.callback_post_solve,
-                nonLinearTolerance=self._curTolerance)
+        self.get_stokes_solver().solve(
+            nonLinearIterate=True,
+            nonLinearMinIterations=minIterations,
+            nonLinearMaxIterations=maxIterations,
+            callback_post_solve=self.callback_post_solve,
+            nonLinearTolerance=self._curTolerance)
 
         self._solution_exist.value = True
 
@@ -2149,9 +2137,6 @@ class Model(Material):
         if self.passive_tracers:
             for (dump, item) in self.passive_tracers.items():
                 item.save(outputDir, checkpointID, time)
-
-    def save(self, filename=None):
-        save_model(self, filename)
 
     def geometry_from_shapefile(self, filename, units=None):
         from ._utils import MoveImporter
