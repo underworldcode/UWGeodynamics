@@ -87,7 +87,6 @@ class DruckerPrager(object):
     def __init__(self, name=None, cohesion=None, frictionCoefficient=None,
                  cohesionAfterSoftening = None,
                  frictionAfterSoftening = None,
-                 minimumViscosity=None,
                  epsilon1=0.0, epsilon2=0.2):
 
         self.name = name
@@ -95,8 +94,6 @@ class DruckerPrager(object):
         self._frictionCoefficient = frictionCoefficient
         self.cohesionAfterSoftening = cohesionAfterSoftening
         self.frictionAfterSoftening = frictionAfterSoftening
-
-        self.minimumViscosity = minimumViscosity
 
         self.plasticStrain = None
         self.pressureField = None
@@ -216,13 +213,11 @@ class VonMises(object):
 
     def __init__(self, name=None, cohesion=None,
                  cohesionAfterSoftening = None,
-                 minimumViscosity=None, epsilon1=0.5,
-                 epsilon2=1.0):
+                 epsilon1=None, epsilon2=None):
 
         self.name = name
         self.cohesion = cohesion
         self.cohesionAfterSoftening = cohesionAfterSoftening
-        self.minimumViscosity = minimumViscosity
         self.plasticStrain = None
         self.pressureField = None
         self.epsilon1 = epsilon1
