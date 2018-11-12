@@ -173,9 +173,7 @@ class Model(Material):
 
         # symmetric component of the gradient of the flow velocityField.
         self.strainRate = fn.tensor.symmetric(self.velocityField.fn_gradient)
-        self._strainRate_2ndInvariant = fn.tensor.second_invariant(
-            self.strainRate
-        )
+        self._strainRate_2ndInvariant = None
 
         # Create the material swarm
         self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
@@ -550,15 +548,20 @@ class Model(Material):
         return self._projMeltField
 
     @property
-    def strainRateField(self):
+    def strainRate_2ndInvariant(self):
         """ Strain Rate Field """
-        # Initialize strain rate field to default
-        if not self._solution_exist.value:
-            self._strainRateField.data[:] = nd(self.defaultStrainRate)
-        else:
-            self._strainRateField.data[:] = (
-                self._strainRate_2ndInvariant.evaluate(self.mesh.subMesh)
-            )
+        self._strainRate_2ndInvariant = fn.tensor.second_invariant(
+            self.strainRate
+        )
+        condition = [(self._solution_exist, self._strainRate_2ndInvariant),
+                     (True, fn.misc.constant(nd(self.defaultStrainRate)))]
+        self._strainRate_2ndInvariant = fn.branching.conditional(condition)
+        return self._strainRate_2ndInvariant
+
+    @property
+    def strainRateField(self):
+        self._strainRateField.data[:] = (
+            self.strainRate_2ndInvariant.evaluate(self.mesh.subMesh))
         return self._strainRateField
 
     @property
@@ -758,7 +761,7 @@ class Model(Material):
         # Add Viscous dissipation Heating
         if rcParams["shearHeating"]:
             stress = fn.tensor.second_invariant(self._stressFn)
-            strain = self._strainRate_2ndInvariant
+            strain = self.strainRate_2ndInvariant
             self.HeatProdFn += stress * strain
 
         if rcParams["advection.diffusion.method"] is "SLCN":
@@ -1130,7 +1133,7 @@ class Model(Material):
                 ViscosityHandler = material.viscosity
                 ViscosityHandler.pressureField = self.pressureField
                 ViscosityHandler.strainRateInvariantField = (
-                    self.strainRateField)
+                    self.strainRate_2ndInvariant)
                 ViscosityHandler.temperatureField = self.temperature
                 ViscosityMap[material.index] = ViscosityHandler.muEff
 
@@ -1195,7 +1198,7 @@ class Model(Material):
                              / (mu * dt_e))
                     SRInv = fn.tensor.second_invariant(D_eff)
                 else:
-                    SRInv = self.strainRateField
+                    SRInv = self.strainRate_2ndInvariant
 
                 eij = fn.branching.conditional(
                     [(SRInv < nd(1e-20 / u.second), nd(1e-20 / u.second)),
@@ -1223,8 +1226,8 @@ class Model(Material):
                         yieldStress = YieldHandler._get_yieldStress3D()
 
                     eij = fn.branching.conditional(
-                        [(self._strainRate_2ndInvariant <= 1e-20, 1e-20),
-                         (True, self._strainRate_2ndInvariant)])
+                        [(self.strainRate_2ndInvariant <= 1e-20, 1e-20),
+                         (True, self.strainRate_2ndInvariant)])
 
                     muEff = 0.5 * yieldStress / eij
 
@@ -1290,7 +1293,7 @@ class Model(Material):
         # Do not yield at the very first solve
         if self._solution_exist.value:
             self._isYielding = (fn.branching.conditional(yieldConditions)
-                                * self._strainRate_2ndInvariant)
+                                * self.strainRate_2ndInvariant)
         else:
             self._isYielding = fn.misc.constant(0.0)
 
@@ -1351,7 +1354,7 @@ class Model(Material):
     @property
     def _yieldStressFn(self):
         """ Calculate Yield stress function from viscosity and strain rate"""
-        eij = self._strainRate_2ndInvariant
+        eij = self.strainRate_2ndInvariant
         eijdef = nd(self.defaultStrainRate)
         return 2.0 * self._viscosityFn * fn.misc.max(eij, eijdef)
 
