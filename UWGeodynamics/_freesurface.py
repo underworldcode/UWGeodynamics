@@ -40,7 +40,7 @@ class FreeSurfaceProcessor(object):
 
     def _advect_surface(self, dt):
 
-        if self.Model.top_wall.data.size > 0:
+        if self.top:
             # Extract top surface
             x = self.Model.mesh.data[self.top.data][:, 0]
             y = self.Model.mesh.data[self.top.data][:, 1]
@@ -54,9 +54,11 @@ class FreeSurfaceProcessor(object):
             y2 = y + vy * nd(dt)
 
             # Spline top surface
-            f = interp1d(x2, y2, kind='cubic')
+            f = interp1d(x2, y2, kind='cubic', fill_value='extrapolate')
 
             self.TField.data[self.top.data, 0] = f(x)
+        uw.barrier()
+        self.TField.syncronise()
 
     def _update_mesh(self):
 
@@ -68,11 +70,7 @@ class FreeSurfaceProcessor(object):
 
         # First we advect the surface
         self._advect_surface(dt)
-
-        uw.barrier()
-
         # Then we solve the system of linear equation
         self._solve_sle()
-
         # Finally we update the mesh
         self._update_mesh()
