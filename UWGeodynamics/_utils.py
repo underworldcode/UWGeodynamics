@@ -1,3 +1,4 @@
+from __future__ import print_function,  absolute_import
 import numpy as np
 import underworld as uw
 import underworld.function as fn
@@ -742,6 +743,7 @@ class LogFile(object):
                 non_linear_blocks.append(block)
         self.nonLinear_blocks = non_linear_blocks
         return self.nonLinear_blocks
+
 
 def extract_profile(field,
                     line,

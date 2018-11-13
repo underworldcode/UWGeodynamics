@@ -1,3 +1,4 @@
+from __future__ import print_function,  absolute_import
 import underworld as uw
 import underworld.function as fn
 import numpy as np
@@ -74,8 +75,9 @@ class VelocityBCs(BoundaryConditions):
 
         """
 
-        super().__init__(Model, left, right, top, bottom,
-                         front, back, nodeSets, order_wall_conditions)
+        super(VelocityBCs, self).__init__(Model, left, right, top, bottom,
+                                          front, back, nodeSets, 
+                                          order_wall_conditions)
         # Link Moving Walls
         for arg in [self.left, self.right, self.top, self.bottom, self.front,
                     self.back]:
@@ -300,7 +302,7 @@ class StressBCs(BoundaryConditions):
         ---------
 
         """
-        super().__init__(Model, left, right, top, bottom,
+        super(StressBCs, self).__init__(Model, left, right, top, bottom,
                          front, back, nodeSets, order_wall_conditions)
 
     def __getitem__(self, name):

@@ -1,8 +1,10 @@
+from __future__ import print_function,  absolute_import
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
 from .scaling import Dimensionalize
 import json
 from copy import copy
+
 
 class _Polynom(object):
 
@@ -13,7 +15,7 @@ class _Polynom(object):
         self.A3 = A3
         self.A4 = A4
 
-    def temperature(self, pressure, units=None):
+    def temperature(self, pressure):
         T = nd(self.A1)
         T += nd(self.A2) * pressure
         T += nd(self.A3) * pressure**2

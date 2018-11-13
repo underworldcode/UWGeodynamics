@@ -1,3 +1,5 @@
+from __future__ import print_function,  absolute_import
+
 
 class BoundaryConditions(object):
 
@@ -48,4 +50,3 @@ class BoundaryConditions(object):
             else:
                 self.order_wall_conditions = ["bottom", "top", "front", "back",
                                               "left", "right"]
-

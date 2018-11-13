@@ -1,4 +1,6 @@
+from __future__ import print_function, absolute_import
 import os
+import sys
 from collections import OrderedDict
 import numpy as np
 import underworld as uw
@@ -43,7 +45,7 @@ class Model(Material):
                  name=None, gravity=None, periodic=None, elementType=None,
                  temperatureBCs=None, velocityBCs=None, stressBCs=None, materials=None,
                  outputDir=None, frictionalBCs=None, surfaceProcesses=None,
-                 isostasy=None, visugrid=None, advector=None):
+                 isostasy=None, visugrid=None):
         """__init__
 
         Parameters
@@ -401,10 +403,11 @@ class Model(Material):
             self.time = u.Quantity(h5f.attrs.get("time"))
 
         if uw.rank() == 0:
-            print(80 * "=" + "\n", flush=True)
-            print("Restarting Model from Step {0} at Time = {1}\n".format(step, self.time), flush=True)
-            print('(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
-            print(80 * "=" + "\n", flush=True)
+            print(80 * "=" + "\n")
+            print("Restarting Model from Step {0} at Time = {1}\n".format(step,self.time))
+            print('(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+            print(80 * "=" + "\n")
+            sys.stdout.flush()
 
         self.checkpointID = step
 
@@ -416,13 +419,15 @@ class Model(Material):
             self.mesh.load(os.path.join(restartDir, "mesh.h5"))
 
         if uw.rank() == 0:
-            print("Mesh loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
+            print("Mesh loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+            sys.stdout.flush()
 
         self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
         self.swarm.load(os.path.join(restartDir, 'swarm-%s.h5' % step))
 
         if uw.rank() == 0:
-            print("Swarm loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
+            print("Swarm loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+            sys.stdout.flush()
 
         self._initialize()
 
@@ -433,10 +438,12 @@ class Model(Material):
             obj = getattr(self, field)
             path = os.path.join(restartDir, field + "-%s.h5" % step)
             if uw.rank() == 0:
-                print("Reloading field {0} from {1}".format(field, path), flush=True)
+                print("Reloading field {0} from {1}".format(field, path))
+                sys.stdout.flush()
             obj.load(str(path))
             if uw.rank() == 0:
-                print("{0} loaded".format(field) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
+                print("{0} loaded".format(field) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+                sys.stdout.flush()
 
         # Temperature is a special case...
         path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
@@ -445,16 +452,20 @@ class Model(Material):
                 self.temperature = True
             obj = getattr(self, "temperature")
             if uw.rank() == 0:
-                print("Reloading field {0} from {1}".format("temperature", path), flush=True)
+                print("Reloading field {0} from {1}".format("temperature", path))
+                sys.stdout.flush()
             obj.load(str(path))
             if uw.rank() == 0:
-                print("Temperature loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
+                print("Temperature loaded" + '(' +
+                        datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+                sys.stdout.flush()
 
         # Reload Passive Tracers
         for key, tracer in self.passive_tracers.items():
 
             if uw.rank() == 0:
-                print("Reloading {0} passive tracers".format(tracer.name), flush=True)
+                print("Reloading {0} passive tracers".format(tracer.name))
+                sys.stdout.flush()
 
             fname = tracer.name + '-%s.h5' % step
             fpath = os.path.join(restartDir, fname)
@@ -471,7 +482,8 @@ class Model(Material):
             setattr(self, attr_name, obj)
             self.passive_tracers[key] = obj
             if uw.rank() == 0:
-                print("{0} loaded".format(tracer.name) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
+                print("{0} loaded".format(tracer.name) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+                sys.stdout.flush()
 
         if isinstance(self.surfaceProcesses,
                       (surfaceProcesses.SedimentationThreshold,
@@ -516,7 +528,8 @@ class Model(Material):
                 restartFolder=restartFolder,
                 restartStep=restartStep)
             if uw.rank() == 0:
-                print("Badlands restarted" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
+                print("Badlands restarted" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+                sys.stdout.flush()
 
         return
 
@@ -1397,9 +1410,9 @@ class Model(Material):
                         material.radiogenicHeatProd]):
 
                     HeatProdMap[material.index] = (
-                        nd(material.radiogenicHeatProd) /
-                        (self._densityFn *
-                         nd(material.capacity))
+                        nd(material.radiogenicHeatProd) / 
+                        self._densityFn  / 
+                        nd(material.capacity)
                     )
 
                 else:
@@ -1560,7 +1573,8 @@ class Model(Material):
         """
 
         if uw.rank() == 0:
-            print("""Running with UWGeodynamics version {0}""".format(full_version), flush=True)
+            print("""Running with UWGeodynamics version {0}""".format(full_version))
+            sys.stdout.flush()
 
         if restartStep:
             restartDir = restartDir if restartDir else self.outputDir
@@ -1681,7 +1695,8 @@ class Model(Material):
                 if uw.rank() == 0:
                     print("Step:" + str(stepDone) + " Model Time: ", str(self.time.to(units)),
                           'dt:', str(Dimensionalize(self._dt, units)),
-                          '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')', flush=True)
+                          '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+                    sys.stdout.flush()
 
             self.postSolveHook()
 
@@ -1823,7 +1838,8 @@ class Model(Material):
             centroids = list(centroids)
 
         if name in self.passive_tracers.keys():
-            print("{0} tracers exists already".format(name), flush=True)
+            print("{0} tracers exists already".format(name))
+            sys.stdout.flush()
             return self.passive_tracers[name]
 
         if not centroids:

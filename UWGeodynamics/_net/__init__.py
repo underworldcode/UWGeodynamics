@@ -11,8 +11,12 @@ This module implements some basic functionality for posting usage metrics
 to google analytics.
 """
 
+from __future__ import print_function,  absolute_import
 import json,urllib
-import http.client
+try:
+    import http.client
+except ImportError as e:
+    import httplib
 import urllib
 import uuid
 import underworld as uw
