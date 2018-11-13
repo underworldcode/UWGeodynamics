@@ -1727,6 +1727,8 @@ class Model(Material):
                 self._calibrate_pressureField()
             if rcParams["pressure.smoothing"]:
                 self.pressSmoother.smooth()
+            if self._isostasy:
+                self._isostasy.solve()
             for material in self.materials:
                 if material.viscosity:
                     material.viscosity.firstIter.value = False
@@ -1798,8 +1800,6 @@ class Model(Material):
         # Update Time Field
         self.timeField.data[...] += dt
 
-        if self._isostasy:
-            self._isostasy.solve()
 
         if self._visugrid:
             self._visugrid.advect(dt)
