@@ -1,3 +1,4 @@
+from __future__ import print_function,  absolute_import
 import warnings
 
 try:
@@ -47,6 +48,7 @@ _id = str(_uuid.uuid4())
 
 uw = underworld
 nd = nonDimensionalize
+dim = Dimensionalize
 u = UnitRegistry
 
 rheologies = ViscousCreepRegistry()
@@ -415,7 +417,7 @@ See rcParams.keys() for a list of valid parameters.' % (key,))
         """
         Return values in order of sorted keys.
         """
-        return [selzaf[k] for k in self.keys()]
+        return [self[k] for k in self.keys()]
 
     def find_all(self, pattern):
         """
@@ -536,7 +538,8 @@ def rc_params_from_file(fname, fail_on_error=False, use_default_template=True):
     config.update(config_from_file)
 
     if underworld.rank() == 0:
-        print('loaded rc file %s' % fname, flush=True)
+        print('loaded rc file %s' % fname)
+        sys.stdout.flush()
 
     return config
 

@@ -1,4 +1,5 @@
-from __future__ import absolute_import
+from __future__ import print_function,  absolute_import
+import sys
 from pyBadlands.model import Model as BadlandsModel
 from scipy.interpolate import griddata, interp1d
 from scipy.ndimage.filters import gaussian_filter
@@ -112,7 +113,8 @@ class SPM(object):
         if rank == 0 and self.verbose:
             purple = "\033[0;35m"
             endcol = "\033[00m"
-            print(purple+"Processing surface with Badlands"+endcol, flush=True)
+            print(purple+"Processing surface with Badlands"+endcol)
+            sys.stdout.flush()
 
         dt_years = Dimensionalize(dt, UnitRegistry.years).magnitude
 
@@ -152,8 +154,8 @@ class SPM(object):
         if rank == 0 and self.verbose:
             purple = "\033[0;35m"
             endcol = "\033[00m"
-            print(purple + "Processing surface with Badlands...Done" + endcol,
-                  flush=True)
+            print(purple + "Processing surface with Badlands...Done" + endcol)
+            sys.stdout.flush()
 
         return
 

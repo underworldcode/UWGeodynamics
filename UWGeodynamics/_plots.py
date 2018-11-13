@@ -1,12 +1,6 @@
-import glucifer
+from __future__ import print_function,  absolute_import
 import underworld as uw
 from mpi4py import MPI
-from .scaling import nonDimensionalize as nd
-from .scaling import Dimensionalize
-from .scaling import UnitRegistry as u
-from . import rcParams
-from .Underworld_extended import SwarmVariable
-from scipy import interpolate
 import numpy as np
 
 comm = MPI.COMM_WORLD

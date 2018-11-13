@@ -1,3 +1,4 @@
+from __future__ import print_function,  absolute_import
 import underworld as uw
 import numpy as np
 from .scaling import nonDimensionalize as nd
@@ -15,8 +16,8 @@ class TemperatureBCs(BoundaryConditions):
                  right_material=None, back_material=None, front_material=None,
                  order_wall_conditions=None):
 
-        super().__init__(Model, left, right, top, bottom, front, back,
-                         nodeSets, order_wall_conditions)
+        super(TemperatureBCs, self).__init__(Model, left, right, top, bottom, front, back,
+                                             nodeSets, order_wall_conditions)
 
         self.materials = materials
         self.bottom_material = bottom_material
