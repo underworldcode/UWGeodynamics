@@ -17,7 +17,7 @@ RUN mkdir /workspace/UWGeodynamics && \
     mkdir /workspace/MODELS_RESULTS && \
     mv /opt/UWGeodynamics/examples /workspace/UWGeodynamics/. && \
     mv /opt/UWGeodynamics/tutorials /workspace/UWGeodynamics/. && \
-    mv /opt/UWGeodynamics/manual /workspace/UWGeodynamics/.
+    mv /opt/UWGeodynamics/docs /workspace/UWGeodynamics/.
 
 # Badlands dependency
 RUN pip install --no-cache-dir pandas \

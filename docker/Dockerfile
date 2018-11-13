@@ -10,7 +10,7 @@ RUN pip install -e /opt/UWGeodynamics
 RUN mkdir /workspace/UWGeodynamics
 RUN rsync -av /opt/UWGeodynamics/examples/* /workspace/UWGeodynamics/examples/
 RUN rsync -av /opt/UWGeodynamics/tutorials/* /workspace/UWGeodynamics/tutorials/
-RUN rsync -av /opt/UWGeodynamics/manual/* /workspace/UWGeodynamics/manual/
+RUN rsync -av /opt/UWGeodynamics/docs/* /workspace/UWGeodynamics/docs/
 
 # update all permissions for jovyan user
 ENV NB_USER jovyan
