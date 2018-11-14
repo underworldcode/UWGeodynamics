@@ -439,6 +439,7 @@ attributes
 **Example**
 
 .. code:: python
+
    >>> Model.density = 200. * u.kg / u.m**3
    >>> myMaterial = GEO.Material(name="My Material")
 
