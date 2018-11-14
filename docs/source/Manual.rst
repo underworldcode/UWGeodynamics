@@ -1,11 +1,8 @@
 UWGeodynamics User Guide
 ========================
 
-Docker
-------
-
-We strongly encourage users to run UWGeodynamics using the docker images
-we provide on `Docker Hub`_
+Docker_
+-------
 
 Docker containers provide and easy-way to set up and distribute
 applications. They also provide a safe and consistent environment which
@@ -15,11 +12,56 @@ Underworld models. Users can start developping model as soon as they
 have downloaded the image, independently of the operating system running
 on their machine.
 
-Docker container using `Kitematic <https://kitematic.com/>`__
--------------------------------------------------------------
+We strongly encourage users to run UWGeodynamics using the docker images
+we provide on `Docker Hub`_
 
-Getting UWGeodynamics docker image
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Different version of the `underworldcode/uwgeodynamics` image can be
+pulled using a tag:
+
+1. The *latest* tag points to the github master branch and uses the latest
+   *underworld* release.
+2. The *dev* tag points to the github development and uses the development
+   branch of *underworld*.
+3. release tags such as *0.9.8* points to the specified version.
+
+Command line
+~~~~~~~~~~~~
+
+Once you have installed docker on your system you can *pull* the
+*UWGeodynamics* official image as follow:
+
+.. code:: bash
+
+  docker pull underworldcode/uwgeodynamics
+
+You can then start a docker container. (An instance of
+an image).
+
+.. code:: bash
+
+  docker run -d \
+     --name my_container \
+     --port 8888:8888 \
+     --mount source=myvol,target=/workspace/user-data \
+     underworldcode/uwgeodynamics
+
+You can access the container via your browser at the following
+address: http://localhost:8888
+
+
+It is also possible to ssh into the container as follow:
+
+.. code:: bash
+
+  docker exec -it my_container /bin/bash
+
+
+Kitematic_
+~~~~~~~~~~
+
+Kitematic_ is a program that provides a graphical user interface to
+the *docker* daemon and to Docker Hub.
+It is available on Linux, MacOSX and Windows.
 
 1. Download and Install Kitematic_
    The software is available for Windows, MacOsx and Linux. Be aware that on
@@ -28,9 +70,6 @@ Getting UWGeodynamics docker image
 
 2. Open Kitematic and search for the **uwgeodynamics** image.
 3. Create a container by clicking on the create button.
-
-Starting a container:
-~~~~~~~~~~~~~~~~~~~~~
 
 You should now have a container appearing on the left side of your
 kitematic window. The first thing to do now is to create a link between
@@ -42,8 +81,12 @@ will use to save your results.
 Local Installation
 ------------------
 
+If you really need to install the software natively on your system...
+This is not recommended and involves installing *Underworld* and all
+its dependencies. Docker is highly recommended!!!
+
 Requirements
-------------
+~~~~~~~~~~~~
 
 -  Python >= 2.7
 -  A Working version of Underworld2 >=2.6.0 (Please refer to the
@@ -55,42 +98,46 @@ The bleeding edge version of *Underworld* (development branch)
 is now python 3 compatible only.
 *UWGeodynamics* is python 3 ready and can thus be used with it.
 
-Install UWGeodynamics
----------------------
+Install
+~~~~~~~
 
-Pip install (recommended)
-~~~~~~~~~~~~~~~~~~~~~~~~~
+**from Pip**
 
 The UWGeodynamics module can be installed directly from the Python
 Package Index:
 
-.. code: bash
+.. code:: bash
 
-       pip3 install UWGeodynamics
+  pip3 install UWGeodynamics
 
-Install from sources
-~~~~~~~~~~~~~~~~~~~~
+**from sources**
 
 The module source files are available through github_
 
-.. code: bash
+.. code:: bash
 
-       git clone https://github.com/underworldcode/UWGeodynamics.git
+  git clone https://github.com/underworldcode/UWGeodynamics.git
 
 It can then be installed globally on your system using
 
-.. code: bash
+.. code:: bash
 
-       pip3 install -e UWGeodynamics
+  pip3 install -e UWGeodynamics
 
 The Jupyter notebook
 --------------------
 
 The Jupyter_ notebook provides a powerfull
 environment for the development and analysis of Underworld model.
+*Underworld* and *UWGeodynamics* recommend using Jupyter notebooks
+for the development of geodynamic models.
 
-Importing UWGeodynamics
------------------------
+If you are not familiar with Jupyter notebooks, we suggest you follow
+a quick introduction `here <https://mybinder.org/v2/gh/ipython/ipython-in-depth/master?filepath=binder/Index.ipynb>`_.
+
+
+import UWGeodynamics
+--------------------
 
 *UWGeodynamics* can be imported as follow:
 
@@ -189,9 +236,6 @@ The unit entered are checked internally and an error is raised if the
 units are incompatible. The value is automatically converted to the base
 units (meter, second, degree, etc).
 
-Scaling a Model
----------------
-
 To scale a model, the user must define a serie of characteristic
 physical values and assign them to the scaling object.
 
@@ -202,28 +246,25 @@ Arguments with units will be scaled by the UWGeodynamics functions.
    >>> import UWGeodynamics as GEO
    >>> u = GEO.u
 
-   >>> KL = 100 * u.kilometer  # Characteristic length
-   >>> Kt = 1. * u.year        # Characteristic time
-   >>> KM = 3000. * u.kilogram # Characteristic mass
-   >>> KT = 1200. * u.degK     # Characteristic temperature
+   >>> KL = 100 * u.kilometer
+   >>> Kt = 1. * u.year
+   >>> KM = 3000. * u.kilogram
+   >>> KT = 1200. * u.degK
 
    >>> GEO.scaling_coefficients["[length]"] = KL
    >>> GEO.scaling_coefficients["[time]"] = Kt
    >>> GEO.scaling_coefficients["[mass]"]= KM
    >>> GEO.scaling_coefficients["[temperature]"] = KT
 
-Tools
-~~~~~
+Dimensionalize / non-Dimensionalize
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-It is sometime necessary to scale or convert values back to units.
-
-We provide 2 function to process the conversion:
-:code:`GEO.nonDimensionalize` and :code:`GEO.Dimensionalize`.
+We provide 2 functions :code:`GEO.nonDimensionalize` and :code:`GEO.Dimensionalize`
+to convert between non-dimensional and dimensional values.
 The function are also available respectively as :code:`GEO.nd` and
 :code:`GEO.dim`.
 
-Example
-~~~~~~~
+**Example:**
 
 1. define a length of 300 kilometers.
 2. use the GEO.nd function to scale it.
@@ -244,8 +285,17 @@ Example
    >>> print(length_meters)
    300.0 kilometer
 
-The Model object
+
+Building a Model
 ----------------
+
+Design principles
+~~~~~~~~~~~~~~~~~
+
+
+
+The Model object
+~~~~~~~~~~~~~~~~
 
 The central element or “object” of the UWGeodynamics module is the
 **Model** object.
@@ -270,7 +320,7 @@ properties are changed by defining new materials.
                          maxCoord=(64. * u.kilometer, 64. * u.kilometer))
 
 The Material object
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 The *UWGeodynamics* module is designed around the idea of materials,
 which are essentially a way to define physical properties across the
@@ -333,26 +383,87 @@ The **Model.add_material** method will return a Material object. That
 object is a python object that will then be used to define the property
 of the material.
 
-Material shape
-~~~~~~~~~~~~~~
+Material Attributes
+~~~~~~~~~~~~~~~~~~~
 
-A material (or a phase) is first defined by the space it takes in the
-box (its shape).
+The Material object comes with a series of attribute that can
+be used to define its physical behavior.
+
+.. table:: Materials attributes
+  :widths: auto
+
+  =================== ==================
+  Name                    Description
+  =================== ==================
+  shape
+  density             Density
+  diffusivity         Thermal Diffusivity
+  capacity            Thermal Capacity
+  radiogenicHeatProd  Radiogenic Heat Production
+  viscosity           Viscous behavior
+  plasticity          Plastic behavior
+  elasticity          Elastic behavior
+  minViscosity        Minimum Viscosity allowed
+  maxViscosity        Maximum Viscosity allowed
+  stressLimiter       Maximum sustainable stress
+  healingRate         Plastic Strain Healing Rate
+  solidus             Solidus
+  liquidus            Liquidus
+  latentHeatFusion    Latent Heat Fusion (Enthalpy of Fusion)
+  meltExpansion       Melt Expansion
+  meltFraction        Initial Melt Fraction
+  meltFractionLimit   Maximum Fraction of Melt
+  viscosityChange     Change in Viscosity over Melt Fraction range
+  viscosityChangeX1   Melt Fraction Range begin
+  viscosityChangeX2   Melt Fraction Range end
+  =================== ==================
+
+**Examples**
+
+.. code:: python
+
+   >>> Model.density = 200. * u.kg / u.m**3
+   >>> myMaterial = GEO.Material(name="My Material")
+   >>> myMaterial.density = 3000 * u.kilogram / u.meter**3
+   >>> myMaterial.viscosity = 1e19 * u.pascal * u.second
+   >>> myMaterial.radiogenicHeatProd = 0.7 * u.microwatt / u.meter**3
+   >>> myMaterial.diffusivity = 1.0e-6 * u.metre**2 / u.second
+
+Global properties
+^^^^^^^^^^^^^^^^^
+
+The user can define attributes on the *Model* itself.
+The values will be used as global values for materials with undefined
+attributes
+
+**Example**
+
+.. code:: python
+   >>> Model.density = 200. * u.kg / u.m**3
+   >>> myMaterial = GEO.Material(name="My Material")
+
+The density of myMaterial will default to 200. kilogram / cubic metre unless
+its *density* attribute is specified.
+
+
+Material shape
+^^^^^^^^^^^^^^
+
+The *shape* attribute essentially describe the initial
+location of a material.
+It is used to build a initial geometry of the model.
 
 There is a range of shapes available
 
-2D:
+-  Layer (2D/3D)
+-  Polygon (2D)
+-  Box (2D)
+-  Disk (2D) / Spheres (3D)
+-  Annulus (2D)
+-  MultiShape (Combination of any of the above) (2D)
+-  HalfSpace (3D)
 
--  `Layer <#layer>`__ (2D/3D)
--  `Polygon <#polygon>`__ (2D)
--  `Box <#box>`__ (2D)
--  `Disk <#disk>`__ (2D) / `Spheres <#spheres>`__ (3D)
--  `Annulus <#annulus>`__ (2D)
--  `MultiShape <#multishape>`__ (Combination of any of the above) (2D)
--  `HalfSpace <#halfspace>`__ (3D)
-
-Layer
-^^^^^
+**Layer**
 
 .. code:: python
 
@@ -369,8 +480,7 @@ Layer
 
 .. image:: /img/layers.png
 
-Polygon
-^^^^^^^
+**Polygon**
 
 .. code:: python
 
@@ -389,8 +499,7 @@ Polygon
 
 .. image:: /img/polygon.png
 
-Box
-^^^
+**Box**
 
 .. code:: python
 
@@ -408,8 +517,7 @@ Box
 
 .. image:: /img/box.png
 
-Disk
-^^^^
+**Disk**
 
 .. code:: python
 
@@ -426,8 +534,7 @@ Disk
 
 .. image:: /img/disk.png
 
-Annulus
-^^^^^^^
+**Annulus**
 
 .. code:: python
 
@@ -446,8 +553,7 @@ Annulus
 
 .. image:: /img/annulus.png
 
-MultiShape
-^^^^^^^^^^
+**MultiShape**
 
 Several shapes can be combined to form a material shape:
 
@@ -510,9 +616,7 @@ You can also take the intersection of some shapes:
   >>> Fig.show()
   >>> Fig.save("multishape-3.png")
 
-
-Multiple materials
-~~~~~~~~~~~~~~~~~~
+**Multiple materials**
 
 You can add as many materials as needed:
 
@@ -538,30 +642,31 @@ You can add as many materials as needed:
   >>> Fig.save("multiple_materials.png")
 
 
-Material Attributes
-~~~~~~~~~~~~~~~~~~~
+Rheologies
+~~~~~~~~~~
+
+Newtonian Rheology
+^^^^^^^^^^^^^^^^^^
+
+A newtonian rheology can be applied by assigning a viscosity
 
 .. code:: python
 
-   Model.density = 200. * u.kg / u.m**3
-   material.density = 3000 * u.kilogram / u.meter**3
-   Fig = Model.plot.density(figsize=(400, 400))
+  >>> import UWGeodynamics as GEO
 
-.. image:: /img/density.png
+  >>> myMaterial = GEO.Material(name="Newtonian Material")
+  >>> myMaterial.viscosity = 1e19 * u.pascal * u.second
 
-Material Rheologies
--------------------
+Non-Newtonian Rheology
+^^^^^^^^^^^^^^^^^^^^^^
 
-Viscous Rheology
-~~~~~~~~~~~~~~~~
-
-Registry / Database
-^^^^^^^^^^^^^^^^^^^
+*UWGeodynamics* provides a library of commonly used Viscous Creep Flow Laws.
+They can be accessed using the `GEO.ViscousCreepRegistry` registry:
 
 .. image:: /img/ViscousCreepRegistry.gif
 
 
-Here is an example:
+**Example:**
 
 .. code:: python
 
@@ -570,7 +675,6 @@ Here is an example:
 
   >>> rh = GEO.ViscousCreepRegistry()
   >>> material.viscosity = rh.Gleason_and_Tullis_1995
-
 
 You can scale viscosity by using a multiplier.
 For example to make the **Gleason and Tullis, 1995** rheology
@@ -584,20 +688,7 @@ For example to make the **Gleason and Tullis, 1995** rheology
   >>> rh = GEO.ViscousCreepRegistry()
   >>> material.viscosity = 30 * rh.Gleason_and_Tullis_1995
 
-
-User Defined
-^^^^^^^^^^^^
-
-Constant viscosity
-''''''''''''''''''
-
-.. code:: python
-
-   >>> viscosity = 1e21 * u.pascal * u.second
-   >>> viscosity = GEO.ConstantViscosity(1e21 * u.pascal * u.second)
-
-Viscous Creep
-'''''''''''''
+The user can of course define its own rheology.
 
 .. code:: python
 
@@ -619,20 +710,16 @@ Single parameters can then be modified
 
    >>> viscosity.activationEnergy = 300. * u.kilojoule
 
-Plastic Rheology (Yield)
+Plastic Behavior (Yield)
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. _registry-database-1:
-
-Registry / Database
-^^^^^^^^^^^^^^^^^^^
+As for Viscous Creep, we provide a registry of commmonly used
+plastic behaviors.
+They can be accessed using the `GEO.PlasticityRegistry` registry.
 
 .. image:: /img/PlasticityRegistry.gif
 
-.. _user-defined-1:
-
-User Defined
-^^^^^^^^^^^^
+The user can define its own parameters:
 
 .. code:: python
 
@@ -643,8 +730,10 @@ User Defined
                                       epsilon1=0.5,
                                       epsilon2=1.5)
 
-Mechanical Boundary Conditions
-------------------------------
+   >>> plasticity = GEO.VonMises(cohesion=10. * u.megapascal)
+
+Mechanical Boundary ConditionVs
+-------------------------------
 
 Mechanical boundary conditions are a critical part of any
 geodynamic model design. In the following, we quickly detail the options
@@ -667,7 +756,7 @@ We will define a simple model for the sake of the example.
                          maxCoord=(64. * u.kilometer, 64. * u.kilometer))
 
 Kinematic boundary conditions
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Kinematic boundary conditions are set using the **set_velocityBCs** method.
 Conditions are defined for each wall (left, right, bottom, top, back and front (3D only)).
@@ -700,82 +789,30 @@ vertically along the side walls.
 
 .. image:: /img/mechanicalBCs1.png
 
-Stress Conditions
------------------
+3D
+^^
 
-Stress conditions can be applied to the boundaries using the
-**set_stressBCs** method:
-
-In the following example we apply a stress of 200.0 megapascal to the
-bottom of our model:
+Defining boundary conditions for a 3D model is no different than above.
+The user must define the velocity components with 3 degree of freedom
+instead of 2.
 
 .. code:: python
 
-   >>> Model.set_stressBCs(bottom=[None, 200. * u.megapascal])
-
-Note that you will have to make sure that kinematic and stress conditions
-are compatible.
-
-
-Isostasy
---------
-
-Isostasy is an important concept in geodynamics. It is essentially a
-consequence of the redistribution of mass within a deforming Earth. One
-important limitation of our geodynamic model is that we model special
-cases inside rectangular boxes while earth is actually a sphere. One may
-however need to provide a way to maintain the volume / mass inside the
-domain in order to mimic isostasy. There is no ideal way to model
-isostasy in a boxed model, it is however possible to approach isostasy
-using a support condition.
-
-Options are to:
-
--  Balance flows using a kinematic condition at the base of the model.
--  Balance flows using a stress condition at the base of the model.
--  Balance flows along the sides.
-
-Lecode Isostasy (kinematic)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The Lecode Isostasy submodule provides a way to model isostatic support
-at the base of the model. It calculates the velocity to apply at the
-base of each elemental column. It applies the principles of Airy
-isostatic model by approximating the weight of each column. The
-calculation is done dynamically and velocities will change from one step
-to the next. It is a good option to use in most cases.
-
-The option can be used by creating a LecodeIsostasy object using the
-``GEO.LecodeIsostasy`` class. The object requires the index of the
-material of reference (the material number). One can apply an average
-velocity (calculated across each column base) using the ``average``
-parameter (default to False).
+   >>> Model2 = GEO.Model(elementRes=(16, 16, 16),
+                          minCoord=(0. * u.kilometer, 0. * u.kilometer, 0. * u.kilometer),
+                          maxCoord=(64. * u.kilometer, 64. * u.kilometer, 64. * u.kilometer))
 
 .. code:: python
 
-   >>> Model.set_velocityBCs(left=[1.0*u.centimetre/u.year, None],
-                             right=[-1.0*u.centimetre/u.year, None],
-                             bottom=[None, GEO.LecodeIsostasy(reference_mat=Model.index)],
-                             top=[None,0.])
-
-Traction Condition (stress)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Another approach to model isostasy is to defined a stress at the base of
-the model. This is done using units of stress (derived SI units =
-pascal). The model will then maintain the stress by adjusting the flow
-(and thus velocities) across the border. Units are important: units of
-stress defines a stress while units of velocity define a velocity.
-
-.. code:: python
-
-   >>> Model.set_velocityBCs(left=[1.0*u.centimetre/u.year, None],
-                             right=[-1.0*u.centimetre/u.year, None],
-                             bottom=[None, 10.*u.megapascal],
-                             top=[None,0.])
+   >>> Model2.set_velocityBCs(left=[1.0*u.centimetre/u.year, None, 0.],
+                              right=[-1.0*u.centimetre/u.year, None, 0.],
+                              bottom=[None, None, 0.],
+                              top=[None, None, 0.],
+                              front=[None, 0., None],
+                              back=[None, 0., None])
 
 Velocity varying along a wall
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It is sometime necessary to define a velocity only for a section of a
 wall. That can be done using a **condition**. A condition is a set of
@@ -798,38 +835,85 @@ the part of the left wall below 32 kilometre. Velocity is set to be
 
 .. image:: /img/mechanicalBCs2.png
 
-nodeSets
+Assign Viscosity to Internal nodes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Stress Conditions
+~~~~~~~~~~~~~~~~~
+
+Stress conditions can be applied to the boundaries using the
+**set_stressBCs** method:
+
+In the following example we apply a stress of 200.0 megapascal to the
+bottom of our model:
+
+.. code:: python
+
+   >>> Model.set_stressBCs(bottom=[None, 200. * u.megapascal])
+
+Note that you will have to make sure that kinematic and stress conditions
+are compatible.
+
+
+Isostasy
 ~~~~~~~~
 
-(to be implemented)
+Isostasy is an important concept in geodynamics. It is essentially a
+consequence of the redistribution of mass within a deforming Earth. One
+important limitation of our geodynamic model is that we model special
+cases inside rectangular boxes while earth is actually a sphere. One may
+however need to provide a way to maintain the volume / mass inside the
+domain in order to mimic isostasy. There is no ideal way to model
+isostasy in a boxed model, it is however possible to approach isostasy
+using a support condition.
 
-3D Model
---------
+Options are to:
 
-Defining boundary conditions for a 3D model is no different than above.
-The user must define the velocity components with 3 degree of freedom
-instead of 2.
+-  Balance flows using a kinematic condition at the base of the model.
+-  Balance flows using a stress condition at the base of the model.
+-  Balance flows along the sides.
+
+Lecode Isostasy (kinematic)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Lecode Isostasy submodule provides a way to model isostatic support
+at the base of the model. It calculates the velocity to apply at the
+base of each elemental column. It applies the principles of Airy
+isostatic model by approximating the weight of each column. The
+calculation is done dynamically and velocities will change from one step
+to the next. It is a good option to use in most cases.
+
+The option can be used by creating a LecodeIsostasy object using the
+``GEO.LecodeIsostasy`` class. The object requires the index of the
+material of reference (the material number). One can apply an average
+velocity (calculated across each column base) using the ``average``
+parameter (default to False).
 
 .. code:: python
 
-   >>> Model2 = GEO.Model(elementRes=(16, 16, 16),
-                          minCoord=(0. * u.kilometer, 0. * u.kilometer, 0. * u.kilometer),
-                          maxCoord=(64. * u.kilometer, 64. * u.kilometer, 64. * u.kilometer))
+   >>> Model.set_velocityBCs(left=[1.0*u.centimetre/u.year, None],
+                             right=[-1.0*u.centimetre/u.year, None],
+                             bottom=[None, GEO.LecodeIsostasy(reference_mat=Model.index)],
+                             top=[None,0.])
+
+Traction Condition (stress)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Another approach to model isostasy is to defined a stress at the base of
+the model. This is done using units of stress (derived SI units =
+pascal). The model will then maintain the stress by adjusting the flow
+across the border.
 
 .. code:: python
 
-   >>> Model2.set_velocityBCs(left=[1.0*u.centimetre/u.year, None, 0.],
-                              right=[-1.0*u.centimetre/u.year, None, 0.],
-                              bottom=[None, None, 0.],
-                              top=[None, None, 0.],
-                              front=[None, 0., None],
-                              back=[None, 0., None])
+   >>> Model.set_stressBCs(bottom=[None, 10.*u.megapascal])
+
 
 Thermal Boundary Conditions
----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Setting absolute temperatures at the boundaries
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Absolute temperatures
+^^^^^^^^^^^^^^^^^^^^^
 
 Setting the temperature at the top of a model to be
 :math:`500 \text{kelvin}` at the top and :math:`1600 \text{kelvin}` at
@@ -845,23 +929,14 @@ You can of course define temperatures on the sidewalls:
 
    >>> Model.set_temperatureBCs(right=500. * u.degK, left=1600. * u.degK)
 
-Setting Heat flux at the boundaries
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code:: python
-
-   >>> Model.set_temperatureBCs(top=500. * u.degK, bottom=-0.22 * u.milliwatt / u.metre**2, bottom_material=Model)
-
-Fix the temperature of a Material
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Fix the temperature of a Material**
 
 .. code:: python
 
    >>> Model.set_temperatureBCs(top=500. * u.degK, bottom=-0.22 * u.milliwatt / u.metre**2, bottom_material=Model,
                                 materials=[(air, 273. * u.Kelvin)])
 
-Fix the temperature of some nodes using an IndexSet
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Fix the temperature of internal nodes**
 
 You can assign a temperature to a list of nodes by passing a list of
 node indices (global).
@@ -872,8 +947,16 @@ node indices (global).
    >>> Model.set_temperatureBCs(top=500. * u.degK, bottom=-0.22 * u.milliwatt / u.metre**2, bottom_material=Model,
                                 nodeSets=[(nodes, 273. * u.Kelvin)])
 
+Heat flux
+^^^^^^^^^
+
+.. code:: python
+
+   >>> Model.set_temperatureBCs(top=500. * u.degK, bottom=-0.22 * u.milliwatt / u.metre**2, bottom_material=Model)
+
+
 Frictional Boundaries
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 Frictional Boundaries can be set as follow:
 
