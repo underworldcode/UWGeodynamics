@@ -29,7 +29,7 @@ of possibilities offered by Underworld.
 .. image:: ./img/SandboxCompression.gif
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    Manual
 
