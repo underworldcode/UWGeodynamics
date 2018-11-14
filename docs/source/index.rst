@@ -26,14 +26,16 @@ We hope that the user will naturally move to the low-level functionalities as
 he or her gets more confident, and by doing so will access the wide range
 of possibilities offered by Underworld.
 
+.. image:: ./img/SandboxCompression.gif
+
 .. toctree::
    :maxdepth: 1
 
    Manual
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   Examples
+   Benchmarks
+   Tutorials
+   
+   HPC-Installation
+   About

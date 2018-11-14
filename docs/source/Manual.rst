@@ -5,8 +5,7 @@ Docker
 ------
 
 We strongly encourage users to run UWGeodynamics using the docker images
-we provide on `Docker
-Hub <https://hub.docker.com/r/underworldcode/uwgeodynamics>`__.
+we provide on `Docker Hub`_
 
 Docker containers provide and easy-way to set up and distribute
 applications. They also provide a safe and consistent environment which
@@ -22,8 +21,8 @@ Docker container using `Kitematic <https://kitematic.com/>`__
 Getting UWGeodynamics docker image
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Download and Install `Kitematic <https://kitematic.com/>`__ The
-   software is available for Windows, MacOsx and Linux. Be aware that on
+1. Download and Install Kitematic_
+   The software is available for Windows, MacOsx and Linux. Be aware that on
    linux the installation may differ depending on the distribution you
    are running.
 
@@ -46,10 +45,15 @@ Local Installation
 Requirements
 ------------
 
--  Python >= 3.5
--  A Working version of Underworld2 >=2.7.0 (Please refer to the
+-  Python >= 2.7
+-  A Working version of Underworld2 >=2.6.0 (Please refer to the
    Underworld documentation)
 -  pint >= 0.8
+
+**Note on Python 3 compatibility**:
+The bleeding edge version of *Underworld* (development branch)
+is now python 3 compatible only.
+*UWGeodynamics* is python 3 ready and can thus be used with it.
 
 Install UWGeodynamics
 ---------------------
@@ -60,30 +64,29 @@ Pip install (recommended)
 The UWGeodynamics module can be installed directly from the Python
 Package Index:
 
-::
+.. code: bash
 
        pip3 install UWGeodynamics
 
 Install from sources
 ~~~~~~~~~~~~~~~~~~~~
 
-The module source files are available through
-`github <https://github.com/rbeucher/UWGeodynamics.git>`__
+The module source files are available through github_
 
-::
+.. code: bash
 
-       git clone https://github.com/rbeucher/UWGeodynamics.git
+       git clone https://github.com/underworldcode/UWGeodynamics.git
 
 It can then be installed globally on your system using
 
-::
+.. code: bash
 
        pip3 install -e UWGeodynamics
 
 The Jupyter notebook
 --------------------
 
-The [[Jupyter|https://jupyter.org]] notebook provides a powerfull
+The Jupyter_ notebook provides a powerfull
 environment for the development and analysis of Underworld model.
 
 Importing UWGeodynamics
@@ -93,52 +96,55 @@ Importing UWGeodynamics
 
 .. code:: python
 
-   import UWGeodynamics as GEO
+   >>> import UWGeodynamics as GEO
 
 Working with units
 ------------------
 
-*UWGeodynamics* uses *[[Pint|https://pint.readthedocs.io/en/latest]]*, a
+*UWGeodynamics* uses Pint_, a
 Python package to define, operate and manipulate **physical quantities**
 (A numerical value with unit of measurement). Pint is a very powerful
 package that handles conversion and operation between units.
 
 We recommend using SI units but other systems are also available.
 
-*[[Pint|https://pint.readthedocs.io/en/latest]]* **Unit Registry** can
-be used as follow:
+Pint_ **Unit Registry** can be used as follow:
 
 .. code:: python
 
-   import UWGeodynamics as GEO
-   u = GEO.UnitRegistry
+   >>> import UWGeodynamics as GEO
+   >>> u = GEO.UnitRegistry
 
 or simply
 
 .. code:: python
 
-   u = GEO.u
+   >>> import UWGeodynamics as GEO
+   >>> u = GEO.u
 
 You can have a quick overview of all the units available by hitting tab
 after the “.” of the u object.
 
-[[img/tabtab.gif]]
+.. image:: img/tabtab.gif
 
 Quantities can then be defined as follow:
 
 .. code:: python
 
-   length = 100. * u.kilometer
-   width = 50. * u.kilometer
-   gravity = 9.81 * u.meter / u.second**2
+   >>> import UWGeodynamics as GEO
+   >>> u = GEO.u
+   >>> length = 100. * u.kilometer
+   >>> width = 50. * u.kilometer
+   >>> gravity = 9.81 * u.meter / u.second**2
 
-*[[Pint|https://pint.readthedocs.io/en/latest]]* offers the possibility
-to append a prefix to the units. 1 million year can thus be defined as
-follow:
+Pint_ offers the possibility to append a prefix to the units.
+1 million year can thus be defined as follow:
 
 .. code:: python
 
-   1.0 * u.megayear
+   >>> import UWGeodynamics as GEO
+   >>> u = GEO.u
+   >>> 1.0 * u.megayear
 
 Model Scaling
 -------------
@@ -147,7 +153,8 @@ Model can be scaled using a series of scaling coefficients
 
 .. code:: python
 
-   import UWGeodynamics as GEO
+   >>> import UWGeodynamics as GEO
+   >>> GEO.scaling_coefficients
 
 The default scaling coefficients are defined as follow:
 
@@ -170,12 +177,13 @@ as follow
 
 .. code:: python
 
-   u = GEO.u
+   >>> import UWGeodynamics as GEO
+   >>> u = GEO.u
 
-   GEO.scaling_coefficients["[length]"] = 3.0 * u.kilometer
-   GEO.scaling_coefficients["[mass]"] = 4.0 * u.kilogram
-   GEO.scaling_coefficients["[temperature]"] = 273.15 * u.degK
-   GEO.scaling_coefficients["[time]"] = 300 * u.years
+   >>> GEO.scaling_coefficients["[length]"] = 3.0 * u.kilometer
+   >>> GEO.scaling_coefficients["[mass]"] = 4.0 * u.kilogram
+   >>> GEO.scaling_coefficients["[temperature]"] = 273.15 * u.degK
+   >>> GEO.scaling_coefficients["[time]"] = 300 * u.years
 
 The unit entered are checked internally and an error is raised if the
 units are incompatible. The value is automatically converted to the base
@@ -191,15 +199,18 @@ Arguments with units will be scaled by the UWGeodynamics functions.
 
 .. code:: python
 
-   KL = 100 * u.kilometer  # Characteristic length
-   Kt = 1. * u.year        # Characteristic time
-   KM = 3000. * u.kilogram # Characteristic mass
-   KT = 1200. * u.degK     # Characteristic temperature
+   >>> import UWGeodynamics as GEO
+   >>> u = GEO.u
 
-   GEO.scaling_coefficients["[length]"] = KL
-   GEO.scaling_coefficients["[time]"] = Kt
-   GEO.scaling_coefficients["[mass]"]= KM
-   GEO.scaling_coefficients["[temperature]"] = KT
+   >>> KL = 100 * u.kilometer  # Characteristic length
+   >>> Kt = 1. * u.year        # Characteristic time
+   >>> KM = 3000. * u.kilogram # Characteristic mass
+   >>> KT = 1200. * u.degK     # Characteristic temperature
+
+   >>> GEO.scaling_coefficients["[length]"] = KL
+   >>> GEO.scaling_coefficients["[time]"] = Kt
+   >>> GEO.scaling_coefficients["[mass]"]= KM
+   >>> GEO.scaling_coefficients["[temperature]"] = KT
 
 Tools
 ~~~~~
@@ -207,17 +218,9 @@ Tools
 It is sometime necessary to scale or convert values back to units.
 
 We provide 2 function to process the conversion:
-
-.. code:: python
-
-   GEO.nonDimensionalize
-   GEO.Dimensionalize
-
-The nonDimensionalize function is also available as:
-
-.. code:: python
-
-   GEO.nd
+:code:`GEO.nonDimensionalize` and :code:`GEO.Dimensionalize`.
+The function are also available respectively as :code:`GEO.nd` and
+:code:`GEO.dim`.
 
 Example
 ~~~~~~~
@@ -228,9 +231,18 @@ Example
 
 .. code:: python
 
-   length = 300. * u.kilometers
-   scaled_length = GEO.nd(length)
-   length_meters = GEO.Dimensionalize(scaled_length, u.meters)
+   >>> import UWGeodynamics as GEO
+   >>> u = GEO.u
+
+   >>> GEO.scaling_coefficients["[length]"] = 300. * u.kilometer
+
+   >>> length = 300. * u.kilometers
+   >>> scaled_length = GEO.nd(length)
+   >>> print(scaled_length)
+   1.0
+   >>> length_meters = GEO.Dimensionalize(scaled_length, u.meters)
+   >>> print(length_meters)
+   300.0 kilometer
 
 The Model object
 ----------------
@@ -251,11 +263,11 @@ properties are changed by defining new materials.
 
 .. code:: python
 
-   import UWGeodynamics as GEO
-   u = GEO.u
-   Model = GEO.Model(elementRes=(64, 64), 
-                     minCoord=(0. * u.kilometer, 0. * u.kilometer),
-                     maxCoord=(64. * u.kilometer, 64. * u.kilometer))
+   >>> import UWGeodynamics as GEO
+   >>> u = GEO.u
+   >>> Model = GEO.Model(elementRes=(64, 64),
+                         minCoord=(0. * u.kilometer, 0. * u.kilometer),
+                         maxCoord=(64. * u.kilometer, 64. * u.kilometer))
 
 The Material object
 -------------------
@@ -268,14 +280,14 @@ Materials are defined using the **Material** object as follow:
 
 .. code:: python
 
-   import UWGeodynamics as GEO
+   >>> import UWGeodynamics as GEO
 
-   crust = GEO.Material(name="Crust")
+   >>> crust = GEO.Material(name="Crust")
 
 Typing the name of the material in an empty cell will return a table
 which summarizes the property of the material:
 
-[[img/Material1.png]]
+.. image:: img/Material1.png
 
 As you can see, most of the property are undefined.
 
@@ -286,21 +298,21 @@ They are several ways to define the physical parameters of our Material.
 
 .. code:: python
 
-   import UWGeodynamics as GEO
+   >>> import UWGeodynamics as GEO
 
-   u = GEO.u
-   crust = GEO.Material(name="Crust", density=3000*u.kilogram/u.metre**3)
+   >>> u = GEO.u
+   >>> crust = GEO.Material(name="Crust", density=3000*u.kilogram/u.metre**3)
 
 -  The second option is to change the property after creating the
    **Material**:
 
 .. code:: python
 
-   import UWGeodynamics as GEO
+   >>> import UWGeodynamics as GEO
 
-   u = GEO.u
-   crust = GEO.Material(name="Crust")
-   crust.density = 3000. * u.kilogram / u.metre **3
+   >>> u = GEO.u
+   >>> crust = GEO.Material(name="Crust")
+   >>> crust.density = 3000. * u.kilogram / u.metre **3
 
 The second option is often easier to read.
 
@@ -311,10 +323,10 @@ Material can be added to a model as follow:
 
 .. code:: python
 
-   import UWGeodynamics as GEO
-   u = GEO.u
-   Model = GEO.Model()
-   crust = Model.add_material(name="Crust")
+   >>> import UWGeodynamics as GEO
+   >>> u = GEO.u
+   >>> Model = GEO.Model()
+   >>> crust = Model.add_material(name="Crust")
 
 Although optional, tt is a good idea to give a **name** to the material.
 The **Model.add_material** method will return a Material object. That
@@ -344,90 +356,95 @@ Layer
 
 .. code:: python
 
-   import UWGeodynamics as GEO
+   >>> import UWGeodynamics as GEO
+   >>> import glucifer
 
-   u = GEO.u
-   Model = GEO.Model()
-   shape = GEO.shapes.Layer(top=30.*u.kilometer, bottom=0.*u.kilometer)
-   material = Model.add_material(name="Material", shape=shape)
+   >>> u = GEO.u
+   >>> Model = GEO.Model()
+   >>> shape = GEO.shapes.Layer(top=30.*u.kilometer, bottom=0.*u.kilometer)
+   >>> material = Model.add_material(name="Material", shape=shape)
 
-   Fig = Model.plot.material(figsize=(400, 400), fn_size=3.0)
-   Fig.save("layers.png")
+   >>> Fig = Model.plot.material(figsize=(400, 400), fn_size=3.0)
+   >>> Fig.save("layers.png")
 
-[[/img/layers.png]]
+.. image:: /img/layers.png
 
 Polygon
 ^^^^^^^
 
 .. code:: python
 
-   import UWGeodynamics as GEO
+   >>> import UWGeodynamics as GEO
+   >>> import glucifer
 
-   u = GEO.u
-   Model = GEO.Model()
-   polygon = GEO.shapes.Polygon(vertices=[(10.* u.kilometer, 10.*u.kilometer),
-                                          (20.* u.kilometer, 35.*u.kilometer),
-                                          (35.* u.kilometer, 5.*u.kilometer)])
-   material = Model.add_material(name="Material", shape=polygon)
+   >>> u = GEO.u
+   >>> Model = GEO.Model()
+   >>> polygon = GEO.shapes.Polygon(vertices=[(10.* u.kilometer, 10.*u.kilometer),
+                                              (20.* u.kilometer, 35.*u.kilometer),
+                                              (35.* u.kilometer, 5.*u.kilometer)])
+   >>> material = Model.add_material(name="Material", shape=polygon)
 
-   Fig = Model.plot.material(figsize=(400, 400), fn_size=3.0)
-   Fig.save("polygon.png")
+   >>> Fig = Model.plot.material(figsize=(400, 400), fn_size=3.0)
+   >>> Fig.save("polygon.png")
 
-[[/img/polygon.png]]
+.. image:: /img/polygon.png
 
 Box
 ^^^
 
 .. code:: python
 
-   import UWGeodynamics as GEO
+   >>> import UWGeodynamics as GEO
+   >>> import glucifer
 
-   u = GEO.u
-   Model = GEO.Model()
-   box = GEO.shapes.Box(top=10.* u.kilometer, bottom=5*u.kilometer,
-                        minX=10.*u.kilometer, maxX=15*u.kilometer)
-   material = Model.add_material(name="Material", shape=box)
+   >>> u = GEO.u
+   >>> Model = GEO.Model()
+   >>> box = GEO.shapes.Box(top=10.* u.kilometer, bottom=5*u.kilometer,
+                            minX=10.*u.kilometer, maxX=15*u.kilometer)
+   >>> material = Model.add_material(name="Material", shape=box)
 
-   Fig = Model.plot.material(figsize=(400, 400), fn_size=3.0)
-   Fig.save("box.png")
+   >>> Fig = Model.plot.material(figsize=(400, 400), fn_size=3.0)
+   >>> Fig.save("box.png")
 
-[[/img/box.png]]
+.. image:: /img/box.png
 
 Disk
 ^^^^
 
 .. code:: python
 
-   import UWGeodynamics as GEO
+   >>> import UWGeodynamics as GEO
+   >>> import glucifer
 
-   u = GEO.u
-   Model = GEO.Model()
-   disk = GEO.shapes.Disk(center=(32. * u.kilometer, 32. * u.kilometer), radius=10.*u.kilometer)
-   material = Model.add_material(name="Material", shape=disk)
+   >>> u = GEO.u
+   >>> Model = GEO.Model()
+   >>> disk = GEO.shapes.Disk(center=(32. * u.kilometer, 32. * u.kilometer), radius=10.*u.kilometer)
+   >>> material = Model.add_material(name="Material", shape=disk)
 
-   Fig = Model.plot.material(figsize=(400, 400), fn_size=3.0)
-   Fig.save("disk.png")
+   >>> Fig = Model.plot.material(figsize=(400, 400), fn_size=3.0)
+   >>> Fig.save("disk.png")
 
-[[/img/disk.png]]
+.. image:: /img/disk.png
 
 Annulus
 ^^^^^^^
 
 .. code:: python
 
-   import UWGeodynamics as GEO
+   >>> import UWGeodynamics as GEO
+   >>> import glucifer
 
-   u = GEO.u
-   Model = GEO.Model()
-   annulus = GEO.shapes.Annulus(center=(35.*u.kilometer, 50.*u.kilometer),
-                                r1=5.*u.kilometer, 
-                                r2=10.*u.kilometer)
-   material = Model.add_material(name="Material", shape=annulus)
+   >>> u = GEO.u
+   >>> Model = GEO.Model()
+   >>> annulus = GEO.shapes.Annulus(center=(35.*u.kilometer, 50.*u.kilometer),
+                                    r1=5.*u.kilometer,
+                                    r2=10.*u.kilometer)
+   >>> material = Model.add_material(name="Material", shape=annulus)
 
-   Fig = Model.plot.material(figsize=(400, 400), fn_size=3.0)
-   Fig.save("annulus.png")
+   >>> Fig = Model.plot.material(figsize=(400, 400), fn_size=3.0)
+   >>> Fig.save("annulus.png")
 
-[[/img/annulus.png]]
+.. image:: /img/annulus.png
 
 MultiShape
 ^^^^^^^^^^
@@ -436,19 +453,90 @@ Several shapes can be combined to form a material shape:
 
 .. code:: python
 
-   import UWGeodynamics as GEO
+   >>> import UWGeodynamics as GEO
+   >>> import glucifer
 
-   u = GEO.u
-   Model = GEO.Model()
-   disk1 = GEO.shapes.Disk(center=(10. * u.kilometer, 10. * u.kilometer), radius=10.*u.kilometer)
-   disk2 = GEO.shapes.Disk(center=(20. * u.kilometer, 20. * u.kilometer), radius=5.*u.kilometer)
+   >>> u = GEO.u
+   >>> Model = GEO.Model()
+   >>> disk1 = GEO.shapes.Disk(center=(10. * u.kilometer, 10. * u.kilometer), radius=10.*u.kilometer)
+   >>> disk2 = GEO.shapes.Disk(center=(20. * u.kilometer, 20. * u.kilometer), radius=5.*u.kilometer)
 
-   shape = GEO.shapes.MultiShape([disk1, disk2])
-   material = Model.add_material(name="Material", shape=shape)
-   Fig = Model.plot.material(figsize=(400, 400), fn_size=3.0)
-   Fig.save("multishape.png")
+   >>> shape = GEO.shapes.MultiShape([disk1, disk2])
+   >>> material = Model.add_material(name="Material", shape=shape)
 
-[[/img/multishape.png]]
+   >>>Fig = Model.plot.material(figsize=(400, 400), fn_size=3.0)
+   >>>Fig.save("multishape.png")
+
+.. image:: /img/multishape.png
+
+the following is equivalent:
+
+.. code:: python
+
+  >>> import UWGeodynamics as GEO
+  >>> import glucifer
+
+  >>> u = GEO.u
+  >>> Model = GEO.Model()
+  >>> disk1 = GEO.shapes.Disk(center=(32. * u.kilometer, 32. * u.kilometer), radius=10.*u.kilometer)
+  >>> disk2 = GEO.shapes.Disk(center=(32. * u.kilometer, 22. * u.kilometer), radius=10.*u.kilometer)
+
+  >>> shape = disk1 + disk2
+  >>> material = Model.add_material(name="Material", shape=shape)
+
+  >>> Fig = glucifer.Figure(figsize=(400,400))
+  >>> Fig.Points(Model.swarm, Model.materialField, fn_size=3.)
+  >>> Fig.show()
+  >>> Fig.save("multishape-2.png")
+
+
+You can also take the intersection of some shapes:
+
+.. code:: python
+
+  >>> import UWGeodynamics as GEO
+  >>> import glucifer
+
+  >>> u = GEO.u
+  >>> Model = GEO.Model()
+  >>> disk1 = GEO.shapes.Disk(center=(32. * u.kilometer, 32. * u.kilometer), radius=10.*u.kilometer)
+  >>> disk2 = GEO.shapes.Disk(center=(32. * u.kilometer, 22. * u.kilometer), radius=10.*u.kilometer)
+
+  >>> shape = disk1 & disk2
+  >>> material = Model.add_material(name="Material", shape=shape)
+
+  >>> Fig = glucifer.Figure(figsize=(400,400))
+  >>> Fig.Points(Model.swarm, Model.materialField, fn_size=3.)
+  >>> Fig.show()
+  >>> Fig.save("multishape-3.png")
+
+
+Multiple materials
+~~~~~~~~~~~~~~~~~~
+
+You can add as many materials as needed:
+
+.. code:: python
+
+  >>> import UWGeodynamics as GEO
+  >>> import glucifer
+
+  >>> u = GEO.u
+  >>> Model = GEO.Model()
+  >>> shape = GEO.shapes.Layer(top=30.*u.kilometer, bottom=0.*u.kilometer)
+  >>> material1 = Model.add_material(name="Material 1", shape=shape)
+
+  >>> polygon = GEO.shapes.Polygon(vertices=[(10.* u.kilometer, 10.*u.kilometer),
+  >>>                                        (20.* u.kilometer, 35.*u.kilometer),
+  >>>                                        (35.* u.kilometer, 5.*u.kilometer)])
+
+  >>> material2 = Model.add_material(name="Material 2", shape=polygon)
+
+  >>> Fig = glucifer.Figure(figsize=(400,400))
+  >>> Fig.Points(Model.swarm, Model.materialField, fn_size=3.)
+  >>> Fig.show()
+  >>> Fig.save("multiple_materials.png")
+
 
 Material Attributes
 ~~~~~~~~~~~~~~~~~~~
@@ -459,15 +547,10 @@ Material Attributes
    material.density = 3000 * u.kilogram / u.meter**3
    Fig = Model.plot.density(figsize=(400, 400))
 
-[[/img/density.png]]
+.. image:: /img/density.png
 
 Material Rheologies
 -------------------
-
-.. code:: python
-
-   >>> import UWGeodynamics as GEO
-   >>> u = GEO.u
 
 Viscous Rheology
 ~~~~~~~~~~~~~~~~
@@ -475,7 +558,32 @@ Viscous Rheology
 Registry / Database
 ^^^^^^^^^^^^^^^^^^^
 
-[[/img/ViscousCreepRegistry.gif]]
+.. image:: /img/ViscousCreepRegistry.gif
+
+
+Here is an example:
+
+.. code:: python
+
+  >>> import UWGeodynamics as GEO
+  >>> material = GEO.Material(name="Material")
+
+  >>> rh = GEO.ViscousCreepRegistry()
+  >>> material.viscosity = rh.Gleason_and_Tullis_1995
+
+
+You can scale viscosity by using a multiplier.
+For example to make the **Gleason and Tullis, 1995** rheology
+30 times stronger you can do:
+
+.. code:: python
+
+  >>> import UWGeodynamics as GEO
+  >>> material = GEO.Material(name="Material")
+
+  >>> rh = GEO.ViscousCreepRegistry()
+  >>> material.viscosity = 30 * rh.Gleason_and_Tullis_1995
+
 
 User Defined
 ^^^^^^^^^^^^
@@ -493,15 +601,15 @@ Viscous Creep
 
 .. code:: python
 
-   >>> viscosity = GEO.ViscousCreep(preExponentialFactor=1.0, 
-                                    stressExponent=1.0, 
-                                    activationVolume=0., 
+   >>> viscosity = GEO.ViscousCreep(preExponentialFactor=1.0,
+                                    stressExponent=1.0,
+                                    activationVolume=0.,
                                     activationEnergy=200 * u.kilojoules,
                                     waterFugacity=0.0,
                                     grainSize=0.0,
                                     meltFraction=0.,
-                                    grainSizeExponent=0., 
-                                    waterFugacityExponent=0., 
+                                    grainSizeExponent=0.,
+                                    waterFugacityExponent=0.,
                                     meltFractionFactor=0.0,
                                     f=1.0)
 
@@ -519,7 +627,7 @@ Plastic Rheology (Yield)
 Registry / Database
 ^^^^^^^^^^^^^^^^^^^
 
-[[/img/PlasticityRegistry.gif]]
+.. image:: /img/PlasticityRegistry.gif
 
 .. _user-defined-1:
 
@@ -528,8 +636,8 @@ User Defined
 
 .. code:: python
 
-   >>> plasticity = GEO.DruckerPrager(cohesion=10. * u.megapascal, 
-                                      cohesionAfterSoftening=10. * u.megapascal, 
+   >>> plasticity = GEO.DruckerPrager(cohesion=10. * u.megapascal,
+                                      cohesionAfterSoftening=10. * u.megapascal,
                                       frictionCoefficient = 0.3,
                                       frictionAfterSoftening = 0.2,
                                       epsilon1=0.5,
@@ -538,9 +646,9 @@ User Defined
 Mechanical Boundary Conditions
 ------------------------------
 
-Kinematic or mechanichal boundary conditions are a critical part of any
+Mechanical boundary conditions are a critical part of any
 geodynamic model design. In the following, we quickly detail the options
-available to define boundary conditions in Underworld using the
+available to define mechanical boundary conditions in Underworld using the
 UWGeodynamics module.
 
 How to define boundary conditions and how to make sure those are
@@ -558,24 +666,22 @@ We will define a simple model for the sake of the example.
                          minCoord=(0. * u.kilometer, 0. * u.kilometer),
                          maxCoord=(64. * u.kilometer, 64. * u.kilometer))
 
-Kinematic or mechanical boundary conditions are set using the
-**set_velocityBCs** method. Conditions are defined for each wall (left,
-right, bottom, top, back and front (3D only)). For each wall, the user
-must define the condition for each degree of freedom (2 in 2D (x,y), 3
-in 3D (x,y,z).
+Kinematic boundary conditions
+-----------------------------
 
-if :math:`V` is a vector (:math:`V_x`, :math:`V_y`, :math:`V_z`) that we
+Kinematic boundary conditions are set using the **set_velocityBCs** method.
+Conditions are defined for each wall (left, right, bottom, top, back and front (3D only)).
+For each wall, the user must define the condition for each degree of freedom
+(2 in 2D (x,y), 3 in 3D (x,y,z).
+
+if :math:`V` is a vector :math:`(V_x, V_y, V_z)` that we
 want to apply on the left wall, the *left* parameter must be defined as
-follow:
-
-::
-
-   left=[Vx, Vy, Vz]
+:code:`left=[Vx, Vy, Vz]`.
 
 In the following example we set the boundary condition to be:
 
--  left wall: \\V_x = -1.0\\ :raw-latex:`\text{cm / yr}`$,
-   :math:`Vy=None`
+-  left wall: :math:`V_x = -1.0 \text{cm / yr}`,
+   :math:`Vy = None`
 -  right wall: :math:`V_x = 1.0 \text{cm / yr}`, :math:`Vy=None`
 -  bottom wall: :math:`V_x = None`, :math:`V_y= 0.` (free slip)
 
@@ -588,16 +694,31 @@ vertically along the side walls.
 .. code:: python
 
    >>> Model.set_velocityBCs(left=[1.0*u.centimetre/u.year, None],
-                             right=[-1.0*u.centimetre/u.year, None],
-                             bottom=[None, 0.],
-                             top=[None,0.])
+   >>>                       right=[-1.0*u.centimetre/u.year, None],
+   >>>                       bottom=[None, 0.],
+   >>>                       top=[None,0.])
 
-   >>> Fig = Model.plot.velocityField()
+.. image:: /img/mechanicalBCs1.png
 
-[[/img/mechanicalBCs1.png]]
+Stress Conditions
+-----------------
 
-Support Conditions
-------------------
+Stress conditions can be applied to the boundaries using the
+**set_stressBCs** method:
+
+In the following example we apply a stress of 200.0 megapascal to the
+bottom of our model:
+
+.. code:: python
+
+   >>> Model.set_stressBCs(bottom=[None, 200. * u.megapascal])
+
+Note that you will have to make sure that kinematic and stress conditions
+are compatible.
+
+
+Isostasy
+--------
 
 Isostasy is an important concept in geodynamics. It is essentially a
 consequence of the redistribution of mass within a deforming Earth. One
@@ -614,8 +735,8 @@ Options are to:
 -  Balance flows using a stress condition at the base of the model.
 -  Balance flows along the sides.
 
-Lecode Isostasy
-~~~~~~~~~~~~~~~
+Lecode Isostasy (kinematic)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Lecode Isostasy submodule provides a way to model isostatic support
 at the base of the model. It calculates the velocity to apply at the
@@ -637,7 +758,7 @@ parameter (default to False).
                              bottom=[None, GEO.LecodeIsostasy(reference_mat=Model.index)],
                              top=[None,0.])
 
-Traction Condition (Stress)
+Traction Condition (stress)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Another approach to model isostasy is to defined a stress at the base of
@@ -668,14 +789,14 @@ the part of the left wall below 32 kilometre. Velocity is set to be
 
    >>> conditions = [(Model.y < GEO.nd(32 * u.kilometer), GEO.nd(5.0 * u.centimeter/u.year)),
                      (True, GEO.nd(1.0*u.centimeter/u.year))]
-     
+
    >>> Model.set_velocityBCs(left=[conditions, None],
                              right=[-1.0*u.centimetre/u.year, None],
                              bottom=[None, 10.*u.megapascal],
                              top=[None,0.])
    >>> Fig = Model.plot.velocityField()
 
-[[/img/mechanicalBCs2.png]]
+.. image:: /img/mechanicalBCs2.png
 
 nodeSets
 ~~~~~~~~
@@ -718,15 +839,11 @@ the bottom is done as follow.
 
    >>> Model.set_temperatureBCs(top=500. * u.degK, bottom=1600. * u.degK)
 
-[[/img/thermalBCs1.png]]
-
 You can of course define temperatures on the sidewalls:
 
 .. code:: python
 
    >>> Model.set_temperatureBCs(right=500. * u.degK, left=1600. * u.degK)
-
-[[/img/thermalBCs2.png]]
 
 Setting Heat flux at the boundaries
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -762,12 +879,12 @@ Frictional Boundaries can be set as follow:
 
 .. code:: python
 
-   Model.set_frictional_boundary(left=True, 
-                                 right=True, 
-                                 bottom=True, 
-                                 top=False, 
-                                 friction=19.0, 
-                                 thickness=3)
+   >>> Model.set_frictional_boundary(left=True,
+   >>>                               right=True,
+   >>>                               bottom=True,
+   >>>                               top=False,
+   >>>                               friction=19.0,
+   >>>                               thickness=3)
 
 Where *left*, *right*, *top*, *bottom*, parameters are the side you want
 to apply a frictional boundary condition on. *friction* is the angle of
@@ -785,9 +902,9 @@ Example:
 
 .. code:: python
 
-     import UWGeodynamics as GEO
+   >>> import UWGeodynamics as GEO
 
-     Model.surfaceProcesses = GEO.surfaceProcesses.SedimentationThreshold(air=[air], sediment=[sediment], threshold=0. * u.meter)
+   >>> Model.surfaceProcesses = GEO.surfaceProcesses.SedimentationThreshold(air=[air], sediment=[sediment], threshold=0. * u.meter)
 
 Three simple function are available:
 
@@ -803,12 +920,12 @@ UWGeodynamics provide a way to couple an Underworld model to Badlands.
 
 .. code:: python
 
-   import UWGeodynamics as GEO
+   >>> import UWGeodynamics as GEO
 
-   Model.surfaceProcesses = GEO.surfaceProcesses.Badlands(
-       airIndex=[air.index], sedimentIndex=sediment.index,
-       XML="ressources/badlands.xml", resolution=1. * u.kilometer,
-       checkpoint_interval=0.01 * u.megayears)
+   >>> Model.surfaceProcesses = GEO.surfaceProcesses.Badlands(
+   >>>     airIndex=[air.index], sedimentIndex=sediment.index,
+   >>>     XML="ressources/badlands.xml", resolution=1. * u.kilometer,
+   >>>     checkpoint_interval=0.01 * u.megayears)
 
 Passive Tracers and Grids
 -------------------------
@@ -818,18 +935,18 @@ Passive tracers
 
 .. code:: python
 
-   import UWGeodynamics as GEO
+   >>> import UWGeodynamics as GEO
 
-   u = GEO.u
+   >>> u = GEO.u
 
-   Model = GEO.Model(elementRes=(64,64),
-                     minCoord=(0.*u.kilometer, 0.* u.kilometer),
-                     maxCoord=(64.* u.kilometer, 64 * u.kilometer))
+   >>> Model = GEO.Model(elementRes=(64,64),
+   >>>                   minCoord=(0.*u.kilometer, 0.* u.kilometer),
+   >>>                   maxCoord=(64.* u.kilometer, 64 * u.kilometer))
 
-   x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
-   y = 32. * u.kilometer
+   >>> x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
+   >>> y = 32. * u.kilometer
 
-   P = Model.add_passive_tracers(vertices=[x,y])
+   >>> P = Model.add_passive_tracers(vertices=[x,y])
 
 Tracer patterns / Finite Strain Ellipsis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -852,15 +969,19 @@ You have 2 options:
 
 .. code:: python
 
-      Model.run_for(nstep=10)
+   >>> Model.run_for(nstep=10)
 
 1. Specify an endTime
 
 .. code:: python
 
-      Model.run_for(endTime=1.0* u.megayears)
-      # which is equivalent to
-      Model.run_for(1.0*u.megayears)
+   >>> Model.run_for(endTime=1.0* u.megayears)
+
+which is equivalent to
+
+.. code:: python
+
+   >>> Model.run_for(1.0*u.megayears)
 
 Specify a timestep
 ^^^^^^^^^^^^^^^^^^
@@ -881,18 +1002,18 @@ save the results at some regular. You can define:
 
 .. code:: python
 
-      Model.run_for(endTime=1.0*u.megayears, 
-                    checkpoint_interval=0.1* u.megayears)
+   >>> Model.run_for(endTime=1.0*u.megayears,
+                     checkpoint_interval=0.1* u.megayears)
 
 **The value passed to the checkpoint_interval must have units of time**
 1. A list of checkpoint times:
 
 .. code:: python
 
-      Model.run_for(endTime=1.0*u.megayears, 
-                    checkpoint_interval=0.1* u.megayears,
-                    checkpoint_times=[0.85 * u.megayears, 
-                                      0.21 * u.megayears])
+   >>> Model.run_for(endTime=1.0*u.megayears,
+   >>>                  checkpoint_interval=0.1* u.megayears,
+   >>>                  checkpoint_times=[0.85 * u.megayears,
+   >>>                                    0.21 * u.megayears])
 
 **This can be used together or without the checkpoint_interval**
 
@@ -915,9 +1036,9 @@ This is done passing the *restart_checkpoint* argument to the
 
 .. code:: python
 
-   Model.run_for(endTime=1.0*u.megayears, 
-                 checkpoint_interval=0.1* u.megayears,
-             restart_checkpoint=2
+   >>> Model.run_for(endTime=1.0*u.megayears,
+   >>>               checkpoint_interval=0.1* u.megayears,
+   >>>               restart_checkpoint=2
 
 By default, the swarm and the swarm variables are saved every time the
 model reaches a checkpoint time (``restart_checkpoint=1``).
@@ -939,9 +1060,10 @@ program will attempt to reload the last available step.
 The user can alter this behavior using the **restartStep** and
 **restartFolder** arguments:
 
--  **restartStep** is None by default. The default behaviour is to look
+-  **restartStep** is *-1* by default. The default behaviour is to look
    into **restartFolder** for an existing output and attempt a restart
-   from there. Setting it to False will overwrite any existing outputs
+   from the last output available.
+   Setting it to False will overwrite any existing outputs
    in the *output* folder. If its value is an integer, this corresponds
    to the step number you want to restart from.
 
@@ -950,21 +1072,93 @@ The user can alter this behavior using the **restartStep** and
 
 .. code:: python
 
-   import UWGeodynamics as GEO
+   >>> import UWGeodynamics as GEO
 
-   u = GEO.u
+   >>> u = GEO.u
 
-   Model = GEO.Model(elementRes=(64, 64),
-                     minCoord=(0. * u.kilometer, 0. * u.kilometer),
-                     maxCoord=(64. * u.kilometer, 64. * u.kilometer))
+   >>> Model = GEO.Model(elementRes=(64, 64),
+   >>>                   minCoord=(0. * u.kilometer, 0. * u.kilometer),
+   >>>                   maxCoord=(64. * u.kilometer, 64. * u.kilometer))
 
-   # normal model setup
+   >>> # Default (restart, restartFolder are optional in this case)
+   >>> Model.run_for(2.0 * u.megayears, restartStep=-1, restartFolder="your_restart_folder")
 
-   # Default (restart, restartFolder are optional in this case)
-   Model.run_for(2.0 * u.megayears, restartStep=True, restartFolder="your_restart_folder") 
+   >>> # Restart from step 10
+   >>> Model.run_for(2.0 * u.megayears, restartStep=10, restartFolder="your_restart_folder")
 
-   # Restart from step 10
-   Model.run_for(2.0 * u.megayears, restartStep=10, restartFolder="your_restart_folder") 
+   >>> # Overwrite existing outputs
+   >>> Model.run_for(2.0 * u.megayears, restartStep=False)
 
-   # Overwrite existing outputs
-   Model.run_for(2.0 * u.megayears, restartStep=False) 
+
+Dynamic rc settings
+-------------------
+
+You can dynamically change the default rc settings in a python script or
+interactively from the python shell. All of the rc settings are stored
+in a dictionary-like variable called `UWGeodynamics.rcParams`, which
+is global to the UWGeodynamics package. rcParams can be modified
+directly, for example:
+
+.. code:: python
+
+   >>> import UWGeodynamics as GEO
+   >>> GEO.rcParams['solver'] = "mumps"
+   >>> GEO.rcParams['penalty'] = 1e6
+
+
+The ``UWGeodynamics.rcdefaults`` command will restore the standard
+UWGeodynamics default settings.
+
+There is some degree of validation when setting the values of rcParams,
+see ``UWGeodynamics.rcsetup`` for details.
+
+The ``uwgeodynamicsrc`` file
+----------------------------
+
+UWGeodynamics uses ``uwgeodynamicsrc`` configuration files to customize
+all kinds of properties, which we call ``rc settings`` or
+``rc parameters``. For now, you can control the defaults of a limited
+set of property in matplotlib UWGeodynamics looks for
+``uwgeodynamicsrc`` in four locations, in the following order:
+
+1. ``uwgeodynamicsrc`` in the current working directory, usually used
+   for specific customizations that you do not want to apply elsewhere.
+
+2. ``$UWGEODYNAMICSRC`` if it is a file, else
+   ``$UWGEODYNAMICSRC/uwgeodynamicsrc``.
+
+3. It next looks in a user-specific place, depending on your platform:
+
+   -  On Linux, it looks in ``.config/uwgeodynamics/uwgeodynamicsrc``
+      (or ``$XDG_CONFIG_HOME/uwgeodynamics/uwgeodynamicsrc``) if you’ve
+      customized your environment.
+
+   -  On other platforms, it looks in
+      ``.uwgeodynamics/uwgeodynamicsrc``.
+
+4. ``{INSTALL}/UWGeodynamics/uwgeo-data/uwgeodynamicsrc``, where
+   ``{INSTALL}`` is something like ``/usr/lib/python2.5/site-packages``
+   on Linux, and maybe ``C:\\Python25\\Lib\\site-packages`` on Windows.
+   Every time you install matplotlib, this file will be overwritten, so
+   if you want your customizations to be saved, please move this file to
+   your user-specific matplotlib directory.
+
+To display where the currently active ``uwgeodynamicsrc`` file was
+loaded from, one can do the following:
+
+.. code:: python
+
+     >>> import UWGeodynamics as GEO
+     >>> GEO.uwgeodynamics_fname()
+     '/home/foo/.config/uwgeodynamics/uwgeodynamicsrc'
+
+See below for a sample.
+
+\_uwgeodynamicsrc-sample:
+-------------------------
+
+.. _Jupyter: http://jupyter.org/
+.. _Docker Hub: https://hub.docker.com/r/underworldcode/uwgeodynamics
+.. _Kitematic: https://kitematic.com/
+.. _github: https://github.com/underworldcode/UWGeodynamics.git
+.. _Pint: https://pint.readthedocs.io/en/latest
