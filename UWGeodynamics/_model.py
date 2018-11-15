@@ -1410,8 +1410,8 @@ class Model(Material):
                         material.radiogenicHeatProd]):
 
                     HeatProdMap[material.index] = (
-                        nd(material.radiogenicHeatProd) / 
-                        self._densityFn  / 
+                        nd(material.radiogenicHeatProd) /
+                        self._densityFn  /
                         nd(material.capacity)
                     )
 
@@ -2094,12 +2094,14 @@ class Model(Material):
                              units=u.kilometers,
                              time=time)
 
-        filename = "XDMF.swarms." + str(checkpointID).zfill(5) + ".xmf"
-        filename = os.path.join(outputDir, filename)
+        if uw.rank() == 0:
+            filename = "XDMF.swarms." + str(checkpointID).zfill(5) + ".xmf"
+            filename = os.path.join(outputDir, filename)
 
-        # First write the XDMF header
-        string = uw.utils._xdmfheader()
-        string += uw.utils._swarmspacetimeschema(sH, swarm_name, time)
+            # First write the XDMF header
+            string = uw.utils._xdmfheader()
+            string += uw.utils._swarmspacetimeschema(sH, swarm_name, time)
+        uw.barrier()
 
         for field in fields:
             if field in rcParams["swarm.variables"]:
@@ -2114,15 +2116,18 @@ class Model(Material):
                 obj = getattr(self, field)
                 file_prefix = os.path.join(outputDir, field + '-%s' % checkpointID)
                 handle = obj.save('%s.h5' % file_prefix, units=units, time=time)
-                string += uw.utils._swarmvarschema(handle, field)
+                if uw.rank() == 0:
+                    string += uw.utils._swarmvarschema(handle, field)
+                uw.barrier()
 
-        # Write the footer to the xmf
-        string += uw.utils._xdmffooter()
-
-        # Write the string to file - only proc 0
         if uw.rank() == 0:
+            # Write the footer to the xmf
+            string += uw.utils._xdmffooter()
+
+            # Write the string to file - only proc 0
             with open(filename, "w") as xdmfFH:
                 xdmfFH.write(string)
+
         uw.barrier()
 
     @u.check([None, None, None, "[time]", None])
