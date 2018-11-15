@@ -40,7 +40,7 @@ We hope that the user will naturally move to the low-level functionalities as he
 or her gets more confident, and by doing so will access the wide range of 
 possibilities offered by Underworld.
 
-.. image:: https://github.com/underworldcode/UWGeodynamics/development/master/docs/SandboxCompression.gif
+.. image:: https://github.com/underworldcode/UWGeodynamics/development/master/docs/img/SandboxCompression.gif
 
 Getting started
 ---------------
