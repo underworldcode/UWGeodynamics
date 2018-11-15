@@ -317,7 +317,7 @@
             },
             "preExponentialFactor": {
                 "units": "1 / pascal ** 4.7 / second",
-                "value": 5.77904e-27
+                "value": 8e-6
             },
             "stressExponent": {
                 "units": "None",
