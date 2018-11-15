@@ -1,9 +1,23 @@
-# Underworld Geodynamics project
+Underworld Geodynamics project
+==============================
 
-[![DOI](https://zenodo.org/badge/114189389.svg)](https://zenodo.org/badge/latestdoi/114189389)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/85b5f7736d03441db786549d6e357c9e)](https://www.codacy.com/app/romainbeucher/UWGeodynamics?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=rbeucher/UWGeodynamics&amp;utm_campaign=Badge_Grade)
+.. image:: https://zenodo.org/badge/114189389.svg
+    :target: https://zenodo.org/badge/latestdoi/114189389
+    :alt: DOI      
 
-![Tutorial1](./tutorials/images/Tutorial1.gif)
+.. image:: https://api.codacy.com/project/badge/Grade/85b5f7736d03441db786549d6e357c9e
+    :target: https://www.codacy.com/app/romainbeucher/UWGeodynamics?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=rbeucher/UWGeodynamics&amp;utm_campaign=Badge_Grade
+    :alt: Codacy
+
+.. image:: https://img.shields.io/pypi/v/uwgeodynamics.svg
+    :target: https://pypi.python.org/pypi/uwgeodynamics
+    :alt: Pip
+
+.. image:: https://readthedocs.org/projects/uwgeodynamics/badge
+    :target: http://uwgeodynamics.readthedocs.org/
+    :alt: Docs
+
+.. image:: https://github.com/underworldcode/UWGeodynamics/blob/development/tutorials/images/Tutorial1.gif
 
 The UWGeodynamics module intents to facilitate rapid prototyping of geodynamics models using Underworld. 
 It can be seen as a set of high-level functions within the Underworld ecosystem. 
@@ -26,32 +40,16 @@ We hope that the user will naturally move to the low-level functionalities as he
 or her gets more confident, and by doing so will access the wide range of 
 possibilities offered by Underworld.
 
-![Sandbox](./docs/source/img/SandboxCompression.gif)
+.. image:: https://github.com/underworldcode/UWGeodynamics/development/master/docs/SandboxCompression.gif
+
+Getting started
+---------------
+
+The full documentation is available on `ReadTheDocs <http://uwgeodynamics.readthedocs.org/>`_
 
 
-## Getting started
-
-For installation information and documentation visit our github [**wiki page**](https://github.com/rbeucher/UWGeodynamics/wiki) which provides several useful notes on how to start using the tool.
-
-The easiest way to get started is with the [Docker container](https://hub.docker.com/r/rbeucher/underworld2_geodynamics/) using [Kitematic](https://docs.docker.com/kitematic/userguide/). Once **Kitematic** is installed on your computer, open it and look for **underworld2_geodynamics** via the *search* menu.
-
-The latest UWGeodynamics version is the one that’s in our Github [repository](https://github.com/rbeucher/UWGeodynamics). Get it using this shell command, which requires Git: 
-* `git clone https://github.com/rbeucher/UWGeodynamics.git`
-
-
-## Installation
-
-### Requirements
-
-An up-to-date working version of Underworld is required.
-
-UWGeodynamics is available via pip:
-
-```
-   pip install UWGeodynamics
-```
-
-## Community driven
+Community driven
+----------------
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -59,7 +57,8 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU Lesser General Public License along with this program.  If not, see <http://www.gnu.org/licenses/lgpl-3.0.en.html>.
 
-## Versioning
+Versioning
+----------
 
 Current releases (**DOI** citable): 
 
