@@ -17,6 +17,10 @@ Underworld Geodynamics project
     :target: http://uwgeodynamics.readthedocs.org/
     :alt: Docs
 
+.. image:: https://dockerbuildbadges.quelltext.eu/status.svg?organization=underworldcode&repository=uwgeodynamics
+    :target: https://cloud.docker.com/u/underworldcode/repository/docker/underworldcode/uwgeodynamics
+    :alt: Docker 
+    
 .. image:: https://github.com/underworldcode/UWGeodynamics/blob/development/tutorials/images/Tutorial1.gif
 
 The UWGeodynamics module intents to facilitate rapid prototyping of geodynamics models using Underworld. 
