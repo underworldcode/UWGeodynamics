@@ -76,7 +76,6 @@ If it succeeds, you can install UWGeodynamics:
     module purge
     module load pbs dot gcc/5.2.0 hdf5/1.10.2p petsc/3.8.4 swig/3.0.12 python/2.7.11 openmpi/3.1.2
     source /short/q97/Underworld/python-2.7.11-venv/bin/activate
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/short/q97/Underworld/opt/pyBadlands_serial/pyBadlands/libUtils
     
     MODELNAME="test"
     OUTPUTPATH=`pwd`
