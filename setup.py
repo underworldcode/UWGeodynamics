@@ -10,12 +10,12 @@ MAJOR               = 0
 MINOR               = 9
 MICRO               = 8
 ISRELEASED          = False
-VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+VERSION             = '%d.%d.%db' % (MAJOR, MINOR, MICRO)
 
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+with open(path.join(here, 'README'), encoding='utf-8') as f:
     long_description = f.read()
 
 
@@ -90,7 +90,6 @@ def write_version_py(filename='UWGeodynamics/version.py'):
     cnt = """
 # THIS FILE IS GENERATED FROM UWGeodynamics SETUP.PY
 #
-underworld_version = '%(UW)s'
 short_version = '%(version)s'
 version = '%(version)s'
 full_version = '%(full_version)s'
@@ -103,15 +102,8 @@ if not release:
     FULLVERSION, GIT_REVISION = get_version_info()
 
     try:
-        import underworld as uw
-        uw_version = uw.__version__
-    except ImportError:
-        uw_version = "NOT INSTALLED"
-
-    try:
         a = open(filename, 'w')
-        a.write(cnt % {'UW':uw_version,
-                       'version': VERSION,
+        a.write(cnt % {'version': VERSION,
                        'full_version': FULLVERSION,
                        'git_revision': GIT_REVISION,
                        'isrelease': str(ISRELEASED)})
@@ -183,7 +175,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
 
         # Indicate who your project is intended for
         'Intended Audience :: Developers',
@@ -196,6 +188,11 @@ setup(
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
 
     # This field adds keywords for your project which will appear on the
