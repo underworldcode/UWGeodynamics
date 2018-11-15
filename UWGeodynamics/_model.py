@@ -2025,12 +2025,15 @@ class Model(Material):
             mesh_prefix = os.path.join(outputDir, mesh_name)
             mH = uw.utils.SavedFileData(self.mesh, '%s.h5' % mesh_prefix)
 
-        filename = "XDMF.fields." + str(checkpointID).zfill(5) + ".xmf"
-        filename = os.path.join(outputDir, filename)
+        if uw.rank() == 0:
+            filename = "XDMF.fields." + str(checkpointID).zfill(5) + ".xmf"
+            filename = os.path.join(outputDir, filename)
 
-        # First write the XDMF header
-        string = uw.utils._xdmfheader()
-        string += uw.utils._spacetimeschema(mH, mesh_name, time)
+            # First write the XDMF header
+            string = uw.utils._xdmfheader()
+            string += uw.utils._spacetimeschema(mH, mesh_name, time)
+
+        uw.barrier()
 
         for field in fields:
             if field == "temperature" and not self.temperature:
@@ -2048,13 +2051,15 @@ class Model(Material):
                 file_prefix = os.path.join(outputDir, field + '-%s' % checkpointID)
                 handle = obj.save('%s.h5' % file_prefix, units=units,
                                   time=time)
-                string += uw.utils._fieldschema(handle, field)
+                if uw.rank() == 0:
+                    string += uw.utils._fieldschema(handle, field)
+            uw.barrier()
 
-        # Write the footer to the xmf
-        string += uw.utils._xdmffooter()
-
-        # Write the string to file - only proc 0
         if uw.rank() == 0:
+            # Write the footer to the xmf
+            string += uw.utils._xdmffooter()
+
+            # Write the string to file - only proc 0
             with open(filename, "w") as xdmfFH:
                 xdmfFH.write(string)
         uw.barrier()
