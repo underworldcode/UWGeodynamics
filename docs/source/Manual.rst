@@ -1,5 +1,5 @@
-UWGeodynamics User Guide
-========================
+UWGeo User Guide
+================
 
 Docker_
 -------
@@ -61,13 +61,11 @@ Kitematic_
 
 Kitematic_ is a program that provides a graphical user interface to
 the *docker* daemon and to Docker Hub.
-It is available on Linux, MacOSX and Windows.
+The software is available for Windows, MacOsx and Linux. Be aware that on
+linux the installation may differ depending on the distribution you
+are running.
 
 1. Download and Install Kitematic_
-   The software is available for Windows, MacOsx and Linux. Be aware that on
-   linux the installation may differ depending on the distribution you
-   are running.
-
 2. Open Kitematic and search for the **uwgeodynamics** image.
 3. Create a container by clicking on the create button.
 
@@ -81,7 +79,6 @@ will use to save your results.
 Local Installation
 ------------------
 
-If you really need to install the software natively on your system...
 This is not recommended and involves installing *Underworld* and all
 its dependencies. Docker is highly recommended!!!
 
@@ -108,7 +105,7 @@ Package Index:
 
 .. code:: bash
 
-  pip3 install UWGeodynamics
+  pip install UWGeodynamics
 
 **from sources**
 
@@ -122,7 +119,7 @@ It can then be installed globally on your system using
 
 .. code:: bash
 
-  pip3 install -e UWGeodynamics
+  pip install -e UWGeodynamics
 
 The Jupyter notebook
 --------------------
@@ -733,7 +730,7 @@ The user can define its own parameters:
 
    >>> plasticity = GEO.VonMises(cohesion=10. * u.megapascal)
 
-Mechanical Boundary ConditionVs
+Mechanical Boundary Conditions
 -------------------------------
 
 Mechanical boundary conditions are a critical part of any

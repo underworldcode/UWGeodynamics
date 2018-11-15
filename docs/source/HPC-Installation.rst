@@ -18,8 +18,8 @@ Python 2:
   ~/.local/bin/virtualenv python-2.7.11-venv
   source python-2.7.11-venv/bin/activate
   export HDF5_VERSION=1.10.2
-  CC="mpicc" HDF5_MPI="ON" HDF5_DIR=$HDF5_DIR pip install --no-binary=h5py h5py
   pip install --no-binary=mpi4py mpi4py
+  CC="mpicc" HDF5_MPI="ON" HDF5_DIR=$HDF5_DIR pip install --no-binary=h5py h5py
 
 
 2. Install Underworld
