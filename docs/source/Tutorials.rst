@@ -1,6 +1,6 @@
 
-UWGeodynamics Tutorials
-=======================
+Tutorials
+=========
 
 We provide a series of tutorials as Jupyter notebook:
 
