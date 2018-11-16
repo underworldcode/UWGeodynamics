@@ -154,18 +154,24 @@ class PassiveTracers(object):
 
         sH = self.swarm.save(swarm_fpath, units=u.kilometers)
 
-        filename = self.name + '-%s.xdmf' % checkpointID
-        filename = os.path.join(outputDir, filename)
+        if uw.rank() == 0:
+            filename = self.name + '-%s.xdmf' % checkpointID
+            filename = os.path.join(outputDir, filename)
 
-        # First write the XDMF header
-        string = uw.utils._xdmfheader()
-        string += uw.utils._swarmspacetimeschema(sH, swarm_fname, time.magnitude)
+            # First write the XDMF header
+            string = uw.utils._xdmfheader()
+            string += uw.utils._swarmspacetimeschema(sH, swarm_fname, time.magnitude)
+
+        uw.barrier()
 
         # Save global index
         file_prefix = os.path.join(
             outputDir, self.name + '_global_index-%s' % checkpointID)
         handle = self.global_index.save('%s.h5' % file_prefix)
-        string += uw.utils._swarmvarschema(handle, "global_index")
+
+        if uw.rank() == 0:
+            string += uw.utils._swarmvarschema(handle, "global_index")
+        uw.barrier()
 
         # Save each tracked field
         for field in self.tracked_field:
@@ -178,8 +184,11 @@ class PassiveTracers(object):
             obj.data[...] = field["value"].evaluate(self.swarm)
             handle = obj.save('%s.h5' % file_prefix, units=field["units"])
 
-            # Add attribute to xdmf file
-            string += uw.utils._swarmvarschema(handle, field["name"])
+            if uw.rank() == 0:
+                # Add attribute to xdmf file
+                string += uw.utils._swarmvarschema(handle, field["name"])
+
+        uw.barrier()
 
         # get swarm parameters - serially read from hdf5 file to get size
         h5f = h5py.File(name=swarm_fpath, mode="r", driver="mpio",
@@ -191,19 +200,20 @@ class PassiveTracers(object):
         dim = self.swarm.mesh.dim
         h5f.close()
 
-        string += "\t<Attribute Type=\"Scalar\" Center=\"Node\" Name=\"Coordinates\">\n"
-        string += """\t\t\t<DataItem Format=\"HDF\" NumberType=\" Float\"
-                     Precision=\"8\" Dimensions=\"{0} {1}\">{2}:/data</DataItem>\n""".format(globalCount, dim, swarm_fname)
-        string += "\t</Attribute>\n"
+        if uw.rank() == 0:
+            string += "\t<Attribute Type=\"Scalar\" Center=\"Node\" Name=\"Coordinates\">\n"
+            string += """\t\t\t<DataItem Format=\"HDF\" NumberType=\" Float\"
+                         Precision=\"8\" Dimensions=\"{0} {1}\">{2}:/data</DataItem>\n""".format(globalCount, dim, swarm_fname)
+            string += "\t</Attribute>\n"
 
-        # Write the footer to the xmf
-        string += uw.utils._xdmffooter()
+            # Write the footer to the xmf
+            string += uw.utils._xdmffooter()
 
-        # Write the string to file - only proc 0
-        xdmfFH = open(filename, "w")
-        xdmfFH.write(string)
-        xdmfFH.close()
-
+            # Write the string to file - only proc 0
+            xdmfFH = open(filename, "w")
+            xdmfFH.write(string)
+            xdmfFH.close()
+        uw.barrier()
 
 class PassiveTracersGrid(object):
 
