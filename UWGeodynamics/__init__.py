@@ -32,7 +32,7 @@ from ._rheology import Elasticity
 from ._material import Material
 from ._density import ConstantDensity, LinearDensity
 from ._melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry
-from ._utils import Balanced_InflowOutflow, MoveImporter
+from ._utils import Balanced_InflowOutflow
 from ._utils import circles_grid, fn_Tukey_window, circle_points_tracers, sphere_points_tracers
 from ._utils import LogFile
 from ._utils import MovingWall

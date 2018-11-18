@@ -2167,26 +2167,6 @@ class Model(Material):
             for (dump, item) in self.passive_tracers.items():
                 item.save(outputDir, checkpointID, time)
 
-    def geometry_from_shapefile(self, filename, units=None):
-        from ._utils import MoveImporter
-        Importer = MoveImporter(filename, units=units)
-
-        shape_dict = {name: [] for name in Importer.names}
-
-        for polygon in Importer.generator:
-            name = polygon["properties"]["Name"]
-            vertices = polygon["coordinates"]
-            shape = shapes.Polygon(vertices)
-            shape_dict[name].append(shape)
-
-        for name, shape in shape_dict.items():
-            mshape = shapes.MultiShape(shape)
-            self.add_material(name=name,
-                              shape=mshape,
-                              fill=False)
-
-        self._fill_model()
-
     def velocity_rms(self):
         vdotv_fn = uw.function.math.dot(self.velocityField, self.velocityField)
         fn_2_integrate = (1., vdotv_fn)
