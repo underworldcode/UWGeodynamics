@@ -928,14 +928,14 @@ class Model(Material):
                                    order_wall_conditions=order_wall_conditions)
         return self.stressBCs
 
-    def add_material(self, shape=None, name="unknown", fill=True, reset=False):
+    def add_material(self, material=None, shape=None,
+                     name="unknown", fill=True, reset=False):
         """ Add Material to the Model
 
         Parameters:
         -----------
             material:
-                An UWGeodynamics material. If None the material is
-                initialized to the global properties.
+                An UWGeodynamics material. If a material is created.
             shape:
                 Shape of the material. See UWGeodynamics.shape
             name:
@@ -949,8 +949,9 @@ class Model(Material):
         if reset:
             self.materialField.data[:] = self.index
 
-        mat = Material()
-        mat.name = name
+        mat = material if material else Material()
+        mat.name = material.name if material.name else name
+
         mat.Model = self
         mat.diffusivity = self.diffusivity
         mat.capacity = self.capacity
