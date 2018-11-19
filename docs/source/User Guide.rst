@@ -1,125 +1,5 @@
-UWGeo User Guide
-================
-
-Docker_
--------
-
-Docker containers provide and easy-way to set up and distribute
-applications. They also provide a safe and consistent environment which
-facilitate debugging and reproducibility of models. The image we provide
-contains all the dependencies and configuration files required to run
-Underworld models. Users can start developping model as soon as they
-have downloaded the image, independently of the operating system running
-on their machine.
-
-We strongly encourage users to run UWGeodynamics using the docker images
-we provide on `Docker Hub`_
-
-Different version of the `underworldcode/uwgeodynamics` image can be
-pulled using a tag:
-
-1. The *latest* tag points to the github master branch and uses the latest
-   *underworld* release.
-2. The *dev* tag points to the github development and uses the development
-   branch of *underworld*.
-3. release tags such as *0.9.8* points to the specified version.
-
-Command line
-~~~~~~~~~~~~
-
-Once you have installed docker on your system you can *pull* the
-*UWGeodynamics* official image as follow:
-
-.. code:: bash
-
-  docker pull underworldcode/uwgeodynamics
-
-You can then start a docker container. (An instance of
-an image).
-
-.. code:: bash
-
-  docker run -d \
-     --name my_container \
-     --port 8888:8888 \
-     --mount source=myvol,target=/workspace/user-data \
-     underworldcode/uwgeodynamics
-
-You can access the container via your browser at the following
-address: http://localhost:8888
-
-
-It is also possible to ssh into the container as follow:
-
-.. code:: bash
-
-  docker exec -it my_container /bin/bash
-
-
-Kitematic_
-~~~~~~~~~~
-
-Kitematic_ is a program that provides a graphical user interface to
-the *docker* daemon and to Docker Hub.
-The software is available for Windows, MacOsx and Linux. Be aware that on
-linux the installation may differ depending on the distribution you
-are running.
-
-1. Download and Install Kitematic_
-2. Open Kitematic and search for the **uwgeodynamics** image.
-3. Create a container by clicking on the create button.
-
-You should now have a container appearing on the left side of your
-kitematic window. The first thing to do now is to create a link between
-a local directory (A directory on your physical hard drive) and a volume
-directory inside the docker container. A volume is a special directory
-that can be accessed from outside the container. It is the location you
-will use to save your results.
-
-Local Installation
-------------------
-
-This is not recommended and involves installing *Underworld* and all
-its dependencies. Docker is highly recommended!!!
-
-Requirements
-~~~~~~~~~~~~
-
--  Python >= 2.7
--  A Working version of Underworld2 >=2.6.0 (Please refer to the
-   Underworld documentation)
--  pint >= 0.8
-
-**Note on Python 3 compatibility**:
-The bleeding edge version of *Underworld* (development branch)
-is now python 3 compatible only.
-*UWGeodynamics* is python 3 ready and can thus be used with it.
-
-Install
-~~~~~~~
-
-**from Pip**
-
-The UWGeodynamics module can be installed directly from the Python
-Package Index:
-
-.. code:: bash
-
-  pip install UWGeodynamics
-
-**from sources**
-
-The module source files are available through github_
-
-.. code:: bash
-
-  git clone https://github.com/underworldcode/UWGeodynamics.git
-
-It can then be installed globally on your system using
-
-.. code:: bash
-
-  pip install UWGeodynamics/
+User Guide
+==========
 
 The Jupyter notebook
 --------------------
@@ -133,6 +13,9 @@ If you are not familiar with Jupyter notebooks, we suggest you follow
 a quick introduction `here <https://mybinder.org/v2/gh/ipython/ipython-in-depth/master?filepath=binder/Index.ipynb>`_.
 
 
+Design principles
+-----------------
+
 import UWGeodynamics
 --------------------
 
@@ -141,6 +24,7 @@ import UWGeodynamics
 .. code:: python
 
    >>> import UWGeodynamics as GEO
+
 
 Working with units
 ------------------
@@ -287,14 +171,6 @@ The function are also available respectively as :code:`GEO.nd` and
    >>> length_metres = GEO.Dimensionalize(scaled_length, u.metre)
    >>> print(length_metres)
    300.0 kilometre
-
-
-Building a Model
-----------------
-
-Design principles
-~~~~~~~~~~~~~~~~~
-
 
 
 The Model object
@@ -911,8 +787,6 @@ the part of the left wall below 32 kilometre. Velocity is set to be
 
 .. image:: /img/mechanicalBCs2.png
 
-Assign Viscosity to Internal nodes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Stress Conditions
 ~~~~~~~~~~~~~~~~~
@@ -930,6 +804,23 @@ bottom of our model:
 Note that you will have to make sure that kinematic and stress conditions
 are compatible.
 
+Frictional Boundaries
+~~~~~~~~~~~~~~~~~~~~~
+
+Frictional Boundaries can be set as follow:
+
+.. code:: python
+
+   >>> Model.set_frictional_boundary(left=True,
+   ...                               right=True,
+   ...                               bottom=True,
+   ...                               top=False,
+   ...                               friction=19.0,
+   ...                               thickness=3)
+
+Where *left*, *right*, *top*, *bottom*, parametres are the side you want
+to apply a frictional boundary condition on. *friction* is the angle of
+friction (in degrees). *thickness* is the thickness of the boundary.
 
 Isostasy
 ~~~~~~~~
@@ -986,10 +877,10 @@ across the border.
 
 
 Thermal Boundary Conditions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 
 Absolute temperatures
-^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~
 
 Setting the temperature at the top of a model to be
 :math:`500 \text{kelvin}` at the top and :math:`1600 \text{kelvin}` at
@@ -1028,95 +919,15 @@ node indices (global).
    ...                          nodeSets=[(nodes, 273. * u.Kelvin)])
 
 Heat flux
-^^^^^^^^^
+~~~~~~~~~
 
 .. code:: python
 
    >>> Model.set_temperatureBCs(top=500. * u.degK, bottom=-0.22 * u.milliwatt / u.metre**2, bottom_material=Model)
 
 
-Frictional Boundaries
-~~~~~~~~~~~~~~~~~~~~~
-
-Frictional Boundaries can be set as follow:
-
-.. code:: python
-
-   >>> Model.set_frictional_boundary(left=True,
-   ...                               right=True,
-   ...                               bottom=True,
-   ...                               top=False,
-   ...                               friction=19.0,
-   ...                               thickness=3)
-
-Where *left*, *right*, *top*, *bottom*, parametres are the side you want
-to apply a frictional boundary condition on. *friction* is the angle of
-friction (in degrees). *thickness* is the thickness of the boundary.
-
-Surface Processes
------------------
-
-A range of basic surface processes function are available from the
-*surfaceProcesses* submodule. Surface processes are turned on once you
-have passed a valid surface processes function to the
-``surfaceProcesses`` method of the ``Model`` object.
-
-Example:
-
-.. code:: python
-
-   >>> import UWGeodynamics as GEO
-
-   >>> Model.surfaceProcesses = GEO.surfaceProcesses.SedimentationThreshold(air=[air], sediment=[sediment], threshold=0. * u.metre)
-
-Three simple function are available:
-
-1. Total Erosion Above Threshold (``ErosionThreshold``).
-2. Total Sedimentation Below Threshold (``SedimentationThreshold``)
-3. Combination of the 2 above. (``ErosionAndSedimentationThreshold``)
-
-Coupling with Badlands
-~~~~~~~~~~~~~~~~~~~~~~
-
-UWGeodynamics provide a way to couple an Underworld model to Badlands.
-**More documentation needed**
-
-.. code:: python
-
-   >>> import UWGeodynamics as GEO
-
-   >>> Model.surfaceProcesses = GEO.surfaceProcesses.Badlands(
-   ...     airIndex=[air.index], sedimentIndex=sediment.index,
-   ...     XML="ressources/badlands.xml", resolution=1. * u.kilometre,
-   ...     checkpoint_interval=0.01 * u.megayears)
-
-Passive Tracers
----------------
-
-.. code:: python
-
-   >>> import UWGeodynamics as GEO
-
-   >>> u = GEO.u
-
-   >>> Model = GEO.Model(elementRes=(64,64),
-   ...                   minCoord=(0.*u.kilometre, 0.* u.kilometre),
-   ...                   maxCoord=(64.* u.kilometre, 64 * u.kilometre))
-
-   >>> x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
-   >>> y = 32. * u.kilometre
-
-   >>> P = Model.add_passive_tracers(vertices=[x,y])
-
-.. note::
-
-   You can pass a list of centroids to the `Model.add_passive_tracers` method.
-   In that case, the coordinates of the passive tracers are relative to the
-   position of the centroids. The pattern is repeated around each centroid.
-
-
 Model initialization
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 Initialization of the pressure and temperature field is done using the
 ::code::python`Model.init_model` method.
@@ -1160,14 +971,14 @@ which is equivalent to
    >>> Model.run_for(1.0*u.megayears)
 
 Specify a timestep
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 UWGeodynamics calculates the time step automatically based on some
 numerical stability criteria. You can force a specific time step or
 force the time step to be constant throughou
 
 Saving data
-^^^^^^^^^^^
+~~~~~~~~~~~
 
 As your model is running you will need to save the results to files.
 
@@ -1266,8 +1077,8 @@ The user can alter this behavior using the **restartStep** and
    >>> Model.run_for(2.0 * u.megayears, restartStep=False)
 
 
-Run on multiple processors
---------------------------
+Parallel run
+------------
 
 Model can be run on multiple processors:
 
@@ -1295,6 +1106,68 @@ You can then run the python script as follow:
    *Tutorial 1* has examples of matplotlib plots which are only done
    on the rank 0 CPU.
 
+   
+Passive Tracers
+---------------
+
+.. code:: python
+
+   >>> import UWGeodynamics as GEO
+
+   >>> u = GEO.u
+
+   >>> Model = GEO.Model(elementRes=(64,64),
+   ...                   minCoord=(0.*u.kilometre, 0.* u.kilometre),
+   ...                   maxCoord=(64.* u.kilometre, 64 * u.kilometre))
+
+   >>> x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
+   >>> y = 32. * u.kilometre
+
+   >>> P = Model.add_passive_tracers(vertices=[x,y])
+
+.. note::
+
+   You can pass a list of centroids to the `Model.add_passive_tracers` method.
+   In that case, the coordinates of the passive tracers are relative to the
+   position of the centroids. The pattern is repeated around each centroid.
+
+Surface Processes
+-----------------
+
+A range of basic surface processes function are available from the
+*surfaceProcesses* submodule. Surface processes are turned on once you
+have passed a valid surface processes function to the
+``surfaceProcesses`` method of the ``Model`` object.
+
+Example:
+
+.. code:: python
+
+   >>> import UWGeodynamics as GEO
+
+   >>> Model.surfaceProcesses = GEO.surfaceProcesses.SedimentationThreshold(air=[air], sediment=[sediment], threshold=0. * u.metre)
+
+Three simple function are available:
+
+1. Total Erosion Above Threshold (``ErosionThreshold``).
+2. Total Sedimentation Below Threshold (``SedimentationThreshold``)
+3. Combination of the 2 above. (``ErosionAndSedimentationThreshold``)
+
+Coupling with Badlands
+~~~~~~~~~~~~~~~~~~~~~~
+
+UWGeodynamics provide a way to couple an Underworld model to Badlands.
+**More documentation needed**
+
+.. code:: python
+
+   >>> import UWGeodynamics as GEO
+
+   >>> Model.surfaceProcesses = GEO.surfaceProcesses.Badlands(
+   ...     airIndex=[air.index], sedimentIndex=sediment.index,
+   ...     XML="ressources/badlands.xml", resolution=1. * u.kilometre,
+   ...     checkpoint_interval=0.01 * u.megayears)
+
 
 Dynamic rc settings
 -------------------
@@ -1318,8 +1191,16 @@ UWGeodynamics default settings.
 There is some degree of validation when setting the values of rcParams,
 see ``UWGeodynamics.rcsetup`` for details.
 
+
+.. table::
+
+   ======== =========== ============
+   name      function    default val.
+   ======== =========== ============
+
+
 The ``uwgeodynamicsrc`` file
-----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 UWGeodynamics uses ``uwgeodynamicsrc`` configuration files to customize
 all kinds of properties, which we call ``rc settings`` or
@@ -1361,7 +1242,7 @@ loaded from, one can do the following:
 See below for a sample.
 
 \_uwgeodynamicsrc-sample:
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. _Jupyter: http://jupyter.org/
 .. _Docker Hub: https://hub.docker.com/r/underworldcode/uwgeodynamics

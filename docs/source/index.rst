@@ -31,11 +31,10 @@ of possibilities offered by Underworld.
 .. toctree::
    :maxdepth: 2
 
-   Manual
+   Installation
+   User Guide
+   Troubleshoot
 
    Examples
    Benchmarks
    Tutorials
-   
-   HPC-Installation
-   About
