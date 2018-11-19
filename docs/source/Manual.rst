@@ -1343,8 +1343,8 @@ set of property in matplotlib UWGeodynamics looks for
       ``.uwgeodynamics/uwgeodynamicsrc``.
 
 4. ``{INSTALL}/UWGeodynamics/uwgeo-data/uwgeodynamicsrc``, where
-   ``{INSTALL}`` is something like ``/usr/lib/python2.5/site-packages``
-   on Linux, and maybe ``C:\\Python25\\Lib\\site-packages`` on Windows.
+   ``{INSTALL}`` is something like ``/usr/lib/python2.7/site-packages``
+   on Linux, and maybe ``C:\\Python27\\Lib\\site-packages`` on Windows.
    Every time you install matplotlib, this file will be overwritten, so
    if you want your customizations to be saved, please move this file to
    your user-specific matplotlib directory.
