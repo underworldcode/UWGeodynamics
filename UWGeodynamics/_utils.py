@@ -388,68 +388,6 @@ class Balanced_InflowOutflow(object):
 
         return velocity
 
-
-class MoveImporter(object):
-
-    def __init__(self, filename, units):
-
-        self.filename = filename
-        self.shapes = self.records()
-        self.units = units
-        self.attributes = None
-        self.extent = None
-        self.names = []
-
-        xmin = float('inf') * units
-        xmax = -float('inf') * units
-        ymin = float('inf') * units
-        ymax = -float('inf') * units
-
-        _, self.filetype = os.path.splitext(filename)
-
-        for record in self.records():
-            self.names.append(record["properties"]["Name"])
-            if record["extent"][0][0].magnitude < xmin.magnitude:
-                xmin = record["extent"][0][0]
-            if record["extent"][0][1].magnitude > xmax.magnitude:
-                xmax = record["extent"][0][1]
-            if record["extent"][1][0].magnitude < ymin.magnitude:
-                ymin = record["extent"][1][0]
-            if record["extent"][1][1].magnitude > ymax.magnitude:
-                ymax = record["extent"][1][1]
-
-        self.names = np.unique(self.names)
-
-        self.xmin = xmin
-        self.xmax = xmax
-        self.ymin = ymin
-        self.ymax = ymax
-
-        self.coords = [(xmin, ymin), (xmax, ymax)]
-
-        self.generator = self.records()
-
-    def records(self):
-
-        if self.units:
-            units = self.units
-        else:
-            units = u.dimensionless
-
-        reader = shapefile.Reader(self.filename)
-        fields = reader.fields[1:]
-        field_names = [field[0] for field in fields]
-
-        for sr in reader.shapeRecords():
-            atr = dict(zip(field_names, sr.record))
-            coords = np.array(sr.shape.points)
-            coords[:,-1] = sr.shape.z
-            xextent = (coords[:,0].min(), coords[:,0].max())
-            yextent = (coords[:,1].min(), coords[:,1].max())
-            yield dict(coordinates=coords * units, properties=atr,
-                       extent=[xextent * units, yextent * units])
-
-
 def circles_grid(radius, minCoord, maxCoord, npoints=72):
 
     if len(minCoord) == 2:
