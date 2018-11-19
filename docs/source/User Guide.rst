@@ -1250,7 +1250,7 @@ The ``uwgeodynamicsrc`` file
 UWGeodynamics uses ``uwgeodynamicsrc`` configuration files to customize
 all kinds of properties, which we call ``rc settings`` or
 ``rc parametres``. For now, you can control the defaults of a limited
-set of property in matplotlib UWGeodynamics looks for
+set of property in UWGeodynamics looks for
 ``uwgeodynamicsrc`` in four locations, in the following order:
 
 1. ``uwgeodynamicsrc`` in the current working directory, usually used
@@ -1269,11 +1269,11 @@ set of property in matplotlib UWGeodynamics looks for
       ``.uwgeodynamics/uwgeodynamicsrc``.
 
 4. ``{INSTALL}/UWGeodynamics/uwgeo-data/uwgeodynamicsrc``, where
-   ``{INSTALL}`` is something like ``/usr/lib/python2.5/site-packages``
-   on Linux, and maybe ``C:\\Python25\\Lib\\site-packages`` on Windows.
-   Every time you install matplotlib, this file will be overwritten, so
+   ``{INSTALL}`` is something like ``/usr/lib/python2.7/site-packages``
+   on Linux, and maybe ``C:\\Python27\\Lib\\site-packages`` on Windows.
+   Every time you install UWgeodynamics, this file will be overwritten, so
    if you want your customizations to be saved, please move this file to
-   your user-specific matplotlib directory.
+   your user-specific directory.
 
 To display where the currently active ``uwgeodynamicsrc`` file was
 loaded from, one can do the following:
