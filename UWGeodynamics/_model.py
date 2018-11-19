@@ -42,7 +42,7 @@ class Model(Material):
               _dim_gravity])
     def __init__(self, elementRes=(64, 64),
                  minCoord=(0., 0.), maxCoord=(64. * u.kilometer, 64 * u.kilometer),
-                 name=None, gravity=None, periodic=None, elementType=None,
+                 name=None, gravity=None, periodic=None, elementType="Q1/dQ0",
                  temperatureBCs=None, velocityBCs=None, stressBCs=None, materials=None,
                  outputDir=None, frictionalBCs=None, surfaceProcesses=None,
                  isostasy=None, visugrid=None):
