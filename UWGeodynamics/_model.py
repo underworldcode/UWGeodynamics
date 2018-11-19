@@ -160,7 +160,6 @@ class Model(Material):
                                      periodic=self.periodic)
 
         self.mesh_variables = OrderedDict()
-        self.submesh_variables = OrderedDict()
         self.swarm_variables = OrderedDict()
         self.restart_variables = OrderedDict()
 
@@ -1092,7 +1091,7 @@ class Model(Material):
                                 dataType, **kwargs)
         setattr(self, name, newField)
         newField.data[...] = init_value
-        self.submesh_variables[name.strip("_")] = newField
+        self.mesh_variables[name.strip("_")] = newField
         if restart_variable:
             self.restart_variables[name] = newField
         return newField
@@ -1704,14 +1703,19 @@ class Model(Material):
 
             uw.barrier()
 
-            if checkpoint_interval or self.step % 1 == 0 or nstep:
-                if uw.rank() == 0:
-                    print("Step:" + str(stepDone) + " Model Time: ", str(self.time.to(units)),
-                          'dt:', str(Dimensionalize(self._dt, units)),
-                          '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
-                    sys.stdout.flush()
+            if uw.rank() == 0:
+                print("Step:" + str(stepDone) + " Model Time: ", str(self.time.to(units)),
+                      'dt:', str(Dimensionalize(self._dt, units)),
+                      '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+                sys.stdout.flush()
 
             self.postSolveHook()
+
+        if uw.rank() == 0:
+            print("Finalising Model")
+        self.checkpoint(checkpointID=self.checkpointID)
+        if uw.rank() == 0:
+            print("Done")
 
         return 1
 
@@ -1965,6 +1969,7 @@ class Model(Material):
         self.checkpoint_fields(variables, checkpointID)
         self.checkpoint_swarms(variables, checkpointID)
         self.checkpoint_tracers(checkpointID=checkpointID)
+        uw.barrier()
 
     def add_visugrid(self, elementRes, minCoord=None, maxCoord=None):
         """ Add a tracking grid to the Model
@@ -2180,6 +2185,8 @@ class Model(Material):
         if self.passive_tracers:
             for (dump, item) in self.passive_tracers.items():
                 item.save(outputDir, checkpointID, time)
+
+        uw.barrier()
 
     def velocity_rms(self):
         vdotv_fn = uw.function.math.dot(self.velocityField, self.velocityField)
