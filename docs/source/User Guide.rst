@@ -1186,6 +1186,34 @@ UWGeodynamics provide a way to couple an Underworld model to Badlands.
    ...     checkpoint_interval=0.01 * u.megayears)
 
 
+Deforming Mesh
+--------------
+
+Uniaxial deformation can be turned on using the ``Model.mesh_advector()``
+method. The method takes an ``axis`` argument which defines the direction
+of deformation (x=0, y=1, z=2)
+
+.. code:: python
+
+   >>> Model.mesh_advector(axis=0)
+
+Element are stretched or compressed uniformly across the model.
+This will results in a change in resolution with time.
+
+Top Free surface
+----------------
+
+Free surface can be turned on using the ``Model.freesurface`` switch.
+
+.. code:: python
+
+   >>> Model.freesurface = True
+
+.. warning::
+
+   No stabilization algorithm has been implemented yet.
+
+
 Dynamic rc settings
 -------------------
 
