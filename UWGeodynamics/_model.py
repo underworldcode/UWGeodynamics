@@ -159,15 +159,15 @@ class Model(Material):
                                      maxCoord=maxCoord,
                                      periodic=self.periodic)
 
-        self.mesh_fields = {}
-        self.submesh_fields = {}
-        self.swarm_fields = {}
+        self.mesh_variables = OrderedDict()
+        self.submesh_variables = OrderedDict()
+        self.swarm_variables = OrderedDict()
 
         # Add common mesh variables
         self.temperature = False
         self.add_submesh_field("pressureField", nodeDofCount=1)
-        self.add_mesh_field("velocityField", nodeDofCount=self.mesh.dim)
-        self.add_mesh_field("tractionField", nodeDofCount=self.mesh.dim)
+        self.add_mesh_variable("velocityField", nodeDofCount=self.mesh.dim)
+        self.add_mesh_variable("tractionField", nodeDofCount=self.mesh.dim)
         self.add_submesh_field("_strainRateField", nodeDofCount=1)
 
         # symmetric component of the gradient of the flow velocityField.
@@ -273,13 +273,13 @@ class Model(Material):
             particlesPerCell=particlesPerCell)
 
         # Add Common Swarm Variables
-        self.add_swarm_field("materialField", dataType="int", count=1,
+        self.add_swarm_variable("materialField", dataType="int", count=1,
                              init_value=self.index)
-        self.add_swarm_field("plasticStrain", dataType="double", count=1)
-        self.add_swarm_field("_viscosityField", dataType="double", count=1)
-        self.add_swarm_field("_densityField", dataType="double", count=1)
-        self.add_swarm_field("meltField", dataType="double", count=1)
-        self.add_swarm_field("timeField", dataType="double", count=1)
+        self.add_swarm_variable("plasticStrain", dataType="double", count=1)
+        self.add_swarm_variable("_viscosityField", dataType="double", count=1)
+        self.add_swarm_variable("_densityField", dataType="double", count=1)
+        self.add_swarm_variable("meltField", dataType="double", count=1)
+        self.add_swarm_variable("timeField", dataType="double", count=1)
         self.timeField.data[...] = 0.0
         self.materialField.data[...] = self.index
 
@@ -288,11 +288,11 @@ class Model(Material):
         else:
             stress_dim = 3
 
-        self.add_swarm_field("_previousStressField", dataType="double",
+        self.add_swarm_variable("_previousStressField", dataType="double",
                              count=stress_dim)
-        self.add_swarm_field("_stressTensor", dataType="double",
+        self.add_swarm_variable("_stressTensor", dataType="double",
                              count=stress_dim, projected="submesh")
-        self.add_swarm_field("_stressField", dataType="double",
+        self.add_swarm_variable("_stressField", dataType="double",
                              count=1, projected="submesh")
 
     def __getitem__(self, name):
@@ -941,7 +941,7 @@ class Model(Material):
             self.materialField.data[:] = self.index
 
         mat = material if material else Material()
-        mat.name = material.name if material.name else name
+        mat.name = material.name if (material and material.name) else name
 
         mat.Model = self
         mat.diffusivity = self.diffusivity
@@ -974,7 +974,7 @@ class Model(Material):
 
         return mat
 
-    def add_swarm_field(self, name, dataType="double", count=1,
+    def add_swarm_variable(self, name, dataType="double", count=1,
                         init_value=0., projected="mesh", **kwargs):
         """Add a new swarm field to the model
 
@@ -999,7 +999,7 @@ class Model(Material):
         newField = self.swarm.add_variable(dataType, count, **kwargs)
         setattr(self, name, newField)
         newField.data[...] = init_value
-        self.swarm_fields[name] = newField
+        self.swarm_variables[name.strip("_")] = newField
 
         # Create mesh variable for projection
         if name.startswith("_"):
@@ -1008,7 +1008,7 @@ class Model(Material):
             proj_name = "_proj" + name[0].upper() + name[1:]
 
         if projected == "mesh":
-            projected = self.add_mesh_field(proj_name,
+            projected = self.add_mesh_variable(proj_name,
                                             nodeDofCount=count,
                                             dataType="double")
         else:
@@ -1029,7 +1029,7 @@ class Model(Material):
 
         return newField
 
-    def add_mesh_field(self, name, nodeDofCount=1,
+    def add_mesh_variable(self, name, nodeDofCount=1,
                        dataType="double", init_value=0., **kwargs):
         """Add a new mesh field to the model
 
@@ -1049,7 +1049,7 @@ class Model(Material):
         newField = self.mesh.add_variable(nodeDofCount, dataType, **kwargs)
         setattr(self, name, newField)
         newField.data[...] = init_value
-        self.mesh_fields[name] = newField
+        self.mesh_variables[name.strip("_")] = newField
         return newField
 
     def add_submesh_field(self, name, nodeDofCount=1,
@@ -1073,7 +1073,7 @@ class Model(Material):
                                 dataType, **kwargs)
         setattr(self, name, newField)
         newField.data[...] = init_value
-        self.submesh_fields[name] = newField
+        self.submesh_variables[name.strip("_")] = newField
         return newField
 
     @property
@@ -2030,8 +2030,9 @@ class Model(Material):
         for field in fields:
             if field == "temperature" and not self.temperature:
                 continue
-            if field in rcParams["mesh.variables"]:
+            if field in self.mesh_variables.keys():
                 field = str(field)
+
                 try:
                     units = rcParams[field + ".SIunits"]
                 except KeyError:
@@ -2101,7 +2102,7 @@ class Model(Material):
         uw.barrier()
 
         for field in fields:
-            if field in rcParams["swarm.variables"]:
+            if field in self.swarm_variables.keys():
                 field = str(field)
                 try:
                     units = rcParams[field + ".SIunits"]

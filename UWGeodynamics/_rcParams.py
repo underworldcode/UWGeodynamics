@@ -4,29 +4,12 @@ from .scaling import u
 from ._validate import *
 
 
-rcParams = {
+rcParams =  {
 
     "model.name": ["Model", validate_string],
     "output.directory": ["outputs", validate_path],
     "element.type" : ["Q1/dQ0", validate_string],
 
-    "swarm.variables" : [["materialField",
-                          "plasticStrain",
-                          "viscosityField",
-                          "timeField",
-                          "densityField"], validate_stringlist],
-    "mesh.variables" :  [["velocityField",
-                          "temperature",
-                          "pressureField",
-                          "strainRateField",
-                          "boundariesField",
-                          "projMaterialField",
-                          "projTimeField",
-                          "projStressField",
-                          "projStressTensor",
-                          "projViscosityField",
-                          "projPlasticStrain",
-                          "projDensityField"], validate_stringlist],
     "default.outputs" : [["temperature",
                           "pressureField",
                           "strainRateField",
