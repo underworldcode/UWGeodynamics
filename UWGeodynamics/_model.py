@@ -162,11 +162,14 @@ class Model(Material):
         self.mesh_variables = OrderedDict()
         self.submesh_variables = OrderedDict()
         self.swarm_variables = OrderedDict()
+        self.restart_variables = OrderedDict()
 
         # Add common mesh variables
         self.temperature = False
-        self.add_submesh_field("pressureField", nodeDofCount=1)
-        self.add_mesh_variable("velocityField", nodeDofCount=self.mesh.dim)
+        self.add_submesh_field("pressureField", nodeDofCount=1,
+                               restart_variable=True)
+        self.add_mesh_variable("velocityField", nodeDofCount=self.mesh.dim,
+                               restart_variable=True)
         self.add_mesh_variable("tractionField", nodeDofCount=self.mesh.dim)
         self.add_submesh_field("_strainRateField", nodeDofCount=1)
 
@@ -274,8 +277,9 @@ class Model(Material):
 
         # Add Common Swarm Variables
         self.add_swarm_variable("materialField", dataType="int", count=1,
-                             init_value=self.index)
-        self.add_swarm_variable("plasticStrain", dataType="double", count=1)
+                                restart_variable=True, init_value=self.index)
+        self.add_swarm_variable("plasticStrain", dataType="double", count=1,
+                                restart_variable=True)
         self.add_swarm_variable("_viscosityField", dataType="double", count=1)
         self.add_swarm_variable("_densityField", dataType="double", count=1)
         self.add_swarm_variable("meltField", dataType="double", count=1)
@@ -289,11 +293,11 @@ class Model(Material):
             stress_dim = 3
 
         self.add_swarm_variable("_previousStressField", dataType="double",
-                             count=stress_dim)
+                                count=stress_dim)
         self.add_swarm_variable("_stressTensor", dataType="double",
-                             count=stress_dim, projected="submesh")
+                                count=stress_dim, projected="submesh")
         self.add_swarm_variable("_stressField", dataType="double",
-                             count=1, projected="submesh")
+                                count=1, projected="submesh")
 
     def __getitem__(self, name):
         """__getitem__
@@ -428,8 +432,8 @@ class Model(Material):
 
         self._initialize()
 
-        # Reload all the restart fields
-        for field in rcParams["restart.fields"]:
+        # Reload all the restart variables
+        for field in self.restart_variables:
             if field == "temperature":
                 continue
             obj = getattr(self, field)
@@ -724,13 +728,14 @@ class Model(Material):
     def temperature(self, value):
         if value is True:
             self._temperature = MeshVariable(mesh=self.mesh,
-                                                nodeDofCount=1)
+                                             nodeDofCount=1)
             self._temperatureDot = MeshVariable(mesh=self.mesh,
-                                                    nodeDofCount=1)
+                                                nodeDofCount=1)
             self._heatFlux = MeshVariable(mesh=self.mesh,
-                                              nodeDofCount=1)
+                                          nodeDofCount=1)
             self._temperatureDot.data[...] = 0.
             self._heatFlux.data[...] = 0.
+            self.restart_variables["temperature"] = self._temperature
         else:
             self._temperature = False
 
@@ -975,7 +980,8 @@ class Model(Material):
         return mat
 
     def add_swarm_variable(self, name, dataType="double", count=1,
-                        init_value=0., projected="mesh", **kwargs):
+                           init_value=0., projected="mesh",
+                           restart_variable=False, **kwargs):
         """Add a new swarm field to the model
 
         Parameters
@@ -989,6 +995,8 @@ class Model(Material):
         projected : the function creates a projector for each new
             swarm variable, you can choose to project on the "mesh" or
             "submesh"
+        restart_variable: boolean, specifies if the variable is needed
+            for a restart.
 
         Returns
         -------
@@ -1027,10 +1035,14 @@ class Model(Material):
                                                      type=0)
         setattr(self, projector_name, projector)
 
+        if restart_variable:
+            self.restart_variables[name] = newField
+
         return newField
 
     def add_mesh_variable(self, name, nodeDofCount=1,
-                       dataType="double", init_value=0., **kwargs):
+                       dataType="double", init_value=0.,
+                       restart_variable=False, **kwargs):
         """Add a new mesh field to the model
 
         Parameters
@@ -1041,6 +1053,8 @@ class Model(Material):
         dataType : type of data to be recorded, default is "double"
         init_value : default value of the field, default is to initialise
             the field to 0.
+        restart_variable: boolean, specifies if the variable is needed
+            for a restart.
 
         Returns
         -------
@@ -1050,10 +1064,13 @@ class Model(Material):
         setattr(self, name, newField)
         newField.data[...] = init_value
         self.mesh_variables[name.strip("_")] = newField
+        if restart_variable:
+            self.restart_variables[name] = newField
         return newField
 
     def add_submesh_field(self, name, nodeDofCount=1,
-                          dataType="double", init_value=0., **kwargs):
+                          dataType="double", init_value=0.,
+                          restart_variable=False, **kwargs):
         """Add a new sub-mesh field to the model
 
         Parameters
@@ -1064,6 +1081,8 @@ class Model(Material):
         dataType : type of data to be recorded, default is "double"
         init_value : default value of the field, default is to initialise
             the field to 0.
+        restart_variable: boolean, specifies if the variable is needed
+            for a restart.
 
         Returns
         -------
@@ -1074,6 +1093,8 @@ class Model(Material):
         setattr(self, name, newField)
         newField.data[...] = init_value
         self.submesh_variables[name.strip("_")] = newField
+        if restart_variable:
+            self.restart_variables[name] = newField
         return newField
 
     @property
@@ -2072,7 +2093,7 @@ class Model(Material):
         """
 
         if not fields:
-            fields = rcParams["restart.fields"]
+            fields = self.restart_variables
 
         if not checkpointID:
             checkpointID = self.checkpointID

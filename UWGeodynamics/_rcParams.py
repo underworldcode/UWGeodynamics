@@ -34,11 +34,6 @@ rcParams =  {
                           "projViscosityField",
                           "projPlasticStrain",
                           "projDensityField"], validate_stringlist],
-    "restart.fields" : [["materialField",
-                         "temperature",
-                         "pressureField",
-                         "plasticStrain",
-                         "velocityField"], validate_stringlist],
 
     "gravity": [9.81 * u.meter / u.second**2, validate_quantity],
     "swarm.particles.per.cell.2D": [40, validate_int],
