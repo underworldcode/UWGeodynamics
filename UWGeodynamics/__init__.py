@@ -590,16 +590,3 @@ rcParamsOrig = rcParams.copy()
 rcParamsDefault = defaultParams
 
 from ._model import Model
-
-scaling["[length]"] = rcParams["scaling.length"]
-scaling["[mass]"] = rcParams["scaling.mass"]
-scaling["[time]"] = rcParams["scaling.time"]
-scaling["[substance]"] = rcParams["scaling.substance"]
-scaling["[temperature]"] = rcParams["scaling.temperature"]
-
-UpperCrust_default = rcParams["rheology.default.uppercrust"]
-MidCrust_default = rcParams["rheology.default.midcrust"]
-LowerCrust_default = rcParams["rheology.default.lowercrust"]
-MantleLithosphere_default = rcParams["rheology.default.mantlelithosphere"]
-Mantle_default = rcParams["rheology.default.mantle"]
-

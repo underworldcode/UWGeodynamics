@@ -8,7 +8,21 @@ rcParams =  {
 
     "model.name": ["Model", validate_string],
     "output.directory": ["outputs", validate_path],
-    "element.type" : ["Q1/dQ0", validate_string],
+    "CFL": [0.5, validate_float],
+
+    "solver" : ["mg", validate_solver],
+    "penalty" : [0.0, validate_float],
+
+    "initial.nonlinear.tolerance": [1e-2, validate_float],
+    "nonlinear.tolerance": [1e-2, validate_float],
+    "maximum.timestep" : [200000, validate_int],
+    "initial.nonlinear.min.iterations": [2, validate_int],
+    "initial.nonlinear.max.iterations": [500, validate_int],
+    "nonlinear.min.iterations": [2, validate_int],
+    "nonlinear.max.iterations": [500, validate_int],
+    "nonlinear.tolerance.adjust.factor": [2, validate_int],
+    "nonlinear.tolerance.adjust.nsteps": [100, validate_int],
+    "mg.levels": [None, validate_int_or_none],
 
     "default.outputs" : [["temperature",
                           "pressureField",
@@ -35,33 +49,6 @@ rcParams =  {
     "popcontrol.max.splits" : [10, validate_int],
     "popcontrol.particles.per.cell.2D" : [40, validate_int],
     "popcontrol.particles.per.cell.3D" : [120, validate_int],
-
-    "CFL": [0.5, validate_float],
-
-    "solver" : ["mg", validate_solver],
-    "penalty" : [0.0, validate_float],
-    "initial.nonlinear.tolerance": [1e-2, validate_float],
-    "nonlinear.tolerance": [1e-2, validate_float],
-    "maximum.timestep" : [200000, validate_int],
-    "initial.nonlinear.min.iterations": [2, validate_int],
-    "initial.nonlinear.max.iterations": [500, validate_int],
-    "nonlinear.min.iterations": [2, validate_int],
-    "nonlinear.max.iterations": [500, validate_int],
-    "nonlinear.tolerance.adjust.factor": [2, validate_int],
-    "nonlinear.tolerance.adjust.nsteps": [100, validate_int],
-    "mg.levels": [None, validate_int_or_none],
-
-    "rheology.default.uppercrust": ["Patterson et al., 1990", validate_viscosity],
-    "rheology.default.midcrust": ["Patterson et al., 1990", validate_viscosity],
-    "rheology.default.lowercrust": ["Wang et al., 2012", validate_viscosity],
-    "rheology.default.mantlelithosphere": ["Hirth et al., 2003", validate_viscosity],
-    "rheology.default.mantle": ["Karato and Wu, 1990", validate_viscosity],
-
-    "scaling.length": [1.0 * u.meter, validate_quantity],
-    "scaling.mass": [1.0 * u.kilogram, validate_quantity],
-    "scaling.time": [1.0 * u.year, validate_quantity],
-    "scaling.temperature": [1.0 * u.degK, validate_quantity],
-    "scaling.substance": [1.0 * u.mole, validate_quantity],
 
     "time.SIunits": [u.years, validate_quantity],
     "viscosityField.SIunits" : [u.pascal * u.second, validate_quantity],
