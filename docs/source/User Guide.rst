@@ -1134,21 +1134,51 @@ Passive Tracers
 
    >>> u = GEO.u
 
+      >>> Model = GEO.Model()
+   >>> x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
+   >>> y = 32. * u.kilometre
+    >>> tracers = Model.add_passive_tracers(vertices=[x,y])
+ You can pass a list of centroids to the `Model.add_passive_tracers` method.
+In that case, the coordinates of the passive tracers are relative to the
+position of the centroids. The pattern is repeated around each centroid.
+ .. code:: python
+    >>> import UWGeodynamics as GEO
+    >>> u = GEO.u
+    >>> Model = GEO.Model()
+   >>> cxpos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer),5)
+   >>> cypos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer),5)
+   >>> cxpos, cypos = np.meshgrid(cxpos, cypos)
+    >>> tracers = Model.add_passive_tracers(vertices=[0,0],
+   ...                                     centroids=[cxpos.ravel(),
+   ...                                                cypos.ravel())
+ We provide a function to create circles on a grid:
    >>> Model = GEO.Model(elementRes=(64,64),
    ...                   minCoord=(0.*u.kilometre, 0.* u.kilometre),
    ...                   maxCoord=(64.* u.kilometre, 64 * u.kilometre))
-
+ .. code:: python
+    >>> x_c, y_c = GEO.circles_grid(radius = 2.0 * u.kilometer,
+   ...                 minCoord=[Model.minCoord[0], lowercrust.bottom],
+   ...                 maxCoord=[Model.maxCoord[0], 0.*u.kilometer])
+ Tracking Values
+~~~~~~~~~~~~~~~
+ Passive tracers can be used to track values of fields at specific location
+through time.
+ .. code:: python
+    >>> import UWGeodynamics as GEO
+    >>> u = GEO.u
+    >>> Model = GEO.Model()
    >>> x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
    >>> y = 32. * u.kilometre
-
+    >>> tracers = Model.add_passive_tracers(vertices=[x,y])
    >>> P = Model.add_passive_tracers(vertices=[x,y])
-
-.. note::
-
-   You can pass a list of centroids to the `Model.add_passive_tracers` method.
-   In that case, the coordinates of the passive tracers are relative to the
-   position of the centroids. The pattern is repeated around each centroid.
-
+    >>> tracers.add_tracked_field(Model.pressureField,
+                                 name="tracers_press",
+                                 units=u.megapascal,
+                                 dataType="float")
+   >>> tracers.add_tracked_field(Model.strainRateField,
+                                 name="tracers_strainRate",
+                                 units=1.0/u.second,
+                                 dataType="float")
 Surface Processes
 -----------------
 
