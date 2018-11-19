@@ -1,9 +1,5 @@
 from __future__ import print_function,  absolute_import
 import abc
-try:
-    from .linkage import SPM
-except ImportError:
-    pass
 import underworld.function as fn
 from .scaling import nonDimensionalize as nd
 
@@ -67,6 +63,9 @@ class Badlands(SurfaceProcesses):
         self.Model = Model
 
     def _init_model(self):
+
+        from .linkage import SPM
+
         self.mesh = self._Model.mesh
         self.velocityField = self._Model.velocityField
         self.swarm = self._Model.swarm
