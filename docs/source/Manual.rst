@@ -192,7 +192,7 @@ Pint_ offers the possibility to append a prefix to the units.
 
 .. note::
 
-   Unit abbreviation is also possible `u.km` is equivalent to `u.kilometer`.
+   Unit abbreviation is also possible :code:`u.km` is equivalent to :code:`u.kilometer`.
    You can refer to the Pint_ documentation for all abbreviations available.
 
 
@@ -1264,6 +1264,36 @@ The user can alter this behavior using the **restartStep** and
 
    >>> # Overwrite existing outputs
    >>> Model.run_for(2.0 * u.megayears, restartStep=False)
+
+
+Run on multiple processors
+--------------------------
+
+Model can be run on multiple processors:
+
+You first need to convert your jupyter notebook to a python script:
+
+.. code:: bash
+
+  jupyter nbconvert --to python my_script.ipynb
+
+
+You can then run the python script as follow:
+
+.. code:: bash
+
+  mpirun -np 4 python my_script.py
+
+
+.. warning::
+
+   Underworld and UWGeodynamics functions are parallel safe and
+   can be run on multiple CPUs. This might not be the case of other
+   python library you might be interested in using in your Model.
+   For example, matplotlib plots will not work in parallel and must
+   be processed in serial. 
+   *Tutorial 1* has examples of matplotlib plots which are only done
+   on the rank 0 CPU.
 
 
 Dynamic rc settings
