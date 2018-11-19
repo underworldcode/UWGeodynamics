@@ -917,6 +917,11 @@ You can of course define temperatures on the sidewalls:
    ...                          bottom_material=Model,
    ...                          materials=[(air, 273. * u.Kelvin)])
 
+.. Note::
+
+   Model inflow is negative, outflow is positive.
+
+
 **Fix the temperature of internal nodes**
 
 You can assign a temperature to a list of nodes by passing a list of
