@@ -174,7 +174,7 @@ The function are also available respectively as :code:`GEO.nd` and
 
 
 The Model object
-~~~~~~~~~~~~~~~~
+----------------
 
 The central element or “object” of the UWGeodynamics module is the
 **Model** object.
@@ -199,7 +199,7 @@ properties are changed by defining new materials.
    ...                   maxCoord=(64. * u.kilometre, 64. * u.kilometre))
 
 The Material object
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 The *UWGeodynamics* module is designed around the idea of materials,
 which are essentially a way to define physical properties across the
@@ -595,10 +595,10 @@ You can add as many materials as needed:
 
 
 Rheologies
-~~~~~~~~~~
+----------
 
 Newtonian Rheology
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 A newtonian rheology can be applied by assigning a viscosity
 
@@ -610,7 +610,7 @@ A newtonian rheology can be applied by assigning a viscosity
   >>> myMaterial.viscosity = 1e19 * u.pascal * u.second
 
 Non-Newtonian Rheology
-^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~
 
 *UWGeodynamics* provides a library of commonly used Viscous Creep Flow Laws.
 They can be accessed using the `GEO.ViscousCreepRegistry` registry:
@@ -675,14 +675,26 @@ The user can define its own parametres:
 
 .. code:: python
 
-   >>> plasticity = GEO.DruckerPrager(cohesion=10. * u.megapascal,
-   ...                                cohesionAfterSoftening=10. * u.megapascal,
-   ...                                frictionCoefficient = 0.3,
-   ...                                frictionAfterSoftening = 0.2,
-   ...                                epsilon1=0.5,
-   ...                                epsilon2=1.5)
+   >>> material.plasticity = GEO.DruckerPrager(
+   ...     cohesion=10. * u.megapascal,
+   ...     cohesionAfterSoftening=10. * u.megapascal,
+   ...     frictionCoefficient = 0.3,
+   ...     frictionAfterSoftening = 0.2,
+   ...     epsilon1=0.5,
+   ...     epsilon2=1.5)
 
-   >>> plasticity = GEO.VonMises(cohesion=10. * u.megapascal)
+   >>> material.plasticity = GEO.VonMises(cohesion=10. * u.megapascal)
+
+Elasticity
+~~~~~~~~~~
+
+Elastic behavior can be added to a material:
+
+.. code:: python
+
+   >>> material.elasticity(shear_modulus=10e9 * u.pascal,
+                           observation_time=10000 * u.year)
+
 
 Mechanical Boundary Conditions
 -------------------------------
@@ -1102,11 +1114,11 @@ You can then run the python script as follow:
    can be run on multiple CPUs. This might not be the case of other
    python library you might be interested in using in your Model.
    For example, matplotlib plots will not work in parallel and must
-   be processed in serial. 
+   be processed in serial.
    *Tutorial 1* has examples of matplotlib plots which are only done
    on the rank 0 CPU.
 
-   
+
 Passive Tracers
 ---------------
 
