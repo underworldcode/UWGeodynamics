@@ -108,7 +108,6 @@ class VelocityBCs(BoundaryConditions):
             self.Model._isostasy.swarm = self.Model.swarm
             self.Model._isostasy._mesh_advector = self.Model._advector
             self.Model._isostasy.velocityField = self.Model.velocityField
-            self.Model._isostasy.boundariesField = self.Model.boundariesField
             self.Model._isostasy.materialIndexField = self.Model.materialField
             self.Model._isostasy._densityFn = self.Model._densityFn
             vertical_walls_conditions = {
@@ -139,12 +138,9 @@ class VelocityBCs(BoundaryConditions):
                     if (dim == axis):
                         self.Model.velocityField.data[ISet.data, dim] = (
                             func.evaluate(ISet)[:, 0])
-                        self.Model.boundariesField.data[ISet.data, dim] = (
-                            func.evaluate(ISet)[:, 0])
                         self._dirichlet_indices[dim] += ISet
                     else:
                         self.Model.velocityField.data[ISet.data, dim] = 0.
-                        self.Model.boundariesField.data[ISet.data, dim] = 0.
                         self._dirichlet_indices[dim] += ISet
 
             return
@@ -160,9 +156,6 @@ class VelocityBCs(BoundaryConditions):
                     self.Model.velocityField.data[nodes.data, dim] = (
                         func.evaluate(
                             self.Model.mesh.data[nodes.data])[:, dim])
-                    self.Model.boundariesField.data[nodes.data, dim] = (
-                        func.evaluate(
-                            self.Model.mesh.data[nodes.data])[:, dim])
                     self._dirichlet_indices[dim] += nodes
 
                 # User defined function
@@ -171,16 +164,11 @@ class VelocityBCs(BoundaryConditions):
                     self.Model.velocityField.data[nodes.data, dim] = (
                         func.evaluate(
                             self.Model.mesh.data[nodes.data])[:, 0])
-                    self.Model.boundariesField.data[nodes.data, dim] = (
-                        func.evaluate(
-                            self.Model.mesh.data[nodes.data])[:, 0])
                     self._dirichlet_indices[dim] += nodes
 
                 # Scalar condition
                 if isinstance(condition[dim], (u.Quantity, float, int)):
                     self.Model.velocityField.data[nodes.data, dim] = (
-                        nd(condition[dim]))
-                    self.Model.boundariesField.data[nodes.data, dim] = (
                         nd(condition[dim]))
                     self._dirichlet_indices[dim] += nodes
 
@@ -190,8 +178,6 @@ class VelocityBCs(BoundaryConditions):
                     obj.ynodes = self.Model.mesh.data[nodes.data, 1]
                     obj._get_side_flow()
                     self.Model.velocityField.data[nodes.data, dim] = (
-                        obj._get_side_flow())
-                    self.Model.boundariesField.data[nodes.data, dim] = (
                         obj._get_side_flow())
                     self._dirichlet_indices[dim] += nodes
 
@@ -206,7 +192,6 @@ class VelocityBCs(BoundaryConditions):
                     self.Model._isostasy.swarm = self.Model.swarm
                     self.Model._isostasy._mesh_advector = self.Model._advector
                     self.Model._isostasy.velocityField = self.Model.velocityField
-                    self.Model._isostasy.boundariesField = self.Model.boundariesField
                     self.Model._isostasy.materialIndexField = self.Model.materialField
                     self.Model._isostasy._densityFn = self.Model._densityFn
                     vertical_walls_conditions = {

@@ -170,9 +170,6 @@ class Model(Material):
         self.add_mesh_field("tractionField", nodeDofCount=self.mesh.dim)
         self.add_submesh_field("_strainRateField", nodeDofCount=1)
 
-        # Create a field to check applied boundary conditions
-        self.add_mesh_field("boundariesField", nodeDofCount=self.mesh.dim)
-
         # symmetric component of the gradient of the flow velocityField.
         self.strainRate = fn.tensor.symmetric(self.velocityField.fn_gradient)
         self._strainRate_2ndInvariant = None
@@ -833,12 +830,6 @@ class Model(Material):
 
                 if rcParams["mg.levels"]:
                     self._solver.options.mg.levels = rcParams["mg.levels"]
-
-            if self._solver._check_linearity(False):
-                if not hasattr(self, "prevVelocityField"):
-                    self.add_mesh_field("prevVelocityField", nodeDofCount=self.mesh.dim)
-                if not hasattr(self, "prevPressureField"):
-                    self.add_submesh_field("prevPressureField", nodeDofCount=1)
 
         return self._solver
 

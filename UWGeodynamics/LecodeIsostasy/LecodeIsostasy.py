@@ -18,7 +18,6 @@ class LecodeIsostasy(object):
         self.swarm = None
         self._mesh_advector = None
         self.velocityField = None
-        self.boundariesField = None
         self._densityFn = None
         self.materialIndexField = None
         self.reference_mat = reference_mat
@@ -141,13 +140,8 @@ class LecodeIsostasy(object):
             bot_ids = base.data[base.data < self.mesh.nodesLocal]
             node_gids = self.mesh.data_nodegId[bot_ids].flatten()
             self.velocityField.data[bot_ids, 1] = basal_velocities[node_gids]
-            if self.boundariesField:
-                self.boundariesField.data[bot_ids, 1] = basal_velocities[node_gids]
 
         self.velocityField.syncronise()
-
-        if self.boundariesField:
-            self.boundariesField.syncronise()
 
     def _lecode_tools_isostasy3D(self):
 
@@ -196,14 +190,8 @@ class LecodeIsostasy(object):
             bot_ids = base.data[base.data < self.mesh.nodesLocal]
             node_gids = self.mesh.data_nodegId[bot_ids].flatten()
             self.velocityField.data[bot_ids, -1] = basal_velocities.flatten()[node_gids]
-            if self.boundariesField:
-                self.boundariesField.data[bot_ids, -1] = basal_velocities.flatten()[node_gids]
-
 
         self.velocityField.syncronise()
-
-        if self.boundariesField:
-            self.boundariesField.syncronise()
 
     def _get_sep_velocities2D(self):
 
