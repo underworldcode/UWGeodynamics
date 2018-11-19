@@ -13,7 +13,7 @@ from .scaling import Dimensionalize
 from .scaling import nonDimensionalize as nd
 from .scaling import UnitRegistry as u
 from .lithopress import LithostaticPressure
-from ._utils import PressureSmoother, PassiveTracers, PassiveTracersGrid
+from ._utils import PressureSmoother, PassiveTracers
 from ._rheology import ViscosityLimiter, StressLimiter
 from ._material import Material
 from ._visugrid import Visugrid
@@ -1868,13 +1868,19 @@ class Model(Material):
                                      particleEscape=particleEscape)
 
         else:
+            x = np.array(vertices[0])[..., np.newaxis]  + np.array(centroids[0]).ravel()
+            y = np.array(vertices[1])[..., np.newaxis]  + np.array(centroids[1]).ravel()
+            vertices = [x.ravel(), y.ravel()]
 
-            tracers = PassiveTracersGrid(self.mesh,
-                                         self.velocityField,
-                                         name=name,
-                                         vertices=vertices,
-                                         centroids=centroids,
-                                         particleEscape=particleEscape)
+            if self.mesh.dim > 2:
+                z = np.array(vertices[2])[..., np.newaxis]  + np.array(centroids[2]).ravel()
+                vertices = [x.ravel(), y.ravel(), z.ravel()]
+
+            tracers = PassiveTracers(self.mesh,
+                                     self.velocityField,
+                                     name=name,
+                                     vertices=vertices,
+                                     particleEscape=particleEscape)
 
         self.passive_tracers[name] = tracers
         setattr(self, name.lower() + "_tracers", tracers)
