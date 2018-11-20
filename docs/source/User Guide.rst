@@ -25,6 +25,74 @@ import UWGeodynamics
 
    >>> import UWGeodynamics as GEO
 
+Visualization
+--------------
+
+*glucifer* can be used to plot the fields produced by Underworld / UWGeodynamics.
+The module is a wrapper around Lavavu_ and is readily available from
+Underworld.
+
+It can be imported as follow
+
+.. code:: python
+
+   >>> import glucifer
+
+.. warning::
+
+   Although many plotting module are available, we strongly encourage people
+   to use *glucifer*. It integrates very well inside the Jupyter_ notebook,
+   is parallel safe, and can take Underworld function as arguments.
+
+
+.. warning::
+
+   We provide some basic examples. Look at the glucifer_ documentation for more
+   details.
+
+Simple examples:
+~~~~~~~~~~~~~~~~
+
+*Plot Material Field* or any field / variable defined on the swarm (e.g. plasticstrain,
+viscosityField, densityField etc.):
+
+.. code:: python
+
+   >>> import glucifer
+   >>> Fig = glucifer.Figure(figsize=(1200,400), title="Material Field")
+   >>> Fig.Points(Model.swarm, Model.materialField, fn_size=3.0)
+   >>> Fig.show()
+   >>> Fig.save("MaterialField.png")
+
+*Plot Temperature Field* or any field / variable defined on the mesh (e.g. temperature,
+pressureField, velocityField, strainRateField) as well as projected swarm field /
+variables (e.g. projMaterialField, projViscosityField etc.)
+
+.. code:: python
+
+   >>> import glucifer
+   >>> Fig = glucifer.Figure(figsize=(1200,400), title="Temperature")
+   >>> Fig.Surface(Model.mesh, GEO.Dim(Model.temperature, u.degK))
+   >>> Fig.show()
+   >>> Fig.save("Temperature.png")
+
+.. note::
+
+   Fields can be dimensionalized using the GEO.Dimensionalize function (see below)
+
+*Plot Velocity Fields* or any vector field.
+
+The example below plots a temperature field with the velocity vectors on top:
+
+.. code:: python
+
+   >>> import glucifer
+   >>> Fig = glucifer.Figure(figsize=(1200,400), title="Velocity")
+   >>> Fig.Surface(Model.mesh, GEO.Dim(Model.temperature, u.degK))
+   >>> Fig.VectorArrows(Model.mesh, Model.velocityField)
+   >>> Fig.show()
+   >>> Fig.save("VelocityField.png")
+
 
 Working with units
 ------------------
@@ -1478,3 +1546,6 @@ See below for a sample.
 .. _Kitematic: https://kitematic.com/
 .. _github: https://github.com/underworldcode/UWGeodynamics.git
 .. _Pint: https://pint.readthedocs.io/en/latest
+.. _glucifer: https://underworld2.readthedocs.io/en/latest/glucifer.html
+.. _Underworld: https://underworld2.readthedocs.io/en/latest/index.html
+.. _Lavavu: https://github.com/OKaluza/LavaVu
