@@ -682,6 +682,35 @@ Single parametres can then be modified.
 
    >>> viscosity.activationEnergy = 300. * u.kilojoule
 
+Composite Viscosity
+~~~~~~~~~~~~~~~~~~~
+
+Material viscosity can be assigned a combination of viscosities.
+The effective viscosity is calculated as the harmonic mean of
+all viscosities.
+
+
+.. code:: python
+
+   >>> import UWGeodynamics as GEO
+
+   >>> viscosity1 = GEO.ViscousCreep(preExponentialFactor=1.0,
+   ...                              stressExponent=1.0,
+   ...                              activationVolume=0.,
+   ...                              activationEnergy=200 * u.kilojoules,
+   ...                              waterFugacity=0.0,
+   ...                              grainSize=0.0,
+   ...                              meltFraction=0.,
+   ...                              grainSizeExponent=0.,
+   ...                              waterFugacityExponent=0.,
+   ...                              meltFractionFactor=0.0,
+   ...                              f=1.0)
+
+
+   >>> viscosity2 = 1e19 * u.pascal * u.second
+   >>> combined_viscosity = GEO.CompositeViscosity([viscosity1, viscosity2])
+
+
 Plastic Behavior (Yield)
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
