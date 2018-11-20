@@ -1145,9 +1145,9 @@ position of the centroids. The pattern is repeated around each centroid.
     >>> import UWGeodynamics as GEO
     >>> u = GEO.u
     >>> Model = GEO.Model()
-   >>> cxpos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer),5)
-   >>> cypos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer),5)
-   >>> cxpos, cypos = np.meshgrid(cxpos, cypos)
+    >>> cxpos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer),5)
+    >>> cypos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer),5)
+    >>> cxpos, cypos = np.meshgrid(cxpos, cypos)
     >>> tracers = Model.add_passive_tracers(vertices=[0,0],
    ...                                     centroids=[cxpos.ravel(),
    ...                                                cypos.ravel())
@@ -1156,7 +1156,7 @@ position of the centroids. The pattern is repeated around each centroid.
    ...                   minCoord=(0.*u.kilometre, 0.* u.kilometre),
    ...                   maxCoord=(64.* u.kilometre, 64 * u.kilometre))
  .. code:: python
-    >>> x_c, y_c = GEO.circles_grid(radius = 2.0 * u.kilometer,
+   >>> x_c, y_c = GEO.circles_grid(radius = 2.0 * u.kilometer,
    ...                 minCoord=[Model.minCoord[0], lowercrust.bottom],
    ...                 maxCoord=[Model.maxCoord[0], 0.*u.kilometer])
  Tracking Values
@@ -1164,14 +1164,14 @@ position of the centroids. The pattern is repeated around each centroid.
  Passive tracers can be used to track values of fields at specific location
 through time.
  .. code:: python
-    >>> import UWGeodynamics as GEO
-    >>> u = GEO.u
-    >>> Model = GEO.Model()
+   >>> import UWGeodynamics as GEO
+   >>> u = GEO.u
+   >>> Model = GEO.Model()
    >>> x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
    >>> y = 32. * u.kilometre
-    >>> tracers = Model.add_passive_tracers(vertices=[x,y])
+   >>> tracers = Model.add_passive_tracers(vertices=[x,y])
    >>> P = Model.add_passive_tracers(vertices=[x,y])
-    >>> tracers.add_tracked_field(Model.pressureField,
+   >>> tracers.add_tracked_field(Model.pressureField,
                                  name="tracers_press",
                                  units=u.megapascal,
                                  dataType="float")
