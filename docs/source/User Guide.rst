@@ -705,7 +705,7 @@ change such as transition from mantle to oceanic-crust behavior or
 simply air to water...
 
 .. warning::
-  
+
    Phase changes can only occur between predefined material. If you plan to
    add a material during the Model run, you will have to define it beforehand.
 
@@ -731,6 +731,57 @@ purpose you can use the ``WaterFill`` class.
    >>> air.phase_changes = GEO.WaterFill(sealevel=0., result=water)
 
 This is easier to read but equivalent.
+
+
+Melt
+----
+
+Materials can be assigned a ``Solidus`` and a ``Liquidus`` defined as polynomial
+function of temperature. This allows to calculate the fraction of melt present in
+the material. 
+
+.. warning::
+
+   There is no seggregation of the melt from its source.
+
+A registry of Solidii and Liquidii are available:
+
+.. code:: python
+
+    >>> solidii = GEO.SolidusRegistry()
+    >>> crust_solidus = solidii.Crustal_Solidus
+
+    >>> liquidii = GEO.LiquidusRegistry()
+    >>> crust_liquidus = liquidii.Crustal_Liquidus
+
+The percentage of melt results in a linear decrease of the viscosity of a factor
+``viscosityChange`` over the ``viscosityChangeX1`` - ``viscosityChangeX2``
+melt fraction interval.
+
+The latent heat of fusion is embedded in the energy equation and affects the
+temperature field of the Model.
+
+The meltExpansion factor affects the density of the materials.
+
+The following example prescribes a decrease in viscosity of 3 order of
+magnitude over a range of 0.15 to 0.30 fraction of melt.
+The fraction of the melt is limited to 0.3
+
+.. code:: python
+
+    >>> continentalcrust = Model.add_material(name="Continental Crust")
+    >>> continentalcrust.radiogenicHeatProd = 7.67e-7 * u.watt / u.meter**3
+    >>> continentalcrust.density  = 2720. * u.kilogram / u.metre**3
+
+    >>> continentalcrust.add_melt_modifier(crust_solidus, crust_liquidus,
+    ...                                    latentHeatFusion=250.0 * u.kilojoules / u.kilogram / u.kelvin,
+    ...                                    meltFraction=0.,
+    ...                                    meltFractionLimit=0.3,
+    ...                                    meltExpansion=0.13,
+    ...                                    viscosityChangeX1 = 0.15,
+    ...                                    viscosityChangeX2 = 0.30,
+    ...                                    viscosityChange = 1e-3
+    ...                                   )
 
 
 Mechanical Boundary Conditions
@@ -1133,7 +1184,7 @@ The user can alter this behavior using the **restartStep** and
 Model outputs
 -------------
 
-All mesh variables / fields defined in the ``GEO.rcParams["default.outputs"]`` 
+All mesh variables / fields defined in the ``GEO.rcParams["default.outputs"]``
 are saved as HDF5_ files to the ``outputDir`` directory at every output times.
 An XMF file is provided and can be used to open the files in Paraview_
 
