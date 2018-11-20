@@ -709,9 +709,28 @@ simply air to water...
    Phase changes can only occur between predefined material. If you plan to
    add a material during the Model run, you will have to define it beforehand.
 
+In the following example we change air into water when the air particles
+move below the 0. level.
+
 .. code:: python
 
    >>> import UWGeodynamics as GEO
+
+   >>> air = Model.add_material(name="air")
+   >>> water = Model.add_material(name="water")
+   >>> air.phase_changes = GEO.PhaseChange((Model.swarm.particleCoordinates[:,1] < 0.),
+                                           water.index)
+
+The above example essentially fills the basins with water. For such a specific
+purpose you can use the ``WaterFill`` class.
+
+.. code:: python
+
+   >>> air = Model.add_material(name="air")
+   >>> water = Model.add_material(name="water")
+   >>> air.phase_changes = GEO.WaterFill(sealevel=0., result=water)
+
+This is easier to read but equivalent.
 
 
 Mechanical Boundary Conditions
