@@ -123,7 +123,7 @@ The unit entered are checked internally and an error is raised if the
 units are incompatible. The value is automatically converted to the base
 units (metre, second, degree, etc).
 
-To scale a model, the user must define a serie of characteristic
+To scale a model, the user must define a series of characteristic
 physical values and assign them to the scaling object.
 
 Arguments with units will be scaled by the UWGeodynamics functions.
@@ -276,7 +276,7 @@ be used to define its physical behavior.
   =================== ==================
   Name                    Description
   =================== ==================
-  shape
+  shape               Initial Geometrical Representation
   density             Density
   diffusivity         Thermal Diffusivity
   capacity            Thermal Capacity
@@ -325,17 +325,17 @@ attributes
    >>> myMaterial = GEO.Material(name="My Material")
 
 The density of myMaterial will default to 200. kilogram / cubic metre unless
-its *density* attribute is specified.
+its *density* attribute is explicitly specified.
 
 
 Material shape
 ^^^^^^^^^^^^^^
 
-The *shape* attribute essentially describe the initial
+The *shape* attribute essentially describes the initial
 location of a material.
-It is used to build a initial geometry of the model.
+It is used to build the initial geometry of the model.
 
-There is a range of shapes available
+There are a range of available/pre-defined shapes
 
 -  Layer (2D/3D)
 -  Polygon (2D)
@@ -620,7 +620,7 @@ Rheologies
 Newtonian Rheology
 ~~~~~~~~~~~~~~~~~~
 
-A newtonian rheology can be applied by assigning a viscosity
+A newtonian rheology can be applied by assigning a viscosity to a already defined material
 
 .. code:: python
 
@@ -633,7 +633,7 @@ Non-Newtonian Rheology
 ~~~~~~~~~~~~~~~~~~~~~~
 
 *UWGeodynamics* provides a library of commonly used Viscous Creep Flow Laws.
-They can be accessed using the `GEO.ViscousCreepRegistry` registry:
+These can be accessed using the `GEO.ViscousCreepRegistry` registry:
 
 .. image:: /img/ViscousCreepRegistry.gif
 
@@ -660,7 +660,7 @@ For example to make the **Gleason and Tullis, 1995** rheology
   >>> rh = GEO.ViscousCreepRegistry()
   >>> material.viscosity = 30 * rh.Gleason_and_Tullis_1995
 
-The user can of course define its own rheology.
+The user can of course define their own ViscousCreep rheology.
 
 .. code:: python
 
@@ -676,7 +676,7 @@ The user can of course define its own rheology.
    ...                              meltFractionFactor=0.0,
    ...                              f=1.0)
 
-Single parametres can then be modified
+Single parametres can then be modified.
 
 .. code:: python
 
@@ -685,13 +685,13 @@ Single parametres can then be modified
 Plastic Behavior (Yield)
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-As for Viscous Creep, we provide a registry of commmonly used
+As with Viscous Creep, we also provide a registry of commmonly used
 plastic behaviors.
 They can be accessed using the `GEO.PlasticityRegistry` registry.
 
 .. image:: /img/PlasticityRegistry.gif
 
-The user can define its own parametres:
+The user can define their own parametres:
 
 .. code:: python
 
@@ -808,12 +808,12 @@ Mechanical Boundary Conditions
 -------------------------------
 
 Mechanical boundary conditions are a critical part of any
-geodynamic model design. In the following, we quickly detail the options
-available to define mechanical boundary conditions in Underworld using the
+geodynamic model design. In what follows, we quickly detail the options
+available for defining the mechanical boundary conditions in Underworld using the
 UWGeodynamics module.
 
-How to define boundary conditions and how to make sure those are
-consistent are questions beyond the scope of this manual.
+Questions like how to define boundary conditions and to make sure that those are
+consistent are beyond the scope of this manual.
 
 We will define a simple model for the sake of the example.
 
@@ -886,9 +886,9 @@ instead of 2.
 Velocity varying along a wall
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-It is sometime necessary to define a velocity only for a section of a
-wall. That can be done using a **condition**. A condition is a set of
-rule to apply on a wall.
+At times it is necessary to define a velocity only for a section of a
+wall and or varying velocities along a wall. This can be done using a **condition**. A condition is a set of
+rules that are applied to a wall.
 
 As an example, we will apply a velocity of :math:`5.0\text{cm/yr}` for
 the part of the left wall below 32 kilometre. Velocity is set to be
@@ -938,8 +938,8 @@ Frictional Boundaries can be set as follow:
    ...                               friction=19.0,
    ...                               thickness=3)
 
-Where *left*, *right*, *top*, *bottom*, parametres are the side you want
-to apply a frictional boundary condition on. *friction* is the angle of
+Where the *left*, *right*, *top*, *bottom* parametres indicate the side to which you 
+apply a frictional boundary condition on. *friction* is the angle of
 friction (in degrees). *thickness* is the thickness of the boundary.
 
 Isostasy
@@ -974,7 +974,7 @@ The option can be used by creating a LecodeIsostasy object using the
 ``GEO.LecodeIsostasy`` class. The object requires the index of the
 material of reference (the material number). One can apply an average
 velocity (calculated across each column base) using the ``average``
-parametre (default to False).
+parameter (default to False).
 
 .. code:: python
 
@@ -986,10 +986,10 @@ parametre (default to False).
 Traction Condition (stress)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Another approach to model isostasy is to defined a stress at the base of
+Another approach to model isostasy is to defined a certain stress at the base of
 the model. This is done using units of stress (derived SI units =
-pascal). The model will then maintain the stress by adjusting the flow
-across the border.
+pascal). The model will then maintain the denfined stress by adjusting the flow
+across the border/boundary.
 
 .. code:: python
 
@@ -1054,11 +1054,11 @@ Heat flux
 Model initialization
 --------------------
 
-Initialization of the pressure and temperature field is done using the
+Initialization of the pressure and temperature fields is done by using the
 ::code::python`Model.init_model` method.
 
 The default behavior is to initialise the temperature field to a steady-state
-while the pressure field is initialize to the lithostatic pressure.
+while the pressure field is initialized to the lithostatic pressure.
 
 You can deactivate pressure or temperature initialization by setting the
 corresponding argument to `False` (`Model.init_model(temperature=False)`)
@@ -1072,7 +1072,7 @@ corresponding argument to `False` (`Model.init_model(temperature=False)`)
 Running the Model
 -----------------
 
-Once your model is set up and initialize. You can run it using the
+Once your model is set up and initialized. You can run it using the
 *Model.run_for* method.
 
 You have 2 options:
@@ -1100,15 +1100,15 @@ Specify a timestep
 
 UWGeodynamics calculates the time step automatically based on some
 numerical stability criteria. You can force a specific time step or
-force the time step to be constant throughou
+force the time step to be constant throughout
 
 Saving data
 ~~~~~~~~~~~
 
 As your model is running you will need to save the results to files.
 
-The *Model.run_for* command provides a series of arguments to help you
-save the results at some regular. You can define:
+The *Model.run_for* method provides a series of arguments to help you
+save the results at some regular intervals and/or specified times. You can define:
 
 1. A *checkpoint_interval*
 
@@ -1158,15 +1158,16 @@ model reaches a checkpoint time (``restart_checkpoint=1``).
 Restarting the Model
 --------------------
 
-When checkpointing a model, the model state is not explicitely saved,
-only the mesh, swarms and explicitely saved variables are… We thus need
-to recreate the **Model** object before restarting it.
+When checkpointing a model only the mesh, swarms their assoiciated variables 
+are explicitely saved. 
+Since the model state is not explicitly saved, thus the user needs to recreate 
+the **Model** object before restarting it.
 
-In practice, that means the user must run all commands preceding the
+In practice, this means the user must run all commands preceding the
 **Model.run_for** command.
 
 When running the **Model.run_for** command *UWGeodynamics* will first
-check if an output already exists in the output folder. If it does, the
+check if a checkpoint already exists in the output folder. If it does, the
 program will attempt to reload the last available step.
 
 The user can alter this behavior using the **restartStep** and
@@ -1175,12 +1176,12 @@ The user can alter this behavior using the **restartStep** and
 -  **restartStep** is *-1* by default. The default behaviour is to look
    into **restartFolder** for an existing output and attempt a restart
    from the last output available.
-   Setting it to False will overwrite any existing outputs
+   Setting it to `False` will overwrite any existing output(s)
    in the *output* folder. If its value is an integer, this corresponds
    to the step number you want to restart from.
 
 -  **restartFolder** is the folder where the program should look for
-   previously saved data. It is set to **Model.outputs** by default.
+   previously saved data or checkpoints. It is set to **Model.outputs** by default.
 
 .. code:: python
 
@@ -1219,7 +1220,7 @@ Each of then has an associated XMF file.
 Parallel run
 ------------
 
-Model can be run on multiple processors:
+A Model can be run on multiple processors:
 
 You first need to convert your jupyter notebook to a python script:
 
@@ -1238,8 +1239,8 @@ You can then run the python script as follow:
 .. warning::
 
    Underworld and UWGeodynamics functions are parallel safe and
-   can be run on multiple CPUs. This might not be the case of other
-   python library you might be interested in using in your Model.
+   can be run on multiple CPUs. This might not be the case with other
+   python libraries you might be interested in using with your Model.
    For example, matplotlib plots will not work in parallel and must
    be processed in serial.
    *Tutorial 1* has examples of matplotlib plots which are only done
@@ -1255,62 +1256,43 @@ Passive Tracers
 
    >>> u = GEO.u
 
-   >>> Model = GEO.Model()
+      >>> Model = GEO.Model()
    >>> x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
    >>> y = 32. * u.kilometre
-
-   >>> tracers = Model.add_passive_tracers(vertices=[x,y])
-
-
-You can pass a list of centroids to the `Model.add_passive_tracers` method.
+    >>> tracers = Model.add_passive_tracers(vertices=[x,y])
+ You can pass a list of centroids to the `Model.add_passive_tracers` method.
 In that case, the coordinates of the passive tracers are relative to the
 position of the centroids. The pattern is repeated around each centroid.
-
-.. code:: python
-
-
-   >>> import UWGeodynamics as GEO
-
-   >>> u = GEO.u
-
-   >>> Model = GEO.Model()
-   >>> cxpos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer),5)
-   >>> cypos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer),5)
-   >>> cxpos, cypos = np.meshgrid(cxpos, cypos)
-
-   >>> tracers = Model.add_passive_tracers(vertices=[0,0],
+ .. code:: python
+    >>> import UWGeodynamics as GEO
+    >>> u = GEO.u
+    >>> Model = GEO.Model()
+    >>> cxpos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer),5)
+    >>> cypos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer),5)
+    >>> cxpos, cypos = np.meshgrid(cxpos, cypos)
+    >>> tracers = Model.add_passive_tracers(vertices=[0,0],
    ...                                     centroids=[cxpos.ravel(),
    ...                                                cypos.ravel())
-
-We provide a function to create circles on a grid:
-
-.. code:: python
-
+ We provide a function to create circles on a grid:
+   >>> Model = GEO.Model(elementRes=(64,64),
+   ...                   minCoord=(0.*u.kilometre, 0.* u.kilometre),
+   ...                   maxCoord=(64.* u.kilometre, 64 * u.kilometre))
+ .. code:: python
    >>> x_c, y_c = GEO.circles_grid(radius = 2.0 * u.kilometer,
    ...                 minCoord=[Model.minCoord[0], lowercrust.bottom],
    ...                 maxCoord=[Model.maxCoord[0], 0.*u.kilometer])
-
-
-
-Tracking Values
+ Tracking Values
 ~~~~~~~~~~~~~~~
-
-Passive tracers can be used to track values of fields at specific location
+ Passive tracers can be used to track values of fields at specific location
 through time.
-
-
-.. code:: python
-
+ .. code:: python
    >>> import UWGeodynamics as GEO
-
    >>> u = GEO.u
-
    >>> Model = GEO.Model()
    >>> x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
    >>> y = 32. * u.kilometre
-
    >>> tracers = Model.add_passive_tracers(vertices=[x,y])
-
+   >>> P = Model.add_passive_tracers(vertices=[x,y])
    >>> tracers.add_tracked_field(Model.pressureField,
                                  name="tracers_press",
                                  units=u.megapascal,
@@ -1319,8 +1301,6 @@ through time.
                                  name="tracers_strainRate",
                                  units=1.0/u.second,
                                  dataType="float")
-
-
 Surface Processes
 -----------------
 
@@ -1346,7 +1326,7 @@ Three simple function are available:
 Coupling with Badlands
 ~~~~~~~~~~~~~~~~~~~~~~
 
-UWGeodynamics provide a way to couple an Underworld model to Badlands.
+UWGeodynamics provides a way to couple an Underworld model to Badlands.
 **More documentation needed**
 
 .. code:: python
@@ -1371,7 +1351,7 @@ of deformation (x=0, y=1, z=2)
    >>> Model.mesh_advector(axis=0)
 
 Element are stretched or compressed uniformly across the model.
-This will results in a change in resolution with time.
+This will result in a change in resolution with time.
 
 Top Free surface
 ----------------
@@ -1422,12 +1402,14 @@ The ``uwgeodynamicsrc`` file
 
 UWGeodynamics uses ``uwgeodynamicsrc`` configuration files to customize
 all kinds of properties, which we call ``rc settings`` or
-``rc parametres``. For now, you can control the defaults of a limited
-set of property in UWGeodynamics looks for
-``uwgeodynamicsrc`` in four locations, in the following order:
+``rc parameters``. For now, you can control the defaults of a limited
+set of properties.
+
+UWGeodynamics looks for ``uwgeodynamicsrc`` in four locations, in the following order:
 
 1. ``uwgeodynamicsrc`` in the current working directory, usually used
-   for specific customizations that you do not want to apply elsewhere.
+   for specific customizations for a particular model setup that you 
+   do not want to apply elsewhere.
 
 2. ``$UWGEODYNAMICSRC`` if it is a file, else
    ``$UWGEODYNAMICSRC/uwgeodynamicsrc``.
