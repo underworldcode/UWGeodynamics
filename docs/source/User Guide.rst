@@ -593,6 +593,26 @@ You can add as many materials as needed:
   >>> Fig.show()
   >>> Fig.save("multiple_materials.png")
 
+Temperature and Pressure dependent densities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Temperature and Pressure dependent densities can be assigned to a Material using
+the ``GEO.LinearDensity`` function which calculates:
+
+:math:`density = rho0 * (1 + (beta * deltaP) - (alpha * deltaT))`
+
+where $rho$ is the reference density, beta a factor, deltaP the difference
+between the pressure and the reference pressure, alpha is the thermal
+expansivity and deltaT is the difference between the temperature and the
+reference temperature.
+
+.. code:: python
+
+  >>> u = GEO.u
+  >>> material1 = Model.add_material(name="Material 1", shape=shape)
+  >>> material1.density = GEO.LinearDensity(reference_density=3370. * u.kilogram / u.metre**3,
+                                            thermalExpansivity= 2.8e-5 * u.kelvin**-1,
+                                            beta=1.0)
 
 Rheologies
 ----------
