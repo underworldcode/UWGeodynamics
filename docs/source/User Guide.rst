@@ -695,6 +695,24 @@ Elastic behavior can be added to a material:
    >>> material.elasticity(shear_modulus=10e9 * u.pascal,
                            observation_time=10000 * u.year)
 
+Simple phase change
+-------------------
+
+One can change the property of one material to another depending on
+some time, tepmerature, pressure etc. criteria.
+This is not a phase change sensu-stricto but this allows for simple
+change such as transition from mantle to oceanic-crust behavior or
+simply air to water...
+
+.. warning::
+  
+   Phase changes can only occur between predefined material. If you plan to
+   add a material during the Model run, you will have to define it beforehand.
+
+.. code:: python
+
+   >>> import UWGeodynamics as GEO
+
 
 Mechanical Boundary Conditions
 -------------------------------
@@ -872,7 +890,7 @@ parametre (default to False).
 
    >>> Model.set_velocityBCs(left=[1.0*u.centimetre/u.year, None],
    ...                       right=[-1.0*u.centimetre/u.year, None],
-   ...                       bottom=[None, GEO.LecodeIsostasy(reference_mat=Model.index)],
+   ...                       bottom=[None, GEO.LecodeIsostasy(reference_mat=mantle)],
    ...                       top=[None,0.])
 
 Traction Condition (stress)
@@ -1093,6 +1111,20 @@ The user can alter this behavior using the **restartStep** and
    >>> # Overwrite existing outputs
    >>> Model.run_for(2.0 * u.megayears, restartStep=False)
 
+Model outputs
+-------------
+
+All mesh variables / fields defined in the ``GEO.rcParams["default.outputs"]`` 
+are saved as HDF5_ files to the ``outputDir`` directory at every output times.
+An XMF file is provided and can be used to open the files in Paraview_
+
+All variables required for a restart are saved as HDF5_ files to the
+``outputDir`` directory at each checkpoint time.
+An XMF file is also provided.
+
+Passive Tracers and tracked fields are also saved as HDF5_ files at every output
+and checkpoint times.
+Each of then has an associated XMF file.
 
 Parallel run
 ------------
