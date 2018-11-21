@@ -706,6 +706,14 @@ These can be accessed using the `GEO.ViscousCreepRegistry` registry:
 .. image:: /img/ViscousCreepRegistry.gif
 
 
+.. note::
+
+   The ViscousCreepRegistry object can import a database of rheologies
+   from a json file by passing its path as argument.
+   The `default json`__ file can be find here and can be used as an example.
+
+__ https://github.com/underworldcode/UWGeodynamics/blob/master/UWGeodynamics/ressources/ViscousRheologies.json_
+
 **Example:**
 
 .. code:: python
@@ -788,7 +796,15 @@ They can be accessed using the `GEO.PlasticityRegistry` registry.
 
 .. image:: /img/PlasticityRegistry.gif
 
-The user can define their own parametres:
+.. note::
+
+   The PlasticityRegistry object can import a database of plasticity
+   from a json file by passing its path as argument.
+   The `default json`__ file can be find here and can be used as an example.
+
+__ https://github.com/underworldcode/UWGeodynamics/blob/master/UWGeodynamics/ressources/PlasticRheologies.json_
+
+Users can define their own parametres:
 
 .. code:: python
 
