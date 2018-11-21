@@ -124,6 +124,13 @@ It can then be installed globally on your system using
 HPC Installation
 ----------------
 
+requirements
+^^^^^^^^^^^^
+
+- python >= 2.7.11
+- openmpi >= 1.8
+- hdf5 >= 1.8
+
 NCI Raijin
 ~~~~~~~~~~
 
