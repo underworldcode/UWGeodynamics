@@ -273,6 +273,31 @@ The *UWGeodynamics* module is designed around the idea of materials,
 which are essentially a way to define physical properties across the
 Model domain.
 
+Predefined Material objects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A library of predefined material is available through the
+MaterialRegistry object:
+
+.. code:: python
+
+   import UWGeodynamics as GEO
+
+   materials_database = GEO.MaterialRegistry()
+
+.. note::
+
+   The MaterialRegistry object can import a database of materials
+   from a json file by passing its path as argument.
+   The `default json`__ file can be find here and can be used as an example.
+
+__ https://github.com/underworldcode/UWGeodynamics/blob/master/UWGeodynamics/ressources/Materials.json_
+
+
+
+User defined
+~~~~~~~~~~~~
+
 Materials are defined using the **Material** object as follow:
 
 .. code:: python

@@ -29,7 +29,7 @@ from ._rheology import Rheology, ConstantViscosity, ViscousCreep, DruckerPrager
 from ._rheology import VonMises, CompositeViscosity
 from ._rheology import ViscousCreepRegistry, PlasticityRegistry
 from ._rheology import Elasticity
-from ._material import Material
+from ._material import Material, MaterialRegistry
 from ._density import ConstantDensity, LinearDensity
 from ._melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry
 from ._utils import Balanced_InflowOutflow

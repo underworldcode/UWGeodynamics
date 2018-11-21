@@ -9,25 +9,11 @@
     "capacity":{
          "value": 1000.0 ,
          "units": "joule / kelvin / kilogram"},
-    "thermalExpansivity":{
-         "value": 3e-5,
-         "units": "1.0 / kelvin"},
     "radiogenicHeatProd":{
          "value": 0.7,
          "units": "milliwatts / metre**3"},
     "viscosity": null  ,
-    "plasticity": null ,
-    "solidus":  null ,
-    "liquidus": null ,
-    "latentHeatFusion":{
-         "value": 300.0,
-         "units": "kilojoules / kilogram"},
-    "meltExpansion": null ,
-    "meltFraction": null ,
-    "meltFractionLimit": null ,
-    "viscosityChangeX1": null ,
-    "viscosityChangeX2": null ,
-    "viscosityChange": null
+    "plasticity": null
     },
 
 
@@ -41,25 +27,11 @@
     "capacity":{
          "value": 1000.0 ,
          "units": "joule / kelvin / kilogram"},
-    "thermalExpansivity":{
-         "value": 3e-5,
-         "units": "1.0 / kelvin"},
     "radiogenicHeatProd":{
          "value": 0.6,
          "units": "milliwatts / metre**3"},
     "viscosity": null  ,
-    "plasticity": null ,
-    "solidus":  null ,
-    "liquidus": null ,
-    "latentHeatFusion":{
-         "value": 300.0,
-         "units": "kilojoules / kilogram"},
-    "meltExpansion": null ,
-    "meltFraction": null ,
-    "meltFractionLimit": null ,
-    "viscosityChangeX1": null ,
-    "viscosityChangeX2": null ,
-    "viscosityChange": null
+    "plasticity": null
     },
 
 "Lower crust":{
@@ -72,25 +44,11 @@
     "capacity":{
          "value": 1000.0 ,
          "units": "joule / kelvin / kilogram"},
-    "thermalExpansivity":{
-         "value": 3e-5,
-         "units": "1.0 / kelvin"},
     "radiogenicHeatProd":{
          "value": 0.4,
          "units": "milliwatts / metre**3"},
     "viscosity": null  ,
-    "plasticity": null ,
-    "solidus":  null ,
-    "liquidus": null ,
-    "latentHeatFusion":{
-         "value": 300.0,
-         "units": "kilojoules / kilogram"},
-    "meltExpansion": null ,
-    "meltFraction": null ,
-    "meltFractionLimit": null ,
-    "viscosityChangeX1": null ,
-    "viscosityChangeX2": null ,
-    "viscosityChange": null
+    "plasticity": null
     },
 
 "Oceanic crust":{
@@ -103,25 +61,11 @@
     "capacity":{
          "value": 1000.0 ,
          "units": "joule / kelvin / kilogram"},
-    "thermalExpansivity":{
-         "value": 3e-5,
-         "units": "1.0 / kelvin"},
     "radiogenicHeatProd":{
          "value": 0.0,
          "units": "milliwatts / metre**3"},
     "viscosity": null  ,
-    "plasticity": null ,
-    "solidus":  null ,
-    "liquidus": null ,
-    "latentHeatFusion":{
-         "value": 300.0,
-         "units": "kilojoules / kilogram"},
-    "meltExpansion": null ,
-    "meltFraction": null ,
-    "meltFractionLimit": null ,
-    "viscosityChangeX1": null ,
-    "viscosityChangeX2": null ,
-    "viscosityChange": null
+    "plasticity": null
     },
 
 "Lithospheric Mantle":{
@@ -134,25 +78,11 @@
     "capacity":{
          "value": 1000.0 ,
          "units": "joule / kelvin / kilogram"},
-    "thermalExpansivity":{
-         "value": 3e-5,
-         "units": "1.0 / kelvin"},
     "radiogenicHeatProd":{
          "value": 0.02,
          "units": "milliwatts / metre**3"},
     "viscosity": null  ,
-    "plasticity": null ,
-    "solidus":  null ,
-    "liquidus": null ,
-    "latentHeatFusion":{
-         "value": 300.0,
-         "units": "kilojoules / kilogram"},
-    "meltExpansion": null ,
-    "meltFraction": null ,
-    "meltFractionLimit": null ,
-    "viscosityChangeX1": null ,
-    "viscosityChangeX2": null ,
-    "viscosityChange": null
+    "plasticity": null
     },
 
 
@@ -166,25 +96,11 @@
     "capacity":{
          "value": 1000.0 ,
          "units": "joule / kelvin / kilogram"},
-    "thermalExpansivity":{
-         "value": 3e-5,
-         "units": "1.0 / kelvin"},
     "radiogenicHeatProd":{
          "value": 0.7,
          "units": "milliwatts / metre**3"},
     "viscosity": null  ,
-    "plasticity": null ,
-    "solidus":  null ,
-    "liquidus": null ,
-    "latentHeatFusion":{
-         "value": 300.0,
-         "units": "kilojoules / kilogram"},
-    "meltExpansion": null ,
-    "meltFraction": null ,
-    "meltFractionLimit": null ,
-    "viscosityChangeX1": null ,
-    "viscosityChangeX2": null ,
-    "viscosityChange": null
+    "plasticity": null
     }
 
 }
