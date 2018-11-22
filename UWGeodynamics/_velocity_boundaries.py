@@ -76,7 +76,7 @@ class VelocityBCs(BoundaryConditions):
         """
 
         super(VelocityBCs, self).__init__(Model, left, right, top, bottom,
-                                          front, back, nodeSets, 
+                                          front, back, nodeSets,
                                           order_wall_conditions)
         # Link Moving Walls
         for arg in [self.left, self.right, self.top, self.bottom, self.front,
@@ -370,7 +370,7 @@ class StressBCs(BoundaryConditions):
         local_procs_has_neumann = np.zeros((uw.nProcs()))
         global_procs_has_neumann = np.zeros((uw.nProcs()))
 
-        if self._neumann_indices != tuple([None for val in range(Model.mesh.dim)]):
+        if self._neumann_indices != tuple([None] * Model.mesh.dim):
             local_procs_has_neumann[uw.rank()] = 1
 
         comm.Allreduce(local_procs_has_neumann, global_procs_has_neumann)

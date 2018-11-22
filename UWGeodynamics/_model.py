@@ -19,7 +19,7 @@ from ._material import Material
 from ._visugrid import Visugrid
 from ._velocity_boundaries import VelocityBCs
 from ._velocity_boundaries import StressBCs
-from ._thermal_boundaries import TemperatureBCs
+from ._thermal_boundaries import TemperatureBCs, HeatFlowBCs
 from ._mesh_advector import Mesh_advector
 from ._frictional_boundary import FrictionBoundaries
 from .Underworld_extended import FeMesh_Cartesian
@@ -41,12 +41,13 @@ class Model(Material):
     @u.check([None, (None, None), ("[length]", "[length]"), None,
               _dim_gravity])
     def __init__(self, elementRes=(64, 64),
-                 minCoord=(0., 0.), maxCoord=(64. * u.kilometer, 64 * u.kilometer),
+                 minCoord=(0., 0.), maxCoord=(64. * u.km, 64 * u.km),
                  name=None, gravity=None, periodic=None, elementType="Q1/dQ0",
-                 temperatureBCs=None, velocityBCs=None, stressBCs=None, materials=None,
-                 outputDir=None, frictionalBCs=None, surfaceProcesses=None,
+                 temperatureBCs=None, heatFlowBCs=None, velocityBCs=None,
+                 stressBCs=None, materials=None, outputDir=None,
+                 frictionalBCs=None, surfaceProcesses=None,
                  isostasy=None, visugrid=None):
-        """__init__
+        """Create a Model object
 
         Parameters
         ----------
@@ -67,6 +68,9 @@ class Model(Material):
         elementType :
             Type of finite element.
         temperatureBCs :
+            Temperature Boundary Condition, must be object of type:
+            TemperatureBCs
+        heatFlowBCs :
             Temperature Boundary Condition, must be object of type:
             TemperatureBCs
         velocityBCs :
@@ -218,6 +222,7 @@ class Model(Material):
         self.velocityBCs = velocityBCs
         self.stressBCs = stressBCs
         self.temperatureBCs = temperatureBCs
+        self.heatFlowBCs = heatFlowBCs
         self.frictionalBCs = frictionalBCs
         self._isostasy = isostasy
         self.surfaceProcesses = surfaceProcesses
@@ -635,37 +640,28 @@ class Model(Material):
     def set_temperatureBCs(self, left=None, right=None,
                            top=None, bottom=None,
                            front=None, back=None,
-                           nodeSets=None, materials=None,
-                           bottom_material=None, top_material=None,
-                           left_material=None, right_material=None,
-                           back_material=None, front_material=None):
+                           nodeSets=None, materials=None):
 
         """ Set Model thermal conditions
 
         Parameters:
             left:
-                Temperature or flux along the left wall.
-                Flux must be a vector (Fx, Fy, [Fz])
+                Temperature along the left wall.
                 Default is 'None'
             right:
-                Temperature or flux along the right wall.
-                Flux must be a vector (Fx, Fy, [Fz])
+                Temperature along the right wall.
                 Default is 'None'
             top:
-                Temperature or flux along the top wall.
-                Flux must be a vector (Fx, Fy, [Fz])
+                Temperature along the top wall.
                 Default is 'None'
             bottom:
-                Temperature or flux along the bottom wall.
-                Flux must be a vector (Fx, Fy, [Fz])
+                Temperature along the bottom wall.
                 Default is 'None'
             front:
-                Temperature or flux along the front wall.
-                Flux must be a vector (Fx, Fy, [Fz])
+                Temperature along the front wall.
                 Default is 'None'
             back:
-                Temperature or flux along the back wall.
-                Flux must be a vector (Fx, Fy, [Fz])
+                Temperature along the back wall.
                 Default is 'None'
             nodeSets: (set, temperature)
                 A list, numpy array which contains the indices (global)
@@ -673,43 +669,92 @@ class Model(Material):
             materials:
                 list of materials for which temperature need to be
                 fixed. [(material, temperature)]
-            bottom_material:
-                Specify Material that lays at the bottom of the model
-                Default is 'None' (required if a flux is defined at the
-                base).
-            top_material:
-                Specify Material that lays at the top of the model
-                Default is 'None' (required if a flux is defined at the top).
-            left_material:
-                Specify Material that lays at the left of the model
-                Default is 'None' (required if a flux is defined at the left).
-            right_material:
-                Specify Material that lays at the right of the model
-                Default is 'None' (required if a flux is defined at the right).
-            back_material:
-                Specify Material that lays at the back of the model
-                Default is 'None' (required if a flux is defined at the back).
-            front_material:
-                Specify Material that lays at the front of the model
-                Default is 'None' (required if a flux is defined at the front).
 
         """
 
         if not self.temperature:
             self.temperature = True
 
-        self.temperatureBCs = TemperatureBCs(self, left=left, right=right,
-                                             top=top, bottom=bottom,
-                                             back=back, front=front,
-                                             nodeSets=nodeSets,
-                                             materials=materials,
-                                             bottom_material=bottom_material,
-                                             top_material=top_material,
-                                             left_material=left_material,
-                                             right_material=right_material,
-                                             back_material=back_material,
-                                             front_material=front_material)
-        return self.temperatureBCs.get_conditions()
+        self._temperatureBCs = TemperatureBCs(self, left=left, right=right,
+                                              top=top, bottom=bottom,
+                                              back=back, front=front,
+                                              nodeSets=nodeSets,
+                                              materials=materials)
+        return self._temperatureBCs.get_conditions()
+
+    def set_heatFlowBCs(self, left=None, right=None,
+                        top=None, bottom=None,
+                        front=None, back=None):
+
+        """ Set Model Heat Flow conditions
+
+        Parameters:
+            left:
+                Flux along the left wall.
+                Flux must be a vector (Fx, Fy, [Fz])
+                Default is 'None'
+            right:
+                Flux along the right wall.
+                Flux must be a vector (Fx, Fy, [Fz])
+                Default is 'None'
+            top:
+                Flux along the top wall.
+                Flux must be a vector (Fx, Fy, [Fz])
+                Default is 'None'
+            bottom:
+                Flux along the bottom wall.
+                Flux must be a vector (Fx, Fy, [Fz])
+                Default is 'None'
+            front:
+                Flux along the front wall.
+                Flux must be a vector (Fx, Fy, [Fz])
+                Default is 'None'
+            back:
+                Flux along the back wall.
+                Flux must be a vector (Fx, Fy, [Fz])
+                Default is 'None'
+
+        """
+
+        if not self.temperature:
+            self.temperature = True
+
+        self._heatFlowBCs = HeatFlowBCs(self, left=left, right=right,
+                                       top=top, bottom=bottom,
+                                       back=back, front=front)
+        return self._heatFlowBCs.get_conditions()
+
+    @property
+    def temperatureBCs(self):
+        return self._temperatureBCs.get_conditions()
+
+    @temperatureBCs.setter
+    def temperatureBCs(self, value):
+        self._temperatureBCs = value
+
+    @property
+    def heatFlowBCs(self):
+        return self._heatFlowBCs.get_conditions()
+
+    @heatFlowBCs.setter
+    def heatFlowBCs(self, value):
+        self._heatFlowBCs = value
+
+    @property
+    def velocityBCs(self):
+        return self._velocityBCs.get_conditions()
+
+    @velocityBCs.setter
+    def velocityBCs(self, value):
+        self._velocityBCs = value
+
+    @property
+    def stressBCs(self):
+        return self._stressBCs.get_conditions()
+
+    @stressBCs.setter
+    def stressBCs(self, value):
+        self._stressBCs = value
 
     @property
     def solver(self):
@@ -739,12 +784,6 @@ class Model(Material):
             self.restart_variables["temperature"] = self._temperature
         else:
             self._temperature = False
-
-    @property
-    def _temperatureBCs(self):
-        if not self.temperatureBCs:
-            raise ValueError("Set Boundary Conditions")
-        return self.temperatureBCs.get_conditions()
 
     @property
     def _advdiffSystem(self):
@@ -780,6 +819,11 @@ class Model(Material):
             strain = self.strainRate_2ndInvariant
             self.HeatProdFn += stress * strain
 
+        conditions = []
+        conditions.append(self.temperatureBCs)
+        if self._heatFlowBCs:
+            conditions.append(self.heatFlowBCs)
+
         if rcParams["advection.diffusion.method"] is "SLCN":
 
             obj = uw.systems.SLCN_AdvectionDiffusion(
@@ -787,7 +831,7 @@ class Model(Material):
                 velocityField=self.velocityField,
                 fn_diffusivity=self.DiffusivityFn,
                 fn_sourceTerm=self.HeatProdFn,
-                conditions=self._temperatureBCs
+                conditions=conditions
             )
 
         if rcParams["advection.diffusion.method"] is "SUPG":
@@ -798,7 +842,7 @@ class Model(Material):
                 velocityField=self.velocityField,
                 fn_diffusivity=self.DiffusivityFn,
                 fn_sourceTerm=self.HeatProdFn,
-                conditions=self._temperatureBCs
+                conditions=conditions
             )
         return obj
 
@@ -813,10 +857,10 @@ class Model(Material):
             if any([material.viscosity for material in self.materials]):
 
                 conditions = list()
-                conditions.append(self.velocityBCs.get_conditions())
+                conditions.append(self.velocityBCs)
 
-                if self.stressBCs:
-                    conditions.append(self.stressBCs.get_conditions())
+                if self._stressBCs:
+                    conditions.append(self.stressBCs)
 
                 self._stokes_SLE = uw.systems.Stokes(
                     velocityField=self.velocityField,
@@ -881,12 +925,12 @@ class Model(Material):
                 underworld mesh index set and associate velocity
         """
 
-        self.velocityBCs = VelocityBCs(self, left=left,
-                                        right=right, top=top,
-                                        bottom=bottom, front=front,
-                                        back=back, nodeSets=nodeSets,
-                                        order_wall_conditions=order_wall_conditions)
-        return self.velocityBCs
+        self._velocityBCs = VelocityBCs(
+            self, left=left, right=right, top=top,
+            bottom=bottom, front=front,
+            back=back, nodeSets=nodeSets,
+            order_wall_conditions=order_wall_conditions)
+        return self._velocityBCs.get_conditions()
 
     set_kinematicBCs = set_velocityBCs
 
@@ -918,12 +962,12 @@ class Model(Material):
                 underworld mesh index set and associate velocity
         """
 
-        self.stressBCs = StressBCs(self, left=left,
+        self._stressBCs = StressBCs(self, left=left,
                                    right=right, top=top,
                                    bottom=bottom, front=front,
                                    back=back, nodeSets=nodeSets,
                                    order_wall_conditions=order_wall_conditions)
-        return self.stressBCs
+        return self._stressBCs.get_conditions()
 
     def add_material(self, material=None, shape=None,
                      name="unknown", fill=True, reset=False):
@@ -1442,7 +1486,10 @@ class Model(Material):
             self.DiffusivityFn = fn.misc.constant(nd(self.diffusivity))
             self.HeatProdFn = fn.misc.constant(nd(self.radiogenicHeatProd))
 
-        conditions = self._temperatureBCs
+        conditions = []
+        conditions.append(self.temperatureBCs)
+        if self._heatFlowBCs:
+            conditions.append(self.heatFlowBCs)
 
         heatequation = uw.systems.SteadyStateHeat(
             temperatureField=self.temperature,
@@ -2203,6 +2250,7 @@ class Model(Material):
         vrms = math.sqrt(v2 / vol)
         #os.write(1, "Velocity rms (vrms): {0}".format(vrms))
         return vrms
+
 
 _html_global = OrderedDict()
 _html_global["Number of Elements"] = "elementRes"

@@ -1184,9 +1184,11 @@ node indices (global).
 Heat flux
 ~~~~~~~~~
 
+Heat Flux can be assign as follow:
+
 .. code:: python
 
-   >>> Model.set_temperatureBCs(top=500. * u.degK, bottom=-0.22 * u.milliwatt / u.metre**2, bottom_material=Model)
+   >>> Model.set_heatFlowBCs(bottom=(-0.22 * u.milliwatt / u.metre**2, Material))
 
 
 Model initialization
