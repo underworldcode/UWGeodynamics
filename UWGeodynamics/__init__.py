@@ -26,7 +26,7 @@ from .scaling import Dimensionalize
 from .LecodeIsostasy import LecodeIsostasy
 from .lithopress import LithostaticPressure
 from ._rheology import Rheology, ConstantViscosity, ViscousCreep, DruckerPrager
-from ._rheology import VonMises, CompositeViscosity
+from ._rheology import CompositeViscosity
 from ._rheology import ViscousCreepRegistry, PlasticityRegistry
 from ._rheology import Elasticity
 from ._material import Material, MaterialRegistry

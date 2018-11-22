@@ -17,6 +17,7 @@ def linearCohesionWeakening(cumulativeTotalStrain, Cohesion, CohesionSw,
 
     Parameters
     ----------
+
     cumulativeTotalStrain : Accumulated Plastic Strain field
     Cohesion : Cohesion for a pristine material Cohesion(epsilon1)
     CohesionSw : Cohesion(epsilon2)
@@ -46,18 +47,22 @@ def linearFrictionWeakening(cumulativeTotalStrain, FrictionCoef,
     Parameters
     ----------
 
-    cumulativeTotalStrain : Accumulated Plastic Strain field
-    friction angle : friction angle for a pristine material
-                     friction angle(epsilon1)
-    friction angleSw : friction angle(epsilon2)
-    epsilon1 : Start of weakening (fraction of accumulated plastic strain)
-    epsilon2 : End of weakening (fraction of accumulated plastic strain)
+        cumulativeTotalStrain : Underworld Mesh Variable
+            Accumulated Plastic Strain field
+        friction angle :
+            friction angle for a pristine material (friction angle(epsilon1))
+        friction angleSw : float
+            friction angle(epsilon2)
+        epsilon1 : float
+            Start of weakening (fraction of accumulated plastic strain)
+        epsilon2 : float
+            End of weakening (fraction of accumulated plastic strain)
 
     Returns
     -------
 
-    Underworld function which returns the friction angle as a function of
-    accumulated plastic strain.
+        Underworld function which returns the friction angle as a function of
+        accumulated plastic strain.
     """
 
     frictionVal = [(cumulativeTotalStrain < epsilon1, FrictionCoef),
@@ -84,11 +89,11 @@ class ViscosityLimiter(object):
 
         Parameters
         ----------
-        viscosityField : viscosity function of field
+            viscosityField : viscosity function or field
 
         Returns
         -------
-        viscosity function
+            viscosity function
 
         """
         if self.maxViscosity and self.minViscosity:
@@ -108,14 +113,14 @@ class StressLimiter(object):
 
     def apply(self, stress):
         """Apply a stress limit to a stress function.
-        
+
         Parameters
         ----------
-        stress : stress function or field.
+            stress : stress function or field.
 
         Returns
         -------
-        stress function
+            stress function
 
         """
         maxBound = fn.misc.min(stress, nd(self.maxStress))
@@ -148,7 +153,12 @@ class Rheology(ABC):
 
 
 class DruckerPrager(object):
-    """The Drucker Prager yield criterion class."""
+    """The Drucker Prager yield criterion class.
+
+    The yield strength
+
+
+    """
 
     def __init__(self, name=None, cohesion=None, frictionCoefficient=None,
                  cohesionAfterSoftening=None,
@@ -164,6 +174,11 @@ class DruckerPrager(object):
         frictionAfterSoftening : friction angle of weakened material(epsilon2)
         epsilon1 : Start of weakening (fraction of accumulated plastic strain)
         epsilon2 : End of weakening (fraction of accumulated plastic strain)
+
+        Returns
+        -------
+
+        An UWGeodynamics DruckerPrager class
 
         """
         self.name = name
@@ -288,70 +303,6 @@ class DruckerPrager(object):
         return self.yieldStress
 
 
-class VonMises(object):
-    """The VonMises yield criterion class."""
-
-    def __init__(self, name=None, cohesion=None,
-                 cohesionAfterSoftening=None,
-                 epsilon1=None, epsilon2=None):
-        """Von Mises Yielding Rheology.
-
-        Parameters
-        ----------
-        cohesion : Cohesion for the pristine material(initial cohesion)
-        cohesionAfterSoftening : Cohesion of the weakened material
-        epsilon1 : Start of weakening (fraction of accumulated plastic strain)
-        epsilon2 : End of weakening (fraction of accumulated plastic strain)
-
-        """
-        self.name = name
-        self.cohesion = cohesion
-        self.cohesionAfterSoftening = cohesionAfterSoftening
-        self.plasticStrain = None
-        self.pressureField = None
-        self.epsilon1 = epsilon1
-        self.epsilon2 = epsilon2
-        self.cohesionWeakeningFn = linearCohesionWeakening
-
-    def __getitem__(self, name):
-        return self.__dict__[name]
-
-    @property
-    def cohesion(self):
-        return self._cohesion
-
-    @cohesion.setter
-    def cohesion(self, value):
-        self._cohesion = value
-
-    @property
-    def cohesionAfterSoftening(self):
-        return self._cohesionAfterSoftening
-
-    @cohesionAfterSoftening.setter
-    def cohesionAfterSoftening(self, value):
-        if value:
-            self._cohesionAfterSoftening = value
-        else:
-            self._cohesionAfterSoftening = self.cohesion
-
-    def _cohesionFn(self):
-        if self.plasticStrain:
-            cohesion = self.cohesionWeakeningFn(
-                self.plasticStrain,
-                Cohesion=nd(self.cohesion),
-                CohesionSw=nd(self.cohesionAfterSoftening))
-        else:
-            cohesion = fn.misc.constant(nd(self.cohesion))
-        return cohesion
-
-    def _get_yieldStress2D(self):
-        return self._cohesionFn()
-
-    def _get_yieldStress3D(self):
-        return self._cohesionFn()
-
-
 class ConstantViscosity(Rheology):
     """The newtonian rheology Class."""
 
@@ -361,6 +312,11 @@ class ConstantViscosity(Rheology):
         Parameters
         ----------
         Viscosity : newtonian viscosity of the material
+
+        Returns
+        -------
+
+        An UWGeodynamics ConstantViscosity Class
 
         """
         super(ConstantViscosity, self).__init__()
@@ -487,7 +443,7 @@ class ViscousCreep(Rheology):
 
     def _effectiveViscosity(self):
         """
-        Return effetive viscosity based on
+        Return effective viscosity based on
 
         Power law creep equation
         viscosity = 0.5 * A^(-1/n) * edot_ii^((1-n)/n) * d^(m/n) * exp((E + P*V)/(nRT))
