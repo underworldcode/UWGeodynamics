@@ -122,6 +122,7 @@ class Material(object):
 
         self._viscosity = None
         self.viscosity = viscosity
+        self._plasticity = None
         self.plasticity = plasticity
 
         self.elasticity = elasticity
@@ -151,8 +152,21 @@ class Material(object):
                                           _dim_vals)
 
             self._viscosity = ConstantViscosity(value)
+        elif isinstance(value, str):
+            self._viscosity = get_viscosity_from_registry(value)
         else:
             self._viscosity = value
+
+    @property
+    def plasticity(self):
+        return self._plasticity
+
+    @plasticity.setter
+    def plasticity(self, value):
+        if isinstance(value, str):
+            self._plasticity = get_plasticity_from_registry(value)
+        else:
+            self._plasticity = value
 
     @property
     def density(self):
@@ -290,6 +304,14 @@ class MaterialRegistry(object):
             filename = pkg_resources.resource_filename(
                 __name__, "ressources/Materials.json")
 
+        def get_value(item):
+            value = item["value"]
+            units = item["units"]
+            if units != "None":
+                return u.Quantity(value, units)
+            else:
+                return value
+
         with open(filename, "r") as infile:
             _materials = json.load(infile)
 
@@ -298,14 +320,15 @@ class MaterialRegistry(object):
             name = material.replace(" ", "_").replace(",", "").replace(".", "")
             name = name.replace(")", "").replace("(", "")
 
-            for key in parameters.keys():
-                if parameters[key] is not None:
-                    value = parameters[key]["value"]
-                    units = parameters[key]["units"]
-                    if units != "None":
-                        parameters[key] = u.Quantity(value, units)
-                    else:
-                        parameters[key] = value
+            for key, item in parameters.items():
+                if isinstance(item, dict):
+                    if "value" in item.keys():
+                        parameters[key] = get_value(item)
+                    elif ("thermalExpansivity" or "beta") in item.keys():
+                        from UWGeodynamics import LinearDensity
+                        for prop, val in item.items():
+                            item[prop] = get_value(item[prop])
+                        parameters[key] = LinearDensity(**item)
 
             self._dir[name] = Material(name=material, **parameters)
 
@@ -316,3 +339,21 @@ class MaterialRegistry(object):
     def __getattr__(self, item):
         # Make sure to return a new instance of ViscousCreep
         return copy(self._dir[item])
+
+
+def get_viscosity_from_registry(rheology_name):
+
+    from UWGeodynamics import ViscousCreepRegistry
+    rh = ViscousCreepRegistry()
+    name = rheology_name.replace(" ", "_").replace(",", "").replace(".", "")
+    name = name.replace(")", "").replace("(", "")
+    return rh._dir[name]
+
+
+def get_plasticity_from_registry(plasticity_name):
+
+    from UWGeodynamics import PlasticityRegistry
+    pl = PlasticityRegistry()
+    name = plasticity_name.replace(" ", "_").replace(",", "").replace(".", "")
+    name = name.replace(")", "").replace("(", "")
+    return pl._dir[name]

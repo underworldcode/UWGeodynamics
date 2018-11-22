@@ -1,8 +1,46 @@
 {
+"Air":{
+    "density": {
+         "value": 1.0 ,
+         "units": "kilogram / metre**3"},
+    "diffusivity": {
+         "value": 1.0e-6,
+         "units": "metre**2 / second"},
+    "capacity":{
+         "value": 100.0 ,
+         "units": "joule / kelvin / kilogram"},
+    "radiogenicHeatProd":{
+         "value": 0.0,
+         "units": "milliwatts / metre**3"},
+    "viscosity": {
+         "value": 1e19,
+         "units": "pascal * second"}
+    },
+"Sticky Air":{
+    "density": {
+         "value": 1.0 ,
+         "units": "kilogram / metre**3"},
+    "diffusivity": {
+         "value": 1.0e-6,
+         "units": "metre**2 / second"},
+    "capacity":{
+         "value": 100.0 ,
+         "units": "joule / kelvin / kilogram"},
+    "radiogenicHeatProd":{
+         "value": 0.0,
+         "units": "milliwatts / metre**3"},
+    "viscosity": {
+         "value": 1e20,
+         "units": "pascal * second"}
+    },
 "Upper crust":{
     "density": {
-         "value": 2620.0 ,
-         "units": "kilogram / metre**3"},
+         "reference_density": {
+             "value": 2620.0,
+             "units": "kilogram / metre**3"},
+         "thermalExpansivity":{
+             "value": 3e-5,
+             "units": "kelvin**-1"}},
     "diffusivity": {
          "value": 1.0e-6,
          "units": "metre**2 / second"},
@@ -12,8 +50,8 @@
     "radiogenicHeatProd":{
          "value": 0.7,
          "units": "milliwatts / metre**3"},
-    "viscosity": null  ,
-    "plasticity": null
+    "viscosity": "Gleason and Tullis, 1995",
+    "plasticity": "Rey and Muller, 2010 (UpperCrust)"
     },
 
 
@@ -47,8 +85,8 @@
     "radiogenicHeatProd":{
          "value": 0.4,
          "units": "milliwatts / metre**3"},
-    "viscosity": null  ,
-    "plasticity": null
+    "viscosity": "Goetze et al., 1978" ,
+    "plasticity": "Rey and Muller, 2010 (LowerCrust)"
     },
 
 "Oceanic crust":{
@@ -81,8 +119,8 @@
     "radiogenicHeatProd":{
          "value": 0.02,
          "units": "milliwatts / metre**3"},
-    "viscosity": null  ,
-    "plasticity": null
+    "viscosity": "Karato and Wu, 1990",
+    "plasticity": "Rey and Muller, 2010 (LithosphericMantle)"
     },
 
 
@@ -99,8 +137,7 @@
     "radiogenicHeatProd":{
          "value": 0.7,
          "units": "milliwatts / metre**3"},
-    "viscosity": null  ,
-    "plasticity": null
+    "viscosity": "Karato and Wu, 1990"
     }
 
 }
