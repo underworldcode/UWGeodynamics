@@ -69,7 +69,7 @@ def test_shapes():
     disk1 = GEO.shapes.Disk(center=(10. * u.kilometer, 10. * u.kilometer), radius=10.*u.kilometer)
     disk2 = GEO.shapes.Disk(center=(20. * u.kilometer, 20. * u.kilometer), radius=5.*u.kilometer)
 
-    shape = GEO.shapes.MultiShape([disk1, disk2])
+    shape = GEO.shapes.CombinedShape([disk1, disk2])
     shape2 = layer + polygon + box + disk + annulus
     #shape3 = layer & polygon & box & disk & annulus
 

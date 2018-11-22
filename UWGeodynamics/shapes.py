@@ -6,7 +6,7 @@ from .scaling import nonDimensionalize as nd
 
 
 class Shape(object):
-    """Shape"""
+    """Base Class for Shape objects"""
 
     def __init__(self):
         self._fn = None
@@ -26,7 +26,7 @@ class Shape(object):
         return newShape
 
     def __add__(self, B):
-        newShape = MultiShape([self, B])
+        newShape = CombinedShape([self, B])
         return newShape
 
     def __or__(self, B):
@@ -34,10 +34,23 @@ class Shape(object):
         newShape.fn = self._fn | B._fn
         return newShape
 
+
 class Polygon(Shape):
     """Polygon"""
 
     def __init__(self, vertices):
+        """Create a polygon shape
+
+        Parameters
+        ----------
+
+        vertices : vertices of the polygon as (x,y) pairs.
+
+        Returns
+        -------
+
+        Polygon Shape Class
+        """
         self.vertices = vertices
         vertices = [(nd(x), nd(y)) for x, y in self.vertices]
         self._fn = uw.function.shape.Polygon(np.array(vertices))
@@ -56,13 +69,20 @@ class HalfSpace(Shape):
     def __init__(self, normal, origin=None, reverse=False):
         """ HalfSpace
 
-        arguments:
+        Parameters:
+        -----------
 
-            normal: A vector defining the normal to the plan.
-            origin: Origin
-            reverse: by default, particles tested against this class are
-                     assigned "True" if they lay on or below the plan.
-                     You can reverse than behavior by setting reverse=True.
+        normal: A vector defining the normal to the plan.
+        origin: Origin
+        reverse: by default, particles tested against this class are
+                 assigned "True" if they lay on or below the plan.
+                 You can reverse than behavior by setting reverse=True.
+
+        Returns:
+        --------
+
+        A UWGeodynamics Shape object.
+
         """
 
         if isinstance(normal, (tuple, list)):
@@ -92,10 +112,22 @@ class HalfSpace(Shape):
         return fn.branching.conditional(conditions)
 
 
-class MultiShape(Shape):
-    """MultiShape"""
+class CombinedShape(Shape):
+    """CombinedShape class"""
 
     def __init__(self, shapes):
+        """Combine a list of shapes into one
+
+        Parameters
+        ----------
+
+        shapes : list of Shape objects
+
+        Returns
+        -------
+
+        An UWGeodynamics Shape object
+        """
         self.shapes = shapes
 
     @property
@@ -111,11 +143,29 @@ class MultiShape(Shape):
             fn.misc.constant(False))
         return func
 
-
-class CombinedShape(Shape):
-    """CombinedShape"""
+class MultiShape(CombinedShape):
 
     def __init__(self, shapes):
+
+        super(MultiShape, self).__init__(shapes)
+
+
+class IntersectShape(Shape):
+    """IntersectShape class"""
+
+    def __init__(self, shapes):
+        """ Take the intersection of some shapes
+
+        Parameters
+        ----------
+
+        shapes : A list of Shapes
+
+        Returns
+        -------
+
+        An UWGeodynamics Shape object
+        """
         self.shapes = shapes
 
     @property
@@ -133,16 +183,22 @@ class CombinedShape(Shape):
 
 
 class Layer(Shape):
-    """Layer"""
-    def __init__(self, top, bottom):
-        self.top = top
-        self.bottom = bottom
-
-
-class Layer2D(Shape):
     """Layer2D"""
 
     def __init__(self, top, bottom):
+        """Create a 2D Layer object
+
+        Parameters
+        ----------
+
+        top : top of the layer
+        bottom : bottom of the layer
+
+        Returns
+        -------
+
+        AN UWGeodynamics Shape object
+        """
         self.top = top
         self.bottom = bottom
 
@@ -153,27 +209,24 @@ class Layer2D(Shape):
                 (coord[1] >= nd(self.bottom)))
         return func
 
-    @property
-    def top(self):
-        return self._top
 
-    @top.setter
-    def top(self, value):
-        self._top = value
-
-    @property
-    def bottom(self):
-        return self._bottom
-
-    @bottom.setter
-    def bottom(self, value):
-        self._bottom = value
-
-
-class Layer3D(Shape):
+class Layer3D(Layer):
     """Layer3D"""
 
     def __init__(self, top, bottom):
+        """Create a 3D Layer object
+
+        Parameters
+        ----------
+
+        top : top of the layer
+        bottom : bottom of the layer
+
+        Returns
+        -------
+
+        AN UWGeodynamics Shape object
+        """
         self.top = top
         self.bottom = bottom
 
@@ -184,27 +237,29 @@ class Layer3D(Shape):
                 (coord[2] >= nd(self.bottom)))
         return func
 
-    @property
-    def top(self):
-        return self._top
-
-    @top.setter
-    def top(self, value):
-        self._top = value
-
-    @property
-    def bottom(self):
-        return self._bottom
-
-    @bottom.setter
-    def bottom(self, value):
-        self._bottom = value
-
 
 class Box(Shape):
     """Box"""
 
     def __init__(self, top, bottom, minX=0., maxX=0., minY=None, maxY=None):
+        """Create a Box Shape
+
+        Parameters
+        ----------
+
+        top : Top of the Box
+        bottom : Bottom of the Box
+        minX : Minimum extent of the Box along the x-axis
+        maxX : Maximum extent of the Box along the x-axis
+
+        Only in 3D:
+
+        minY : Minimum extent of the Box along the y-axis
+        maxY : Maximum extent of the Box along the y-axis
+
+        Returns
+        -------
+        """
         self.top = top
         self.bottom = bottom
         self.minX = minX
@@ -229,43 +284,24 @@ class Box(Shape):
                     (coord[0] >= nd(self.minX)))
         return func
 
-    @property
-    def minX(self):
-        return self._minX
-
-    @minX.setter
-    def minX(self, value):
-        self._minX = value
-
-    @property
-    def maxX(self):
-        return self._maxX
-
-    @maxX.setter
-    def maxX(self, value):
-        self._maxX = value
-
-    @property
-    def top(self):
-        return self._top
-
-    @top.setter
-    def top(self, value):
-        self._top = value
-
-    @property
-    def bottom(self):
-        return self._bottom
-
-    @bottom.setter
-    def bottom(self, value):
-        self._bottom = value
-
 
 class Disk(Shape):
     """Disk"""
 
     def __init__(self, center, radius):
+        """Create a Disk shape
+
+        Parameters
+        ----------
+
+        center : center of the disk
+        radius : radius of the disk
+
+        Returns
+        -------
+
+        An UWGeodynamics Shape
+        """
         self.center = center
         self.radius = radius
 
@@ -284,6 +320,20 @@ class Annulus(Shape):
     """Annulus"""
 
     def __init__(self, center, r1, r2):
+        """Create an Annulus shape
+
+        Parameters
+        ----------
+
+        center : center of the annulus
+        r1 : Internal radius
+        r2 : External radius
+
+        Returns
+        -------
+
+        An UWGeodynamics Shape object
+        """
         self.center = center
         self.r1 = r1
         self.r2 = r2

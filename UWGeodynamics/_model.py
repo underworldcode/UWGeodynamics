@@ -933,6 +933,7 @@ class Model(Material):
                 An UWGeodynamics material. If a material is created.
             shape:
                 Shape of the material. See UWGeodynamics.shape
+                Or Underworld function returning 0 or 1
             name:
                 Material name
             reset: (bool)
@@ -953,8 +954,6 @@ class Model(Material):
         mat.radiogenicHeatProd = self.radiogenicHeatProd
 
         if isinstance(shape, shapes.Layer):
-            if self.mesh.dim == 2:
-                shape = shapes.Layer2D(top=shape.top, bottom=shape.bottom)
             if self.mesh.dim == 3:
                 shape = shapes.Layer3D(top=shape.top, bottom=shape.bottom)
 

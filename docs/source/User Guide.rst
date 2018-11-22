@@ -436,7 +436,7 @@ There are a range of available/pre-defined shapes
 -  Disk (2D)
 -  Spheres (3D)
 -  Annulus (2D)
--  MultiShape (Combination of any of the above) (2D)
+-  CombinedShape (Combination of any of the above) (2D)
 -  HalfSpace (3D)
 
 **Layer**
@@ -552,7 +552,7 @@ There are a range of available/pre-defined shapes
 .. image:: /img/annulus.png
 
 
-**MultiShape**
+**CombinedShape**
 
 Several shapes can be combined to form a material shape:
 
@@ -568,7 +568,7 @@ Several shapes can be combined to form a material shape:
    >>> disk2 = GEO.shapes.Disk(center=(20. * u.kilometre, 20. * u.kilometre),
    ...                         radius=5.*u.kilometre)
 
-   >>> shape = GEO.shapes.MultiShape([disk1, disk2])
+   >>> shape = GEO.shapes.CombinedShape([disk1, disk2])
    >>> material = Model.add_material(name="Material", shape=shape)
 
    >>> Fig = glucifer.Figure(figsize(400,400))
