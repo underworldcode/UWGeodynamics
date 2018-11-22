@@ -27,8 +27,8 @@ def linearCohesionWeakening(cumulativeTotalStrain, Cohesion, CohesionSw,
     -------
     Underworld function which returns the cohesion as a function of
     accumulated plastic strain.
-    """
 
+    """
     cohesionVal = [(cumulativeTotalStrain < epsilon1, Cohesion),
                    (cumulativeTotalStrain > epsilon2, CohesionSw),
                    (True, Cohesion + ((Cohesion - CohesionSw) /
@@ -80,17 +80,16 @@ class ViscosityLimiter(object):
         self.maxViscosity = maxViscosity
 
     def apply(self, viscosityField):
-        """Apply a viscosity limit to a viscosity function
+        """Apply a viscosity limit to a viscosity function.
 
         Parameters
         ----------
-
         viscosityField : viscosity function of field
 
         Returns
         -------
-
         viscosity function
+
         """
         if self.maxViscosity and self.minViscosity:
             maxBound = fn.misc.min(viscosityField, nd(self.maxViscosity))
@@ -101,24 +100,23 @@ class ViscosityLimiter(object):
 
 
 class StressLimiter(object):
-    """ Stress Limiter Class """
+    """Stress Limiter Class"""
 
     def __init__(self, maxStress):
         # Add unit check
         self.maxStress = maxStress
 
     def apply(self, stress):
-        """apply a stress limit to a stress function
-
+        """Apply a stress limit to a stress function.
+        
         Parameters
         ----------
-
         stress : stress function or field.
 
         Returns
         -------
-
         stress function
+
         """
         maxBound = fn.misc.min(stress, nd(self.maxStress))
         return maxBound
