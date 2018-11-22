@@ -52,57 +52,58 @@ class Model(Material):
         Parameters
         ----------
 
-        elementRes :
-            Resolution of the mesh in number of elements for each axis (degree
-            of freedom)
-        minCoord :
-            Minimum coordinates for each axis.
-        maxCoord :
-            Maximum coordinates for each axis.
-        name :
-            The Model name.
-        gravity :
-            Acceleration due to gravity vector.
-        periodic :
-            Mesh periodicity.
-        elementType :
-            Type of finite element.
-        temperatureBCs :
-            Temperature Boundary Condition, must be object of type:
-            TemperatureBCs
-        heatFlowBCs :
-            Temperature Boundary Condition, must be object of type:
-            TemperatureBCs
-        velocityBCs :
-            Velocity Boundary Condtion, must be object of type VelocityBCs
-        stressBCs :
-            Stress Boundary Condtion, must be object of type StressBCs
-        materials :
-            List of materials, each material must be an object of type:
-            Material
-        outputDir :
-            Output Directory
-        frictionalBCs :
-            Frictional Boundary Conditions, must be object of type:
-            FrictionBoundaries
-        surfaceProcesses :
-            Surface Processes, must be an object of type:
-            surfaceProcesses
-        isostasy :
-            Isostasy Solver
-        visugrid :
-            Visugrid object
-        advector :
-            Mesh advector object
+            elementRes : tuple
+                Resolution of the mesh in number of elements for each axis (degree
+                of freedom)
+            minCoord : tuple
+                Minimum coordinates for each axis.
+            maxCoord : tuple
+                Maximum coordinates for each axis.
+            name : str
+                The Model name.
+            gravity : tuple
+                Acceleration due to gravity vector.
+            periodic : tuple
+                Mesh periodicity.
+            elementType : str
+                Type of finite element. "Q1/dQ0", "Q2/dQ0" are supported.
+            temperatureBCs : TemperatureBCs
+                Temperature Boundary Condition, must be object of type:
+                TemperatureBCs
+            heatFlowBCs : HeatFlowBCs
+                Temperature Boundary Condition, must be object of type:
+                TemperatureBCs
+            velocityBCs : VelocityBCs
+                Velocity Boundary Condtion, must be object of type VelocityBCs
+            stressBCs : StressBCs
+                Stress Boundary Condtion, must be object of type StressBCs
+            materials : list
+                List of materials, each material must be an object of type:
+                Material
+            outputDir : str
+                Output Directory
+            frictionalBCs : FrictionalBCs
+                Frictional Boundary Conditions, must be object of type:
+                FrictionBoundaries
+            surfaceProcesses : SurfaceProcesses
+                Surface Processes, must be an object of type:
+                SurfaceProcesses
+            isostasy : LecodeIsostasy
+                Isostasy Solver
+            visugrid : Visugrid
+                Visugrid object
+            advector : MeshAdvector
+                Mesh advector object
 
         Examples
         --------
-        >>> import UWGeodynamics as GEO
-        >>> u = GEO.UnitRegistry
-        >>> Model = Model = GEO.Model(
-                elementRes=(64, 64),
-                minCoord=(0., 0.),
-                maxCoord=(64. * u.kilometer, 64. * u.kilometer))
+
+            >>> import UWGeodynamics as GEO
+            >>> u = GEO.UnitRegistry
+            >>> Model = Model = GEO.Model(
+                    elementRes=(64, 64),
+                    minCoord=(0., 0.),
+                    maxCoord=(64. * u.kilometer, 64. * u.kilometer))
 
         """
 
@@ -316,12 +317,12 @@ class Model(Material):
         Parameters
         ----------
 
-        name : name of the attribute
+            name : name of the attribute
 
         Returns
         -------
-        Attribute of the Model instance.
-        self.__dict__[name]
+            Attribute of the Model instance.
+            self.__dict__[name]
         """
         return self.__dict__[name]
 
@@ -363,14 +364,14 @@ class Model(Material):
         Parameters
         ----------
 
-        step :
-                Step from which you want to restart the model.
-                Must be an int (step number either absolute or relative)
-                if step == -1, run the last available step
-                if step == -2, run the second last etc.
-        restartDir :
-                Directory that contains the outputs of the model
-                you want to restart from.
+        step : int
+            Step from which you want to restart the model.
+            Must be an int (step number either absolute or relative)
+            if step == -1, run the last available step
+            if step == -2, run the second last etc.
+        restartDir : path
+            Directory that contains the outputs of the model
+            you want to restart from.
 
         Returns
         -------
@@ -937,36 +938,34 @@ class Model(Material):
     def set_stressBCs(self, left=None, right=None, top=None, bottom=None,
                       front=None, back=None, nodeSets=None,
                       order_wall_conditions=None):
-        """ Set Model kinematic conditions
+        """ Set Model Stress conditions
 
         Parameters:
             left:
-                Velocity along the left wall.
+                Stress along the left wall.
                 Default is 'None'
             right:
-                Velocity along the right wall.
+                Stress along the right wall.
                 Default is 'None'
             top:
-                Velocity along the top wall.
+                Stress along the top wall.
                 Default is 'None'
             bottom:
-                Velocity along the bottom wall.
+                Stress along the bottom wall.
                 Default is 'None'
             front:
-                Velocity along the front wall.
+                Stress along the front wall.
                 Default is 'None'
             back:
-                Velocity along the back wall.
+                Stress along the back wall.
                 Default is 'None'
-            nodeSets: (set, velocity)
-                underworld mesh index set and associate velocity
         """
 
         self._stressBCs = StressBCs(self, left=left,
-                                   right=right, top=top,
-                                   bottom=bottom, front=front,
-                                   back=back, nodeSets=nodeSets,
-                                   order_wall_conditions=order_wall_conditions)
+                                    right=right, top=top,
+                                    bottom=bottom, front=front,
+                                    back=back, nodeSets=nodeSets,
+                                    order_wall_conditions=order_wall_conditions)
         return self._stressBCs.get_conditions()
 
     def add_material(self, material=None, shape=None,
@@ -1031,21 +1030,26 @@ class Model(Material):
         Parameters
         ----------
 
-        name : name of the swarm field
-        dataType : type of data to be recorded, default is "double"
-        count : degree of freedom, default is 1
-        init_value : default value of the field, default is to initialise
-            the field to 0.
-        projected : the function creates a projector for each new
-            swarm variable, you can choose to project on the "mesh" or
-            "submesh"
-        restart_variable: boolean, specifies if the variable is needed
-            for a restart.
+            name : str
+                name of the swarm field
+            dataType : str
+                type of data to be recorded, default is "double"
+            count : int
+                degree of freedom, default is 1
+            init_value : float
+                default value of the field, default is to initialise
+                the field to 0.
+            projected : str
+                the function creates a projector for each new
+                swarm variable, you can choose to project on the "mesh" or
+                "submesh"
+            restart_variable: bool
+                specifies if the variable is needed for a restart.
 
         Returns
         -------
 
-        Swarm Variable
+            Swarm Variable
         """
 
         newField = self.swarm.add_variable(dataType, count, **kwargs)
@@ -2255,7 +2259,6 @@ class Model(Material):
         (v2, vol) = self.mesh.integrate(fn=fn_2_integrate)
         import math
         vrms = math.sqrt(v2 / vol)
-        #os.write(1, "Velocity rms (vrms): {0}".format(vrms))
         return vrms
 
 

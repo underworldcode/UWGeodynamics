@@ -13,21 +13,26 @@ ABC = abc.ABCMeta('ABC', (object,), {})
 
 def linearCohesionWeakening(cumulativeTotalStrain, Cohesion, CohesionSw,
                             epsilon1=0.5, epsilon2=1.5):
-    """Calculate the cohesion through linear weakening as a function of accumulated plastic strain.
+    """Calculate the cohesion through linear weakening as
+       a function of accumulated plastic strain.
 
     Parameters
     ----------
 
-    cumulativeTotalStrain : Accumulated Plastic Strain field
-    Cohesion : Cohesion for a pristine material Cohesion(epsilon1)
-    CohesionSw : Cohesion(epsilon2)
-    epsilon1 : Start of weakening (fraction of accumulated plastic strain)
-    epsilon2 : End of weakening (fraction of accumulated plastic strain)
+        cumulativeTotalStrain :
+            Accumulated Plastic Strain field
+        Cohesion :
+            Cohesion for a pristine material Cohesion(epsilon1)
+        CohesionSw :
+            Cohesion(epsilon2)
+        epsilon1 :
+            Start of weakening (fraction of accumulated plastic strain)
+        epsilon2 : End of weakening (fraction of accumulated plastic strain)
 
     Returns
     -------
-    Underworld function which returns the cohesion as a function of
-    accumulated plastic strain.
+        Underworld function which returns the cohesion as a function of
+        accumulated plastic strain.
 
     """
     cohesionVal = [(cumulativeTotalStrain < epsilon1, Cohesion),
@@ -166,14 +171,39 @@ class DruckerPrager(object):
                  epsilon1=0.0, epsilon2=0.2):
         """Drucker Prager yield Rheology.
 
+         The pressure-dependent Drucker-Yield criterion is defined as follow:
+
+         .. math::
+
+            :label: druckerprager
+
+            \sigma_y = C \cos\phi + \sin\phi P \quad \text{(2D)}
+
+            \sigma_y = \frac{6C\cos\phi}{\sqrt3(3-\sin\phi)} +
+                       \frac{6\sin\phi P}{\sqrt3(3-\sin\phi)} \quad \text{(3D)}
+
+
+         Setting the friction angle :math:`\phi=0` gives the von Mises Criterion.
+         In 2D, equation :eq:`druckerprager` corresponds to the Mohr-Coulomb criterion,
+         while in 3D it circumscribes the Mohr-Coulomb yield surface.
+
+         Linear cohesion and friction weakening can be added by defining their
+         initial and final values over a range of accumulated plastic strain.
+
         Parameters
         ----------
-        cohesion : Cohesion for the pristine material(initial cohesion)
-        cohesionAfterSoftening : Cohesion of the weakened material
-        frictionCoefficient : friction angle for a pristine material
-        frictionAfterSoftening : friction angle of weakened material(epsilon2)
-        epsilon1 : Start of weakening (fraction of accumulated plastic strain)
-        epsilon2 : End of weakening (fraction of accumulated plastic strain)
+            cohesion :
+                Cohesion for the pristine material(initial cohesion)
+            cohesionAfterSoftening :
+                Cohesion of the weakened material
+            frictionCoefficient :
+                friction angle for a pristine material
+            frictionAfterSoftening :
+                friction angle of weakened material(epsilon2)
+            epsilon1 :
+                Start of weakening (fraction of accumulated plastic strain)
+            epsilon2 :
+                End of weakening (fraction of accumulated plastic strain)
 
         Returns
         -------
@@ -311,12 +341,13 @@ class ConstantViscosity(Rheology):
 
         Parameters
         ----------
-        Viscosity : newtonian viscosity of the material
+            Viscosity :
+                newtonian viscosity of the material
 
         Returns
         -------
 
-        An UWGeodynamics ConstantViscosity Class
+            An UWGeodynamics ConstantViscosity Class
 
         """
         super(ConstantViscosity, self).__init__()
@@ -351,26 +382,57 @@ class ViscousCreep(Rheology):
                  mineral="unspecified"):
         """ Viscous Creep Rheology
 
+        Deformation of materials on long timescale is predominantly achieved
+        through viscous diffusion and dislocation creep. Those processes can be
+        expressed using the following equation:
+
+        .. math::
+
+           \eta_{\text{eff}}^{vcreep} = \frac{1}{2}A^{\frac{-1}{n}}
+           \dot{\epsilon}^{\frac{(1-n)}{n}}d^{\frac{m}{n}}\exp{\left(\frac{E + PV}{nRT}\right)}
+
+        with `A` the prefactor, :math:`\dot{\epsilon}` the square root of the second invariant of the
+        deviatoric strain rate tensor, `d` the grain size, `p` the grain size exponent, `E` the
+        activation energy, `P` the pressure, `V` the activation volume, `n` the stress exponent,
+        `R` the Gas Constant and `T` the temperature.
+
         Parameters
         ----------
 
-        name : Name of the Viscous Law
-        preExponentialFactor :
-        stressExponent :
-        activationVolume :
-        activationEnergy :
-        waterFugacity :
-        grainSize :
-        meltFraction :
-        grainSizeExponent :
-        waterFugacityExponent :
-        meltFractionFactor :
-        f :
-        BurgersVectorLength :
-        mineral :
+            name : str
+                Name of the Viscous Law
+            preExponentialFactor :
+                pre-exponential factor/ pre-factor
+            stressExponent : float
+                Stress exponent
+            activationVolume :
+                Activation Volume
+            activationEnergy :
+                Activation Energy
+            waterFugacity :
+                Water Fugacity
+            grainSize :
+                Grain Size
+            meltFraction :
+                Initial Fraction of Melt
+            grainSizeExponent :
+                Grain size eponent
+            waterFugacityExponent :
+                Water fugacity exponent
+            meltFractionFactor :
+                Melt Fraction
+            f :
+                Flow Law scaling factor
+            BurgersVectorLength :
+                Burger vector length
+            mineral :
+                Mineral associated to the flow law
 
         Returns
         -------
+
+            An UWGeodynamics ViscousCreep Class.
+
         """
 
         super(ViscousCreep, self).__init__()
@@ -435,6 +497,7 @@ class ViscousCreep(Rheology):
             if val is not None:
                 html += '<tr><td style="text-align:left;width:20%;">{0}</td><td style="text-align:left;width:80%">{1}</td></tr>'.format(key, val)
 
+
         return header + html + footer
 
     @property
@@ -448,16 +511,30 @@ class ViscousCreep(Rheology):
         Power law creep equation
         viscosity = 0.5 * A^(-1/n) * edot_ii^((1-n)/n) * d^(m/n) * exp((E + P*V)/(nRT))
 
-        A: prefactor
-        I: square root of second invariant of deviatoric strain rate tensor,
-        d: grain size,
-        p: grain size exponent,
-        E: activation energy,
-        P: pressure,
-        Va; activation volume,
-        n: stress exponent,
-        R: gas constant,
-        T: temperature.
+        Parameters:
+        -----------
+
+            A:
+                prefactor
+            I:
+                square root of second invariant of deviatoric
+                strain rate tensor,
+            d:
+                grain size,
+            p:
+                grain size exponent,
+            E:
+                activation energy,
+            P:
+                pressure,
+            Va:
+                activation volume,
+            n:
+                stress exponent,
+            R:
+                gas constant,
+            T:
+                temperature.
         """
 
         A = nd(self.preExponentialFactor)

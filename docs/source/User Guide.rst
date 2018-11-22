@@ -725,8 +725,22 @@ A newtonian rheology can be applied by assigning a viscosity to a already define
 Non-Newtonian Rheology
 ~~~~~~~~~~~~~~~~~~~~~~
 
+Deformation of materials on long timescale is predominantly achieved
+through viscous diffusion and dislocation creep. Those processes can be
+expressed using the following equation:
+
+.. math::
+
+   \eta_{\text{eff}}^{vcreep} = \frac{1}{2}A^{\frac{-1}{n}}
+   \dot{\epsilon}^{\frac{(1-n)}{n}}d^{\frac{m}{n}}\exp{\left(\frac{E + PV}{nRT}\right)}
+
+with `A` the prefactor, :math:`\dot{\epsilon}` the square root of the second invariant of the
+deviatoric strain rate tensor, `d` the grain size, `p` the grain size exponent, `E` the
+activation energy, `P` the pressure, `V` the activation volume, `n` the stress exponent,
+`R` the Gas Constant and `T` the temperature.
+
 *UWGeodynamics* provides a library of commonly used Viscous Creep Flow Laws.
-These can be accessed using the `GEO.ViscousCreepRegistry` registry:
+These can be accessed using the `GEO.ViscousCreepRegistry`:
 
 .. image:: /img/ViscousCreepRegistry.gif
 
@@ -790,6 +804,13 @@ Material viscosity can be assigned a combination of viscosities.
 The effective viscosity is calculated as the harmonic mean of
 all viscosities.
 
+This is useful to combine diffusion and dislocation creep:
+
+.. math::
+
+   \eta_{\text{eff}}^{vcreep} = \left(\frac{1}{\eta_{\text{eff}}^{\text{diff}}} +
+                                \frac{1}{\eta_{\text{eff}}^{\text{disl}}}\right)
+
 
 .. code:: python
 
@@ -814,6 +835,37 @@ all viscosities.
 
 Plastic Behavior (Yield)
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
+Plastic yielding can be added and will result in rescaling the
+effective viscosity for a stress limited to the yield stress of the
+material.
+
+The effective plastic viscosity is given by:
+
+.. math::
+
+   \eta_{\text{eff}} = \frac{\sigma_y}{2\dot{\epsilon}}
+
+Where :math:`\dot{\epsilon}` is the second invariant of the strain rate tensor 
+defined as :math:`\dot{\epsilon}=\sqrt{\frac{1}{2}\dot{\epsilon}_{ij}\dot{\epsilon}_{ij}}`
+The yield value :math:`\sigma_y` is defined using a Drucker-Prager yield-criterion:
+
+.. math::
+
+   :label: druckerprager
+
+   \sigma_y = C \cos\phi + \sin\phi P \quad \text{(2D)}
+
+   \sigma_y = \frac{6C\cos\phi}{\sqrt3(3-\sin\phi)} + 
+              \frac{6\sin\phi P}{\sqrt3(3-\sin\phi)} \quad \text{(3D)}
+
+
+Setting the friction angle :math:`\phi=0` gives the von Mises Criterion.
+In 2D, equation :eq:`druckerprager` corresponds to the Mohr-Coulomb criterion,
+while in 3D it circumscribes the Mohr-Coulomb yield surface.
+
+Linear cohesion and friction weakening can be added by defining their
+initial and final values over a range of accumulated plastic strain.
 
 As with Viscous Creep, we also provide a registry of commmonly used
 plastic behaviors.
@@ -841,7 +893,16 @@ Users can define their own parametres:
    ...     epsilon1=0.5,
    ...     epsilon2=1.5)
 
-   >>> material.plasticity = GEO.VonMises(cohesion=10. * u.megapascal)
+
+Viscous Creep and Plastic yielding are combined by assuming that they act
+in parallel as independent processes. The effective viscoplastic viscosity
+is calculated as:
+
+.. math::
+
+   \eta_{\text{eff}^{\text{vp}}} = \min{(\eta_{\text{eff}}^{\text{vcreep}}, \eta_{\text{eff}}^{\text{pl}})}
+
+        
 
 Elasticity
 ~~~~~~~~~~
@@ -896,7 +957,7 @@ Melt
 
 Materials can be assigned a ``Solidus`` and a ``Liquidus`` defined as polynomial
 function of temperature. This allows to calculate the fraction of melt present in
-the material. 
+the material.
 
 .. warning::
 
@@ -1076,7 +1137,7 @@ Frictional Boundaries can be set as follow:
    ...                               friction=19.0,
    ...                               thickness=3)
 
-Where the *left*, *right*, *top*, *bottom* parametres indicate the side to which you 
+Where the *left*, *right*, *top*, *bottom* parametres indicate the side to which you
 apply a frictional boundary condition on. *friction* is the angle of
 friction (in degrees). *thickness* is the thickness of the boundary.
 
@@ -1298,9 +1359,9 @@ model reaches a checkpoint time (``restart_checkpoint=1``).
 Restarting the Model
 --------------------
 
-When checkpointing a model only the mesh, swarms their assoiciated variables 
-are explicitely saved. 
-Since the model state is not explicitly saved, thus the user needs to recreate 
+When checkpointing a model only the mesh, swarms their assoiciated variables
+are explicitely saved.
+Since the model state is not explicitly saved, thus the user needs to recreate
 the **Model** object before restarting it.
 
 In practice, this means the user must run all commands preceding the
@@ -1396,14 +1457,17 @@ Passive Tracers
 
    >>> u = GEO.u
 
-      >>> Model = GEO.Model()
+   >>> Model = GEO.Model()
    >>> x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
    >>> y = 32. * u.kilometre
-    >>> tracers = Model.add_passive_tracers(vertices=[x,y])
- You can pass a list of centroids to the `Model.add_passive_tracers` method.
+   >>> tracers = Model.add_passive_tracers(vertices=[x,y])
+
+You can pass a list of centroids to the `Model.add_passive_tracers` method.
 In that case, the coordinates of the passive tracers are relative to the
 position of the centroids. The pattern is repeated around each centroid.
- .. code:: python
+
+.. code:: python
+
     >>> import UWGeodynamics as GEO
     >>> u = GEO.u
     >>> Model = GEO.Model()
@@ -1413,19 +1477,24 @@ position of the centroids. The pattern is repeated around each centroid.
     >>> tracers = Model.add_passive_tracers(vertices=[0,0],
    ...                                     centroids=[cxpos.ravel(),
    ...                                                cypos.ravel())
- We provide a function to create circles on a grid:
-   >>> Model = GEO.Model(elementRes=(64,64),
-   ...                   minCoord=(0.*u.kilometre, 0.* u.kilometre),
-   ...                   maxCoord=(64.* u.kilometre, 64 * u.kilometre))
- .. code:: python
+
+
+We provide a function to create circles on a grid:
+
+.. code:: python
+
    >>> x_c, y_c = GEO.circles_grid(radius = 2.0 * u.kilometer,
    ...                 minCoord=[Model.minCoord[0], lowercrust.bottom],
    ...                 maxCoord=[Model.maxCoord[0], 0.*u.kilometer])
- Tracking Values
+
+Tracking Values
 ~~~~~~~~~~~~~~~
- Passive tracers can be used to track values of fields at specific location
+
+Passive tracers can be used to track values of fields at specific location
 through time.
- .. code:: python
+
+.. code:: python
+
    >>> import UWGeodynamics as GEO
    >>> u = GEO.u
    >>> Model = GEO.Model()
@@ -1441,6 +1510,7 @@ through time.
                                  name="tracers_strainRate",
                                  units=1.0/u.second,
                                  dataType="float")
+
 Surface Processes
 -----------------
 
@@ -1548,7 +1618,7 @@ set of properties.
 UWGeodynamics looks for ``uwgeodynamicsrc`` in four locations, in the following order:
 
 1. ``uwgeodynamicsrc`` in the current working directory, usually used
-   for specific customizations for a particular model setup that you 
+   for specific customizations for a particular model setup that you
    do not want to apply elsewhere.
 
 2. ``$UWGEODYNAMICSRC`` if it is a file, else
@@ -1592,3 +1662,5 @@ See below for a sample.
 .. _glucifer: https://underworld2.readthedocs.io/en/latest/glucifer.html
 .. _Underworld: https://underworld2.readthedocs.io/en/latest/index.html
 .. _Lavavu: https://github.com/OKaluza/LavaVu
+.. _HDF5: http://portal.hdfgroup.org/display/support
+.. _Paraview: https://www.paraview.org/
