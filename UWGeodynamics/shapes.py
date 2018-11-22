@@ -185,7 +185,7 @@ class IntersectShape(Shape):
 
 
 class Layer(Shape):
-    """Layer2D"""
+    """Layer 2D"""
 
     def __init__(self, top, bottom):
         """Create a 2D Layer object
@@ -239,6 +239,12 @@ class Layer3D(Layer):
                 (coord[2] >= nd(self.bottom)))
         return func
 
+class Layer2D(Layer):
+
+    def __init__(self, top, bottom):
+
+        Warning("Layer2D is now deprecated, use Layer instead")
+        super(Layer, self).__init__(shapes)
 
 class Box(Shape):
     """Box"""
