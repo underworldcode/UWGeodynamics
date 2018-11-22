@@ -1,4 +1,4 @@
-from __future__ import print_function,  absolute_import
+from __future__ import print_function, absolute_import
 import json
 import abc
 import underworld.function as fn
@@ -13,12 +13,10 @@ ABC = abc.ABCMeta('ABC', (object,), {})
 
 def linearCohesionWeakening(cumulativeTotalStrain, Cohesion, CohesionSw,
                             epsilon1=0.5, epsilon2=1.5):
-    """Calculate the cohesion through linear weakening as a function of
-       accumulated plastic strain.
+    """Calculate the cohesion through linear weakening as a function of accumulated plastic strain.
 
     Parameters
     ----------
-
     cumulativeTotalStrain : Accumulated Plastic Strain field
     Cohesion : Cohesion for a pristine material Cohesion(epsilon1)
     CohesionSw : Cohesion(epsilon2)
@@ -27,7 +25,6 @@ def linearCohesionWeakening(cumulativeTotalStrain, Cohesion, CohesionSw,
 
     Returns
     -------
-
     Underworld function which returns the cohesion as a function of
     accumulated plastic strain.
     """
@@ -105,6 +102,7 @@ class ViscosityLimiter(object):
 
 class StressLimiter(object):
     """ Stress Limiter Class """
+
     def __init__(self, maxStress):
         # Add unit check
         self.maxStress = maxStress
@@ -152,24 +150,24 @@ class Rheology(ABC):
 
 
 class DruckerPrager(object):
-    """The Drucker Prager yield criterion class. 
-
-    Parameters
-    ----------
-    cohesion : Cohesion for the pristine material(initial cohesion)
-    cohesionAfterSoftening : Cohesion of the weakened material
-    frictionCoefficient : friction angle for a pristine material
-    frictionAfterSoftening : friction angle of weakened material(epsilon2)
-    epsilon1 : Start of weakening (fraction of accumulated plastic strain)
-    epsilon2 : End of weakening (fraction of accumulated plastic strain)
-
-    """
+    """The Drucker Prager yield criterion class."""
 
     def __init__(self, name=None, cohesion=None, frictionCoefficient=None,
                  cohesionAfterSoftening=None,
                  frictionAfterSoftening=None,
                  epsilon1=0.0, epsilon2=0.2):
+        """Drucker Prager yield Rheology.
 
+        Parameters
+        ----------
+        cohesion : Cohesion for the pristine material(initial cohesion)
+        cohesionAfterSoftening : Cohesion of the weakened material
+        frictionCoefficient : friction angle for a pristine material
+        frictionAfterSoftening : friction angle of weakened material(epsilon2)
+        epsilon1 : Start of weakening (fraction of accumulated plastic strain)
+        epsilon2 : End of weakening (fraction of accumulated plastic strain)
+
+        """
         self.name = name
         self._cohesion = cohesion
         self._frictionCoefficient = frictionCoefficient
@@ -293,11 +291,21 @@ class DruckerPrager(object):
 
 
 class VonMises(object):
+    """The VonMises yield criterion class."""
 
     def __init__(self, name=None, cohesion=None,
                  cohesionAfterSoftening=None,
                  epsilon1=None, epsilon2=None):
+        """Von Mises Yielding Rheology.
 
+        Parameters
+        ----------
+        cohesion : Cohesion for the pristine material(initial cohesion)
+        cohesionAfterSoftening : Cohesion of the weakened material
+        epsilon1 : Start of weakening (fraction of accumulated plastic strain)
+        epsilon2 : End of weakening (fraction of accumulated plastic strain)
+
+        """
         self.name = name
         self.cohesion = cohesion
         self.cohesionAfterSoftening = cohesionAfterSoftening
@@ -347,8 +355,16 @@ class VonMises(object):
 
 
 class ConstantViscosity(Rheology):
+    """The newtonian rheology Class."""
 
     def __init__(self, viscosity):
+        """Newtonian Rheology.
+
+        Parameters
+        ----------
+        Viscosity : newtonian viscosity of the material
+
+        """
         super(ConstantViscosity, self).__init__()
         self.viscosity = viscosity
         self.name = "Constant ({0})".format(str(viscosity))
