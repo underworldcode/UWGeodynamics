@@ -83,7 +83,7 @@ class ViscosityLimiter(object):
         self.maxViscosity = maxViscosity
 
     def apply(self, viscosityField):
-        """apply a viscositylimiter to a viscosity function
+        """Apply a viscosity limit to a viscosity function
 
         Parameters
         ----------
@@ -110,7 +110,7 @@ class StressLimiter(object):
         self.maxStress = maxStress
 
     def apply(self, stress):
-        """apply a stress limiter to s stress function
+        """apply a stress limit to a stress function
 
         Parameters
         ----------
@@ -152,6 +152,18 @@ class Rheology(ABC):
 
 
 class DruckerPrager(object):
+    """The Drucker Prager yield criterion class. 
+
+    Parameters
+    ----------
+    cohesion : Cohesion for the pristine material(initial cohesion)
+    cohesionAfterSoftening : Cohesion of the weakened material
+    frictionCoefficient : friction angle for a pristine material
+    frictionAfterSoftening : friction angle of weakened material(epsilon2)
+    epsilon1 : Start of weakening (fraction of accumulated plastic strain)
+    epsilon2 : End of weakening (fraction of accumulated plastic strain)
+
+    """
 
     def __init__(self, name=None, cohesion=None, frictionCoefficient=None,
                  cohesionAfterSoftening=None,
