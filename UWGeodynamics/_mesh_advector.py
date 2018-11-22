@@ -10,7 +10,8 @@ size = comm.Get_size()
 rank = comm.Get_rank()
 
 
-class _mesh_advector(object):
+class Mesh_advector(object):
+    """Mesh_advector class"""
 
     def __init__(self, Model, axis):
 

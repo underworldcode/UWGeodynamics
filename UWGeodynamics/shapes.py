@@ -36,7 +36,7 @@ class Shape(object):
 
 
 class Polygon(Shape):
-    """Polygon"""
+    """Polygon Shape Class"""
 
     def __init__(self, vertices):
         """Create a polygon shape
@@ -143,10 +143,12 @@ class CombinedShape(Shape):
             fn.misc.constant(False))
         return func
 
+
 class MultiShape(CombinedShape):
 
     def __init__(self, shapes):
 
+        Warning("MultiShape is now deprecated, use CombinedShape instead")
         super(MultiShape, self).__init__(shapes)
 
 

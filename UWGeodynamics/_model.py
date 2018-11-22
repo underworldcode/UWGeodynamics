@@ -20,7 +20,7 @@ from ._visugrid import Visugrid
 from ._velocity_boundaries import VelocityBCs
 from ._velocity_boundaries import StressBCs
 from ._thermal_boundaries import TemperatureBCs
-from ._mesh_advector import _mesh_advector
+from ._mesh_advector import Mesh_advector
 from ._frictional_boundary import FrictionBoundaries
 from .Underworld_extended import FeMesh_Cartesian
 from .Underworld_extended import Swarm
@@ -206,6 +206,8 @@ class Model(Material):
         if self.mesh.dim == 2:
             self.top_wall = self.mesh.specialSets["MaxJ_VertexSet"]
             self.bottom_wall = self.mesh.specialSets["MinJ_VertexSet"]
+            self.front_wall = None
+            self.back_wall = None
         else:
             self.front_wall = self.mesh.specialSets["MinJ_VertexSet"]
             self.back_wall = self.mesh.specialSets["MaxJ_VertexSet"]
@@ -1831,7 +1833,7 @@ class Model(Material):
                 list of axis (or degree of freedom) along which the
                 mesh is allowed to deform
         """
-        self._advector = _mesh_advector(self, axis)
+        self._advector = Mesh_advector(self, axis)
 
     def add_passive_tracers(self, name, vertices=None,
                             particleEscape=True, centroids=None):

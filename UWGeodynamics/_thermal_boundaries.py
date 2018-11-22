@@ -73,7 +73,7 @@ class TemperatureBCs(BoundaryConditions):
 
         for wall in self.order_wall_conditions:
             condition, indexSet = self._wall_indexSets[wall]
-            if condition:
+            if condition and indexSet is not None:
                 if condition.dimensionality == _dim_temp:
                     Model.temperature.data[indexSet.data] = nd(condition)
                     self.dirichlet_indices[0] += indexSet

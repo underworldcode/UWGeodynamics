@@ -48,7 +48,18 @@ class Liquidus(_Polynom):
 
 
 class SolidusRegistry(object):
+    """SolidusRegistry Class"""
     def __init__(self, filename=None):
+        """Create a regustry of Solidus polynomials
+
+        Parameters
+        ----------
+
+        filename : Name of the json file database
+
+        Returns
+        -------
+        """
 
         if not filename:
             import pkg_resources
@@ -84,7 +95,18 @@ class SolidusRegistry(object):
 
 
 class LiquidusRegistry(object):
+    """LiquidusRegistry class"""
     def __init__(self, filename=None):
+        """Create a regustry of Liquidus polynomials
+
+        Parameters
+        ----------
+
+        filename : Name of the json file database
+
+        Returns
+        -------
+        """
 
         if not filename:
             import pkg_resources

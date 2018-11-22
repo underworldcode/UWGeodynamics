@@ -11,20 +11,63 @@ from collections import OrderedDict
 ABC = abc.ABCMeta('ABC', (object,), {})
 
 
-def linearCohesionWeakening(cumulativeTotalStrain, Cohesion, CohesionSw, epsilon1=0.5, epsilon2=1.5, **kwargs):
+def linearCohesionWeakening(cumulativeTotalStrain, Cohesion, CohesionSw,
+                            epsilon1=0.5, epsilon2=1.5):
+    """Calculate the cohesion through linear weakening as a function of
+       accumulated plastic strain.
+
+    Parameters
+    ----------
+
+    cumulativeTotalStrain : Accumulated Plastic Strain field
+    Cohesion : Cohesion for a pristine material Cohesion(epsilon1)
+    CohesionSw : Cohesion(epsilon2)
+    epsilon1 : Start of weakening (fraction of accumulated plastic strain)
+    epsilon2 : End of weakening (fraction of accumulated plastic strain)
+
+    Returns
+    -------
+
+    Underworld function which returns the cohesion as a function of
+    accumulated plastic strain.
+    """
 
     cohesionVal = [(cumulativeTotalStrain < epsilon1, Cohesion),
                    (cumulativeTotalStrain > epsilon2, CohesionSw),
-                   (True, Cohesion + ((Cohesion - CohesionSw)/(epsilon1 - epsilon2)) * (cumulativeTotalStrain - epsilon1))]
+                   (True, Cohesion + ((Cohesion - CohesionSw) /
+                                      (epsilon1 - epsilon2)) *
+                    (cumulativeTotalStrain - epsilon1))]
 
     return fn.branching.conditional(cohesionVal)
 
 
-def linearFrictionWeakening(cumulativeTotalStrain, FrictionCoef, FrictionCoefSw, epsilon1=0.5, epsilon2=1.5, **kwargs):
+def linearFrictionWeakening(cumulativeTotalStrain, FrictionCoef,
+                            FrictionCoefSw, epsilon1=0.5, epsilon2=1.5):
+    """Calculate the friction angle through linear weakening as a function of
+       accumulated plastic strain.
+
+    Parameters
+    ----------
+
+    cumulativeTotalStrain : Accumulated Plastic Strain field
+    friction angle : friction angle for a pristine material
+                     friction angle(epsilon1)
+    friction angleSw : friction angle(epsilon2)
+    epsilon1 : Start of weakening (fraction of accumulated plastic strain)
+    epsilon2 : End of weakening (fraction of accumulated plastic strain)
+
+    Returns
+    -------
+
+    Underworld function which returns the friction angle as a function of
+    accumulated plastic strain.
+    """
 
     frictionVal = [(cumulativeTotalStrain < epsilon1, FrictionCoef),
                    (cumulativeTotalStrain > epsilon2, FrictionCoefSw),
-                   (True, FrictionCoef + ((FrictionCoef - FrictionCoefSw)/(epsilon1 - epsilon2)) * (cumulativeTotalStrain - epsilon1))]
+                   (True, FrictionCoef + ((FrictionCoef - FrictionCoefSw) /
+                                          (epsilon1 - epsilon2)) *
+                    (cumulativeTotalStrain - epsilon1))]
 
     frictionVal = fn.branching.conditional(frictionVal)
 
@@ -40,6 +83,18 @@ class ViscosityLimiter(object):
         self.maxViscosity = maxViscosity
 
     def apply(self, viscosityField):
+        """apply a viscositylimiter to a viscosity function
+
+        Parameters
+        ----------
+
+        viscosityField : viscosity function of field
+
+        Returns
+        -------
+
+        viscosity function
+        """
         if self.maxViscosity and self.minViscosity:
             maxBound = fn.misc.min(viscosityField, nd(self.maxViscosity))
             minMaxBound = fn.misc.max(maxBound, nd(self.minViscosity))
@@ -55,11 +110,24 @@ class StressLimiter(object):
         self.maxStress = maxStress
 
     def apply(self, stress):
+        """apply a stress limiter to s stress function
+
+        Parameters
+        ----------
+
+        stress : stress function or field.
+
+        Returns
+        -------
+
+        stress function
+        """
         maxBound = fn.misc.min(stress, nd(self.maxStress))
         return maxBound
 
 
 class Rheology(ABC):
+    """Rheology Base Class"""
 
     def __init__(self, pressureField=None, strainRateInvariantField=None,
                  temperatureField=None, viscosityLimiter=None,
@@ -86,8 +154,8 @@ class Rheology(ABC):
 class DruckerPrager(object):
 
     def __init__(self, name=None, cohesion=None, frictionCoefficient=None,
-                 cohesionAfterSoftening = None,
-                 frictionAfterSoftening = None,
+                 cohesionAfterSoftening=None,
+                 frictionAfterSoftening=None,
                  epsilon1=0.0, epsilon2=0.2):
 
         self.name = name
@@ -111,12 +179,13 @@ class DruckerPrager(object):
         return self.__dict__[name]
 
     def _repr_html_(self):
-        attributes  = OrderedDict()
+        attributes = OrderedDict()
         if isinstance(self.citation, str):
             attributes["Citation"] = self.citation
             if isinstance(self.onlinePDF, str):
                 if self.onlinePDF.startswith("http"):
-                    attributes["Citation"] = '<a href="{0}">{1}</a>'.format(self.onlinePDF, self.citation)
+                    attributes["Citation"] = '<a href="{0}">{1}</a>'.format(
+                        self.onlinePDF, self.citation)
         attributes["Cohesion"] = self.cohesion
         attributes["Cohesion After Softening"] = self.cohesionAfterSoftening
         attributes["Friction Coefficient"] = self.frictionCoefficient
@@ -205,7 +274,8 @@ class DruckerPrager(object):
         f = self._frictionFn()
         C = self._cohesionFn()
         P = self.pressureField
-        self.yieldStress = 6.0*C*fn.math.cos(f) + 6.0*fn.math.sin(f)*fn.misc.max(P, 0.0)
+        self.yieldStress = 6.0 * C * fn.math.cos(f)
+        self.yieldStress += 6.0 * fn.math.sin(f) * fn.misc.max(P, 0.0)
         self.yieldStress /= (fn.math.sqrt(3.0) * (3.0 + fn.math.sin(f)))
         return self.yieldStress
 
@@ -213,7 +283,7 @@ class DruckerPrager(object):
 class VonMises(object):
 
     def __init__(self, name=None, cohesion=None,
-                 cohesionAfterSoftening = None,
+                 cohesionAfterSoftening=None,
                  epsilon1=None, epsilon2=None):
 
         self.name = name
@@ -297,13 +367,13 @@ class ViscousCreep(Rheology):
                  f=1.0,
                  BurgersVectorLength=0.5e-9 * u.metre,
                  mineral="unspecified"):
-        """ Viscous Creep Rheology 
+        """ Viscous Creep Rheology
 
         Parameters
         ----------
 
         name : Name of the Viscous Law
-        preExponentialFactor : 
+        preExponentialFactor :
         stressExponent :
         activationVolume :
         activationEnergy :
@@ -488,7 +558,8 @@ class TemperatureAndDepthDependentViscosity(Rheology):
     @property
     def muEff(self):
         coord = fn.input()
-        return self._eta0 * fn.math.exp(self._gamma * (coord[-1] - self._reference))
+        return (self._eta0 * fn.math.exp(self._gamma *
+                                         (coord[-1] - self._reference)))
 
 
 class ViscousCreepRegistry(object):
@@ -496,7 +567,8 @@ class ViscousCreepRegistry(object):
 
         if not filename:
             import pkg_resources
-            filename = pkg_resources.resource_filename(__name__, "ressources/ViscousRheologies.json")
+            filename = pkg_resources.resource_filename(
+                __name__, "ressources/ViscousRheologies.json")
 
         with open(filename, "r") as infile:
             self._viscousLaws = json.load(infile)
@@ -515,7 +587,9 @@ class ViscousCreepRegistry(object):
         for key in self._viscousLaws.keys():
             mineral = self._viscousLaws[key]["Mineral"]
             name = key.replace(" ", "_").replace(",", "").replace(".", "")
-            self._dir[name] = ViscousCreep(name=key, mineral=mineral, **self._viscousLaws[key]["coefficients"])
+            self._dir[name] = ViscousCreep(
+                name=key, mineral=mineral,
+                **self._viscousLaws[key]["coefficients"])
 
             try:
                 self._dir[name].onlinePDF = self._viscousLaws[key]["onlinePDF"]
@@ -561,7 +635,8 @@ class PlasticityRegistry(object):
         for key in _plasticLaws.keys():
             name = key.replace(" ", "_").replace(",", "").replace(".", "")
             name = name.replace(")", "").replace("(", "")
-            self._dir[name] = DruckerPrager(name=key, **_plasticLaws[key]["coefficients"])
+            self._dir[name] = DruckerPrager(
+                name=key, **_plasticLaws[key]["coefficients"])
 
             try:
                 self._dir[name].onlinePDF = _plasticLaws[key]["onlinePDF"]

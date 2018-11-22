@@ -3,6 +3,7 @@ import numpy as np
 import underworld as uw
 import underworld.function as fn
 
+
 class FrictionBoundaries(object):
     """ This class flags elements at the boundaries
 
@@ -10,6 +11,35 @@ class FrictionBoundaries(object):
     def __init__(self, Model, rightFriction=None, leftFriction=None,
                  topFriction=None, bottomFriction=None, frontFriction=None,
                  backFriction=None, thickness=2):
+        """Frictional boundaries processor_
+
+        Parameters
+        ----------
+
+        Model : UWGeodynamics Model
+        rightFriction : coefficient of friction on the right wall
+                        (tangent of the friction angle in radians)
+
+        leftFriction : coefficient of friction on the left wall
+                        (tangent of the friction angle in radians)
+
+        topFriction : coefficient of friction on the top wall
+                        (tangent of the friction angle in radians)
+
+        bottomFriction : coefficient of friction on the bottom wall
+                        (tangent of the friction angle in radians)
+
+        frontFriction : coefficient of friction on the front wall
+                        (tangent of the friction angle in radians)
+
+        backFriction : coefficient of friction on the back wall
+                        (tangent of the friction angle in radians)
+
+        thickness : Thickness of the friction layer.
+
+        Returns
+        -------
+        """
 
         self.Model = Model
         self.thickness = thickness

@@ -299,6 +299,19 @@ class MaterialRegistry(object):
     """ Library of commonly used Materials """
 
     def __init__(self, filename=None):
+        """Create a registry of materials
+
+        Parameters
+        ----------
+
+        filename : (optional) filename of the json file
+                   database.
+
+        Returns
+        -------
+
+        An UWGeodynamics MaterialRegistry Class
+        """
 
         if not filename:
             filename = pkg_resources.resource_filename(
@@ -342,6 +355,18 @@ class MaterialRegistry(object):
 
 
 def get_viscosity_from_registry(rheology_name):
+    """Get Viscosity from default registry
+
+    Parameters
+    ----------
+
+    rheology_name : Name of the rheology
+
+    Returns
+    -------
+
+    An UWGeodynamics ViscousCreepRheology object.
+    """
 
     from UWGeodynamics import ViscousCreepRegistry
     rh = ViscousCreepRegistry()
@@ -351,6 +376,18 @@ def get_viscosity_from_registry(rheology_name):
 
 
 def get_plasticity_from_registry(plasticity_name):
+    """Get plasticity from default plasticity registry
+
+    Parameters
+    ----------
+
+    plasticity_name : Name of the plasticity reference
+
+    Returns
+    -------
+
+    An UWGeodynamics DruckerPrager object
+    """
 
     from UWGeodynamics import PlasticityRegistry
     pl = PlasticityRegistry()
