@@ -2243,6 +2243,13 @@ class Model(Material):
         uw.barrier()
 
     def velocity_rms(self):
+        """Root Mean Squared(RMS) Velocity Function.
+
+        Returns
+        -------
+        The rms of the velocity field
+
+        """
         vdotv_fn = uw.function.math.dot(self.velocityField, self.velocityField)
         fn_2_integrate = (1., vdotv_fn)
         (v2, vol) = self.mesh.integrate(fn=fn_2_integrate)
