@@ -230,7 +230,7 @@ class VelocityBCs(BoundaryConditions):
 
         for set_ in self.order_wall_conditions:
             (condition, nodes) = self._wall_indexSets[set_]
-            if nodes:
+            if nodes is not None:
                 self._apply_conditions_nodes(condition, nodes)
 
         if self.nodeSets:
@@ -347,7 +347,7 @@ class StressBCs(BoundaryConditions):
 
         for set_ in self.order_wall_conditions:
             (condition, nodes) = self._wall_indexSets[set_]
-            if nodes:
+            if nodes is not None:
                 self._apply_conditions_nodes(condition, nodes)
 
         if self.nodeSets:
