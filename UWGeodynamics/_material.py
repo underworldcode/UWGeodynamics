@@ -339,7 +339,7 @@ class MaterialRegistry(object):
                         parameters[key] = get_value(item)
                     elif ("thermalExpansivity" or "beta") in item.keys():
                         from UWGeodynamics import LinearDensity
-                        for prop, val in item.items():
+                        for prop in item.keys():
                             item[prop] = get_value(item[prop])
                         parameters[key] = LinearDensity(**item)
 
