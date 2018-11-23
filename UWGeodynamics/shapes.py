@@ -244,7 +244,7 @@ class Layer2D(Layer):
     def __init__(self, top, bottom):
 
         Warning("Layer2D is now deprecated, use Layer instead")
-        super(Layer, self).__init__(shapes)
+        super(Layer2D, self).__init__(top, bottom)
 
 class Box(Shape):
     """Box"""
