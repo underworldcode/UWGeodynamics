@@ -1251,7 +1251,7 @@ node indices (global).
    >>> Model.set_temperatureBCs(top=500. * u.degK,
    ...                          bottom=-0.022 * u.milliwatt / u.metre**2,
    ...                          bottom_material=Model,
-   ...                          nodeSets=[(nodes, 273. * u.Kelvin)])
+   ...                          nodeSets=[(273. * u.Kelvin, nodes)])
 
 Heat flux
 ~~~~~~~~~

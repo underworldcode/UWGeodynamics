@@ -17,9 +17,8 @@ from ._utils import PressureSmoother, PassiveTracers
 from ._rheology import ViscosityLimiter, StressLimiter
 from ._material import Material
 from ._visugrid import Visugrid
-from ._velocity_boundaries import VelocityBCs
-from ._velocity_boundaries import StressBCs
-from ._thermal_boundaries import TemperatureBCs, HeatFlowBCs
+from ._boundary_conditions import TemperatureBCs, HeatFlowBCs
+from ._boundary_conditions import StressBCs, VelocityBCs
 from ._mesh_advector import Mesh_advector
 from ._frictional_boundary import FrictionBoundaries
 from .Underworld_extended import FeMesh_Cartesian
