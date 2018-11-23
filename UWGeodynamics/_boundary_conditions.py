@@ -10,13 +10,83 @@ from ._utils import Balanced_InflowOutflow
 from ._utils import MovingWall
 from .shapes import Shape
 
+
 class BoundaryConditions(object):
-    """Base Class for BOundary Condition objects"""
+    """Base Class for Boundary Condition objects"""
 
     def __init__(self, Model, field, varfield, left=None, right=None,
                  top=None, bottom=None, front=None, back=None,
                  nodeSets=tuple(), materials=None, order_wall_conditions=None,
                  condition_type="Dirichlet"):
+
+        """ Define boundaries condition
+
+        A condition can be a temperature (float, int, Pint Quantity) or
+        an Underworld function which evaluates as a temperature.
+
+        parameters
+        ----------
+
+            Model: (UWGeodynamics.Model)
+                An UWGeodynamics Model (See UWGeodynamics.Model)
+
+            field: Underworld Mesh Variable
+                Field on which the condition applies
+
+            varfield: Underworld Mesh Variable
+                Related Field, needed for neumann conditions
+
+            left:
+                Define conditions on the left side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            right:
+                Define conditions on the right side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            top:
+                Define conditions on the top side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            bottom:
+                Define conditions on the bottom side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            nodeSets: list of tuples: [(nodes, condition)]
+                List of node where to apply predefined condition.
+
+                The nodes can be a list or a numpy array containing the
+                local index of the nodes. It can also be an Underworld
+                IndexSet. You can also pass an UWGeodynamics shape.
+
+                The condition can be an Underworld Function, A Pint
+                Quantity of a scalar.
+
+            materials: list of tuples: [(Material, condition)]
+                List of material on which to apply a condition.
+                The materials must be UWGeodynamics Material objects.
+
+                The condition can be an Underworld Function, A Pint
+                Quantity of a scalar.
+
+            order_wall_conditions: list of str, [left, right, top, bottom,
+                front, back]
+                Order in which the boundaries are processed.
+
+            condition_type: str
+                can be either "Dirichlet" or "Neumann"
+
+            Only valid for 3D Models:
+
+            front:
+                Define conditions on the front side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            back:
+                Define conditions on the front side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+        """
 
         self.Model = Model
         self.left = left
@@ -31,6 +101,10 @@ class BoundaryConditions(object):
         self.varfield = varfield
 
         self.condition_type = condition_type
+
+        if self.condition_type not in ["Dirichlet", "Neumann"]:
+            raise ValueError("""Condition type can only be 'Dirichlet' or
+                             'Neumann'""")
 
         self._indices = []
         for _ in range(Model.mesh.dim):
@@ -61,9 +135,8 @@ class BoundaryConditions(object):
         -----------
             condition:
                 condition
-            nodes:
+            nodes: np.array, list, IndexSet, Shape, Function
                 set of nodes
-
         """
 
         # Expect a list or tuple of dimension equal to the dof of the
@@ -72,12 +145,17 @@ class BoundaryConditions(object):
         if isinstance(condition, (float, int, u.Quantity)):
             condition = [condition]
 
-        if isinstance(nodes, Shape):
-            # Get indices:
-            mask = nodes.fn.evaluate(self.Model.mesh)
+        # If nodes is a shape get the corresponding local
+        # nodes
+        if isinstance(nodes, (Shape, fn.Function)):
+            if isinstance(nodes, Shape):
+                mask = nodes.fn.evaluate(self.Model.mesh)
+            else:
+                mask = nodes.evaluate(self.Model.mesh)
             nodes = np.arange(self.Model.mesh.nodesLocal)
             nodes = nodes.astype("int")[mask.ravel()]
 
+        # Convert nodes numpy arrays / list to UW IndexSet
         if isinstance(nodes, (list, np.ndarray)):
             nodes = uw.mesh.FeMesh_IndexSet(
                 self.Model.mesh, topologicalIndex=0,
@@ -93,19 +171,12 @@ class BoundaryConditions(object):
                     self.field.data[nodes.data, dim] = nd(condition[dim])
                     self._indices[dim] += nodes
 
+                # If it's an Underworld function
                 if isinstance(condition[dim], fn.Function):
                     func = condition[dim]
                     self.field.data[nodes.data, dim] = (
                         func.evaluate(
                             self.Model.mesh.data[nodes.data])[:, dim])
-                    self._indices[dim] += nodes
-
-                # User defined function
-                if isinstance(condition[dim], (list, tuple)):
-                    func = fn.branching.conditional(condition[dim])
-                    self.field.data[nodes.data, dim] = (
-                        func.evaluate(
-                            self.Model.mesh.data[nodes.data])[:, 0])
                     self._indices[dim] += nodes
 
         return
@@ -123,7 +194,7 @@ class BoundaryConditions(object):
                 self._apply_conditions_nodes(condition, nodes)
 
         if self.nodeSets:
-            for (condition, nodes) in self.nodeSets:
+            for (nodes, condition) in self.nodeSets:
                 self._apply_conditions_nodes(condition, nodes)
 
         if self.materials:
@@ -147,44 +218,62 @@ class VelocityBCs(BoundaryConditions):
     def __init__(self, Model, left=None, right=None, top=None, bottom=None,
                  front=None, back=None, nodeSets=None, materials=None,
                  order_wall_conditions=None):
-        """ Defines mechanical boundary conditions
+        """ Defines kinematic boundary conditions
 
-        The type of conditions is determined through the units used do define
-        the parameters:
-            * Units of velocity ([length] / [time]) represent a kinematic
-            condition (Dirichlet)
-            * Units of stress / pressure ([force] / [area]) are set as
-            stress condition (Neumann).
+        A condition can be a velocity (float, int, Pint Quantity) or
+        an Underworld function which evaluates as a velocity.
 
         parameters
         ----------
 
         Model: (UWGeodynamics.Model)
             An UWGeodynamics Model (See UWGeodynamics.Model)
-        left:(tuple) with length 2 in 2D, and length 3 in 3D.
-            Define mechanical conditions on the left side of the Model.
+
+        left:(tuple)
+            Define kinematic conditions on the left side of the Model.
             Conditions are defined for each Model direction (x, y, [z])
-        right:(tuple) with length 2 in 2D, and length 3 in 3D.
-            Define mechanical conditions on the right side of the Model.
+
+        right:(tuple)
+            Define kinematic conditions on the right side of the Model.
             Conditions are defined for each Model direction (x, y, [z])
-        top:(tuple) with length 2 in 2D, and length 3 in 3D.
-            Define mechanical conditions on the top side of the Model.
+
+        top:(tuple)
+            Define kinematic conditions on the top side of the Model.
             Conditions are defined for each Model direction (x, y, [z])
-        bottom:(tuple) with length 2 in 2D, and length 3 in 3D.
-            Define mechanical conditions on the bottom side of the Model.
+
+        bottom:(tuple)
+            Define kinematic conditions on the bottom side of the Model.
             Conditions are defined for each Model direction (x, y, [z])
-        indexSets: [(condition, IndexSet)]
-            List of node where to apply predefined velocities.
+
+        nodeSets: list of tuples: [(nodes, condition)]
+            List of node where to apply predefined condition.
+
+            The nodes can be a list or a numpy array containing the
+            local index of the nodes. It can also be an Underworld
+            IndexSet. You can also pass an UWGeodynamics shape.
+
+            The condition can be an Underworld Function, A Pint
+            Quantity of a scalar.
+
+        materials: list of tuples: [(Material, condition)]
+            List of material on which to apply a condition.
+            The materials must be UWGeodynamics Material objects.
+
+            The condition can be an Underworld Function, A Pint
+            Quantity of a scalar.
+
+        order_wall_conditions: list of str, [left, right, top, bottom, front, back]
+            Order in which the boundaries are processed.
 
         Only valid for 3D Models:
 
         front:(tuple) with length 2 in 2D, and length 3 in 3D.
-            Define mechanical conditions on the front side of the Model.
-            Conditions are defined for each Model direction (x, y, [z])
-        back:(tuple) with length 2 in 2D, and length 3 in 3D.
-            Define mechanical conditions on the front side of the Model.
+            Define kinematic conditions on the front side of the Model.
             Conditions are defined for each Model direction (x, y, [z])
 
+        back:(tuple) with length 2 in 2D, and length 3 in 3D.
+            Define kinematic conditions on the front side of the Model.
+            Conditions are defined for each Model direction (x, y, [z])
 
         examples:
         ---------
@@ -219,10 +308,9 @@ class VelocityBCs(BoundaryConditions):
         Parameters:
         -----------
             condition:
-                velocity condition
-            nodes:
+                condition
+            nodes: np.array, list, IndexSet, Shape, Function
                 set of nodes
-
         """
 
         # Special case (Bottom LecodeIsostasy)
@@ -298,38 +386,61 @@ class StressBCs(BoundaryConditions):
                  order_wall_conditions=None):
         """ Defines stress boundary conditions
 
+        A condition can be a stress (float, int, Pint value) or an
+        Underworld function which evaluates as a stress.
+
         parameters
         ----------
 
-        Model: (UWGeodynamics.Model)
-            An UWGeodynamics Model (See UWGeodynamics.Model)
-        left:(tuple) with length 2 in 2D, and length 3 in 3D.
-            Define conditions on the left side of the Model.
-            Conditions are defined for each Model direction (x, y, [z])
-        right:(tuple) with length 2 in 2D, and length 3 in 3D.
-            Define conditions on the right side of the Model.
-            Conditions are defined for each Model direction (x, y, [z])
-        top:(tuple) with length 2 in 2D, and length 3 in 3D.
-            Define conditions on the top side of the Model.
-            Conditions are defined for each Model direction (x, y, [z])
-        bottom:(tuple) with length 2 in 2D, and length 3 in 3D.
-            Define conditions on the bottom side of the Model.
-            Conditions are defined for each Model direction (x, y, [z])
-        indexSets: [(condition, IndexSet)]
-            List of node where to apply predefined velocities.
+            Model: (UWGeodynamics.Model)
+                An UWGeodynamics Model (See UWGeodynamics.Model)
 
-        Only valid for 3D Models:
+            left:(tuple)
+                Define conditions on the left side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
 
-        front:(tuple) with length 2 in 2D, and length 3 in 3D.
-            Define mechanical conditions on the front side of the Model.
-            Conditions are defined for each Model direction (x, y, [z])
-        back:(tuple) with length 2 in 2D, and length 3 in 3D.
-            Define mechanical conditions on the front side of the Model.
-            Conditions are defined for each Model direction (x, y, [z])
+            right:(tuple)
+                Define conditions on the right side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
 
+            top:(tuple)
+                Define conditions on the top side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
 
-        examples:
-        ---------
+            bottom:(tuple)
+                Define conditions on the bottom side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            nodeSets: list of tuples: [(nodes, condition)]
+                List of node where to apply predefined condition.
+
+                The nodes can be a list or a numpy array containing the
+                local index of the nodes. It can also be an Underworld
+                IndexSet. You can also pass an UWGeodynamics shape.
+
+                The condition can be an Underworld Function, A Pint
+                Quantity of a scalar.
+
+            materials: list of tuples: [(Material, condition)]
+                List of material on which to apply a condition.
+                The materials must be UWGeodynamics Material objects.
+
+                The condition can be an Underworld Function, A Pint
+                Quantity of a scalar.
+
+            order_wall_conditions: list of str, [left, right, top, bottom,
+                front, back]
+                Order in which the boundaries are processed.
+
+            Only valid for 3D Models:
+
+            front:(tuple) with length 2 in 2D, and length 3 in 3D.
+                Define mechanical conditions on the front side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            back:(tuple) with length 2 in 2D, and length 3 in 3D.
+                Define mechanical conditions on the front side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
 
         """
         super(StressBCs, self).__init__(Model, Model.tractionField,
@@ -348,6 +459,65 @@ class TemperatureBCs(BoundaryConditions):
     def __init__(self, Model, left=None, right=None, top=None, bottom=None,
                  front=None, back=None, nodeSets=None, materials=None,
                  order_wall_conditions=None):
+        """ Define temperature boundaries condition
+
+        A condition can be a temperature (float, int, Pint Quantity) or
+        an Underworld function which evaluates as a temperature.
+
+        parameters
+        ----------
+
+            Model: (UWGeodynamics.Model)
+                An UWGeodynamics Model (See UWGeodynamics.Model)
+
+            left:
+                Define conditions on the left side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            right:
+                Define conditions on the right side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            top:
+                Define conditions on the top side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            bottom:
+                Define conditions on the bottom side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            nodeSets: list of tuples: [(nodes, condition)]
+                List of node where to apply predefined condition.
+
+                The nodes can be a list or a numpy array containing the
+                local index of the nodes. It can also be an Underworld
+                IndexSet. You can also pass an UWGeodynamics shape.
+
+                The condition can be an Underworld Function, A Pint
+                Quantity of a scalar.
+
+            materials: list of tuples: [(Material, condition)]
+                List of material on which to apply a condition.
+                The materials must be UWGeodynamics Material objects.
+
+                The condition can be an Underworld Function, A Pint
+                Quantity of a scalar.
+
+            order_wall_conditions: list of str, [left, right, top, bottom,
+                front, back]
+                Order in which the boundaries are processed.
+
+            Only valid for 3D Models:
+
+            front:
+                Define conditions on the front side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            back:
+                Define conditions on the front side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+        """
 
         super(TemperatureBCs, self).__init__(
             Model, Model.temperature, None, left, right, top, bottom,
@@ -360,6 +530,65 @@ class HeatFlowBCs(BoundaryConditions):
     def __init__(self, Model, left=None, right=None, top=None, bottom=None,
                  front=None, back=None, nodeSets=None, materials=None,
                  order_wall_conditions=None):
+        """ Define heat flow boundaries condition
+
+        A condition can be a heat flow (float, int, Pint Quantity) or
+        an Underworld function which evaluates as a heat flow.
+
+        parameters
+        ----------
+
+            Model: (UWGeodynamics.Model)
+                An UWGeodynamics Model (See UWGeodynamics.Model)
+
+            left:
+                Define conditions on the left side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            right:
+                Define conditions on the right side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            top:
+                Define conditions on the top side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            bottom:
+                Define conditions on the bottom side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            nodeSets: list of tuples: [(nodes, condition)]
+                List of node where to apply predefined condition.
+
+                The nodes can be a list or a numpy array containing the
+                local index of the nodes. It can also be an Underworld
+                IndexSet. You can also pass an UWGeodynamics shape.
+
+                The condition can be an Underworld Function, A Pint
+                Quantity of a scalar.
+
+            materials: list of tuples: [(Material, condition)]
+                List of material on which to apply a condition.
+                The materials must be UWGeodynamics Material objects.
+
+                The condition can be an Underworld Function, A Pint
+                Quantity of a scalar.
+
+            order_wall_conditions: list of str, [left, right, top, bottom,
+                front, back]
+                Order in which the boundaries are processed.
+
+            Only valid for 3D Models:
+
+            front:
+                Define conditions on the front side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            back:
+                Define conditions on the front side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+        """
 
         args = [left, right, top, bottom, front, back]
 

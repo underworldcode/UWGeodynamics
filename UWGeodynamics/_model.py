@@ -642,33 +642,63 @@ class Model(Material):
                            front=None, back=None,
                            nodeSets=None, materials=None):
 
-        """ Set Model thermal conditions
+        """ Define temperature boundaries condition
 
-        Parameters:
+        A condition can be a temperature (float, int, Pint Quantity) or
+        an Underworld function which evaluates as a temperature.
+
+        parameters
+        ----------
+
+            Model: (UWGeodynamics.Model)
+                An UWGeodynamics Model (See UWGeodynamics.Model)
+
             left:
-                Temperature along the left wall.
-                Default is 'None'
+                Define conditions on the left side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
             right:
-                Temperature along the right wall.
-                Default is 'None'
+                Define conditions on the right side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
             top:
-                Temperature along the top wall.
-                Default is 'None'
+                Define conditions on the top side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
             bottom:
-                Temperature along the bottom wall.
-                Default is 'None'
+                Define conditions on the bottom side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            nodeSets: list of tuples: [(nodes, condition)]
+                List of node where to apply predefined condition.
+
+                The nodes can be a list or a numpy array containing the
+                local index of the nodes. It can also be an Underworld
+                IndexSet. You can also pass an UWGeodynamics shape.
+
+                The condition can be an Underworld Function, A Pint
+                Quantity of a scalar.
+
+            materials: list of tuples: [(Material, condition)]
+                List of material on which to apply a condition.
+                The materials must be UWGeodynamics Material objects.
+
+                The condition can be an Underworld Function, A Pint
+                Quantity of a scalar.
+
+            order_wall_conditions: list of str, [left, right, top, bottom,
+                front, back]
+                Order in which the boundaries are processed.
+
+            Only valid for 3D Models:
+
             front:
-                Temperature along the front wall.
-                Default is 'None'
+                Define conditions on the front side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
             back:
-                Temperature along the back wall.
-                Default is 'None'
-            nodeSets: (set, temperature)
-                A list, numpy array which contains the indices (global)
-                of the nodes and the associate temperature.
-            materials:
-                list of materials for which temperature need to be
-                fixed. [(material, temperature)]
+                Define conditions on the front side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
 
         """
 
@@ -686,33 +716,63 @@ class Model(Material):
                         top=None, bottom=None,
                         front=None, back=None):
 
-        """ Set Model Heat Flow conditions
+        """ Define heat flow boundaries condition
 
-        Parameters:
+        A condition can be a heat flow (float, int, Pint Quantity) or
+        an Underworld function which evaluates as a heat flow.
+
+        parameters
+        ----------
+
+            Model: (UWGeodynamics.Model)
+                An UWGeodynamics Model (See UWGeodynamics.Model)
+
             left:
-                Flux along the left wall.
-                Flux must be a vector (Fx, Fy, [Fz])
-                Default is 'None'
+                Define conditions on the left side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
             right:
-                Flux along the right wall.
-                Flux must be a vector (Fx, Fy, [Fz])
-                Default is 'None'
+                Define conditions on the right side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
             top:
-                Flux along the top wall.
-                Flux must be a vector (Fx, Fy, [Fz])
-                Default is 'None'
+                Define conditions on the top side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
             bottom:
-                Flux along the bottom wall.
-                Flux must be a vector (Fx, Fy, [Fz])
-                Default is 'None'
+                Define conditions on the bottom side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            nodeSets: list of tuples: [(nodes, condition)]
+                List of node where to apply predefined condition.
+
+                The nodes can be a list or a numpy array containing the
+                local index of the nodes. It can also be an Underworld
+                IndexSet. You can also pass an UWGeodynamics shape.
+
+                The condition can be an Underworld Function, A Pint
+                Quantity of a scalar.
+
+            materials: list of tuples: [(Material, condition)]
+                List of material on which to apply a condition.
+                The materials must be UWGeodynamics Material objects.
+
+                The condition can be an Underworld Function, A Pint
+                Quantity of a scalar.
+
+            order_wall_conditions: list of str, [left, right, top, bottom,
+                front, back]
+                Order in which the boundaries are processed.
+
+            Only valid for 3D Models:
+
             front:
-                Flux along the front wall.
-                Flux must be a vector (Fx, Fy, [Fz])
-                Default is 'None'
+                Define conditions on the front side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
             back:
-                Flux along the back wall.
-                Flux must be a vector (Fx, Fy, [Fz])
-                Default is 'None'
+                Define conditions on the front side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
 
         """
 
@@ -720,8 +780,8 @@ class Model(Material):
             self.temperature = True
 
         self._heatFlowBCs = HeatFlowBCs(self, left=left, right=right,
-                                       top=top, bottom=bottom,
-                                       back=back, front=front)
+                                        top=top, bottom=bottom,
+                                        back=back, front=front)
         return self._heatFlowBCs.get_conditions()
 
     @property
@@ -900,29 +960,77 @@ class Model(Material):
     def set_velocityBCs(self, left=None, right=None, top=None, bottom=None,
                         front=None, back=None, nodeSets=None,
                         order_wall_conditions=None):
-        """ Set Model kinematic conditions
+        """ Set kinematic boundary conditions
 
-        Parameters:
-            left:
-                Velocity along the left wall.
-                Default is 'None'
-            right:
-                Velocity along the right wall.
-                Default is 'None'
-            top:
-                Velocity along the top wall.
-                Default is 'None'
-            bottom:
-                Velocity along the bottom wall.
-                Default is 'None'
-            front:
-                Velocity along the front wall.
-                Default is 'None'
-            back:
-                Velocity along the back wall.
-                Default is 'None'
-            nodeSets: (set, velocity)
-                underworld mesh index set and associate velocity
+        A condition can be a velocity (float, int, Pint Quantity) or
+        an Underworld function which evaluates as a velocity.
+
+        parameters
+        ----------
+
+        Model: (UWGeodynamics.Model)
+            An UWGeodynamics Model (See UWGeodynamics.Model)
+
+        left:(tuple)
+            Define kinematic conditions on the left side of the Model.
+            Conditions are defined for each Model direction (x, y, [z])
+
+        right:(tuple)
+            Define kinematic conditions on the right side of the Model.
+            Conditions are defined for each Model direction (x, y, [z])
+
+        top:(tuple)
+            Define kinematic conditions on the top side of the Model.
+            Conditions are defined for each Model direction (x, y, [z])
+
+        bottom:(tuple)
+            Define kinematic conditions on the bottom side of the Model.
+            Conditions are defined for each Model direction (x, y, [z])
+
+        nodeSets: list of tuples: [(nodes, condition)]
+            List of node where to apply predefined condition.
+
+            The nodes can be a list or a numpy array containing the
+            local index of the nodes. It can also be an Underworld
+            IndexSet. You can also pass an UWGeodynamics shape.
+
+            The condition can be an Underworld Function, A Pint
+            Quantity of a scalar.
+
+        materials: list of tuples: [(Material, condition)]
+            List of material on which to apply a condition.
+            The materials must be UWGeodynamics Material objects.
+
+            The condition can be an Underworld Function, A Pint
+            Quantity of a scalar.
+
+        order_wall_conditions: list of str, [left, right, top, bottom, front, back]
+            Order in which the boundaries are processed.
+
+        Only valid for 3D Models:
+
+        front:(tuple) with length 2 in 2D, and length 3 in 3D.
+            Define kinematic conditions on the front side of the Model.
+            Conditions are defined for each Model direction (x, y, [z])
+
+        back:(tuple) with length 2 in 2D, and length 3 in 3D.
+            Define kinematic conditions on the front side of the Model.
+            Conditions are defined for each Model direction (x, y, [z])
+
+        examples:
+        ---------
+
+        The following example defines a (2x1) meter Underworld model with
+        freeslip conditions on all the sides.
+
+        >>> import UWGeodynamics as GEO
+        >>> u = GEO.u
+        >>> Model = GEO.Model(elementRes=(64, 64),
+                              minCoord=(-1. * u.meter, -50. * u.centimeter),
+                              maxCoord=(1. * u.meter, 50. * u.centimeter))
+        >>> Model.set_velocityBCs(left=[0, None], right=[0,None], top=[None,0],
+                                  bottom=[None, 0])
+
         """
 
         self._velocityBCs = VelocityBCs(
@@ -937,27 +1045,64 @@ class Model(Material):
     def set_stressBCs(self, left=None, right=None, top=None, bottom=None,
                       front=None, back=None, nodeSets=None,
                       order_wall_conditions=None):
-        """ Set Model Stress conditions
+        """ Set stress boundary conditions
 
-        Parameters:
-            left:
-                Stress along the left wall.
-                Default is 'None'
-            right:
-                Stress along the right wall.
-                Default is 'None'
-            top:
-                Stress along the top wall.
-                Default is 'None'
-            bottom:
-                Stress along the bottom wall.
-                Default is 'None'
-            front:
-                Stress along the front wall.
-                Default is 'None'
-            back:
-                Stress along the back wall.
-                Default is 'None'
+        A condition can be a stress (float, int, Pint value) or an
+        Underworld function which evaluates as a stress.
+
+        parameters
+        ----------
+
+            Model: (UWGeodynamics.Model)
+                An UWGeodynamics Model (See UWGeodynamics.Model)
+
+            left:(tuple)
+                Define conditions on the left side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            right:(tuple)
+                Define conditions on the right side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            top:(tuple)
+                Define conditions on the top side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            bottom:(tuple)
+                Define conditions on the bottom side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            nodeSets: list of tuples: [(nodes, condition)]
+                List of node where to apply predefined condition.
+
+                The nodes can be a list or a numpy array containing the
+                local index of the nodes. It can also be an Underworld
+                IndexSet. You can also pass an UWGeodynamics shape.
+
+                The condition can be an Underworld Function, A Pint
+                Quantity of a scalar.
+
+            materials: list of tuples: [(Material, condition)]
+                List of material on which to apply a condition.
+                The materials must be UWGeodynamics Material objects.
+
+                The condition can be an Underworld Function, A Pint
+                Quantity of a scalar.
+
+            order_wall_conditions: list of str, [left, right, top, bottom,
+                front, back]
+                Order in which the boundaries are processed.
+
+            Only valid for 3D Models:
+
+            front:(tuple) with length 2 in 2D, and length 3 in 3D.
+                Define mechanical conditions on the front side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
+            back:(tuple) with length 2 in 2D, and length 3 in 3D.
+                Define mechanical conditions on the front side of the Model.
+                Conditions are defined for each Model direction (x, y, [z])
+
         """
 
         self._stressBCs = StressBCs(self, left=left,

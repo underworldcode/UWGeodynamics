@@ -1097,8 +1097,9 @@ Velocity varying along a wall
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 At times it is necessary to define a velocity only for a section of a
-wall and or varying velocities along a wall. This can be done using a **condition**. A condition is a set of
-rules that are applied to a wall.
+wall and or varying velocities along that wall.
+
+An Underworld function can be passed as a condition.
 
 As an example, we will apply a velocity of :math:`5.0\text{cm/yr}` for
 the part of the left wall below 32 kilometre. Velocity is set to be
@@ -1109,7 +1110,9 @@ the part of the left wall below 32 kilometre. Velocity is set to be
    >>> conditions = [(Model.y < GEO.nd(32 * u.kilometre), GEO.nd(5.0 * u.centimetre/u.year)),
                      (True, GEO.nd(1.0*u.centimetre/u.year))]
 
-   >>> Model.set_velocityBCs(left=[conditions, None],
+   >>> function = GEO.uw.fn.branching.conditional(conditions)
+
+   >>> Model.set_velocityBCs(left=[function, None],
    ...                       right=[-1.0*u.centimetre/u.year, None],
    ...                       bottom=[None, 10.*u.megapascal],
    ...                       top=[None,0.])
