@@ -6,7 +6,7 @@ import json
 import pkg_resources
 from .scaling import u
 from ._utils import PhaseChange
-from ._rheology import ConstantViscosity
+from ._rheology import ConstantViscosity, ViscousCreep
 from ._density import ConstantDensity
 from pint.errors import DimensionalityError
 
@@ -282,7 +282,13 @@ def _material_html_repr(Material):
       <th colspan="2">Rheology {}</th>
     </tr>""".format(type_)
 
-    if Material.viscosity:
+    if isinstance(Material.viscosity, ViscousCreep):
+        rh_type = [Material.viscosity.mineral,
+                   Material.viscosity.creep_type,
+                   Material.viscosity.name]
+        html += "<tr><td>{0}</td><td>{1}</td></tr>".format(
+            "Viscosity", ", ".join(rh_type))
+    if isinstance(Material.viscosity, ConstantViscosity):
         html += "<tr><td>{0}</td><td>{1}</td></tr>".format(
             "Viscosity", Material.viscosity.name)
     if Material.plasticity:
