@@ -1,5 +1,5 @@
 {
-    "Brace and Kohlstedt, 1980": {
+    "Wet Dunite, Viscous Dislocation Creep, Brace and Kohlstedt, 1980": {
         "Mineral": "Wet Dunite",
         "Type": "Viscous Dislocation Creep",
         "coefficients": {
@@ -21,7 +21,7 @@
             }
         }
     },
-    "Gleason and Tullis, 1995": {
+    "Wet Quartz, Viscous Dislocation Creep, Gleason and Tullis, 1995": {
         "Mineral": "Wet Quartz",
         "Type": "Viscous Dislocation Creep",
         "coefficients": {
@@ -43,7 +43,7 @@
             }
         }
     },
-    "Goetze et al., 1978": {
+    "Wet Quartz, Viscous Dislocation Creep, Goetze et al., 1978": {
         "Mineral": "Wet Quartz",
         "Type": "Viscous Dislocation Creep",
         "coefficients": {
@@ -65,7 +65,7 @@
             }
         }
     },
-    "Hirth and Kohlstedt, 2003": {
+    "Dry Olivine, Viscous Dislocation Creep, Hirth and Kohlstedt, 2003": {
         "Mineral": "Dry Olivine",
         "Type": "Viscous Dislocation Creep",
         "coefficients": {
@@ -95,7 +95,7 @@
             }
         }
     },
-    "Hirth and Kohlstedt, 2003": {
+    "Dry Olivine, Viscous Diffusion Creep, Hirth and Kohlstedt, 2003": {
         "Mineral": "Dry Olivine",
         "Type": "Viscous Diffusion Creep",
         "coefficients": {
@@ -133,7 +133,7 @@
             }
         }
     },
-    "Hirth and Kohlstedt, 2003": {
+    "Wet Olivine, Viscous Dislocation Creep, Hirth and Kohlstedt, 2003": {
         "Mineral": "Wet Olivine",
         "Type": "Viscous Dislocation Creep",
         "coefficients": {
@@ -171,13 +171,13 @@
             }
         }
     },
-    "Hirth and Kohlstedt, 2003": {
+    "Wet Olivine, Viscous Diffusion Creep, Hirth and Kohlstedt, 2003": {
         "Mineral": "Wet Olivine",
         "Type": "Viscous Diffusion Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",
-                "value": 375 
+                "value": 375
             },
             "activationVolume": {
                 "units": "meter ** 3 / mole",
@@ -209,13 +209,13 @@
             }
         }
     },
-    "Faul and Jackson, 2007": {
+    "Wet Olivine, Viscous Diffusion Creep, Faul and Jackson, 2007": {
         "Mineral": "Wet Olivine",
         "Type": "Viscous Diffusion Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",
-                "value": 484.0 
+                "value": 484.0
             },
             "activationVolume": {
                 "units": "meter ** 3 / mole",
@@ -247,7 +247,7 @@
             }
         }
     },
-    "Petersen, 2010": {
+    "Dry Olivine, Viscous Diffusion Creep, Petersen, 2010": {
         "Mineral": "Dry Olivine",
         "Type": "Viscous Diffusion Creep",
         "coefficients": {
@@ -269,7 +269,7 @@
             }
         }
     },
-    "Karato and Wu, 1990": {
+    "Dry Olivine, Viscous Dislocation Creep, Karato and Wu, 1990": {
         "Mineral": "Dry Olivine",
         "Type": "Viscous Dislocation Creep",
         "coefficients": {
@@ -291,7 +291,7 @@
             }
         }
     },
-    "Kirby and Kronenberg, 1987": {
+    "Olivine, Viscous Dislocation Creep, Kirby and Kronenberg, 1987": {
         "Mineral": "Olivine",
         "Type": "Viscous Dislocation Creep",
         "coefficients": {
@@ -313,7 +313,7 @@
             }
         }
     },
-    "Koch et al., 1983": {
+    "Dry Quartz, Viscous Dislocation Creep, Koch et al., 1983": {
         "Mineral": "Dry Quartz",
         "Type": "Viscous Dislocation Creep",
         "coefficients": {
@@ -335,7 +335,7 @@
             }
         }
     },
-    "Korenaga and Karato, 2008": {
+    "Dry Olivine, Viscous Dislocation Creep, Korenaga and Karato, 2008": {
         "citation": "Korenaga, J., and S.‐I. Karato (2008), A new analysis of experimental data on olivine rheology, J. Geophys. Res., 113, B02403, doi: 10.1029/2007JB005100.",
 	"onlinePDF": "https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2007JB005100",
         "Mineral": "Dry Olivine",
@@ -359,7 +359,7 @@
             }
         }
     },
-    "Kronenberg and Tullis, 1984": {
+    "Wet Quartz, Viscous Dislocation Creep, Kronenberg and Tullis, 1984": {
         "Mineral": "Wet Quartz",
         "Type": "Viscous Dislocation Creep",
         "coefficients": {
@@ -381,7 +381,7 @@
             }
         }
     },
-    "Paterson and Luan, 1990": {
+    "Wet Quartz, Viscous Dislocation Creep, Paterson and Luan, 1990": {
         "Mineral": "Wet Quartz",
         "Type": "Viscous Dislocation Creep",
         "coefficients": {
@@ -403,7 +403,7 @@
             }
         }
     },
-    "Ribacki et al., 2000": {
+    "Wet Anorthite, Viscous Dislocation Creep, Ribacki et al., 2000": {
         "Mineral": "Wet Anorthite",
         "Type": "Viscous Dislocation Creep",
         "coefficients": {
@@ -425,7 +425,7 @@
             }
         }
     },
-    "Tullis et al, 2002": {
+    "Wet Quartz, Viscous Dislocation Creep, Tullis et al, 2002": {
         "Mineral": "Wet Quartz",
         "Type": "Viscous Dislocation Creep",
         "coefficients": {
@@ -447,7 +447,7 @@
             }
         }
     },
-    "Wang et al., 2012": {
+    "Dry Mafic Granulite, Viscous Dislocation Creep, Wang et al., 2012": {
         "Mineral": "Dry Mafic Granulite",
         "Type": "Viscous Dislocation Creep",
         "coefficients": {
@@ -469,7 +469,7 @@
             }
         }
     },
-    "Mackwell et al., 1998": {
+    "Dry Maryland Diabase, Viscous Dislocation Creep, Mackwell et al., 1998": {
         "Mineral": "Dry Maryland Diabase",
         "Type": "Viscous Dislocation Creep",
         "coefficients": {

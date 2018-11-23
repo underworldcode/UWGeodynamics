@@ -652,11 +652,10 @@ class ViscousCreepRegistry(object):
         for key in self._viscousLaws.keys():
             mineral = self._viscousLaws[key]["Mineral"]
             rh_type = self._viscousLaws[key]["Type"]
-            short_rh_type = rh_type.split()
-            short_rh_type = [word for word in short_rh_type if word not in ["Viscous", "Creep"]]
-            short_rh_type = "_".join(short_rh_type)
-            name = "_".join([mineral, short_rh_type, key])
-            name = name.replace(" ", "_").replace(",", "").replace(".", "")
+            name = key.replace(",", "").replace(".", "")
+            name = [word.strip() for word in name.split()
+                    if word.lower() not in ["viscous", "creep"]]
+            name = "_".join(name)
             self._dir[name] = ViscousCreep(
                 name=key, mineral=mineral, creep_type=rh_type,
                 **self._viscousLaws[key]["coefficients"])
