@@ -1,7 +1,7 @@
 {
     "Brace and Kohlstedt, 1980": {
         "Mineral": "Wet Dunite",
-        "Type": "Strain Rate and Temperature Dependent Rheology",
+        "Type": "Viscous Dislocation Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",
@@ -23,7 +23,7 @@
     },
     "Gleason and Tullis, 1995": {
         "Mineral": "Wet Quartz",
-        "Type": "Strain Rate and Temperature Dependent Rheology",
+        "Type": "Viscous Dislocation Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",
@@ -45,7 +45,7 @@
     },
     "Goetze et al., 1978": {
         "Mineral": "Wet Quartz",
-        "Type": "Strain Rate and Temperature Dependent Rheology",
+        "Type": "Viscous Dislocation Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",
@@ -65,17 +65,17 @@
             }
         }
     },
-    "Hirth et al., 2003": {
-        "Mineral": "Wet Olivine",
-        "Type": "Strain Rate and Temperature Dependent Rheology",
+    "Hirth and Kohlstedt, 2003": {
+        "Mineral": "Dry Olivine",
+        "Type": "Viscous Dislocation Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",
-                "value": 520.0
+                "value": 530.0
             },
             "activationVolume": {
                 "units": "meter ** 3 / mole",
-                "value": 2.3e-05
+                "value": 6e-6
             },
             "grainSize": {
                 "units": "None",
@@ -87,7 +87,75 @@
             },
             "preExponentialFactor": {
                 "units": "1 / megapascal ** 3.5 / second",
-                "value": 1600.0
+                "value": 1.1e5
+            },
+            "stressExponent": {
+                "units": "None",
+                "value": 3.5
+            }
+        }
+    },
+    "Hirth and Kohlstedt, 2003": {
+        "Mineral": "Dry Olivine",
+        "Type": "Viscous Diffusion Creep",
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole",
+                "value": 375.0
+            },
+            "activationVolume": {
+                "units": "meter ** 3 / mole",
+                "value": 6e-6
+            },
+            "grainSize": {
+                "units": "None",
+                "value": 10000
+            },
+            "grainSizeExponent": {
+                "units": "None",
+                "value": 3.0
+            },
+            "preExponentialFactor": {
+                "units": "1 / megapascal / second",
+                "value": 1.5e9
+            },
+            "stressExponent": {
+                "units": "None",
+                "value": 1.0
+            },
+            "waterFugacity": {
+                "units": "None",
+                "value": 1000
+            },
+            "waterFugacityExponent": {
+                "units": "None",
+                "value": 0.0
+            }
+        }
+    },
+    "Hirth and Kohlstedt, 2003": {
+        "Mineral": "Wet Olivine",
+        "Type": "Viscous Dislocation Creep",
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole",
+                "value": 520
+            },
+            "activationVolume": {
+                "units": "meter ** 3 / mole",
+                "value": 23e-6
+            },
+            "grainSize": {
+                "units": "None",
+                "value": 10000
+            },
+            "grainSizeExponent": {
+                "units": "None",
+                "value": 0.0
+            },
+            "preExponentialFactor": {
+                "units": "1 / megapascal ** 3.5 / second",
+                "value": 1600
             },
             "stressExponent": {
                 "units": "None",
@@ -103,9 +171,107 @@
             }
         }
     },
+    "Hirth and Kohlstedt, 2003": {
+        "Mineral": "Wet Olivine",
+        "Type": "Viscous Diffusion Creep",
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole",
+                "value": 375 
+            },
+            "activationVolume": {
+                "units": "meter ** 3 / mole",
+                "value": 10e-6
+            },
+            "grainSize": {
+                "units": "None",
+                "value": 10000
+            },
+            "grainSizeExponent": {
+                "units": "None",
+                "value": 3.0
+            },
+            "preExponentialFactor": {
+                "units": "1 / megapascal / second",
+                "value": 2.5e7
+            },
+            "stressExponent": {
+                "units": "None",
+                "value": 1.0
+            },
+            "waterFugacity": {
+                "units": "None",
+                "value": 1000
+            },
+            "waterFugacityExponent": {
+                "units": "None",
+                "value": 1.0
+            }
+        }
+    },
+    "Faul and Jackson, 2007": {
+        "Mineral": "Wet Olivine",
+        "Type": "Viscous Diffusion Creep",
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole",
+                "value": 484.0 
+            },
+            "activationVolume": {
+                "units": "meter ** 3 / mole",
+                "value": 0.0
+            },
+            "grainSize": {
+                "units": "None",
+                "value": 5
+            },
+            "grainSizeExponent": {
+                "units": "None",
+                "value": 3.0
+            },
+            "preExponentialFactor": {
+                "units": "1 / megapascal**1.3 / second",
+                "value": 2.0e10
+            },
+            "stressExponent": {
+                "units": "None",
+                "value": 1.3
+            },
+            "waterFugacity": {
+                "units": "None",
+                "value": 1000
+            },
+            "waterFugacityExponent": {
+                "units": "None",
+                "value": 0.0
+            }
+        }
+    },
+    "Petersen, 2010": {
+        "Mineral": "Dry Olivine",
+        "Type": "Viscous Diffusion Creep",
+        "coefficients": {
+            "activationEnergy": {
+                "units": "kilojoule / mole",
+                "value": 300
+            },
+            "activationVolume": {
+                "units": "meter ** 3 / mole",
+                "value": 6e-6
+            },
+            "preExponentialFactor": {
+                "units": "1 / pascal / second",
+                "value": 1.49e-9
+            },
+            "stressExponent": {
+                "units": "None",
+                "value": 1.0
+            }
+        }
+    },
     "Karato and Wu, 1990": {
         "Mineral": "Dry Olivine",
-        "Type": "Strain Rate and Temperature Dependent Rheology",
+        "Type": "Viscous Dislocation Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",
@@ -125,9 +291,9 @@
             }
         }
     },
-    "Kirby et al., 1987": {
+    "Kirby and Kronenberg, 1987": {
         "Mineral": "Olivine",
-        "Type": "Strain Rate and Temperature Dependent Rheology",
+        "Type": "Viscous Dislocation Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",
@@ -149,7 +315,7 @@
     },
     "Koch et al., 1983": {
         "Mineral": "Dry Quartz",
-        "Type": "Strain Rate and Temperature Dependent Rheology",
+        "Type": "Viscous Dislocation Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",
@@ -169,11 +335,11 @@
             }
         }
     },
-    "Korenaga et al., 2008": {
+    "Korenaga and Karato, 2008": {
         "citation": "Korenaga, J., and S.‐I. Karato (2008), A new analysis of experimental data on olivine rheology, J. Geophys. Res., 113, B02403, doi: 10.1029/2007JB005100.",
 	"onlinePDF": "https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2007JB005100",
         "Mineral": "Dry Olivine",
-        "Type": "Strain Rate and Temperature Dependent Rheology",
+        "Type": "Viscous Dislocation Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",
@@ -193,9 +359,9 @@
             }
         }
     },
-    "Kronenberg et al., 1984": {
+    "Kronenberg and Tullis, 1984": {
         "Mineral": "Wet Quartz",
-        "Type": "Strain Rate and Temperature Dependent Rheology",
+        "Type": "Viscous Dislocation Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",
@@ -215,9 +381,9 @@
             }
         }
     },
-    "Paterson et al., 1990": {
+    "Paterson and Luan, 1990": {
         "Mineral": "Wet Quartz",
-        "Type": "Strain Rate and Temperature Dependent Rheology",
+        "Type": "Viscous Dislocation Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",
@@ -239,7 +405,7 @@
     },
     "Ribacki et al., 2000": {
         "Mineral": "Wet Anorthite",
-        "Type": "Strain Rate and Temperature Dependent Rheology",
+        "Type": "Viscous Dislocation Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",
@@ -261,7 +427,7 @@
     },
     "Tullis et al, 2002": {
         "Mineral": "Wet Quartz",
-        "Type": "Strain Rate and Temperature Dependent Rheology",
+        "Type": "Viscous Dislocation Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",
@@ -283,7 +449,7 @@
     },
     "Wang et al., 2012": {
         "Mineral": "Dry Mafic Granulite",
-        "Type": "Strain Rate and Temperature Dependent Rheology",
+        "Type": "Viscous Dislocation Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",
@@ -304,8 +470,8 @@
         }
     },
     "Mackwell et al., 1998": {
-        "Mineral": "Dry Maryland  Diabase",
-        "Type": "Strain Rate and Temperature Dependent Rheology",
+        "Mineral": "Dry Maryland Diabase",
+        "Type": "Viscous Dislocation Creep",
         "coefficients": {
             "activationEnergy": {
                 "units": "kilojoule / mole",

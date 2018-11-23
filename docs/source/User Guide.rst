@@ -692,11 +692,14 @@ Temperature and Pressure dependent densities
 Temperature and Pressure dependent densities can be assigned to a Material using
 the ``GEO.LinearDensity`` function which calculates:
 
-:math:`density = rho0 * (1 + (beta * deltaP) - (alpha * deltaT))`
+.. math::
 
-where $rho$ is the reference density, beta a factor, deltaP the difference
-between the pressure and the reference pressure, alpha is the thermal
-expansivity and deltaT is the difference between the temperature and the
+    `\rho = \rho_0 (1 + (\beta * \delta P) - (\alpha * \delta T))`
+    :linearDensity:
+
+where $rho$ is the reference density, `\beta` a factor, `\delta P` the difference
+between the pressure and the reference pressure, `\alpha` is the thermal
+expansivity and `\delta T` is the difference between the temperature and the
 reference temperature.
 
 .. code:: python
@@ -761,7 +764,7 @@ __ https://github.com/underworldcode/UWGeodynamics/blob/master/UWGeodynamics/res
   >>> material = GEO.Material(name="Material")
 
   >>> rh = GEO.ViscousCreepRegistry()
-  >>> material.viscosity = rh.Gleason_and_Tullis_1995
+  >>> material.viscosity = rh.Wet_Quartz_Dislocation_Gleason_and_Tullis_1995
 
 You can scale viscosity by using a multiplier.
 For example to make the **Gleason and Tullis, 1995** rheology
@@ -852,12 +855,11 @@ The yield value :math:`\sigma_y` is defined using a Drucker-Prager yield-criteri
 
 .. math::
 
-   :label: druckerprager
-
    \sigma_y = C \cos\phi + \sin\phi P \quad \text{(2D)}
 
    \sigma_y = \frac{6C\cos\phi}{\sqrt3(3-\sin\phi)} + 
               \frac{6\sin\phi P}{\sqrt3(3-\sin\phi)} \quad \text{(3D)}
+   :label: druckerprager
 
 
 Setting the friction angle :math:`\phi=0` gives the von Mises Criterion.
@@ -900,7 +902,8 @@ is calculated as:
 
 .. math::
 
-   \eta_{\text{eff}^{\text{vp}}} = \min{(\eta_{\text{eff}}^{\text{vcreep}}, \eta_{\text{eff}}^{\text{pl}})}
+   \eta_{\text{eff}^{\text{vp}}} = \min{(\eta_{\text{eff}}^{\text{vcreep}},
+   \eta_{\text{eff}}^{\text{pl}})}
 
         
 
@@ -980,7 +983,15 @@ melt fraction interval.
 The latent heat of fusion is embedded in the energy equation and affects the
 temperature field of the Model.
 
-The meltExpansion factor affects the density of the materials.
+The meltExpansion factor affects the density of the materials and equation
+:eq:`linearDensity` becomes:
+
+.. math::
+
+    `\rho = \rho_0 (1 + (\beta * \delta P) - (\alpha * \delta T) - \gamma F) `
+    :linearDensityMelt:
+
+with `\gamma` the factor of melt expansion and `F` the fraction of melt.
 
 The following example prescribes a decrease in viscosity of 3 order of
 magnitude over a range of 0.15 to 0.30 fraction of melt.
@@ -1130,16 +1141,16 @@ Frictional Boundaries can be set as follow:
 
 .. code:: python
 
-   >>> Model.set_frictional_boundary(left=True,
-   ...                               right=True,
-   ...                               bottom=True,
-   ...                               top=False,
-   ...                               friction=19.0,
+   >>> Model.set_frictional_boundary(left=frictionCoeff,
+   ...                               right=frictionCoeff,
+   ...                               bottom=frictionCoeff,
+   ...                               top=frictionCoeff,
    ...                               thickness=3)
 
 Where the *left*, *right*, *top*, *bottom* parametres indicate the side to which you
-apply a frictional boundary condition on. *friction* is the angle of
-friction (in degrees). *thickness* is the thickness of the boundary.
+apply a frictional boundary condition on. *frictionCoeff* is the friction coefficient
+(tangent of the friction angle in radians). *thickness* is the thickness of the boundary
+in number of elements.
 
 Isostasy
 ~~~~~~~~

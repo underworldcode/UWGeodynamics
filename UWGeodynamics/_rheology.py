@@ -1,4 +1,6 @@
 from __future__ import print_function, absolute_import
+
+
 import json
 import abc
 import underworld.function as fn
@@ -379,7 +381,8 @@ class ViscousCreep(Rheology):
                  meltFractionFactor=0.0,
                  f=1.0,
                  BurgersVectorLength=0.5e-9 * u.metre,
-                 mineral="unspecified"):
+                 mineral="unspecified",
+                 creep_type="unspecified"):
         """ Viscous Creep Rheology
 
         Deformation of materials on long timescale is predominantly achieved
@@ -427,6 +430,8 @@ class ViscousCreep(Rheology):
                 Burger vector length
             mineral :
                 Mineral associated to the flow law
+            creep_type :
+                "Dislocation, Diffusion"
 
         Returns
         -------
@@ -439,6 +444,7 @@ class ViscousCreep(Rheology):
 
         self.name = name
         self.mineral = mineral
+        self.creep_type = creep_type
         self.preExponentialFactor = preExponentialFactor
         self.stressExponent = stressExponent
         self.activationVolume = activationVolume
@@ -491,8 +497,8 @@ class ViscousCreep(Rheology):
         footer = "</table>"
         html = """
         <tr>
-            <th colspan="2" style="text-align:center;">Viscous Creep Rheology: {0}</th>
-        </tr>""".format(self.name)
+            <th colspan="2" style="text-align:center;">{0}: {1}</th>
+        </tr>""".format(self.creep_type, self.name)
         for key, val in attributes.items():
             if val is not None:
                 html += '<tr><td style="text-align:left;width:20%;">{0}</td><td style="text-align:left;width:80%">{1}</td></tr>'.format(key, val)
@@ -645,9 +651,14 @@ class ViscousCreepRegistry(object):
         self._dir = {}
         for key in self._viscousLaws.keys():
             mineral = self._viscousLaws[key]["Mineral"]
-            name = key.replace(" ", "_").replace(",", "").replace(".", "")
+            rh_type = self._viscousLaws[key]["Type"]
+            short_rh_type = rh_type.split()
+            short_rh_type = [word for word in short_rh_type if word not in ["Viscous", "Creep"]]
+            short_rh_type = "_".join(short_rh_type)
+            name = "_".join([mineral, short_rh_type, key])
+            name = name.replace(" ", "_").replace(",", "").replace(".", "")
             self._dir[name] = ViscousCreep(
-                name=key, mineral=mineral,
+                name=key, mineral=mineral, creep_type=rh_type,
                 **self._viscousLaws[key]["coefficients"])
 
             try:
