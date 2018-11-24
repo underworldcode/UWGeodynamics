@@ -62,6 +62,7 @@ rcParams =  {
     "shearHeating": [False, validate_bool],
     "surface.pressure.normalization": [True, validate_bool],
     "pressure.smoothing": [True, validate_bool],
-    "advection.diffusion.method": ["SUPG", validate_string]
-    }
+    "advection.diffusion.method": ["SUPG", validate_string],
+    "rheologies.combine.method": ["Min / Max", validate_string]
+}
 

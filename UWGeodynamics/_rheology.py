@@ -555,8 +555,8 @@ class ViscousCreep(Rheology):
         fH2O = nd(self.waterFugacity)
         I = self.strainRateInvariantField
         f = self.f
-        F = nd(self.meltFraction)
-        alpha = nd(self.meltFractionFactor)
+        #F = self.meltFraction
+        #alpha = self.meltFractionFactor
         R = nd(self.constantGas)
         b = nd(self.BurgersVectorLength)
 
@@ -573,8 +573,8 @@ class ViscousCreep(Rheology):
         if r and fH2O:
             mu_eff *= fH2O**(-r / n)
 
-        if F:
-            mu_eff *= fn.math.exp(-1.0 * alpha * F / n)
+        #if F:
+        #    mu_eff *= fn.math.exp(-1.0 * alpha * F / n)
 
         if T:
             mu_eff *= fn.math.exp((Q + P * Va) / (R * T * n))
