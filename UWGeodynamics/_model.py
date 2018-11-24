@@ -1082,6 +1082,7 @@ class Model(Material):
                                           nodeDofCount=1)
             self._temperatureDot.data[...] = 0.
             self._heatFlux.data[...] = 0.
+            self.mesh_variables["temperature"] = self._temperature
             self.restart_variables["temperature"] = self._temperature
         else:
             self._temperature = False
