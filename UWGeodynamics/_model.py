@@ -1870,7 +1870,6 @@ class Model(Material):
             duration = time + nd(duration)
         else:
             units = rcParams["time.SIunits"]
-            duration = time
 
         if not nstep:
             nstep = stepDone
@@ -1895,7 +1894,7 @@ class Model(Material):
         if checkpoint_interval or checkpoint_times:
             self.checkpoint()
 
-        while time < duration or stepDone < nstep:
+        while (duration and time < duration) or stepDone < nstep:
 
             self.preSolveHook()
 
