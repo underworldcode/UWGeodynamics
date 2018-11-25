@@ -3,6 +3,7 @@ import os
 import sys
 from collections import OrderedDict
 import numpy as np
+import h5py
 import underworld as uw
 import underworld.function as fn
 from underworld.function.exception import SafeMaths as Safe
@@ -34,246 +35,6 @@ _dim_gravity = {'[length]': 1.0, '[time]': -2.0}
 _dim_time = {'[time]': 1.0}
 
 
-class _ViscosityFunction():
-
-    def __init__(self, Model):
-        """ Build Viscosity Function """
-
-        self.Model = Model
-        self.eta_eff = None
-        self.plastic_eta = None
-        self.viscous_eta = None
-        self.elastic_eta = None
-
-    def get_effective_eta(self):
-        """ Effective viscosity"""
-
-        Model = self.Model
-
-        if rcParams["rheologies.combine.method"] == "Harmonic Mean":
-            # Harmonic mean
-            n = 1.0
-            eta_eff = 1.0 / self._getViscousEta()
-
-            if any([material.plasticity for material in Model.materials]):
-                eta_eff += 1.0 / self._getPlasticEta()
-                n += 1.0
-
-            if any([material.elasticity for material in Model.materials]):
-                eta_eff = 1.0 / self._getElasticEta()
-                n += 1.0
-
-            eta_eff = n * eta_eff**-1
-
-        if rcParams["rheologies.combine.method"] == "Min / Max":
-            if any([material.elasticity for material in Model.materials]):
-                visc = self._getViscousEta()
-                visc = self._getElasticEta()
-            else:
-                visc = self._getViscousEta()
-            if any([material.plasticity for material in Model.materials]):
-                eta_eff = fn.misc.min(visc, self._getPlasticEta())
-            else:
-                eta_eff = visc
-
-        # Melt Modifier
-        fac = self._melt_modifierFn()
-        if fac:
-            eta_eff *= fac
-
-        # Viscosity Limiter
-        self.eff_eta = self._viscosity_limiter(eta_eff)
-
-        return self.eff_eta
-
-    @property
-    def _isYielding(self):
-
-        Model = self.Model
-
-        yield_condition = [(self.eff_eta < self.viscous_eta,
-                            Model.strainRate_2ndInvariant),
-                           (True, 0.0)]
-
-        # Do not yield at the very first solve
-        if Model._solution_exist.value:
-            return fn.branching.conditional(yield_condition)
-        else:
-            return fn.misc.constant(0.0)
-
-    def _getViscousEta(self):
-
-        Model = self.Model
-
-        ViscosityMap = {}
-
-        # Viscous behavior
-        for material in Model.materials:
-            if material.viscosity:
-                ViscosityHandler = material.viscosity
-                ViscosityHandler.pressureField = Model.pressureField
-                ViscosityHandler.strainRateInvariantField = (
-                    Model.strainRate_2ndInvariant)
-                ViscosityHandler.temperatureField = Model.temperature
-                ViscosityMap[material.index] = ViscosityHandler.muEff
-
-        self.viscous_eta = fn.branching.map(fn_key=Model.materialField,
-                                            mapping=ViscosityMap)
-
-        return self.viscous_eta
-
-    def _melt_modifierFn(self):
-
-        Model = self.Model
-
-        melt_modif = {}
-        for material in Model.materials:
-            if material.viscosity and material.viscosityChange != 1.0:
-                X1 = material.viscosityChangeX1
-                X2 = material.viscosityChangeX2
-                change = (1.0 + (material.viscosityChange - 1.0) /
-                          (X2 - X1) * (Model.meltField - X1))
-                conditions = [(Model.meltField < X1, 1.0),
-                              (Model.meltField > X2, material.viscosityChange),
-                              (True, change)]
-                melt_modif[material.index] = fn.branching.conditional(conditions)
-
-        if melt_modif:
-
-            return fn.branching.map(fn_key=Model.materialField,
-                                    mapping=melt_modif,
-                                    fn_default=1.0)
-
-    def _getPlasticEta(self):
-
-        Model = self.Model
-
-        PlasticityMap = {}
-        for material in Model.materials:
-            if material.plasticity:
-
-                YieldHandler = material.plasticity
-                YieldHandler.pressureField = Model.pressureField
-                YieldHandler.plasticStrain = Model.plasticStrain
-
-                if Model.mesh.dim == 2:
-                    yieldStress = YieldHandler._get_yieldStress2D()
-
-                if Model.mesh.dim == 3:
-                    yieldStress = YieldHandler._get_yieldStress3D()
-
-                if material.stressLimiter:
-                    stressLimiter = StressLimiter(material.stressLimiter)
-                    yieldStress = stressLimiter.apply(yieldStress)
-                elif Model.stressLimiter:
-                    stressLimiter = StressLimiter(Model.stressLimiter)
-                    yieldStress = stressLimiter.apply(yieldStress)
-
-                if material.elasticity:
-                    ElasticityHandler = material.elasticity
-                    mu = nd(ElasticityHandler.shear_modulus)
-                    dt_e = nd(ElasticityHandler.observation_time)
-                    strainRate = fn.tensor.symmetric(
-                        Model.velocityField.fn_gradient)
-                    D_eff = (strainRate
-                             + 0.5
-                             * Model._previousStressField
-                             / (mu * dt_e))
-                    SRInv = fn.tensor.second_invariant(D_eff)
-                else:
-                    SRInv = Model.strainRate_2ndInvariant
-
-                eij = fn.branching.conditional(
-                    [(SRInv < nd(1e-20 / u.second), nd(1e-20 / u.second)),
-                     (True, SRInv)])
-
-                muEff = 0.5 * yieldStress / eij
-                PlasticityMap[material.index] = muEff
-
-            if Model.frictionalBCs is not None:
-                from copy import copy
-
-                # Only affect plastic materials
-                if material.plasticity:
-
-                    YieldHandler = copy(material.plasticity)
-                    YieldHandler.frictionCoefficient = Model.frictionalBCs.friction
-                    YieldHandler.frictionAfterSoftening = Model.frictionalBCs.friction
-                    YieldHandler.pressureField = Model.pressureField
-                    YieldHandler.plasticStrain = Model.plasticStrain
-
-                    if Model.mesh.dim == 2:
-                        yieldStress = YieldHandler._get_yieldStress2D()
-
-                    if Model.mesh.dim == 3:
-                        yieldStress = YieldHandler._get_yieldStress3D()
-
-                    eij = fn.branching.conditional(
-                        [(Model.strainRate_2ndInvariant <= 1e-20, 1e-20),
-                         (True, Model.strainRate_2ndInvariant)])
-
-                    muEff = 0.5 * yieldStress / eij
-
-                    conditions = [(Model.frictionalBCs._mask > 0.0, muEff),
-                                  (True, PlasticityMap[material.index])]
-
-                    PlasticityMap[material.index] = (
-                        fn.branching.conditional(conditions)
-                    )
-
-        self.plastic_eta = fn.branching.map(fn_key=Model.materialField,
-                                            mapping=PlasticityMap,
-                                            fn_default=self._getViscousEta())
-        return self.plastic_eta
-
-    def _getElasticEta(self):
-
-        Model = self.Model
-
-        ElasticEtaMap = {}
-
-        for material in Model.materials:
-            if material.elasticity:
-                ElasticityHandler = material.elasticity
-                ElasticityHandler.viscosity = self.viscous_eta
-                ElasticEtaMap[material.index] = ElasticityHandler.muEff
-
-        if ElasticEtaMap:
-
-            self.elastic_eta = fn.branching.map(fn_key=Model.materialField,
-                                                mapping=ElasticEtaMap,
-                                                fn_default=self.viscous_eta)
-        else:
-            self.elastic_eta = self.viscous_eta
-
-        return self.elastic_eta
-
-    def _viscosity_limiter(self, eta):
-
-        Model = self.Model
-
-        default = ViscosityLimiter(Model.minViscosity, Model.maxViscosity)
-        default = default.apply(eta)
-        limiter_map = {}
-
-        for material in Model.materials:
-            minViscosity = Model.minViscosity
-            maxViscosity = Model.maxViscosity
-            if material.minViscosity:
-                minViscosity = material.minViscosity
-            if material.maxViscosity:
-                maxViscosity = material.maxViscosity
-            limiter = ViscosityLimiter(minViscosity, maxViscosity)
-            limiter_map[material.index] = limiter.apply(eta)
-
-        if limiter_map:
-            return fn.branching.map(fn_key=Model.materialField,
-                                    mapping=limiter_map,
-                                    fn_default=default)
-        else:
-            return default
-
-
 class Model(Material):
     """UWGeodynamic Model Class"""
 
@@ -292,8 +53,8 @@ class Model(Material):
         ----------
 
             elementRes : tuple
-                Resolution of the mesh in number of elements for each axis (degree
-                of freedom)
+                Resolution of the mesh in number of elements
+                for each axis (degree of freedom)
             minCoord : tuple
                 Minimum coordinates for each axis.
             maxCoord : tuple
@@ -546,6 +307,7 @@ class Model(Material):
         self.add_swarm_variable("_stressField", dataType="double",
                                 count=1, projected="submesh")
 
+
     def __getitem__(self, name):
         """__getitem__
 
@@ -599,187 +361,7 @@ class Model(Material):
         self._outputDir = value
 
     def restart(self, step, restartDir):
-        """restart
-
-        Parameters
-        ----------
-
-        step : int
-            Step from which you want to restart the model.
-            Must be an int (step number either absolute or relative)
-            if step == -1, run the last available step
-            if step == -2, run the second last etc.
-        restartDir : path
-            Directory that contains the outputs of the model
-            you want to restart from.
-
-        Returns
-        -------
-
-        This function returns None
-        """
-
-        if not isinstance(step, int):
-            raise ValueError("step must be an int or a bool")
-
-        if not os.path.exists(restartDir):
-            raise ValueError("restartDir must be a path to an existing folder")
-
-        # Do not raise and error idf directory is empty, just run
-        # the model...
-        if not os.listdir(restartDir):
-            return
-
-        # Look for step with swarm available
-        indices = [int(os.path.splitext(filename)[0].split("-")[-1])
-                   for filename in os.listdir(restartDir) if "-" in
-                   filename]
-        indices.sort()
-
-        if step < 0:
-            step = indices[step]
-
-        if step not in indices:
-            raise ValueError("Cannot find step in specified folder")
-
-        # Ready for restart
-
-        # Get time from swarm-%.h5 file
-        import h5py
-        with h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r",
-                       driver="mpio", comm=MPI.COMM_WORLD) as h5f:
-            self.time = u.Quantity(h5f.attrs.get("time"))
-
-        if uw.rank() == 0:
-            print(80 * "=" + "\n")
-            print("Restarting Model from Step {0} at Time = {1}\n".format(step,self.time))
-            print('(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
-            print(80 * "=" + "\n")
-            sys.stdout.flush()
-
-        self.checkpointID = step
-
-        # Reload deformed mesh if advector is present
-        if self._advector:
-            self.mesh.load(os.path.join(restartDir, 'mesh-%s.h5' % step))
-        # Load mesh
-        else:
-            self.mesh.load(os.path.join(restartDir, "mesh.h5"))
-
-        if uw.rank() == 0:
-            print("Mesh loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
-            sys.stdout.flush()
-
-        self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
-        self.swarm.load(os.path.join(restartDir, 'swarm-%s.h5' % step))
-
-        if uw.rank() == 0:
-            print("Swarm loaded" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
-            sys.stdout.flush()
-
-        self._initialize()
-
-        # Reload all the restart variables
-        for field in self.restart_variables:
-            if field == "temperature":
-                continue
-            obj = getattr(self, field)
-            path = os.path.join(restartDir, field + "-%s.h5" % step)
-            if uw.rank() == 0:
-                print("Reloading field {0} from {1}".format(field, path))
-                sys.stdout.flush()
-            obj.load(str(path))
-            if uw.rank() == 0:
-                print("{0} loaded".format(field) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
-                sys.stdout.flush()
-
-        # Temperature is a special case...
-        path = os.path.join(restartDir, "temperature" + "-%s.h5" % step)
-        if os.path.exists(path):
-            if not self.temperature:
-                self.temperature = True
-            obj = getattr(self, "temperature")
-            if uw.rank() == 0:
-                print("Reloading field {0} from {1}".format("temperature", path))
-                sys.stdout.flush()
-            obj.load(str(path))
-            if uw.rank() == 0:
-                print("Temperature loaded" + '(' +
-                        datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
-                sys.stdout.flush()
-
-        # Reload Passive Tracers
-        for key, tracer in self.passive_tracers.items():
-
-            if uw.rank() == 0:
-                print("Reloading {0} passive tracers".format(tracer.name))
-                sys.stdout.flush()
-
-            fname = tracer.name + '-%s.h5' % step
-            fpath = os.path.join(restartDir, fname)
-            with h5py.File(fpath, "r", driver="mpio", comm=MPI.COMM_WORLD) as h5f:
-                vertices = h5f["data"].value * u.Quantity(h5f.attrs["units"])
-                vertices = [vertices[:, dim] for dim in range(self.mesh.dim)]
-                obj = PassiveTracers(self.mesh,
-                                     self.velocityField,
-                                     tracer.name,
-                                     vertices=vertices,
-                                     particleEscape=tracer.particleEscape)
-
-            attr_name = tracer.name.lower() + "_tracers"
-            setattr(self, attr_name, obj)
-            self.passive_tracers[key] = obj
-            if uw.rank() == 0:
-                print("{0} loaded".format(tracer.name) + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
-                sys.stdout.flush()
-
-        if isinstance(self.surfaceProcesses,
-                      (surfaceProcesses.SedimentationThreshold,
-                       surfaceProcesses.ErosionThreshold,
-                       surfaceProcesses.ErosionAndSedimentationThreshold)):
-
-            obj = self.surfaceProcesses
-            obj.Model = self
-            obj.timeField = self.timeField
-
-        # Restart Badlands if we are running a coupled model
-        if isinstance(self.surfaceProcesses, surfaceProcesses.Badlands):
-            badlands_model = self.surfaceProcesses
-            restartFolder = badlands_model.restartFolder
-            restartStep = badlands_model.restartStep
-
-            # Parse xmf for the last timestep time
-            import xml.etree.ElementTree as etree
-            xmf = restartFolder + "/xmf/tin.time" + str(restartStep) + ".xmf"
-            tree = etree.parse(xmf)
-            root = tree.getroot()
-            badlands_time = float(root[0][0][0].attrib["Value"])
-            uw_time = self.time.to(u.years).magnitude
-
-            if np.abs(badlands_time - uw_time) > 1:
-                raise ValueError("""Time in Underworld and Badlands outputs
-                                 differs:\n
-                                 Badlands: {0}\n
-                                 Underworld: {1}""".format(badlands_time,
-                                                           uw_time))
-
-            airIndex = badlands_model.airIndex
-            sedimentIndex = badlands_model.sedimentIndex
-            XML = badlands_model.XML
-            resolution = badlands_model.resolution
-            checkpoint_interval = badlands_model.checkpoint_interval
-
-            self.surfaceProcesses = surfaceProcesses.Badlands(
-                airIndex, sedimentIndex,
-                XML, resolution,
-                checkpoint_interval,
-                restartFolder=restartFolder,
-                restartStep=restartStep)
-            if uw.rank() == 0:
-                print("Badlands restarted" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
-                sys.stdout.flush()
-
-        return
+        _RestartFunction(self).restart(step, restartDir)
 
     @property
     def projMaterialField(self):
@@ -1847,6 +1429,8 @@ class Model(Material):
 
         """
 
+        print("ok")
+        sys.stdout.flush()
         if uw.rank() == 0:
             print("""Running with UWGeodynamics version {0}""".format(full_version))
             sys.stdout.flush()
@@ -1975,7 +1559,7 @@ class Model(Material):
 
         if uw.rank() == 0:
             print("Finalising Model")
-        self.checkpoint(checkpointID=self.checkpointID)
+        #self.checkpoint(checkpointID=self.checkpointID)
         if uw.rank() == 0:
             print("Done")
 
@@ -2457,21 +2041,6 @@ class Model(Material):
 
         uw.barrier()
 
-    def velocity_rms(self):
-        """Root Mean Squared(RMS) Velocity Function.
-
-        Returns
-        -------
-        The rms of the velocity field
-
-        """
-        vdotv_fn = uw.function.math.dot(self.velocityField, self.velocityField)
-        fn_2_integrate = (1., vdotv_fn)
-        (v2, vol) = self.mesh.integrate(fn=fn_2_integrate)
-        import math
-        vrms = math.sqrt(v2 / vol)
-        return vrms
-
 
 _html_global = OrderedDict()
 _html_global["Number of Elements"] = "elementRes"
@@ -2489,3 +2058,442 @@ def _model_html_repr(Model):
         html += "<tr><td>{0}</td><td>{1}</td></tr>".format(key, value)
 
     return header + html + footer
+
+
+class _ViscosityFunction():
+
+    def __init__(self, Model):
+        """ Build Viscosity Function """
+
+        self.Model = Model
+        self.eta_eff = None
+        self.plastic_eta = None
+        self.viscous_eta = None
+        self.elastic_eta = None
+
+    def get_effective_eta(self):
+        """ Effective viscosity"""
+
+        Model = self.Model
+
+        if rcParams["rheologies.combine.method"] == "Harmonic Mean":
+            # Harmonic mean
+            n = 1.0
+            eta_eff = 1.0 / self._getViscousEta()
+
+            if any([material.plasticity for material in Model.materials]):
+                eta_eff += 1.0 / self._getPlasticEta()
+                n += 1.0
+
+            if any([material.elasticity for material in Model.materials]):
+                eta_eff = 1.0 / self._getElasticEta()
+                n += 1.0
+
+            eta_eff = n * eta_eff**-1
+
+        if rcParams["rheologies.combine.method"] == "Min / Max":
+            if any([material.elasticity for material in Model.materials]):
+                visc = self._getViscousEta()
+                visc = self._getElasticEta()
+            else:
+                visc = self._getViscousEta()
+            if any([material.plasticity for material in Model.materials]):
+                eta_eff = fn.misc.min(visc, self._getPlasticEta())
+            else:
+                eta_eff = visc
+
+        # Melt Modifier
+        fac = self._melt_modifierFn()
+        if fac:
+            eta_eff *= fac
+
+        # Viscosity Limiter
+        self.eff_eta = self._viscosity_limiter(eta_eff)
+
+        return self.eff_eta
+
+    @property
+    def _isYielding(self):
+
+        Model = self.Model
+
+        yield_condition = [(self.eff_eta < self.viscous_eta,
+                            Model.strainRate_2ndInvariant),
+                           (True, 0.0)]
+
+        # Do not yield at the very first solve
+        if Model._solution_exist.value:
+            return fn.branching.conditional(yield_condition)
+        else:
+            return fn.misc.constant(0.0)
+
+    def _getViscousEta(self):
+
+        Model = self.Model
+
+        ViscosityMap = {}
+
+        # Viscous behavior
+        for material in Model.materials:
+            if material.viscosity:
+                ViscosityHandler = material.viscosity
+                ViscosityHandler.pressureField = Model.pressureField
+                ViscosityHandler.strainRateInvariantField = (
+                    Model.strainRate_2ndInvariant)
+                ViscosityHandler.temperatureField = Model.temperature
+                ViscosityMap[material.index] = ViscosityHandler.muEff
+
+        self.viscous_eta = fn.branching.map(fn_key=Model.materialField,
+                                            mapping=ViscosityMap)
+
+        return self.viscous_eta
+
+    def _melt_modifierFn(self):
+
+        Model = self.Model
+
+        melt_modif = {}
+        for material in Model.materials:
+            if material.viscosity and material.viscosityChange != 1.0:
+                X1 = material.viscosityChangeX1
+                X2 = material.viscosityChangeX2
+                change = (1.0 + (material.viscosityChange - 1.0) /
+                          (X2 - X1) * (Model.meltField - X1))
+                conditions = [(Model.meltField < X1, 1.0),
+                              (Model.meltField > X2, material.viscosityChange),
+                              (True, change)]
+                melt_modif[material.index] = fn.branching.conditional(conditions)
+
+        if melt_modif:
+
+            return fn.branching.map(fn_key=Model.materialField,
+                                    mapping=melt_modif,
+                                    fn_default=1.0)
+
+    def _getPlasticEta(self):
+
+        Model = self.Model
+
+        PlasticityMap = {}
+        for material in Model.materials:
+            if material.plasticity:
+
+                YieldHandler = material.plasticity
+                YieldHandler.pressureField = Model.pressureField
+                YieldHandler.plasticStrain = Model.plasticStrain
+
+                if Model.mesh.dim == 2:
+                    yieldStress = YieldHandler._get_yieldStress2D()
+
+                if Model.mesh.dim == 3:
+                    yieldStress = YieldHandler._get_yieldStress3D()
+
+                if material.stressLimiter:
+                    stressLimiter = StressLimiter(material.stressLimiter)
+                    yieldStress = stressLimiter.apply(yieldStress)
+                elif Model.stressLimiter:
+                    stressLimiter = StressLimiter(Model.stressLimiter)
+                    yieldStress = stressLimiter.apply(yieldStress)
+
+                if material.elasticity:
+                    ElasticityHandler = material.elasticity
+                    mu = nd(ElasticityHandler.shear_modulus)
+                    dt_e = nd(ElasticityHandler.observation_time)
+                    strainRate = fn.tensor.symmetric(
+                        Model.velocityField.fn_gradient)
+                    D_eff = (strainRate
+                             + 0.5
+                             * Model._previousStressField
+                             / (mu * dt_e))
+                    SRInv = fn.tensor.second_invariant(D_eff)
+                else:
+                    SRInv = Model.strainRate_2ndInvariant
+
+                eij = fn.branching.conditional(
+                    [(SRInv < nd(1e-20 / u.second), nd(1e-20 / u.second)),
+                     (True, SRInv)])
+
+                muEff = 0.5 * yieldStress / eij
+                PlasticityMap[material.index] = muEff
+
+            if Model.frictionalBCs is not None:
+                from copy import copy
+
+                # Only affect plastic materials
+                if material.plasticity:
+
+                    YieldHandler = copy(material.plasticity)
+                    YieldHandler.frictionCoefficient = Model.frictionalBCs.friction
+                    YieldHandler.frictionAfterSoftening = Model.frictionalBCs.friction
+                    YieldHandler.pressureField = Model.pressureField
+                    YieldHandler.plasticStrain = Model.plasticStrain
+
+                    if Model.mesh.dim == 2:
+                        yieldStress = YieldHandler._get_yieldStress2D()
+
+                    if Model.mesh.dim == 3:
+                        yieldStress = YieldHandler._get_yieldStress3D()
+
+                    eij = fn.branching.conditional(
+                        [(Model.strainRate_2ndInvariant <= 1e-20, 1e-20),
+                         (True, Model.strainRate_2ndInvariant)])
+
+                    muEff = 0.5 * yieldStress / eij
+
+                    conditions = [(Model.frictionalBCs._mask > 0.0, muEff),
+                                  (True, PlasticityMap[material.index])]
+
+                    PlasticityMap[material.index] = (
+                        fn.branching.conditional(conditions)
+                    )
+
+        self.plastic_eta = fn.branching.map(fn_key=Model.materialField,
+                                            mapping=PlasticityMap,
+                                            fn_default=self._getViscousEta())
+        return self.plastic_eta
+
+    def _getElasticEta(self):
+
+        Model = self.Model
+
+        ElasticEtaMap = {}
+
+        for material in Model.materials:
+            if material.elasticity:
+                ElasticityHandler = material.elasticity
+                ElasticityHandler.viscosity = self.viscous_eta
+                ElasticEtaMap[material.index] = ElasticityHandler.muEff
+
+        if ElasticEtaMap:
+
+            self.elastic_eta = fn.branching.map(fn_key=Model.materialField,
+                                                mapping=ElasticEtaMap,
+                                                fn_default=self.viscous_eta)
+        else:
+            self.elastic_eta = self.viscous_eta
+
+        return self.elastic_eta
+
+    def _viscosity_limiter(self, eta):
+
+        Model = self.Model
+
+        default = ViscosityLimiter(Model.minViscosity, Model.maxViscosity)
+        default = default.apply(eta)
+        limiter_map = {}
+
+        for material in Model.materials:
+            minViscosity = Model.minViscosity
+            maxViscosity = Model.maxViscosity
+            if material.minViscosity:
+                minViscosity = material.minViscosity
+            if material.maxViscosity:
+                maxViscosity = material.maxViscosity
+            limiter = ViscosityLimiter(minViscosity, maxViscosity)
+            limiter_map[material.index] = limiter.apply(eta)
+
+        if limiter_map:
+            return fn.branching.map(fn_key=Model.materialField,
+                                    mapping=limiter_map,
+                                    fn_default=default)
+        else:
+            return default
+
+
+class _RestartFunction(object):
+
+    def __init__(self, Model):
+
+        self.Model = Model
+
+    def restart(self, step, restartDir):
+        """restart
+
+        Parameters
+        ----------
+
+        step : int
+            Step from which you want to restart the model.
+            Must be an int (step number either absolute or relative)
+            if step == -1, run the last available step
+            if step == -2, run the second last etc.
+        restartDir : path
+            Directory that contains the outputs of the model
+            you want to restart from.
+
+        Returns
+        -------
+
+        This function returns None
+        """
+        Model = self.Model
+
+        if not isinstance(step, int):
+            raise ValueError("step must be an int or a bool")
+
+        if not os.path.exists(restartDir):
+            raise ValueError("restartDir must be a path to an existing folder")
+
+        # Do not raise and error idf directory is empty, just run
+        # the model...
+        if not os.listdir(restartDir):
+            return
+
+        indices = self.find_available_steps(restartDir)
+        step = indices[step] if step < 0 else step
+        Model.checkpointID = step
+
+        if step not in indices:
+            raise ValueError("Cannot find step in specified folder")
+
+        # Ready for restart
+
+        # Get time from swarm-%.h5 file
+        with h5py.File(os.path.join(restartDir, "swarm-%s.h5" % step), "r",
+                       driver="mpio", comm=MPI.COMM_WORLD) as h5f:
+
+            Model.time = u.Quantity(h5f.attrs.get("time"))
+
+        if uw.rank() == 0:
+            print(80 * "=" + "\n")
+            print("Restarting Model from Step {0} at Time = {1}\n".format(step, Model.time))
+            print('(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+            print(80 * "=" + "\n")
+            sys.stdout.flush()
+
+        self.reload_mesh(step, restartDir)
+        self.reload_swarm(step, restartDir)
+        Model._initialize()
+        self.reload_restart_variables(step, restartDir)
+
+        # Reload Passive Tracers
+        for key, tracer in Model.passive_tracers.items():
+            self.reload_passive_tracers(key, tracer, step, restartDir)
+
+        if isinstance(Model.surfaceProcesses,
+                      (surfaceProcesses.SedimentationThreshold,
+                       surfaceProcesses.ErosionThreshold,
+                       surfaceProcesses.ErosionAndSedimentationThreshold)):
+
+            obj = Model.surfaceProcesses
+            obj.Model = Model
+            obj.timeField = Model.timeField
+
+        # Restart Badlands if we are running a coupled model
+        if isinstance(Model.surfaceProcesses, surfaceProcesses.Badlands):
+            self.restart_badlands()
+
+        return
+
+    def find_available_steps(self, restartDir):
+
+        # Look for step with swarm available
+        indices = [int(os.path.splitext(filename)[0].split("-")[-1])
+                   for filename in os.listdir(restartDir) if "-" in
+                   filename]
+        indices.sort()
+        return indices
+
+    def reload_mesh(self, step, restartDir):
+
+        Model = self.Model
+
+        if Model._advector:
+            Model.mesh.load(os.path.join(restartDir, 'mesh-%s.h5' % step))
+        else:
+            Model.mesh.load(os.path.join(restartDir, "mesh.h5"))
+
+        if uw.rank() == 0:
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print("Mesh loaded" + '(' + now + ')')
+            sys.stdout.flush()
+
+    def reload_swarm(self, step, restartDir):
+
+        Model = self.Model
+        Model.swarm = Swarm(mesh=Model.mesh, particleEscape=True)
+        Model.swarm.load(os.path.join(restartDir, 'swarm-%s.h5' % step))
+
+        if uw.rank() == 0:
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print("Swarm loaded" + '(' + now + ')')
+            sys.stdout.flush()
+
+    def reload_restart_variables(self, step, restartDir):
+
+        Model = self.Model
+
+        for field in Model.restart_variables:
+            obj = getattr(Model, field)
+            path = os.path.join(restartDir, field + "-%s.h5" % step)
+            obj.load(str(path))
+            if uw.rank() == 0:
+                now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                print("{0} loaded".format(field) + '(' + now + ')')
+                sys.stdout.flush()
+
+    def reload_passive_tracers(self, key, tracer, step, restartDir):
+
+        Model = self.Model
+
+        fname = tracer.name + '-%s.h5' % step
+        fpath = os.path.join(restartDir, fname)
+
+        with h5py.File(fpath, "r", driver="mpio", comm=MPI.COMM_WORLD) as h5f:
+
+            vertices = h5f["data"].value * u.Quantity(h5f.attrs["units"])
+            vertices = [vertices[:, dim] for dim in range(Model.mesh.dim)]
+            obj = PassiveTracers(Model.mesh,
+                                 Model.velocityField,
+                                 tracer.name,
+                                 vertices=vertices,
+                                 particleEscape=tracer.particleEscape)
+
+        attr_name = tracer.name.lower() + "_tracers"
+        setattr(Model, attr_name, obj)
+        Model.passive_tracers[key] = obj
+
+        if uw.rank() == 0:
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print("{0} loaded".format(tracer.name)+ '(' + now  + ')')
+            sys.stdout.flush()
+
+    def restart_badlands(self):
+
+        Model = self.Model
+
+        badlands_model = Model.surfaceProcesses
+        restartFolder = badlands_model.restartFolder
+        restartStep = badlands_model.restartStep
+
+        # Parse xmf for the last timestep time
+        import xml.etree.ElementTree as etree
+        xmf = restartFolder + "/xmf/tin.time" + str(restartStep) + ".xmf"
+        tree = etree.parse(xmf)
+        root = tree.getroot()
+        badlands_time = float(root[0][0][0].attrib["Value"])
+        uw_time = self.time.to(u.years).magnitude
+
+        if np.abs(badlands_time - uw_time) > 1:
+            raise ValueError("""Time in Underworld and Badlands outputs
+                             differs:\n
+                             Badlands: {0}\n
+                             Underworld: {1}""".format(badlands_time,
+                                                       uw_time))
+
+        airIndex = badlands_model.airIndex
+        sedimentIndex = badlands_model.sedimentIndex
+        XML = badlands_model.XML
+        resolution = badlands_model.resolution
+        checkpoint_interval = badlands_model.checkpoint_interval
+
+        Model.surfaceProcesses = surfaceProcesses.Badlands(
+            airIndex, sedimentIndex,
+            XML, resolution,
+            checkpoint_interval,
+            restartFolder=restartFolder,
+            restartStep=restartStep)
+
+        if uw.rank() == 0:
+            print("Badlands restarted" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+            sys.stdout.flush()
