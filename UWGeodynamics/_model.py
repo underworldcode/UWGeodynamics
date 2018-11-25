@@ -119,10 +119,9 @@ class Model(Material):
         self.maxCoord = maxCoord
         self.top = maxCoord[-1]
         self.bottom = minCoord[-1]
-        self.dimension = dim = len(maxCoord)
 
         if not gravity:
-            self.gravity = [0.0 for val in range(self.dimension)]
+            self.gravity = [0.0 for val in maxCoord]
             self.gravity[-1] = -1.0 * rcParams["gravity"]
             self.gravity = tuple(self.gravity)
         else:
@@ -144,13 +143,13 @@ class Model(Material):
         self.length = maxCoord[0] - minCoord[0]
         self.height = maxCoord[-1] - minCoord[-1]
 
-        if dim == 3:
+        if len(maxCoord) == 3:
             self.width = maxCoord[1] - minCoord[1]
 
         if periodic:
             self.periodic = periodic
         else:
-            periodic = tuple([False for val in range(dim)])
+            periodic = tuple([False for val in maxCoord])
             self.periodic = periodic
 
         # Get non-dimensional extents along each axis
@@ -200,7 +199,6 @@ class Model(Material):
         self.step = 0
         self._dt = None
 
-        self._defaultMaterial = self.index
         self.materials = list(materials) if materials is not None else list()
         self.materials.append(self)
 
@@ -362,8 +360,10 @@ class Model(Material):
     def restart(self, step, restartDir=None):
         _RestartFunction(self, restartDir).restart(step)
 
-    def checkpoint(self, checkpointID, variables):
-        _CheckpointFunction(self).checkpoint_all(checkpointID, variables)
+    def checkpoint(self, checkpointID, variables=None,
+                   time=None, outputDir=None):
+        _CheckpointFunction(self).checkpoint_all(checkpointID, variables,
+                                                 time, outputDir)
 
     @property
     def projMaterialField(self):
@@ -1508,7 +1508,7 @@ class Model(Material):
             checkpointer.checkpoint()
 
             if uw.rank() == 0:
-                print("Step:" + str(self.stepDone) + 
+                print("Step:" + str(self.stepDone) +
                       " Model Time: ", str(self.time.to(units)),
                       'dt:', str(Dimensionalize(self._dt, units)),
                       '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
@@ -2128,7 +2128,8 @@ class _CheckpointFunction(object):
 
         return outputDir
 
-    def checkpoint_all(self, checkpointID=None, variables=None):
+    def checkpoint_all(self, checkpointID=None, variables=None,
+                       tracers=None, time=None, outputDir=None):
         """ Do a checkpoint (Save fields)
 
         Parameters:
@@ -2137,11 +2138,13 @@ class _CheckpointFunction(object):
                 list of fields/variables to save
             checkpointID:
                 checkpoint ID.
+            outpuDir:
+                output directory
 
         """
-        self.checkpoint_fields(variables, checkpointID)
-        self.checkpoint_swarms(variables, checkpointID)
-        self.checkpoint_tracers(checkpointID=checkpointID)
+        self.checkpoint_fields(variables, checkpointID, time, outputDir)
+        self.checkpoint_swarms(variables, checkpointID, time, outputDir)
+        self.checkpoint_tracers(tracers, checkpointID, time, outputDir)
         uw.barrier()
 
     def checkpoint_fields(self, fields=None, checkpointID=None,
@@ -2362,9 +2365,9 @@ class _RestartFunction(object):
         """
         Model = self.Model
 
-        # Do not raise and error idf directory is empty, just run
-        # the model...
-        if not os.path.exists(self.restartDir) or not os.listdir(self.restartDir):
+        if not os.path.exists(self.restartDir):
+            return
+        if not os.listdir(self.restartDir):
             return
 
         indices = self.find_available_steps()
@@ -2374,13 +2377,11 @@ class _RestartFunction(object):
         if step not in indices:
             raise ValueError("Cannot find step in specified folder")
 
-        # Ready for restart
-
         # Get time from swarm-%.h5 file
-        with h5py.File(os.path.join(self.restartDir, "swarm-%s.h5" % step), "r",
-                       driver="mpio", comm=MPI.COMM_WORLD) as h5f:
-
-            Model.time = u.Quantity(h5f.attrs.get("time"))
+        if uw.rank() == 0:
+            swarm_file = os.path.join(self.restartDir, "swarm-%s.h5" % step)
+            with h5py.File(swarm_file, "r") as h5f:
+                Model.time = u.Quantity(h5f.attrs.get("time"))
 
         if uw.rank() == 0:
             print(80 * "=" + "\n")
@@ -2388,6 +2389,7 @@ class _RestartFunction(object):
             print('(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
             print(80 * "=" + "\n")
             sys.stdout.flush()
+        uw.barrier()
 
         self.reload_mesh(step)
         self.reload_swarm(step)
