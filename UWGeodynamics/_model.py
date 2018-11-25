@@ -243,7 +243,6 @@ class Model(Material):
 
         # init solver
         self._solver = None
-        self._static_solver = False
 
         # Initialise remaining attributes
         self.defaultStrainRate = 1e-15 / u.second
@@ -644,11 +643,12 @@ class Model(Material):
 
     @property
     def solver(self):
+        if not self._solver:
+            return self.get_stokes_solver()
         return self._solver
 
     @solver.setter
     def solver(self, value):
-        self._static_solver = True
         self._solver = value
 
     @property
@@ -736,7 +736,7 @@ class Model(Material):
     def get_stokes_solver(self):
         """ Stokes solver """
 
-        if not self._solver or not self._static_solver:
+        if not self._solver:
             gravity = tuple([nd(val) for val in self.gravity])
             self._buoyancyFn = self._densityFn * gravity
             self._buoyancyFn = self._buoyancyFn
@@ -759,16 +759,18 @@ class Model(Material):
                     fn_one_on_lambda=self._lambdaFn)
                     #useEquationResidual=rcParams["useEquationResidual"])
 
-                self._solver = uw.systems.Solver(self._stokes_SLE)
-                self._solver.set_inner_method(rcParams["solver"])
+                solver = uw.systems.Solver(self._stokes_SLE)
+                solver.set_inner_method(rcParams["solver"])
 
                 if rcParams["penalty"]:
-                    self._solver.set_penalty(rcParams["penalty"])
+                    solver.set_penalty(rcParams["penalty"])
 
                 if rcParams["mg.levels"]:
-                    self._solver.options.mg.levels = rcParams["mg.levels"]
+                    solver.options.mg.levels = rcParams["mg.levels"]
 
-        return self._solver
+            return solver
+        else:
+            return self._solver
 
     def _init_melt_fraction(self):
         """ Initialize the Melt Fraction Field """
@@ -1615,7 +1617,6 @@ class Model(Material):
         # Update Time Field
         self.timeField.data[...] += dt
 
-
         if self._visugrid:
             self._visugrid.advect(dt)
 
@@ -1836,7 +1837,7 @@ class _ViscosityFunction():
 
             eta_eff = n * eta_eff**-1
 
-        if rcParams["rheologies.combine.method"] == "Min / Max":
+        if rcParams["rheologies.combine.method"] == "Minimum":
             if any([material.elasticity for material in Model.materials]):
                 visc = self._getViscousEta()
                 visc = self._getElasticEta()
@@ -1866,11 +1867,7 @@ class _ViscosityFunction():
                             Model.strainRate_2ndInvariant),
                            (True, 0.0)]
 
-        # Do not yield at the very first solve
-        if Model._solution_exist.value:
-            return fn.branching.conditional(yield_condition)
-        else:
-            return fn.misc.constant(0.0)
+        return fn.branching.conditional(yield_condition)
 
     def _getViscousEta(self):
 
@@ -1994,7 +1991,7 @@ class _ViscosityFunction():
 
         self.plastic_eta = fn.branching.map(fn_key=Model.materialField,
                                             mapping=PlasticityMap,
-                                            fn_default=self._getViscousEta())
+                                            fn_default=self.viscous_eta)
         return self.plastic_eta
 
     def _getElasticEta(self):
@@ -2142,7 +2139,6 @@ class _CheckpointFunction(object):
                 checkpoint ID.
 
         """
-        self.create_output_directory()
         self.checkpoint_fields(variables, checkpointID)
         self.checkpoint_swarms(variables, checkpointID)
         self.checkpoint_tracers(checkpointID=checkpointID)
@@ -2485,7 +2481,7 @@ class _RestartFunction(object):
 
         if uw.rank() == 0:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            print("{0} loaded".format(tracer.name)+ '(' + now  + ')')
+            print("{0} loaded".format(tracer.name) + '(' + now  + ')')
             sys.stdout.flush()
 
     def restart_badlands(self):
