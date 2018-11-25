@@ -370,8 +370,10 @@ def get_viscosity_from_registry(rheology_name):
 
     from UWGeodynamics import ViscousCreepRegistry
     rh = ViscousCreepRegistry()
-    name = rheology_name.replace(" ", "_").replace(",", "").replace(".", "")
-    name = name.replace(")", "").replace("(", "")
+    name = rheology_name.replace(",", "").replace(".", "")
+    name = [word.strip() for word in name.split()
+            if word.lower() not in ["viscous", "creep"]]
+    name = "_".join(name)
     return rh._dir[name]
 
 
