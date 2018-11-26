@@ -335,6 +335,20 @@ class DruckerPrager(object):
         return self.yieldStress
 
 
+class VonMises(DruckerPrager):
+    """ Von Mises Yield Criterion """
+
+    def __init__(self, name=None, cohesion=None,
+                 cohesionAfterSoftening=None,
+                 epsilon1=0.0, epsilon2=0.2):
+
+        super(VonMises, self).__init__(cohesion=cohesion,
+                                       cohesionAfterSoftening=cohesionAfterSoftening,
+                                       frictionCoefficient=0.,
+                                       frictionAfterSoftening=0.,
+                                       epsilon1=epsilon1, epsilon2=epsilon2)
+
+
 class ConstantViscosity(Rheology):
     """The newtonian rheology Class."""
 
