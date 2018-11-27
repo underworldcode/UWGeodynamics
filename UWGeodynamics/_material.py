@@ -9,6 +9,8 @@ from ._utils import PhaseChange
 from ._rheology import ConstantViscosity
 from ._density import ConstantDensity
 from pint.errors import DimensionalityError
+from ._density import LinearDensity
+import underworld.function as fn
 
 _dim_density = {'[mass]': 1.0, '[length]': -3.0}
 _dim_diffusivity = {'[length]': 2.0, '[time]': -1.0}
@@ -174,18 +176,16 @@ class Material(object):
 
     @density.setter
     def density(self, value):
-        if isinstance(value, (u.Quantity, float)):
-            # Check dimensionality
-            if (isinstance(value, u.Quantity) and
-               value.dimensionality != _dim_density):
-                _dim_vals = u.get_dimensionality(_dim_density)
-                raise DimensionalityError(value, 'a quantity of',
-                                          value.dimensionality,
-                                          _dim_vals)
-            self._density = ConstantDensity(value)
-        elif value.thermalExpansivity:
+        if isinstance(value, LinearDensity):
             self._density = value
             self._thermalExpansivity = value.thermalExpansivity
+        elif (isinstance(value, u.Quantity) and
+             value.dimensionality != _dim_density):
+            _dim_vals = u.get_dimensionality(_dim_density)
+            raise DimensionalityError(value, 'a quantity of',
+                                      value.dimensionality,
+                                      _dim_vals)
+        self._density = ConstantDensity(value)
 
     @property
     def thermalExpansivity(self):
@@ -338,7 +338,6 @@ class MaterialRegistry(object):
                     if "value" in item.keys():
                         parameters[key] = get_value(item)
                     elif ("thermalExpansivity" or "beta") in item.keys():
-                        from UWGeodynamics import LinearDensity
                         for prop in item.keys():
                             item[prop] = get_value(item[prop])
                         parameters[key] = LinearDensity(**item)

@@ -32,7 +32,7 @@ class ConstantDensity(Density):
         self.name = "Constant ({0})".format(str(reference_density))
 
     def effective_density(self):
-        return fn.misc.constant(self._density)
+        return fn.Function.convert(self._density)
 
 
 class LinearDensity(Density):

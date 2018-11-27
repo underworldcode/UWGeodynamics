@@ -375,7 +375,7 @@ class ConstantViscosity(Rheology):
         return self._effectiveViscosity()
 
     def _effectiveViscosity(self):
-        return fn.misc.constant(nd(self.viscosity))
+        return fn.Function.convert(nd(self.viscosity))
 
 
 class ViscousCreep(Rheology):
