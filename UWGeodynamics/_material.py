@@ -10,7 +10,6 @@ from ._rheology import ConstantViscosity
 from ._density import ConstantDensity
 from pint.errors import DimensionalityError
 from ._density import LinearDensity
-import underworld.function as fn
 
 _dim_density = {'[mass]': 1.0, '[length]': -3.0}
 _dim_diffusivity = {'[length]': 2.0, '[time]': -1.0}
@@ -185,7 +184,9 @@ class Material(object):
             raise DimensionalityError(value, 'a quantity of',
                                       value.dimensionality,
                                       _dim_vals)
-        self._density = ConstantDensity(value)
+            self._density = ConstantDensity(value)
+        else:
+            self._density = value
 
     @property
     def thermalExpansivity(self):
