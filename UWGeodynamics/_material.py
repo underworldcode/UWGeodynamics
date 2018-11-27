@@ -178,15 +178,8 @@ class Material(object):
         if isinstance(value, LinearDensity):
             self._density = value
             self._thermalExpansivity = value.thermalExpansivity
-        elif (isinstance(value, u.Quantity) and
-             value.dimensionality != _dim_density):
-            _dim_vals = u.get_dimensionality(_dim_density)
-            raise DimensionalityError(value, 'a quantity of',
-                                      value.dimensionality,
-                                      _dim_vals)
-            self._density = ConstantDensity(value)
         else:
-            self._density = value
+            self._density = ConstantDensity(value)
 
     @property
     def thermalExpansivity(self):
