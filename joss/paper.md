@@ -29,6 +29,9 @@ authors:
  - name: Rebecca Farrington
    orcid: 0000-0002-2594-6965 
    affiliatioin: "1"
+ - name: Luke Mondy
+   orcid: 0000-0001-7779-509X
+   affiliation:  "3"
  - name: Claire Mallard
    orcid: 0000-0003-2595-2414
    affiliation: "3"
@@ -53,7 +56,7 @@ affiliations:
    index: 1
  - name: Monash eResearch Centre, Monash University, Clayton, Australia 
    index: 2
- - name: School of Geosciences, Earthbyte Research Group, The University of Sydney, NSW 2006, Australia
+ - name: School of Geosciences, Earthbyte Research Group, The University of Sydney, Australia
    index: 3
  - name: Laboratoire Géoazur, Université Nice Sophia Antipolis, Nice, France
    index: 4
