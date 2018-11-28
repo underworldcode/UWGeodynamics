@@ -1173,7 +1173,8 @@ class Model(Material):
 
     @property
     def _viscosityFn(self):
-        return self._viscosity_processor.get_effective_eta()
+        return self._viscosity_processor.get_effective_eta(
+            rcParams["averaging.method"])
 
     @property
     def _stressFn(self):
@@ -1457,7 +1458,7 @@ class Model(Material):
             output_units, checkpoint_interval, duration)
 
         checkpointer = _CheckpointFunction(
-            self, checkpoint_interval,
+            self, duration, checkpoint_interval,
             checkpoint_times, restart_checkpoint, output_dt_units)
 
         if not nstep:
@@ -1824,8 +1825,31 @@ class _ViscosityFunction():
         self.plastic_eta = None
         self.viscous_eta = None
         self.elastic_eta = None
+        self._averaged_field = None
+        self._average_projector = None
 
-    def get_effective_eta(self):
+    def average(self, f, p):
+
+        if not self._averaged_field:
+            # Create Mesh variable and projector for averaging scheme
+            self._averaged_field = uw.mesh.MeshVariable(
+                self.Model.mesh.subMesh,
+                nodeDofCount=1,
+                dataType="double")
+            self._average_projector = uw.utils.MeshVariable_Projection(
+                self._averaged_field,
+                fn=1.0)
+
+        def new_function(self):
+            func = f**(p)
+            projector = self._average_projector
+            projector.fn = func
+            projector.solve()
+            return self._averaged_field**(1.0 / p)
+
+        return new_function(self)
+
+    def get_effective_eta(self, averaging_scheme):
         """ Effective viscosity"""
 
         Model = self.Model
@@ -1863,6 +1887,10 @@ class _ViscosityFunction():
 
         # Viscosity Limiter
         self.eff_eta = self._viscosity_limiter(eta_eff)
+
+        if averaging_scheme and averaging_scheme != 1:
+            return self.average(self.eff_eta,
+                                averaging_scheme)
 
         return self.eff_eta
 
@@ -2053,12 +2081,13 @@ class _ViscosityFunction():
 class _CheckpointFunction(object):
     """This Class is responsible for Checkpointing a Model"""
 
-    def __init__(self, Model, checkpoint_interval=None,
+    def __init__(self, Model, duration=None, checkpoint_interval=None,
                  checkpoint_times=None, restart_checkpoint=None,
                  output_units=None):
 
         self.Model = Model
         self.output_units = output_units
+        self.step_type = None
 
         if isinstance(checkpoint_interval, u.Quantity):
             self.step_type = "time"
