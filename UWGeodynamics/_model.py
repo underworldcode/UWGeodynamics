@@ -1180,18 +1180,14 @@ class Model(Material):
     def _stressFn(self):
         """Stress Function Builder"""
         stressMap = {}
-        for material in self.materials:
-            # Calculate viscous stress
-            viscousStressFn = self._viscous_stressFn()
-            elasticStressFn = self._elastic_stressFn
-            stressMap[material.index] = viscousStressFn + elasticStressFn
-
-        return fn.branching.map(fn_key=self.materialField,
-                                mapping=stressMap)
+        viscousStressFn = self._viscous_stressFn()
+        elasticStressFn = self._elastic_stressFn
+        return  viscousStressFn + elasticStressFn
 
     def _viscous_stressFn(self):
         """Viscous Stress Function Builder"""
-        return 2. * self._viscosityFn * self.strainRate
+        print("Viscous Stree Calls")
+        return 2. * self._viscosityField * self.strainRate
 
     @property
     def _elastic_stressFn(self):
@@ -1405,6 +1401,9 @@ class Model(Material):
         # Init pressureField Field
         if self.pressureField and pressureField:
             self.get_lithostatic_pressureField()
+
+        # Init ViscosityField
+        self.viscosityField
         return
 
     @u.check([None, "[time]", "[time]", None, None, None, "[time]", None, None])
