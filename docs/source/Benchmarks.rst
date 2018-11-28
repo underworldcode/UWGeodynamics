@@ -1,6 +1,11 @@
 Benchmarks
 ==========
 
+Viscous Benchmarks
+------------------
+
+1. `Slab Detachment`_
+
 Visco-Plastic Benchmarks
 ------------------------
 
@@ -21,3 +26,4 @@ Averaging Viscosity Method
 .. _Brick Benchmark in extension: http://nbviewer.jupyter.org/github/rbeucher/UWGeodynamics/blob/master/benchmarks/Kaus_BrickBenchmark_Extension.ipynb
 .. _Subduction Case 1: http://nbviewer.jupyter.org/github/rbeucher/UWGeodynamics/blob/master/benchmarks/2D_Self_Subduction_Case1.ipynb
 .. _Subduction Case 2: http://nbviewer.jupyter.org/github/rbeucher/UWGeodynamics/blob/master/benchmarks/2D_Self_Subduction_Case2.ipynb
+.. _Slab Detachment: http://nbviewer.jupyter.org/github/rbeucher/UWGeodynamics/blob/master/benchmarks/1_12_Slab_Detachment_Benchmark.ipynb
