@@ -8,17 +8,18 @@ available in **UWGeodynamics**.
 1. `Steady State heat`_
 2. `Convection`_
 3. `Blankenbach Benchmark`_
-4. `Stokes sinker`_
-5. `Hypnic Jerk`_ (Periodic Boundary Conditions)
-6. `Slab Subduction`_
-7. `Pure Shear example`_
-8. `Visco-elastic half space`_
-9. `Visco-elasto-plasticity in simple shear`_
-10. `3D Stokes Sinker`_
-11. `2D Bottom Traction condition`_ (Stress condition) 
-12. `3D Bottom Traction condition`_ (Stress condition)
-13. `Free surface simple example`_ (Free Surface)
-14. `Hot Canon Ball`_ (Internal boundary condition)  
+4. `Rayleigh Taylor`_
+5. `Stokes sinker`_
+6. `Hypnic Jerk`_ (Periodic Boundary Conditions)
+7. `Slab Subduction`_
+8. `Pure Shear example`_
+9. `Visco-elastic half space`_
+10. `Visco-elasto-plasticity in simple shear`_
+11. `3D Stokes Sinker`_
+12. `2D Bottom Traction condition`_ (Stress condition) 
+13. `3D Bottom Traction condition`_ (Stress condition)
+14. `Free surface simple example`_ (Free Surface)
+15. `Hot Canon Ball`_ (Internal boundary condition)  
 
 
 .. _Steady State heat: http://nbviewer.jupyter.org/github/rbeucher/UWGeodynamics/blob/master/examples/1_01_Steady_State_Heat.ipynb
@@ -35,4 +36,4 @@ available in **UWGeodynamics**.
 .. _3D Bottom Traction condition: http://nbviewer.jupyter.org/github/rbeucher/UWGeodynamics/blob/master/examples/1_21_3D_ColumnsTractionBottom.ipynb
 .. _Free surface simple example: http://nbviewer.jupyter.org/github/rbeucher/UWGeodynamics/blob/master/examples/1_23_FreeSurface_Simple_Example.ipynb
 .. _Hot Canon Ball: http://nbviewer.jupyter.org/github/rbeucher/UWGeodynamics/blob/master/examples/1_25_Hot_Canon_Ball.ipynb
-
+.. _Rayleigh Taylor: http://nbviewer.jupyter.org/github/rbeucher/UWGeodynamics/blob/master/examples/2_15_Rayleigh-Taylor_van_Keken_et_al_1997.ipynb
