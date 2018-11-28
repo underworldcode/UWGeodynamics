@@ -160,7 +160,7 @@ class PassiveTracers(object):
 
             # First write the XDMF header
             string = uw.utils._xdmfheader()
-            string += uw.utils._swarmspacetimeschema(sH, swarm_fname, time.magnitude)
+            string += uw.utils._swarmspacetimeschema(sH, swarm_fname, time)
 
         uw.barrier()
 

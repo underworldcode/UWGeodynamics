@@ -195,7 +195,7 @@ class Model(Material):
 
         # timing and checkpointing
         self.checkpointID = 0
-        self.time = 0.0 * u.megayears
+        self._ndtime = 0.0
         self.step = 0
         self._dt = None
 
@@ -304,7 +304,6 @@ class Model(Material):
         self.add_swarm_variable("_stressField", dataType="double",
                                 count=1, projected="submesh")
 
-
     def __getitem__(self, name):
         """__getitem__
 
@@ -332,6 +331,11 @@ class Model(Material):
         For integration with Jupyter notebook.
         """
         return _model_html_repr(self)
+
+    @property
+    def time(self):
+        """Model time"""
+        return Dimensionalize(self._ndtime, rcParams["time.SIunits"])
 
     @property
     def x(self):
@@ -1405,7 +1409,7 @@ class Model(Material):
     @u.check([None, "[time]", "[time]", None, None, None, "[time]", None, None])
     def run_for(self, duration=None, checkpoint_interval=None, nstep=None,
                 checkpoint_times=None, restart_checkpoint=1, dt=None,
-                restartStep=-1, restartDir=None):
+                restartStep=-1, restartDir=None, output_units=None):
         """ Run the Model
 
         Parameters
@@ -1431,6 +1435,10 @@ class Model(Material):
             Restart Model. int (step number)
         restartDir :
             Restart Directory.
+        output_units:
+            Units used in output. If None, the units of the checkpoint_interval
+            are used, if the latter does not have units, defaults to
+            rcParams["time.SIunits"]
 
         """
 
@@ -1440,17 +1448,16 @@ class Model(Material):
 
         self.stepDone = 0
         self.restart(restartStep, restartDir)
+
+        ndduration = self._ndtime + nd(duration) if duration else None
+
+        units = _get_output_units(output_units,
+                                  checkpoint_interval,
+                                  duration)
+
         checkpointer = _CheckpointFunction(
             self, checkpoint_interval,
-            checkpoint_times, restart_checkpoint)
-
-        time = nd(self.time)
-
-        if duration:
-            units = duration.units
-            duration = time + nd(duration)
-        else:
-            units = rcParams["time.SIunits"]
+            checkpoint_times, restart_checkpoint, units)
 
         if not nstep:
             nstep = self.stepDone
@@ -1460,7 +1467,7 @@ class Model(Material):
         else:
             user_dt = None
 
-        while (duration and time < duration) or self.stepDone < nstep:
+        while (ndduration and self._ndtime < ndduration) or self.stepDone < nstep:
 
             self.preSolveHook()
 
@@ -1476,7 +1483,7 @@ class Model(Material):
                     self._dt = min(self._dt, supg_dt)
 
             if duration:
-                self._dt = min(self._dt, duration - time)
+                self._dt = min(self._dt, ndduration - self._ndtime)
 
             if user_dt:
                 self._dt = min(self._dt, user_dt)
@@ -1502,16 +1509,19 @@ class Model(Material):
 
             self.step += 1
             self.stepDone += 1
-            self.time += Dimensionalize(self._dt, units)
-            time += self._dt
+            self._ndtime += self._dt
 
             checkpointer.checkpoint()
 
             if uw.rank() == 0:
-                print("Step:" + str(self.stepDone) +
-                      " Model Time: ", str(self.time.to(units)),
-                      'dt:', str(Dimensionalize(self._dt, units)),
-                      '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
+                
+                string = """Step: {0:5d} Model Time: {1:5.2f} dt: {2:5.2f} ({3})\n""".format(
+                    self.stepDone, self.time.to(_get_output_units(duration, 
+                                                                  checkpoint_interval,
+                                                                  output_units)),
+                    Dimensionalize(self._dt, units),
+                    datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                sys.stdout.write(string)
                 sys.stdout.flush()
 
             self.postSolveHook()
@@ -2046,20 +2056,22 @@ class _CheckpointFunction(object):
     """This Class is responsible for Checkpointing a Model"""
 
     def __init__(self, Model, checkpoint_interval=None,
-                 checkpoint_times=None, restart_checkpoint=None):
+                 checkpoint_times=None, restart_checkpoint=None,
+                 output_units=None):
 
         self.Model = Model
-
-        next_checkpoint = None
+        self.output_units = output_units
 
         if isinstance(checkpoint_interval, u.Quantity):
-            next_checkpoint = Model.time + checkpoint_interval
+            self.step_type = "time"
+            self.checkpoint_interval = nd(checkpoint_interval)
+            self.next_checkpoint = Model._ndtime + self.checkpoint_interval
 
         elif checkpoint_interval:
-            next_checkpoint = Model.stepDone + checkpoint_interval
+            self.step_type = "step"
+            self.checkpoint_interval = checkpoint_interval
+            self.next_checkpoint = Model.stepDone + checkpoint_interval
 
-        self.next_checkpoint = next_checkpoint
-        self.checkpoint_interval = checkpoint_interval
         self.checkpoint_times = checkpoint_times
         self.restart_checkpoint = restart_checkpoint
         self.outputDir = Model.outputDir
@@ -2071,8 +2083,10 @@ class _CheckpointFunction(object):
 
         Model = self.Model
 
-        if (Model.time == self.next_checkpoint or
-           Model.stepDone == self.next_checkpoint):
+        if (((self.step_type is "time") and
+             (Model._ndtime == self.next_checkpoint)) or
+            ((self.step_type is "step") and
+             (Model.stepDone == self.next_checkpoint))):
 
             Model.checkpointID += 1
             # Save Mesh Variables
@@ -2096,11 +2110,11 @@ class _CheckpointFunction(object):
         dt1 = None
         dt2 = None
 
-        if isinstance(self.checkpoint_interval, u.Quantity):
-            dt1 = nd(self.next_checkpoint - Model.time)
+        if self.step_type is "time":
+            dt1 = self.next_checkpoint - Model._ndtime
 
         if self.checkpoint_times:
-            tcheck = [nd(val - Model.time) for val in self.checkpoint_times]
+            tcheck = [val - Model._ndtime for val in self.checkpoint_times]
             tcheck = [val for val in tcheck if val >= 0]
             tcheck.sort()
             dt2 = tcheck[0]
@@ -2178,13 +2192,13 @@ class _CheckpointFunction(object):
             mesh_prefix = os.path.join(outputDir, mesh_name)
             mH = Model.mesh.save('%s.h5' % mesh_prefix,
                                  units=u.kilometers,
-                                 time=time)
+                                 time=time.to(self.output_units))
         elif not Model._mesh_saved:
             mesh_name = 'mesh'
             mesh_prefix = os.path.join(outputDir, mesh_name)
             mH = Model.mesh.save('%s.h5' % mesh_prefix,
                                  units=u.kilometers,
-                                 time=time)
+                                 time=time.to(self.output_units))
             Model._mesh_saved = True
         else:
             mesh_name = 'mesh'
@@ -2197,7 +2211,8 @@ class _CheckpointFunction(object):
 
             # First write the XDMF header
             string = uw.utils._xdmfheader()
-            string += uw.utils._spacetimeschema(mH, mesh_name, time)
+            string += uw.utils._spacetimeschema(mH, mesh_name,
+                                                time.to(self.output_units))
 
         uw.barrier()
 
@@ -2217,7 +2232,7 @@ class _CheckpointFunction(object):
                 obj = getattr(Model, field)
                 file_prefix = os.path.join(outputDir, field + '-%s' % checkpointID)
                 handle = obj.save('%s.h5' % file_prefix, units=units,
-                                  time=time)
+                                  time=time.to(self.output_units))
                 if uw.rank() == 0:
                     string += uw.utils._fieldschema(handle, field)
             uw.barrier()
@@ -2260,7 +2275,7 @@ class _CheckpointFunction(object):
         sH = Model.swarm.save(os.path.join(outputDir,
                               swarm_name),
                               units=u.kilometers,
-                              time=time)
+                              time=time.to(self.output_units))
 
         if uw.rank() == 0:
             filename = "XDMF.swarms." + str(checkpointID).zfill(5) + ".xmf"
@@ -2268,7 +2283,8 @@ class _CheckpointFunction(object):
 
             # First write the XDMF header
             string = uw.utils._xdmfheader()
-            string += uw.utils._swarmspacetimeschema(sH, swarm_name, time)
+            string += uw.utils._swarmspacetimeschema(sH, swarm_name,
+                                                     time.to(self.output_units))
         uw.barrier()
 
         for field in fields:
@@ -2285,7 +2301,7 @@ class _CheckpointFunction(object):
                 file_prefix = os.path.join(outputDir,
                                            field + '-%s' % checkpointID)
                 handle = obj.save('%s.h5' % file_prefix,
-                                  units=units, time=time)
+                                  units=units, time=time.to(self.output_units))
                 if uw.rank() == 0:
                     string += uw.utils._swarmvarschema(handle, field)
                 uw.barrier()
@@ -2332,7 +2348,7 @@ class _CheckpointFunction(object):
         # Checkpoint passive tracers and associated tracked fields
         if Model.passive_tracers:
             for (dump, item) in Model.passive_tracers.items():
-                item.save(outputDir, checkpointID, time)
+                item.save(outputDir, checkpointID, time.to(self.output_units))
 
         uw.barrier()
 
@@ -2526,3 +2542,15 @@ class _RestartFunction(object):
             print("Badlands restarted" + '(' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ')')
             sys.stdout.flush()
 
+
+def _get_output_units(*args):
+    from pint import UndefinedUnitError
+    for arg in args:
+        try:
+            return u.Unit(arg)
+        except (TypeError, UndefinedUnitError):
+            pass
+        if isinstance(arg, u.Quantity):
+            return arg.units
+
+    return rcParams["time.SIunits"]
