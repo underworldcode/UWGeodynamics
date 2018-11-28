@@ -1186,7 +1186,6 @@ class Model(Material):
 
     def _viscous_stressFn(self):
         """Viscous Stress Function Builder"""
-        print("Viscous Stree Calls")
         return 2. * self._viscosityField * self.strainRate
 
     @property
@@ -1403,7 +1402,8 @@ class Model(Material):
             self.get_lithostatic_pressureField()
 
         # Init ViscosityField
-        self.viscosityField
+        if any([material.viscosity for material in self.materials]):
+            self.viscosityField
         return
 
     @u.check([None, "[time]", "[time]", None, None, None, "[time]", None, None])
