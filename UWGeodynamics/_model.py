@@ -1451,13 +1451,14 @@ class Model(Material):
 
         ndduration = self._ndtime + nd(duration) if duration else None
 
-        units = _get_output_units(output_units,
-                                  checkpoint_interval,
-                                  duration)
+        output_time_units = _get_output_units(
+            duration, checkpoint_interval, output_units)
+        output_dt_units = _get_output_units(
+            output_units, checkpoint_interval, duration)
 
         checkpointer = _CheckpointFunction(
             self, checkpoint_interval,
-            checkpoint_times, restart_checkpoint, units)
+            checkpoint_times, restart_checkpoint, output_dt_units)
 
         if not nstep:
             nstep = self.stepDone
@@ -1514,12 +1515,9 @@ class Model(Material):
             checkpointer.checkpoint()
 
             if uw.rank() == 0:
-                
                 string = """Step: {0:5d} Model Time: {1:5.2f} dt: {2:5.2f} ({3})\n""".format(
-                    self.stepDone, self.time.to(_get_output_units(duration, 
-                                                                  checkpoint_interval,
-                                                                  output_units)),
-                    Dimensionalize(self._dt, units),
+                    self.stepDone, self.time.to(output_time_units),
+                    Dimensionalize(self._dt, output_dt_units),
                     datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 sys.stdout.write(string)
                 sys.stdout.flush()
