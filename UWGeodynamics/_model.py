@@ -1916,13 +1916,14 @@ class _ViscosityFunction():
 
         # Viscous behavior
         for material in Model.materials:
-            if material.viscosity:
-                ViscosityHandler = material.viscosity
-                ViscosityHandler.pressureField = Model.pressureField
-                ViscosityHandler.strainRateInvariantField = (
-                    Model.strainRate_2ndInvariant)
-                ViscosityHandler.temperatureField = Model.temperature
-                ViscosityMap[material.index] = ViscosityHandler.muEff
+            ViscosityHandler = material.viscosity
+            if not ViscosityHandler:
+                ViscosityHandler = Model.viscosity
+            ViscosityHandler.pressureField = Model.pressureField
+            ViscosityHandler.strainRateInvariantField = (
+                Model.strainRate_2ndInvariant)
+            ViscosityHandler.temperatureField = Model.temperature
+            ViscosityMap[material.index] = ViscosityHandler.muEff
 
         self.viscous_eta = fn.branching.map(fn_key=Model.materialField,
                                             mapping=ViscosityMap)
