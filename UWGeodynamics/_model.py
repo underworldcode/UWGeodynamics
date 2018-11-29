@@ -2412,6 +2412,8 @@ class _RestartFunction(object):
         """
         Model = self.Model
 
+        if not step:
+            return
         if not os.path.exists(self.restartDir):
             return
         if not os.listdir(self.restartDir):
