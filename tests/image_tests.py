@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import os
-import importlib
 import imp
 path = os.path.abspath('./image_tests/')
 

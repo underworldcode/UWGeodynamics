@@ -1,4 +1,5 @@
 import UWGeodynamics as GEO
+import underworld as uw
 
 u = GEO.u
 
@@ -95,7 +96,7 @@ def test_set_velocity_boundary_conditions():
         right=[-1.0 * u.centimetre / u.year, None],
         bottom=[None, 0.],
         top=[None, 0.])
-    assert(isinstance(velocityBCs, GEO._boundary_conditions.VelocityBCs))
+    assert(isinstance(velocityBCs, uw.conditions.DirichletCondition))
 
 
 def test_user_defined_viscous_creep():
@@ -122,7 +123,7 @@ def test_user_defined_drucker_prager():
                                    epsilon2=1.5)
     assert(isinstance(plasticity, GEO.DruckerPrager))
 
-def test_thermal_boundary_condition():
+def test_temperature_boundary_condition():
     Model = GEO.Model()
     Model.set_temperatureBCs(top=500. * u.degK,
                              bottom=1000. * u.degK)
@@ -130,8 +131,7 @@ def test_thermal_boundary_condition():
     Model.capacity = 1000. * u.joule / (u.kelvin * u.kilogram)
     Model.density = 1000. * u.kilogram / u.metre**3
     Model.set_temperatureBCs(top=500. * u.degK,
-                            bottom=-0.22 * u.milliwatt / u.metre**2,
-                             bottom_material=Model)
+                             bottom=1200. * u.degK)
 
 def test_passive_tracers():
     import numpy as np
@@ -161,4 +161,4 @@ def test_set_velocity_boundary_conditions_in_3D():
         top=[None, None, 0.],
         front=[None, 0., None],
         back=[None, 0., None])
-    assert(isinstance(velocityBCs, GEO._velocity_boundaries.VelocityBCs))
+    assert(isinstance(velocityBCs, uw.conditions.DirichletCondition))
