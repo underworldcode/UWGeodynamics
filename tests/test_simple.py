@@ -95,7 +95,7 @@ def test_set_velocity_boundary_conditions():
         right=[-1.0 * u.centimetre / u.year, None],
         bottom=[None, 0.],
         top=[None, 0.])
-    assert(isinstance(velocityBCs, GEO._velocity_boundaries.VelocityBCs))
+    assert(isinstance(velocityBCs, GEO._boundary_conditions.VelocityBCs))
 
 
 def test_user_defined_viscous_creep():
