@@ -366,6 +366,12 @@ class Model(Material):
         self._outputDir = value
 
     def restart(self, step, restartDir=None):
+        if not step:
+            return
+        if not os.path.exists(self.restartDir):
+            return
+        if not os.listdir(self.restartDir):
+            return
         _RestartFunction(self, restartDir).restart(step)
 
     def checkpoint(self, checkpointID, variables=None,
@@ -2412,12 +2418,6 @@ class _RestartFunction(object):
         """
         Model = self.Model
 
-        if not step:
-            return
-        if not os.path.exists(self.restartDir):
-            return
-        if not os.listdir(self.restartDir):
-            return
 
         indices = self.find_available_steps()
         step = indices[step] if step < 0 else step
