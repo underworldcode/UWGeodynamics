@@ -366,11 +366,13 @@ class Model(Material):
         self._outputDir = value
 
     def restart(self, step, restartDir=None):
+
         if not step:
             return
-        if not os.path.exists(self.restartDir):
+        restartDir = restartDir if restartDir else self.outputDir
+        if not os.path.exists(restartDir):
             return
-        if not os.listdir(self.restartDir):
+        if not os.listdir(restartDir):
             return
         _RestartFunction(self, restartDir).restart(step)
 
@@ -1922,14 +1924,13 @@ class _ViscosityFunction():
 
         # Viscous behavior
         for material in Model.materials:
-            ViscosityHandler = material.viscosity
-            if not ViscosityHandler:
-                ViscosityHandler = Model.viscosity
-            ViscosityHandler.pressureField = Model.pressureField
-            ViscosityHandler.strainRateInvariantField = (
-                Model.strainRate_2ndInvariant)
-            ViscosityHandler.temperatureField = Model.temperature
-            ViscosityMap[material.index] = ViscosityHandler.muEff
+            if material.viscosity:
+                ViscosityHandler = material.viscosity
+                ViscosityHandler.pressureField = Model.pressureField
+                ViscosityHandler.strainRateInvariantField = (
+                    Model.strainRate_2ndInvariant)
+                ViscosityHandler.temperatureField = Model.temperature
+                ViscosityMap[material.index] = ViscosityHandler.muEff
 
         self.viscous_eta = fn.branching.map(fn_key=Model.materialField,
                                             mapping=ViscosityMap)
@@ -2132,13 +2133,13 @@ class _CheckpointFunction(object):
             self.checkpoint_tracers(checkpointID=Model.checkpointID)
             self.next_checkpoint += self.checkpoint_interval
 
-        uw.barrier()
+            uw.barrier()
 
-        # if it's time to checkpoint the swarm, do so.
-        if Model.checkpointID % self.restart_checkpoint == 0:
-            self.checkpoint_swarms(checkpointID=Model.checkpointID)
+            # if it's time to checkpoint the swarm, do so.
+            if Model.checkpointID % self.restart_checkpoint == 0:
+                self.checkpoint_swarms(checkpointID=Model.checkpointID)
 
-        uw.barrier()
+            uw.barrier()
 
     def get_next_checkpoint_time(self):
 
@@ -2223,19 +2224,21 @@ class _CheckpointFunction(object):
         outputDir = self.create_output_directory(outputDir)
 
         time = time if time else Model.time
+        if isinstance(time, u.Quantity) and self.output_units:
+            time = time.to(self.output_units)
 
         if Model._advector or Model._freeSurface:
             mesh_name = 'mesh-%s' % checkpointID
             mesh_prefix = os.path.join(outputDir, mesh_name)
             mH = Model.mesh.save('%s.h5' % mesh_prefix,
                                  units=u.kilometers,
-                                 time=time.to(self.output_units))
+                                 time=time)
         elif not Model._mesh_saved:
             mesh_name = 'mesh'
             mesh_prefix = os.path.join(outputDir, mesh_name)
             mH = Model.mesh.save('%s.h5' % mesh_prefix,
                                  units=u.kilometers,
-                                 time=time.to(self.output_units))
+                                 time=time)
             Model._mesh_saved = True
         else:
             mesh_name = 'mesh'
@@ -2249,7 +2252,7 @@ class _CheckpointFunction(object):
             # First write the XDMF header
             string = uw.utils._xdmfheader()
             string += uw.utils._spacetimeschema(mH, mesh_name,
-                                                time.to(self.output_units))
+                                                time)
 
         uw.barrier()
 
@@ -2269,7 +2272,7 @@ class _CheckpointFunction(object):
                 obj = getattr(Model, field)
                 file_prefix = os.path.join(outputDir, field + '-%s' % checkpointID)
                 handle = obj.save('%s.h5' % file_prefix, units=units,
-                                  time=time.to(self.output_units))
+                                  time=time)
                 if uw.rank() == 0:
                     string += uw.utils._fieldschema(handle, field)
             uw.barrier()
@@ -2307,12 +2310,15 @@ class _CheckpointFunction(object):
         outputDir = self.create_output_directory(outputDir)
 
         time = time if time else Model.time
+        if isinstance(time, u.Quantity) and self.output_units:
+            time = time.to(self.output_units)
+
         swarm_name = 'swarm-%s.h5' % checkpointID
 
         sH = Model.swarm.save(os.path.join(outputDir,
                               swarm_name),
                               units=u.kilometers,
-                              time=time.to(self.output_units))
+                              time=time)
 
         if uw.rank() == 0:
             filename = "XDMF.swarms." + str(checkpointID).zfill(5) + ".xmf"
@@ -2321,7 +2327,7 @@ class _CheckpointFunction(object):
             # First write the XDMF header
             string = uw.utils._xdmfheader()
             string += uw.utils._swarmspacetimeschema(sH, swarm_name,
-                                                     time.to(self.output_units))
+                                                     time)
         uw.barrier()
 
         for field in fields:
@@ -2338,7 +2344,7 @@ class _CheckpointFunction(object):
                 file_prefix = os.path.join(outputDir,
                                            field + '-%s' % checkpointID)
                 handle = obj.save('%s.h5' % file_prefix,
-                                  units=units, time=time.to(self.output_units))
+                                  units=units, time=time)
                 if uw.rank() == 0:
                     string += uw.utils._swarmvarschema(handle, field)
                 uw.barrier()
@@ -2374,6 +2380,8 @@ class _CheckpointFunction(object):
             checkpointID = Model.checkpointID
 
         time = time if time else Model.time
+        if isinstance(time, u.Quantity) and self.output_units:
+            time = time.to(output_units)
 
         if not outputDir:
             outputDir = Model.outputDir
@@ -2385,7 +2393,7 @@ class _CheckpointFunction(object):
         # Checkpoint passive tracers and associated tracked fields
         if Model.passive_tracers:
             for (dump, item) in Model.passive_tracers.items():
-                item.save(outputDir, checkpointID, time.to(self.output_units))
+                item.save(outputDir, checkpointID, time)
 
         uw.barrier()
 
@@ -2395,7 +2403,7 @@ class _RestartFunction(object):
     def __init__(self, Model, restartDir):
 
         self.Model = Model
-        self.restartDir = restartDir if restartDir else Model.outputDir
+        self.restartDir = restartDir
 
         uw.barrier()
 
