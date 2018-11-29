@@ -337,6 +337,10 @@ class Model(Material):
         """Model time"""
         return Dimensionalize(self._ndtime, rcParams["time.SIunits"])
 
+    @time.setter
+    def time(self, value):
+        self._nd_time = nd(value)
+
     @property
     def x(self):
         """x"""
