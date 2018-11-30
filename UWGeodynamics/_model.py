@@ -2376,7 +2376,7 @@ class _CheckpointFunction(object):
 
         time = time if time else Model.time
         if isinstance(time, u.Quantity) and self.output_units:
-            time = time.to(output_units)
+            time = time.to(self.output_units)
 
         if not outputDir:
             outputDir = Model.outputDir
