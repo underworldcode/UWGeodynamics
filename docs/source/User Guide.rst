@@ -16,7 +16,7 @@ a quick introduction `here <https://mybinder.org/v2/gh/ipython/ipython-in-depth/
 Design principles
 -----------------
 
-import UWGeodynamics
+import *UWGeodynamics*
 --------------------
 
 *UWGeodynamics* can be imported as follow:
@@ -28,7 +28,7 @@ import UWGeodynamics
 Visualization
 --------------
 
-*glucifer* can be used to plot the fields produced by Underworld / UWGeodynamics.
+*glucifer* can be used to plot the fields produced by *Underworld* / *UWGeodynamics*.
 The module is a wrapper around Lavavu_ and is readily available from
 Underworld.
 
@@ -194,7 +194,7 @@ units (metre, second, degree, etc).
 To scale a model, the user must define a series of characteristic
 physical values and assign them to the scaling object.
 
-Arguments with units will be scaled by the UWGeodynamics functions.
+Arguments with units will be scaled by the *UWGeodynamics* functions.
 
 .. code:: python
 
@@ -244,11 +244,14 @@ The function are also available respectively as :code:`GEO.nd` and
 The Model object
 ----------------
 
-The central element or “object” of the UWGeodynamics module is the
+The central element or “object” of the *UWGeodynamics* module is the
 **Model** object.
 
-It has several uses: - It defines the extent and the outside geometry of
-your problem. - It works as a container for the field variables.
+It has several uses: 
+
+- It defines the extent and the outside geometry of
+your problem. 
+- It works as a container for the field variables.
 
 It basically defines the universe on which you are going to apply
 physical rules (Gravity field, boundary condition, composition,
@@ -352,7 +355,7 @@ Material can be added to a model as follow:
    >>> Model = GEO.Model()
    >>> crust = Model.add_material(name="Crust")
 
-Although optional, tt is a good idea to give a **name** to the material.
+Although optional, it is a good idea to give a **name** to the material.
 The **Model.add_material** method will return a Material object. That
 object is a python object that will then be used to define the property
 of the material.
@@ -1373,27 +1376,18 @@ model reaches a checkpoint time (``restart_checkpoint=1``).
 Restarting the Model
 --------------------
 
-When checkpointing a model only the mesh, swarms their assoiciated variables
-are explicitely saved.
-Since the model state is not explicitly saved, thus the user needs to recreate
-the **Model** object before restarting it.
-
+When checkpointing a model only the mesh, swarms their associates variables
+are explicitely saved. Since the model state is not explicitly saved,
+thus the user needs to recreate the **Model** object before restarting it.
 In practice, this means the user must run all commands preceding the
 **Model.run_for** command.
 
-When running the **Model.run_for** command *UWGeodynamics* will first
-check if a checkpoint already exists in the output folder. If it does, the
-program will attempt to reload the last available step.
-
-The user can alter this behavior using the **restartStep** and
+The user can then restart a model using the **restartStep** and
 **restartFolder** arguments:
 
--  **restartStep** is *-1* by default. The default behaviour is to look
-   into **restartFolder** for an existing output and attempt a restart
-   from the last output available.
-   Setting it to `False` will overwrite any existing output(s)
-   in the *output* folder. If its value is an integer, this corresponds
-   to the step number you want to restart from.
+-  **restartStep** is *None* by default.
+   The step numbercyou want to restart from. If -1, restarts from the last available
+   step in **restartFolder**
 
 -  **restartFolder** is the folder where the program should look for
    previously saved data or checkpoints. It is set to **Model.outputs** by default.
