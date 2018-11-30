@@ -9,13 +9,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install cgdb sudo && \
 
 # UWGeodynamics
 WORKDIR /opt
-RUN git clone -b development https://github.com/underworldcode/UWGeodynamics.git && \
+RUN pip3 clone -b development https://github.com/underworldcode/UWGeodynamics.git && \
     pip3 install -e /opt/UWGeodynamics
-RUN mkdir /workspace/UWGeodynamics && \
-    mkdir /workspace/MODELS_RESULTS && \
-    rsync -av /opt/UWGeodynamics/examples/* /workspace/UWGeodynamics/ && \
-    rsync -av /opt/UWGeodynamics/tutorials/* /workspace/UWGeodynamics/ && \
-    rsync -av /opt/UWGeodynamics/docs/* /workspace/UWGeodynamics/
 
 # Badlands dependency
 RUN pip3 install --no-cache-dir pandas \
