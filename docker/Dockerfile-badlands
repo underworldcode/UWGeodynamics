@@ -13,9 +13,9 @@ RUN git clone -b development https://github.com/underworldcode/UWGeodynamics.git
     pip3 install -e /opt/UWGeodynamics
 RUN mkdir /workspace/UWGeodynamics && \
     mkdir /workspace/MODELS_RESULTS && \
-    mv /opt/UWGeodynamics/examples /workspace/UWGeodynamics/. && \
-    mv /opt/UWGeodynamics/tutorials /workspace/UWGeodynamics/. && \
-    mv /opt/UWGeodynamics/docs /workspace/UWGeodynamics/.
+    rsync -av /opt/UWGeodynamics/examples/* /workspace/UWGeodynamics/ && \
+    rsync -av /opt/UWGeodynamics/tutorials/* /workspace/UWGeodynamics/ && \
+    rsync -av /opt/UWGeodynamics/docs/* /workspace/UWGeodynamics/
 
 # Badlands dependency
 RUN pip3 install --no-cache-dir pandas \
