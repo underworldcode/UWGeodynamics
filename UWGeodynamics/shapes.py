@@ -52,6 +52,8 @@ class Polygon(Shape):
         Polygon Shape Class
         """
         self.vertices = vertices
+        self.top = min([y for x, y in self.vertices])
+        self.bottom = max([y for x, y in self.vertices])
         vertices = [(nd(x), nd(y)) for x, y in self.vertices]
         self._fn = uw.function.shape.Polygon(np.array(vertices))
 
@@ -129,6 +131,8 @@ class CombinedShape(Shape):
         An UWGeodynamics Shape object
         """
         self.shapes = shapes
+        self.top = max([shape.top for shape in shapes])
+        self.bottom = min([shape.top for shape in shapes])
 
     @property
     def _fn(self):
@@ -312,6 +316,8 @@ class Disk(Shape):
         """
         self.center = center
         self.radius = radius
+        self.top = center[1] + self.radius
+        self.bottom = center[1] - self.radius
 
     @property
     def _fn(self):
@@ -345,6 +351,8 @@ class Annulus(Shape):
         self.center = center
         self.r1 = r1
         self.r2 = r2
+        self.bottom = center[1] - self.r2
+        self.top = center[1] + self.r2
 
     @property
     def _fn(self):
@@ -353,4 +361,3 @@ class Annulus(Shape):
         r2 = nd(self.r2)
         coord = fn.input() - center
         return (fn.math.dot(coord, coord) < r2**2) & (fn.math.dot(coord, coord) > r1**2)
-
