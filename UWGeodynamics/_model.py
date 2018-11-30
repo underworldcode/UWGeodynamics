@@ -1421,7 +1421,7 @@ class Model(Material):
     @u.check([None, "[time]", "[time]", None, None, None, "[time]", None, None])
     def run_for(self, duration=None, checkpoint_interval=None, nstep=None,
                 checkpoint_times=None, restart_checkpoint=1, dt=None,
-                restartStep=-1, restartDir=None, output_units=None):
+                restartStep=None, restartDir=None, output_units=None):
         """ Run the Model
 
         Parameters
@@ -1673,11 +1673,6 @@ class Model(Material):
         if centroids and not isinstance(centroids, list):
             centroids = list(centroids)
 
-        if name in self.passive_tracers.keys():
-            print("{0} tracers exists already".format(name))
-            sys.stdout.flush()
-            return self.passive_tracers[name]
-
         if not centroids:
 
             tracers = PassiveTracers(self.mesh,
@@ -1687,8 +1682,8 @@ class Model(Material):
                                      particleEscape=particleEscape)
 
         else:
-            x = np.array(vertices[0])[..., np.newaxis]  + np.array(centroids[0]).ravel()
-            y = np.array(vertices[1])[..., np.newaxis]  + np.array(centroids[1]).ravel()
+            x = np.array(vertices[0])[..., np.newaxis] + np.array(centroids[0]).ravel()
+            y = np.array(vertices[1])[..., np.newaxis] + np.array(centroids[1]).ravel()
             vertices = [x.ravel(), y.ravel()]
 
             if self.mesh.dim > 2:
