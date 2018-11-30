@@ -1,5 +1,4 @@
 FROM underworldcode/underworld2:2.6.0b
-MAINTAINER romain.beucher@unimelb.edu
 
 USER root
 
