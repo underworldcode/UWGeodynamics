@@ -26,3 +26,24 @@ def _notebook_run(example):
             "--ExecutePreprocessor.timeout=0",
             "--output", outpath, outpath]
     subprocess.check_call(args)
+
+
+def _notebook_run_parallel(example):
+    path = os.path.join(PROJECT_DIR, example)
+    outpath = os.path.join(RESULT_DIR, example)
+    copyfile(path, outpath)
+
+    s = open(outpath).read()
+    s = re.sub(r'Model\.run\_for\(.*\)', 'Model.run_for(nstep=2)', s)
+    f = open(outpath, 'w')
+    f.write(s)
+    f.close()
+
+    args = ["jupyter", "nbconvert",
+            "--to", "python", outpath]
+    subprocess.check_call(args)
+
+    outpath = outpath.split(".")[0] + ".py"
+    args = ["mpirun", "-np", "4",  "python",
+            outpath]
+    subprocess.check_call(args)
