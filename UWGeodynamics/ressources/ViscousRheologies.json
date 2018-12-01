@@ -72,8 +72,8 @@
     }
   },
   "Dry Olivine, Viscous Dislocation Creep, Hirth and Kohlstedt, 2003": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Hirth, G., & Kohlstedt, D. (2004). Rheology of the upper mantle and the mantle wedge: A view from the experimentalists. Inside the subduction Factory, 138, 83-105.",
+    "onlinePDF": "https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/138GM06",
     "Mineral": "Dry Olivine",
     "Type": "Viscous Dislocation Creep",
     "coefficients": {
@@ -104,8 +104,8 @@
     }
   },
   "Dry Olivine, Viscous Diffusion Creep, Hirth and Kohlstedt, 2003": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Hirth, G., & Kohlstedt, D. (2004). Rheology of the upper mantle and the mantle wedge: A view from the experimentalists. Inside the subduction Factory, 138, 83-105.",
+    "onlinePDF": "https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/138GM06",
     "Mineral": "Dry Olivine",
     "Type": "Viscous Diffusion Creep",
     "coefficients": {
@@ -144,8 +144,8 @@
     }
   },
   "Wet Olivine, Viscous Dislocation Creep, Hirth and Kohlstedt, 2003": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Hirth, G., & Kohlstedt, D. (2004). Rheology of the upper mantle and the mantle wedge: A view from the experimentalists. Inside the subduction Factory, 138, 83-105.",
+    "onlinePDF": "https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/138GM06",
     "Mineral": "Wet Olivine",
     "Type": "Viscous Dislocation Creep",
     "coefficients": {
@@ -184,8 +184,8 @@
     }
   },
   "Wet Olivine, Viscous Diffusion Creep, Hirth and Kohlstedt, 2003": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Hirth, G., & Kohlstedt, D. (2004). Rheology of the upper mantle and the mantle wedge: A view from the experimentalists. Inside the subduction Factory, 138, 83-105.",
+    "onlinePDF": "https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/138GM06",
     "Mineral": "Wet Olivine",
     "Type": "Viscous Diffusion Creep",
     "coefficients": {
@@ -264,8 +264,8 @@
     }
   },
   "Dry Olivine, Viscous Diffusion Creep, Petersen, 2010": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Petersen, K. D., Nielsen, S. B., Clausen, O. R., Stephenson, R., & Gerya, T. (2010). Small-scale mantle convection produces stratigraphic sequences in sedimentary basins. Science, 329(5993), 827-830.",
+    "onlinePDF": "www.sciencemag.org/cgi/content/full/329/5993/827/DC1",
     "Mineral": "Dry Olivine",
     "Type": "Viscous Diffusion Creep",
     "coefficients": {
@@ -288,8 +288,8 @@
     }
   },
   "Dry Olivine, Viscous Dislocation Creep, Karato and Wu, 1990": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Karato, S., & Wu, P. (1993). Rheology of the Upper Mantle: A Synthesis. Science, 260(5109), 771-778.0",
+    "onlinePDF": "http://www.jstor.org.vu-nl.idm.oclc.org/stable/288116",
     "Mineral": "Dry Olivine",
     "Type": "Viscous Dislocation Creep",
     "coefficients": {
@@ -384,8 +384,8 @@
     }
   },
   "Wet Quartz, Viscous Dislocation Creep, Kronenberg and Tullis, 1984": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Kronenberg, A. K., & Tullis, J. (1984). Flow strengths of quartz aggregates: grain size and pressure effects due to hydrolytic weakening. Journal of Geophysical Research: Solid Earth, 89(B6), 4281-4297.",
+    "onlinePDF": "https://onlinelibrary.wiley.com/doi/pdf/10.1029/JB089iB06p04281",
     "Mineral": "Wet Quartz",
     "Type": "Viscous Dislocation Creep",
     "coefficients": {
@@ -408,8 +408,8 @@
     }
   },
   "Wet Quartz, Viscous Dislocation Creep, Paterson and Luan, 1990": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Paterson, M. S., & Luan, F. C. (1990). Quartzite rheology under geological conditions. Geological Society, London, Special Publications, 54(1), 299-307.",
+    "onlinePDF": "http://sp.lyellcollection.org/content/54/1/299.short",
     "Mineral": "Wet Quartz",
     "Type": "Viscous Dislocation Creep",
     "coefficients": {
@@ -432,8 +432,8 @@
     }
   },
   "Wet Anorthite, Viscous Dislocation Creep, Ribacki et al., 2000": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Rybacki, E., & Dresen, G. (2000). Dislocation and diffusion creep of synthetic anorthite aggregates. Journal of Geophysical Research: Solid Earth, 105(B11), 26017-26036.",
+    "onlinePDF": "https://onlinelibrary.wiley.com/doi/pdf/10.1029/2005JB003663",
     "Mineral": "Wet Anorthite",
     "Type": "Viscous Dislocation Creep",
     "coefficients": {
@@ -480,8 +480,8 @@
     }
   },
   "Dry Mafic Granulite, Viscous Dislocation Creep, Wang et al., 2012": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Wang, Y. F., Zhang, J. F., Jin, Z. M., & Green Ii, H. W. (2012). Mafic granulite rheology: Implications for a weak continental lower crust. Earth and Planetary Science Letters, 353, 99-107.",
+    "onlinePDF": "https://www.sciencedirect.com/science/article/pii/S0012821X12004311",
     "Mineral": "Dry Mafic Granulite",
     "Type": "Viscous Dislocation Creep",
     "coefficients": {
@@ -504,8 +504,8 @@
     }
   },
   "Dry Maryland Diabase, Viscous Dislocation Creep, Mackwell et al., 1998": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Mackwell, S. J., Zimmerman, M. E., & Kohlstedt, D. L. (1998). High‐temperature deformation of dry diabase with application to tectonics on Venus. Journal of Geophysical Research: Solid Earth, 103(B1), 975-984.",
+    "onlinePDF": "https://onlinelibrary.wiley.com/doi/pdf/10.1029/97JB02671",
     "Mineral": "Dry Maryland Diabase",
     "Type": "Viscous Dislocation Creep",
     "coefficients": {
