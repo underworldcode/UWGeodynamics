@@ -1,6 +1,6 @@
 {
     "Huismans and Beaumont, 2007 (WeakCrust)": {
-        "citation": "Huismans, R. S., & Beaumont, C. (2007). Roles of lithospheric strain softening and heterogeneity in determining the geometry of rifts and continental margins. Geological Society, London, Special Publications, 282(1), 111–138. https://doi.org/10.1144/SP282.6",
+        "citation": "Huismans, R. S., & Beaumont, C. (2007). Roles of lithospheric strain softening and heterogeneity in determining the geometry of rifts and continental margins. Geological Society, London, Special Publications, 282(1), 111-138. https://doi.org/10.1144/SP282.6",
         "onlinePDF": "http://sp.lyellcollection.org/content/282/1/111.short",
         "coefficients": {
             "cohesion": {
@@ -178,7 +178,7 @@
         }
     },
     "Watremez et al., 2013 (LithosphericMantle)": {
-        "citation": "Watremez, L., E.Burov, E.d'Acremont, S.Leroy, B.Huet, L.LePourhiet, and N.Bellahsen (2013), Buoyancy and localizing properties of continental mantle lithosphere: Insights from thermomechanical models of the eastern Gulf of Aden, Geochem. Geophys. Geosyst., 14, 2800–2817, doi: 10.1002/ggge.20179",
+        "citation": "Watremez, L., E.Burov, E.d'Acremont, S.Leroy, B.Huet, L.LePourhiet, and N.Bellahsen (2013), Buoyancy and localizing properties of continental mantle lithosphere: Insights from thermomechanical models of the eastern Gulf of Aden, Geochem. Geophys. Geosyst., 14, 2800-2817, doi: 10.1002/ggge.20179",
         "onlinePDF": "https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/ggge.20179",
         "coefficients": {
             "cohesion": {
