@@ -1,7 +1,7 @@
 {
   "Wet Dunite, Viscous Dislocation Creep, Brace and Kohlstedt, 1980": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Brace, W. F., & Kohlstedt, D. L. (1980). Limits on lithospheric stress imposed by laboratory experiments. Journal of Geophysical Research: Solid Earth, 85(B11), 6248-6252.",
+    "onlinePDF": "https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JB085iB11p06248",
     "Mineral": "Wet Dunite",
     "Type": "Viscous Dislocation Creep",
     "coefficients": {
@@ -24,8 +24,8 @@
     }
   },
   "Wet Quartz, Viscous Dislocation Creep, Gleason and Tullis, 1995": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Gleason, G. C., & Tullis, J. (1995). A flow law for dislocation creep of quartz aggregates determined with the molten salt cell. Tectonophysics, 247(1-4), 1-23.",
+    "onlinePDF": "https://www.sciencedirect.com/science/article/pii/004019519500011B",
     "Mineral": "Wet Quartz",
     "Type": "Viscous Dislocation Creep",
     "coefficients": {
@@ -48,8 +48,8 @@
     }
   },
   "Wet Quartz, Viscous Dislocation Creep, Goetze et al., 1978": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Goetze, C. (1978). The mechanisms of creep in olivine. Phil. Trans. R. Soc. Lond. A, 288(1350), 99-119.",
+    "onlinePDF": "http://rsta.royalsocietypublishing.org/content/288/1350/99.short",
     "Mineral": "Wet Quartz",
     "Type": "Viscous Dislocation Creep",
     "coefficients": {
@@ -224,8 +224,8 @@
     }
   },
   "Wet Olivine, Viscous Diffusion Creep, Faul and Jackson, 2007": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Faul, U. H., & Jackson, I. (2007). Diffusion creep of dry, melt‐free olivine. Journal of Geophysical Research: Solid Earth, 112(B4).",
+    "onlinePDF": "https://onlinelibrary.wiley.com/doi/full/10.1029/2006JB004586",
     "Mineral": "Wet Olivine",
     "Type": "Viscous Diffusion Creep",
     "coefficients": {
@@ -312,8 +312,8 @@
     }
   },
   "Olivine, Viscous Dislocation Creep, Kirby and Kronenberg, 1987": {
-    "citation": "",
-    "onlinePDF": "",
+    "citation": "Kirby, S. H., & Kronenberg, A. K. (1987). Rheology of the lithosphere: selected topics. Reviews of Geophysics, 25(6), 1219-1244.",
+    "onlinePDF": "http://science.sciencemag.org/content/260/5109/771.short",
     "Mineral": "Olivine",
     "Type": "Viscous Dislocation Creep",
     "coefficients": {
