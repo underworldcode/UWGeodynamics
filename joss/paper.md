@@ -69,30 +69,49 @@ bibliography: paper.bib
 
 # Summary
 
-UWGeo is a high-level python interface to the Underworld API. 
-It provides a framework for rapid prototyping of mechanical and 
-thermo-mechanical numerical models both in 2D and 3D.
+The UWGeodynamics module facilitates development of 2D and 3D thermo-mechanical 
+geodynamics models. It is designed to be used for research and teaching,
+and combined the flexibility of the Underworld Application Programming Interface,
+with a structured workflow. The module is directed towards a large audience,
+including earth-science students, structural geologists, expert numerical
+geodynamicists and industry research and development teams.
 
-UWGeo functionalities includes:
+Designing geodynamical numerical models can be a daunting task which
+often requires good understanding of the computer codes. 
+UWGeodynamics provides a simple interface with examples to get you started
+with development of numerical models. User can get started without any
+pre-existing knowledge of programming. Expert users can easily modify the
+framework and adapt it to more specific needs.
 
-* Handles units through pint
-* semi-automatic scaling through definition of characteristic variables.
-* Function to define 2D and 3D shapes from simple boxes to more complex composite shapes.
-* Lithostatic pressure calculation
-* Isostatic module.
-* Partial melt calculation and associated change in viscosity / heat production.
-* Viscous, Visco-plastic, Visco-elasto-plastic rheologies implementation.
-* Database of common rheologies used in Geodynamics.
-* Possibility to import personal rheology databases.
-* von Mises, Coulomb and Drucker-prager yield criterion.
-* Phase changes
-* Frictional boundary condition
-* Indentor definition
-* Simple Adaptive mesh
+Although UWGeodynamics has been primarily designed to address geodynamic
+problems it can also be used to teach fluid dynamics and material mechanics.
+UWGeodynamics uses the flexibility of the python language and the Jupyter
+notebook environment which allows leveraging the wide range of scientific
+libraries available from the python communauty. 
+It also facilitate the coupling with existing scientific python modules such
+as Badlands, Citcoms and pyGPlates.
 
-UWGeo comes with a series of examples and tutorials such as:
+Functionalities includes:
 
-* Simple
+- Dimensional input values, using user's choice of physical units.
+- Automated and transparent scaling of dimensional values.
+- Sets of predefined geometry that can be combined to define the
+  initial geometry of a model.
+- Handles Newtonian and non-Newtonian rheologies (Viscous, Visco-plastic and
+  Visco-elasto-plastic).
+- Database of common rheologies used in geodynamics, which can be 
+  personalised / extended by users.
+- Simple definition of kinematic, stress, and thermal boundary conditions.
+- Lithostatic pressure calculation.
+- Thermal equilibrium (steady-state) calculation.
+- Pseudo Isostasy using a range of kinematic or stress boundary conditions.
+- Partial melt calculation and associated change in viscosity / heat production.
+- Simple definition of passive tracers and grid of tracers tracers.
+- Simple Phase changes
+- 2 way coupling with the surface processes model pyBadlands.
 
+UWGeo comes with a series of examples, benchmarks and tutorials setups that can
+be used as cookbook recipes. They also provide a wide range of teaching materials
+useful to introduce numerical geodynamic modeling to students.
 
 # References

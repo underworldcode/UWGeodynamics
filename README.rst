@@ -23,8 +23,8 @@ Underworld Geodynamics project
     
 .. image:: https://github.com/underworldcode/UWGeodynamics/blob/development/tutorials/images/Tutorial1.gif
 
-The UWGeodynamics module intents to facilitate rapid prototyping of geodynamics models using Underworld. 
-It can be seen as a set of high-level functions within the Underworld ecosystem. 
+The UWGeodynamics module facilitates prototyping of geodynamics models using Underworld. 
+It can be seen as a set of high-level functions within the Underworld ecosystem.
 It is a means to quickly get the user into Underworld modelling and assumes very
 little knowledge in coding. The module make some assumptions based on how the user
 defines the boundary conditions and the properties of the materials (rocks, phases).

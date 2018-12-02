@@ -1191,7 +1191,6 @@ class Model(Material):
     @property
     def _stressFn(self):
         """Stress Function Builder"""
-        stressMap = {}
         viscousStressFn = self._viscous_stressFn()
         elasticStressFn = self._elastic_stressFn
         return  viscousStressFn + elasticStressFn
@@ -1234,13 +1233,6 @@ class Model(Material):
         veStressFn_data = self._stressFn.evaluate(self.swarm)
         self._previousStressField.data[:] *= (1. - phi)
         self._previousStressField.data[:] += phi * veStressFn_data[:]
-
-    @property
-    def _yieldStressFn(self):
-        """ Calculate Yield stress function from viscosity and strain rate"""
-        eij = self.strainRate_2ndInvariant
-        eijdef = nd(self.defaultStrainRate)
-        return 2.0 * self._viscosityFn * fn.misc.max(eij, eijdef)
 
     def _phaseChangeFn(self):
         for material in self.materials:
