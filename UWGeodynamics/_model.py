@@ -1085,13 +1085,16 @@ class Model(Material):
         Parameters
         ----------
 
-        name : name of the mesh field
-        nodeDofCount : degree of freedom, default is 1
-        dataType : type of data to be recorded, default is "double"
-        init_value : default value of the field, default is to initialise
-            the field to 0.
-        restart_variable: boolean, specifies if the variable is needed
-            for a restart.
+        name : str
+            name of the mesh field
+        nodeDofCount : int
+            degree of freedom, default is 1
+        dataType : str
+            type of data to be recorded, default is "double"
+        init_value : float
+            default value of the field, default is to initialise the field to 0.
+        restart_variable: bool,
+            specifies if the variable is needed for a restart.
 
         Returns
         -------
@@ -1113,13 +1116,16 @@ class Model(Material):
         Parameters
         ----------
 
-        name : name of the submesh field
-        nodeDofCount : degree of freedom, default is 1
-        dataType : type of data to be recorded, default is "double"
-        init_value : default value of the field, default is to initialise
-            the field to 0.
-        restart_variable: boolean, specifies if the variable is needed
-            for a restart.
+        name : str
+            name of the mesh field
+        nodeDofCount : int
+            degree of freedom, default is 1
+        dataType : str
+            type of data to be recorded, default is "double"
+        init_value : float
+            default value of the field, default is to initialise the field to 0.
+        restart_variable: bool,
+            specifies if the variable is needed for a restart.
 
         Returns
         -------
