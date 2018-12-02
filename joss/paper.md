@@ -10,12 +10,13 @@ tags:
   - rift
   - subduction
   - basin evolution
-  - mountains
+  - orogenic collision
+  - subduction
   - sandbox experiment
   - stokes
 authors:
  - name: Romain Beucher
-   orcid:0000-0003-3891-5444 
+   orcid:0000-0003-3891-5444
    affiliation: "1"
  - name: Louis Moresi
    orcid: 0000-0003-3685-174X
@@ -26,8 +27,11 @@ authors:
  - name: John Mansour
    orcid:
    affiliation: "2"
+ - name: Dan Sandiford
+   orcid: 0000-0002-2207-6837
+   affiliation: "1"
  - name: Rebecca Farrington
-   orcid: 0000-0002-2594-6965 
+   orcid: 0000-0002-2594-6965
    affiliatioin: "1"
  - name: Luke Mondy
    orcid: 0000-0001-7779-509X
@@ -36,7 +40,7 @@ authors:
    orcid: 0000-0003-2595-2414
    affiliation: "3"
  - name: Patrice Rey
-   orcid: 0000-0002-1767-8593 
+   orcid: 0000-0002-1767-8593
    affiliation: "3"
  - name: Guillaume Duclaux
    orcid: 0000-0002-9512-7252
@@ -49,18 +53,18 @@ authors:
    affiliation: "5"
  - name: Sara Morón
    orcid: 0000-0002-1270-437
-   affiliation: "1"  
+   affiliation: "1"
 
 affiliations:
  - name: School of Earth Science, The University of Melbourne, Melbourne, Australia
    index: 1
- - name: Monash eResearch Centre, Monash University, Clayton, Australia 
+ - name: Monash eResearch Centre, Monash University, Clayton, Australia
    index: 2
  - name: School of Geosciences, Earthbyte Research Group, The University of Sydney, Australia
    index: 3
  - name: Laboratoire Géoazur, Université Nice Sophia Antipolis, Nice, France
    index: 4
- - name: Department of Earth Science, Faculty of Science, Vrije Universiteit, Amsterdam 
+ - name: Department of Earth Science, Faculty of Science, Vrije Universiteit, Amsterdam
    index: 5
 
 date: 05 October 2018
@@ -69,27 +73,30 @@ bibliography: paper.bib
 
 # Summary
 
-The UWGeodynamics module facilitates development of 2D and 3D thermo-mechanical 
+The UWGeodynamics module facilitates development of 2D and 3D thermo-mechanical
 geodynamics models. It is designed to be used for research and teaching,
 and combined the flexibility of the Underworld Application Programming Interface,
-with a structured workflow. The module is directed towards a large audience,
-including earth-science students, structural geologists, expert numerical
-geodynamicists and industry research and development teams.
+[@Moresi2002, @Moresi2003, @Moresi2007] with a structured workflow.
+The module is directed towards a large audience, including earth-science
+students, structural geologists, expert numerical geodynamicists and
+industry research and development teams.
 
 Designing geodynamical numerical models can be a daunting task which
-often requires good understanding of the computer codes. 
+often requires good understanding of the computer codes.
 UWGeodynamics provides a simple interface with examples to get you started
 with development of numerical models. User can get started without any
 pre-existing knowledge of programming. Expert users can easily modify the
-framework and adapt it to more specific needs.
+framework and adapt it to more specific needs. The code can be run in parallel
+on multiple CPUs whether on a personal computer or large High Performance
+Computing systems.
 
 Although UWGeodynamics has been primarily designed to address geodynamic
 problems it can also be used to teach fluid dynamics and material mechanics.
 UWGeodynamics uses the flexibility of the python language and the Jupyter
 notebook environment which allows leveraging the wide range of scientific
-libraries available from the python communauty. 
+libraries available from the python communauty.
 It also facilitate the coupling with existing scientific python modules such
-as Badlands, Citcoms and pyGPlates.
+as Badlands [@Salles:2018].
 
 Functionalities includes:
 
@@ -99,7 +106,7 @@ Functionalities includes:
   initial geometry of a model.
 - Handles Newtonian and non-Newtonian rheologies (Viscous, Visco-plastic and
   Visco-elasto-plastic).
-- Database of common rheologies used in geodynamics, which can be 
+- Database of common rheologies used in geodynamics, which can be
   personalised / extended by users.
 - Simple definition of kinematic, stress, and thermal boundary conditions.
 - Lithostatic pressure calculation.
