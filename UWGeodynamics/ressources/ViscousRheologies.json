@@ -7,19 +7,19 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 520
+        "value": 520.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
-        "value": 0
+        "value": 0.0
       },
       "preExponentialFactor": {
         "units": "1 / megapascal ** 3 / second",
-        "value": 70000
+        "value": 70000.0
       },
       "stressExponent": {
         "units": "None",
-        "value": 3
+        "value": 3.0
       }
     }
   },
@@ -31,7 +31,7 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 223
+        "value": 223.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
@@ -43,7 +43,7 @@
       },
       "stressExponent": {
         "units": "None",
-        "value": 4
+        "value": 4.0
       }
     }
   },
@@ -55,11 +55,11 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 190
+        "value": 190.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
-        "value": 0
+        "value": 0.0
       },
       "preExponentialFactor": {
         "units": "1 / megapascal ** 3 / second",
@@ -67,7 +67,7 @@
       },
       "stressExponent": {
         "units": "None",
-        "value": 3
+        "value": 3.0
       }
     }
   },
@@ -79,7 +79,7 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 530
+        "value": 530.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
@@ -91,7 +91,7 @@
       },
       "grainSizeExponent": {
         "units": "None",
-        "value": 0
+        "value": 0.0
       },
       "preExponentialFactor": {
         "units": "1 / megapascal ** 3.5 / second",
@@ -111,7 +111,7 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 375
+        "value": 375.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
@@ -123,7 +123,7 @@
       },
       "grainSizeExponent": {
         "units": "None",
-        "value": 3
+        "value": 3.0
       },
       "preExponentialFactor": {
         "units": "1 / megapascal / second",
@@ -131,15 +131,15 @@
       },
       "stressExponent": {
         "units": "None",
-        "value": 1
+        "value": 1.0
       },
       "waterFugacity": {
         "units": "None",
-        "value": 1000
+        "value": 1000.0
       },
       "waterFugacityExponent": {
         "units": "None",
-        "value": 0
+        "value": 0.0
       }
     }
   },
@@ -151,7 +151,7 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 520
+        "value": 520.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
@@ -163,7 +163,7 @@
       },
       "grainSizeExponent": {
         "units": "None",
-        "value": 0
+        "value": 0.0
       },
       "preExponentialFactor": {
         "units": "1 / megapascal ** 3.5 / second",
@@ -175,7 +175,7 @@
       },
       "waterFugacity": {
         "units": "None",
-        "value": 1000
+        "value": 1000.0
       },
       "waterFugacityExponent": {
         "units": "None",
@@ -191,7 +191,7 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 375
+        "value": 375.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
@@ -203,7 +203,7 @@
       },
       "grainSizeExponent": {
         "units": "None",
-        "value": 3
+        "value": 3.0
       },
       "preExponentialFactor": {
         "units": "1 / megapascal / second",
@@ -211,7 +211,7 @@
       },
       "stressExponent": {
         "units": "None",
-        "value": 1
+        "value": 1.0
       },
       "waterFugacity": {
         "units": "None",
@@ -219,7 +219,7 @@
       },
       "waterFugacityExponent": {
         "units": "None",
-        "value": 1
+        "value": 1.0
       }
     }
   },
@@ -231,19 +231,19 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 484
+        "value": 484.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
-        "value": 0
+        "value": 0.0
       },
       "grainSize": {
         "units": "None",
-        "value": 5
+        "value": 5.0
       },
       "grainSizeExponent": {
         "units": "None",
-        "value": 3
+        "value": 3.0
       },
       "preExponentialFactor": {
         "units": "1 / megapascal**1.3 / second",
@@ -255,11 +255,11 @@
       },
       "waterFugacity": {
         "units": "None",
-        "value": 1000
+        "value": 1000.0
       },
       "waterFugacityExponent": {
         "units": "None",
-        "value": 0
+        "value": 0.0
       }
     }
   },
@@ -271,7 +271,7 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 300
+        "value": 300.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
@@ -283,7 +283,7 @@
       },
       "stressExponent": {
         "units": "None",
-        "value": 1
+        "value": 1.0
       }
     }
   },
@@ -295,7 +295,7 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 540
+        "value": 540.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
@@ -323,7 +323,7 @@
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
-        "value": 0
+        "value": 0.0
       },
       "preExponentialFactor": {
         "units": "1 / pascal ** 3 / second",
@@ -331,7 +331,7 @@
       },
       "stressExponent": {
         "units": "None",
-        "value": 3
+        "value": 3.0
       }
     }
   },
@@ -343,11 +343,11 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 149
+        "value": 149.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
-        "value": 0
+        "value": 0.0
       },
       "preExponentialFactor": {
         "units": "1 / pascal ** 3 / second",
@@ -355,7 +355,7 @@
       },
       "stressExponent": {
         "units": "None",
-        "value": 3
+        "value": 3.0
       }
     }
   },
@@ -367,11 +367,11 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 610
+        "value": 610.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
-        "value": 0
+        "value": 0.0
       },
       "preExponentialFactor": {
         "units": "1 / megapascal ** 4.94 / second",
@@ -391,11 +391,11 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 134
+        "value": 134.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
-        "value": 0
+        "value": 0.0
       },
       "preExponentialFactor": {
         "units": "1 / pascal ** 2.4 / second",
@@ -415,11 +415,11 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 135
+        "value": 135.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
-        "value": 0
+        "value": 0.0
       },
       "preExponentialFactor": {
         "units": "1 / megapascal ** 3.1 / second",
@@ -439,11 +439,11 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 356
+        "value": 356.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
-        "value": 0
+        "value": 0.0
       },
       "preExponentialFactor": {
         "units": "1 / pascal ** 3 / second",
@@ -451,7 +451,7 @@
       },
       "stressExponent": {
         "units": "None",
-        "value": 3
+        "value": 3.0
       }
     }
   },
@@ -463,11 +463,11 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 223
+        "value": 223.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
-        "value": 0
+        "value": 0.0
       },
       "preExponentialFactor": {
         "units": "1 / pascal ** 4 / second",
@@ -475,7 +475,7 @@
       },
       "stressExponent": {
         "units": "None",
-        "value": 4
+        "value": 4.0
       }
     }
   },
@@ -487,11 +487,11 @@
     "coefficients": {
       "activationEnergy": {
         "units": "kilojoule / mole",
-        "value": 244
+        "value": 244.0
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
-        "value": 0
+        "value": 0.0
       },
       "preExponentialFactor": {
         "units": "1 / megapascal ** 3.2 / second",
@@ -515,7 +515,7 @@
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
-        "value": 0
+        "value": 0.0
       },
       "preExponentialFactor": {
         "units": "1 / pascal ** 4.7 / second",
