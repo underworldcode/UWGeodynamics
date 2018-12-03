@@ -21,11 +21,11 @@ authors:
  - name: Louis Moresi
    orcid: 0000-0003-3685-174X
    affiliation: "1"
- - name: Juian Giordani
-   orcid:
+ - name: Julian Giordani
+   orcid: 0000-0003-4515-9296
    affiliation: "1"
  - name: John Mansour
-   orcid:
+   orcid: 0000-0001-5865-1664
    affiliation: "2"
  - name: Dan Sandiford
    orcid: 0000-0002-2207-6837
