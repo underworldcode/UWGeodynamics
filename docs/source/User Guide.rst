@@ -12,6 +12,13 @@ for the development of geodynamic models.
 If you are not familiar with Jupyter notebooks, we suggest you follow
 a quick introduction `here <https://mybinder.org/v2/gh/ipython/ipython-in-depth/master?filepath=binder/Index.ipynb>`_.
 
+Where to find documentation?
+----------------------------
+
+Additional documentation and function specific
+documentation can be find in the python doctrings.
+You can acces them in the Jupyter_ notebook by prepending or
+appending the method, variable or function with ``?``.
 
 Design principles
 -----------------
@@ -20,7 +27,7 @@ Design principles
 
 
 import *UWGeodynamics*
---------------------
+----------------------
 
 *UWGeodynamics* can be imported as follow:
 
@@ -252,8 +259,7 @@ The central element or “object” of the *UWGeodynamics* module is the
 
 It has several uses: 
 
-- It defines the extent and the outside geometry of
-your problem. 
+- It defines the extent and the outside geometry of your problem. 
 - It works as a container for the field variables.
 
 It basically defines the universe on which you are going to apply
@@ -295,9 +301,9 @@ MaterialRegistry object:
 
    The MaterialRegistry object can import a database of materials
    from a json file by passing its path as argument.
-   The `default json`__ file can be find here and can be used as an example.
+   The `default json`__ file can be used as an example.
 
-__ https://github.com/underworldcode/UWGeodynamics/blob/master/UWGeodynamics/ressources/Materials.json_
+.. _default json: https://github.com/underworldcode/UWGeodynamics/blob/master/UWGeodynamics/ressources/Materials.json_
 
 
 
@@ -699,9 +705,10 @@ Temperature and Pressure dependent densities can be assigned to a Material using
 the ``GEO.LinearDensity`` function which calculates:
 
 .. math::
+   
+   :label: linearDensity
 
-    `\rho = \rho_0 (1 + (\beta * \delta P) - (\alpha * \delta T))`
-    :linearDensity:
+   `\rho = \rho_0 (1 + (\beta * \delta P) - (\alpha * \delta T))`
 
 where $rho$ is the reference density, `\beta` a factor, `\delta P` the difference
 between the pressure and the reference pressure, `\alpha` is the thermal
@@ -860,12 +867,12 @@ defined as :math:`\dot{\epsilon}=\sqrt{\frac{1}{2}\dot{\epsilon}_{ij}\dot{\epsil
 The yield value :math:`\sigma_y` is defined using a Drucker-Prager yield-criterion:
 
 .. math::
+   :label: druckerprager
 
    \sigma_y = C \cos\phi + \sin\phi P \quad \text{(2D)}
 
    \sigma_y = \frac{6C\cos\phi}{\sqrt3(3-\sin\phi)} + 
               \frac{6\sin\phi P}{\sqrt3(3-\sin\phi)} \quad \text{(3D)}
-   :label: druckerprager
 
 
 Setting the friction angle :math:`\phi=0` gives the von Mises Criterion.
@@ -994,8 +1001,9 @@ The meltExpansion factor affects the density of the materials and equation
 
 .. math::
 
-    `\rho = \rho_0 (1 + (\beta * \delta P) - (\alpha * \delta T) - \gamma F) `
-    :linearDensityMelt:
+   :label: linearDensityMelt
+
+   `\rho = \rho_0 (1 + (\beta * \delta P) - (\alpha * \delta T) - \gamma F) `
 
 with `\gamma` the factor of melt expansion and `F` the fraction of melt.
 
@@ -1351,7 +1359,7 @@ save the results at some regular intervals and/or specified times. You can defin
 **This can be used together or without the checkpoint_interval**
 
 UWGeodynamics will save all the fields defined in the
-GEO.rcParams[“default.outputs”] list. You can change that list before
+``GEO.rcParams[“default.outputs”]`` list. You can change that list before
 running the model.
 
 Checkpointing
@@ -1561,7 +1569,7 @@ UWGeodynamics provides a way to couple an Underworld model to Badlands_.
 This will allow communication between the *UWGeodynamics* model and the *Badlands*
 surface processes model. Badlands input parameters must be defined inside
 an XML file as described in the module documentation_.
-We provide an XML example here_.
+We provide an `XML example`_.
 The resulting Model is a 2-way coupled thermo-mechanical model with
 surface processes, where the velocity field retrieved from the thermo-mechanical
 model is used to advect the surface in the Surface Processes Model. The
@@ -1586,7 +1594,7 @@ model than in the thermo-mechanical model.
 
 
 .. _documentation: https://github.com/badlands-model/pyBadlands
-.. _here: ressources/badlands.xml
+.. _XML example: ressources/badlands.xml
 
 Deforming Mesh
 --------------
@@ -1639,12 +1647,47 @@ There is some degree of validation when setting the values of rcParams,
 see ``UWGeodynamics.rcsetup`` for details.
 
 
-.. table::
-
-   ======== =========== ============
-   name      function    default val.
-   ======== =========== ============
-
+.. table:: rcParams
+   :widths: 40 35 25
+   
+   ====================================== ============================================================== ====================================================
+   Name                                   Function                                                       Default value
+   ====================================== ============================================================== ====================================================
+   CFL                                    Set CFL Factor                                                 0.5
+   solver                                 Set Solver                                                     "mg" (multigrid), options are "mumps", "lu"
+   penalty                                Set penalty value                                              0.0 or None
+   initial.nonlinear.tolerance            Set nonlinear tolerance for Stokes first solve                 1e-2
+   nonlinear.tolerance                    Set nonlinear tolerance for solves                             1e-2
+   initial.nonlinear.min.iterations       Set minimal number of Picard iterations (first solve)          2 
+   initial.nonlinear.max.iterations       Set maximal number of Picard iterations (first solve)          500
+   nonlinear.min.iterations               Set minimal number of Picard iterations                        2   
+   nonlinear.max.iterations               Set maximal number of Picard iterations                        500
+   default.outputs                        List of fields to be saved at checkpoint                       ["temperature", "pressureField", "strainRateField", "velocityField", "projStressField", "projTimeField", "projMaterialField", "projViscosityField", "projPlasticStrain", "projDensityField"]
+   swarm.particles.per.cell.2D            Initial number of particles per cell for 2D models             40
+   swarm.particles.per.cell.3D            Initial number of particles per cell for 3D models             120
+   popcontrol.particles.per.cell.2D       Minimum number of particles per cell                           40
+   popcontrol.particles.per.cell.3D       Maximum number of particles per cell                           120
+   popcontrol.aggressive                  Turn on Aggressive population control                          True
+   popcontrol.split.threshold             Population control split threshold                             0.15
+   popcontrol.max.splits                  Population control maximum number of splits                    10
+   shear.heating                          Turn shear heating on / off                                    False
+   surface.pressure.normalization         Turn surface pressure normalization on / off                   True
+   pressure.smoothing                     Turn pressure smoothing after solve on / off                   True
+   advection.diffusion.method             Advection Diffusion solve method                               "SUPG"
+   rheologies.combine.method              Visco-plastic rheology combination                             "Minimum", options are "Minimum", "Harmonic"
+   averaging.method                       Multi-material element averaging method                        "arithmetic" options are "arithmetic", "geometric", "harmonic", "maximum", "minimum", "root mean square"
+   time.SIunits                           Default output units for time field                             u.year
+   viscosityField.SIunits                 Default output units for viscosity field                       u.pascal * u.second
+   densityField.SIunits                   Default output units for density field                         u.kilogram / u.metre**3    
+   velocityField.SIunits                  Default output units for velocity field                        u.centimetre / u.year
+   temperature.SIunits                    Default output units for temperature field                     u.degK
+   pressureField.SIunits                  Default output units for pressure field                        u.pascal
+   strainRateFieldSIunits                 Default output units for strain rate field                     u.pascal
+   projStressTensor.SIunits               Default output units for mesh projected stress tensor field    u.pascal
+   projStressField.SIunits                Default output units for mesh projected stress field           u.pascal
+   projViscosityFIeld.SIunits             Default output units for mesh projected viscosities            u.pascal * u.second
+   projTimeField.SIunits                  Default output units for mesh projected time field.            u.year
+   ====================================== ============================================================== ====================================================
 
 The ``uwgeodynamicsrc`` file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
