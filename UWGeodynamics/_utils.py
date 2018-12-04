@@ -191,16 +191,15 @@ class PassiveTracers(object):
         uw.barrier()
 
         # get swarm parameters - serially read from hdf5 file to get size
-        h5f = h5py.File(name=swarm_fpath, mode="r", driver="mpio",
-                        comm=MPI.COMM_WORLD)
-        dset = h5f.get('data')
-        if dset == None:
-            raise RuntimeError("Can't find 'data' in file '{}'.\n".format(swarm_fname))
-        globalCount = len(dset)
-        dim = self.swarm.mesh.dim
-        h5f.close()
 
         if uw.rank() == 0:
+            with h5py.File(name=swarm_fpath, mode="r") as h5f:
+                dset = h5f.get('data')
+                if dset is None:
+                    raise RuntimeError("Can't find 'data' in file '{}'.\n".format(swarm_fname))
+                globalCount = len(dset)
+                dim = self.swarm.mesh.dim
+
             string += "\t<Attribute Type=\"Scalar\" Center=\"Node\" Name=\"Coordinates\">\n"
             string += """\t\t\t<DataItem Format=\"HDF\" NumberType=\" Float\"
                          Precision=\"8\" Dimensions=\"{0} {1}\">{2}:/data</DataItem>\n""".format(globalCount, dim, swarm_fname)
