@@ -1544,8 +1544,7 @@ Three simple function are available:
 Coupling with Badlands
 ~~~~~~~~~~~~~~~~~~~~~~
 
-UWGeodynamics provides a way to couple an Underworld model to Badlands.
-**More documentation needed**
+UWGeodynamics provides a way to couple an Underworld model to Badlands_.
 
 .. code:: python
 
@@ -1556,6 +1555,35 @@ UWGeodynamics provides a way to couple an Underworld model to Badlands.
    ...     XML="ressources/badlands.xml", resolution=1. * u.kilometre,
    ...     checkpoint_interval=0.01 * u.megayears)
 
+This will allow communication between the *UWGeodynamics* model and the *Badlands*
+surface processes model. Badlands input parameters must be defined inside
+an XML file as described in the module documentation_.
+We provide an XML example here_.
+The resulting Model is a 2-way coupled thermo-mechanical model with
+surface processes, where the velocity field retrieved from the thermo-mechanical
+model is used to advect the surface in the Surface Processes Model. The
+surface in subjected to erosion and deposition.  The distribution of materials
+in the thermomechanical model is then updated.
+
+Users must define a list of material describing the air layers (usually, air and
+sticky air). It is also require to define an `UWGeodynamics.Material` object
+describing the sediment that will be deposited. The index of the Material is passed
+to the `surfaceProcesses` function. Users can also provide an `Underworld` function
+returning an index of an existing `UWGeodynamics.Material`.
+
+It is recommended to use a higher spatial resolution in the surface processes
+model than in the thermo-mechanical model.
+
+.. note::
+
+    When the Thermomechanical model is 2D, the velocity field at the surface
+    is extrapolated in the 3D dimension and the resulting model is a T or 2.5D
+    model (symmetric regional uplift). 
+    If the thermomechanical model is 3D the coupling is done in 3D.
+
+
+.. _documentation: https://github.com/badlands-model/pyBadlands
+.. _here: ressources/badlands.xml
 
 Deforming Mesh
 --------------
@@ -1672,3 +1700,4 @@ See below for a sample.
 .. _Lavavu: https://github.com/OKaluza/LavaVu
 .. _HDF5: http://portal.hdfgroup.org/display/support
 .. _Paraview: https://www.paraview.org/
+.. _Badlands: https://github.com/badlands-model/pyBadlands
