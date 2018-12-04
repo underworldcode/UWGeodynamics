@@ -16,6 +16,9 @@ a quick introduction `here <https://mybinder.org/v2/gh/ipython/ipython-in-depth/
 Design principles
 -----------------
 
+.. image:: /img/Design.svg
+
+
 import *UWGeodynamics*
 --------------------
 
