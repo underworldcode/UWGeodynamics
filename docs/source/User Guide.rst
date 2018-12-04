@@ -710,9 +710,9 @@ the ``GEO.LinearDensity`` function which calculates:
 
    `\rho = \rho_0 (1 + (\beta * \delta P) - (\alpha * \delta T))`
 
-where $rho$ is the reference density, `\beta` a factor, `\delta P` the difference
-between the pressure and the reference pressure, `\alpha` is the thermal
-expansivity and `\delta T` is the difference between the temperature and the
+where :math:`\rho` is the reference density, :math:`\beta` a factor, :math:`\delta P` the difference
+between the pressure and the reference pressure, :math:`\alpha` is the thermal
+expansivity and :math:`\delta T` is the difference between the temperature and the
 reference temperature.
 
 .. code:: python
