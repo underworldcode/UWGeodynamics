@@ -4,8 +4,8 @@ User Guide
 The Jupyter notebook
 --------------------
 
-The Jupyter_ notebook provides a powerfull
-environment for the development and analysis of Underworld model.
+The Jupyter_ notebook provides a powerful
+environment for the development and analysis of Underworld models.
 *Underworld* and *UWGeodynamics* recommend using Jupyter notebooks
 for the development of geodynamic models.
 
@@ -50,7 +50,7 @@ It can be imported as follow
 
 .. warning::
 
-   Although many plotting module are available, we strongly encourage people
+   Although many plotting modules are available, we strongly encourage people
    to use *glucifer*. It integrates very well inside the Jupyter_ notebook,
    is parallel safe, and can take Underworld function as arguments.
 
@@ -129,7 +129,7 @@ or simply
    >>> u = GEO.u
 
 You can have a quick overview of all the units available by hitting tab
-after the “.” of the u object.
+after the ``.`` of the u object.
 
 .. image:: img/tabtab.gif
 
@@ -144,7 +144,7 @@ Quantities can then be defined as follow:
    >>> gravity = 9.81 * u.metre / u.second**2
 
 Pint_ offers the possibility to append a prefix to the units.
-1 million year can thus be defined as follow:
+1 million years can thus be defined as follow:
 
 .. code:: python
 
@@ -296,6 +296,9 @@ MaterialRegistry object:
    import UWGeodynamics as GEO
 
    materials_database = GEO.MaterialRegistry()
+
+
+.. image:: /img/MaterialRegistry.gif
 
 .. note::
 
