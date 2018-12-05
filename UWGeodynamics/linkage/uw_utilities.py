@@ -24,7 +24,7 @@ def get_UW_velocities(surfacePoints, velocityField):
     # reduce local arrays into global_array
     comm.Allreduce(local_top_vy, global_top_vy)
     comm.Allreduce(local_counts, global_counts)
-       
+
     global_top_vy /= global_counts
 
     # Calculate and return sep velocities

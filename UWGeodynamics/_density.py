@@ -50,7 +50,7 @@ class LinearDensity(Density):
 
         reference_density : reference density
         thermalExpansivity : thermal expansivity of the material at the
-                             temperature of reference. 
+                             temperature of reference.
         reference_temperature : reference temperature
         beta : coefficient of compressibility
         reference_pressure : reference pressure
@@ -74,7 +74,7 @@ class LinearDensity(Density):
         self._Pref = nd(reference_pressure)
 
     def effective_density(self):
-        """calculate effective_density based 
+        """calculate effective_density based
            on PT conditions"""
 
         density = nd(self.reference_density)
