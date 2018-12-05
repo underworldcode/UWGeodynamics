@@ -44,6 +44,13 @@ from .version import git_revision as __git_revision__
 from . import _net
 
 __author__ = "Romain Beucher"
+__copyright__ = "Copyright 2018, The University of Melbourne"
+__credits__ = ["Romain Beucher",
+               "Louis Moresi",
+               "Julian Giordani",
+               "John Mansour"]
+__maintainer__ = "Romain Beucher"
+__email__ = "romain.beucher@unimelb.edu.au"
 
 _id = str(_uuid.uuid4())
 
@@ -74,6 +81,7 @@ def mkdirs(newdir, mode=0o777):
         except OSError as exception:
             if exception.errno != errno.EEXIST:
                 raise
+
 
 def _is_writable_dir(p):
     """

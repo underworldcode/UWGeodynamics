@@ -74,35 +74,33 @@ bibliography: paper.bib
 # Summary
 
 The UWGeodynamics module facilitates development of 2D and 3D thermo-mechanical
-geodynamics models. It is designed to be used for research and teaching,
-and combined the flexibility of the Underworld Application Programming Interface,
+geodynamic models (Subduction, Basins, Orogenic systems).
+It is designed to be used for research and teaching, and combined the flexibility
+of the Underworld Application Programming Interface, 
 [@Moresi2002, @Moresi2003, @Moresi2007] with a structured workflow.
-The module is directed towards a large audience, including earth-science
-students, structural geologists, expert numerical geodynamicists and
-industry research and development teams.
 
-Designing geodynamical numerical models can be a daunting task which
-often requires good understanding of the computer codes.
+Designing geodynamic numerical models can be a daunting task which
+often requires good understanding of the numerical code.
 UWGeodynamics provides a simple interface with examples to get you started
-with development of numerical models. User can get started without any
+with development of numerical models. Users can start designing their models without any
 pre-existing knowledge of programming. Expert users can easily modify the
 framework and adapt it to more specific needs. The code can be run in parallel
-on multiple CPUs whether on a personal computer or large High Performance
-Computing systems.
+on multiple CPUs on personal computers and/or High Performance Computing systems.
 
 Although UWGeodynamics has been primarily designed to address geodynamic
-problems it can also be used to teach fluid dynamics and material mechanics.
+problems, it can also be used to teach fluid dynamics and material mechanics.
+
 UWGeodynamics uses the flexibility of the python language and the Jupyter
 notebook environment which allows leveraging the wide range of scientific
-libraries available from the python communauty.
-It also facilitate the coupling with existing scientific python modules such
-as Badlands [@Salles:2018].
+libraries available from the python community.
+It also facilitates the coupling with existing scientific python modules such
+as Badlands [@Salles2018].
 
-Functionalities includes:
+The functionalities include:
 
 - Dimensional input values, using user's choice of physical units.
 - Automated and transparent scaling of dimensional values.
-- Sets of predefined geometry that can be combined to define the
+- Sets of predefined geometries that can be combined to define the
   initial geometry of a model.
 - Handles Newtonian and non-Newtonian rheologies (Viscous, Visco-plastic and
   Visco-elasto-plastic).
@@ -113,12 +111,27 @@ Functionalities includes:
 - Thermal equilibrium (steady-state) calculation.
 - Pseudo Isostasy using a range of kinematic or stress boundary conditions.
 - Partial melt calculation and associated change in viscosity / heat production.
-- Simple definition of passive tracers and grid of tracers tracers.
+- Simple definition of passive tracers and grid of tracers.
 - Simple Phase changes
-- 2 way coupling with the surface processes model pyBadlands.
+- 2 way coupling with the surface processes model pyBadlands [@Salles2018].
 
 UWGeo comes with a series of examples, benchmarks and tutorials setups that can
 be used as cookbook recipes. They also provide a wide range of teaching materials
 useful to introduce numerical geodynamic modeling to students.
+
+# Audience
+
+The module is directed towards a large audience, including earth-science
+students, structural geologists, expert numerical geodynamicists and
+industry research and development teams. It is used as a research and teaching
+tool at the University of Melbourne and the University of Sydney.
+
+# Acknowledgments
+
+Development of Underworld / UWGeodynamics is financially supported by AuScope as
+part of the Simulation Analysis Modelling platform (SAM).
+UWGeodynamics has been developed to assist researchers and students of the
+Basin Genesis Hub and their industry partners.
+
 
 # References

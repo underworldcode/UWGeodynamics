@@ -42,11 +42,12 @@ class Model(Material):
               _dim_gravity])
     def __init__(self, elementRes=(64, 64),
                  minCoord=(0., 0.), maxCoord=(64. * u.km, 64 * u.km),
-                 name=None, gravity=None, periodic=None, elementType="Q1/dQ0",
-                 temperatureBCs=None, heatFlowBCs=None, velocityBCs=None,
-                 stressBCs=None, materials=None, outputDir=None,
-                 frictionalBCs=None, surfaceProcesses=None,
-                 isostasy=None, visugrid=None):
+                 name="Model", gravity=(0., 9.81 * u.m / u.s**2),
+                 periodic=None, elementType="Q1/dQ0",
+                 temperatureBCs=None, heatFlowBCs=None,
+                 velocityBCs=None, stressBCs=None, materials=None,
+                 outputDir="outputs", frictionalBCs=None,
+                 surfaceProcesses=None, isostasy=None, visugrid=None):
         """Create a Model object
 
         Parameters
@@ -110,10 +111,7 @@ class Model(Material):
         super(Model, self).__init__()
 
         # Process __init__ arguments
-        if not name:
-            self.name = rcParams["model.name"]
-        else:
-            self.name = name
+        self.name = name
 
         self.minCoord = minCoord
         self.maxCoord = maxCoord
@@ -134,10 +132,7 @@ class Model(Material):
 
         self.elementRes = elementRes
 
-        if outputDir:
-            self.outputDir = outputDir
-        else:
-            self.outputDir = rcParams["output.directory"]
+        self.outputDir = outputDir
 
         # Compute model dimensions
         self.length = maxCoord[0] - minCoord[0]
@@ -717,7 +712,7 @@ class Model(Material):
                                            mapping=HeatProdMap)
 
         # Add Viscous dissipation Heating
-        if rcParams["shearHeating"]:
+        if rcParams["shear.heating"]:
             stress = fn.tensor.second_invariant(self._stressFn)
             strain = self.strainRate_2ndInvariant
             self.HeatProdFn += stress * strain
@@ -773,16 +768,12 @@ class Model(Material):
                     fn_bodyforce=self._buoyancyFn,
                     fn_stresshistory=self._elastic_stressFn,
                     fn_one_on_lambda=self._lambdaFn)
-                    #useEquationResidual=rcParams["useEquationResidual"])
 
                 solver = uw.systems.Solver(self._stokes_SLE)
                 solver.set_inner_method(rcParams["solver"])
 
                 if rcParams["penalty"]:
                     solver.set_penalty(rcParams["penalty"])
-
-                if rcParams["mg.levels"]:
-                    solver.options.mg.levels = rcParams["mg.levels"]
 
             return solver
         else:

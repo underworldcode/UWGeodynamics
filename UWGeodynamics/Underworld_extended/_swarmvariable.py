@@ -218,12 +218,6 @@ class SwarmVariable(uw.swarm.SwarmVariable):
             fact = 1.0
             if units:
                 fact = Dimensionalize(1.0, units=units).magnitude
-                h5f.attrs['units'] = str(units)
-
-            if time is not None:
-                h5f.attrs['time'] = str(time)
-
-            h5f.attrs["git commit"] = __git_revision__
 
             if collective:
                 with dset.collective:
@@ -234,10 +228,13 @@ class SwarmVariable(uw.swarm.SwarmVariable):
         # let's reopen in serial to write the attrib.
         # not sure if this really is necessary.
         comm.barrier()
-        if comm.rank==0:
+        if comm.rank == 0:
             with h5py.File(name=filename, mode="a") as h5f:
                 # attribute of the proc offsets - used for loading from checkpoint
                 h5f.attrs["proc_offset"] = procCount
+                h5f.attrs['units'] = str(units)
+                h5f.attrs['time'] = str(time)
+                h5f.attrs["git commit"] = __git_revision__
 
         return uw.utils.SavedFileData( self, filename )
 

@@ -26,7 +26,7 @@ class LecodeIsostasy(object):
         average : (bool) if True, calculate an average velocity at the base of the Model.
         surface : (optional) Initial position of the surface of the material columns. The
                   top of the Model is used by default and should be fine in most cases.
-        maskedMat : (optional) Mask a material or a list of materials. 
+        maskedMat : (optional) Mask a material or a list of materials.
                     The masked material will not interfere in the calculation of the densities.
         vertical_walls_conditions : (optional) Existing boundary conditions on the
                                     lateral walls.
@@ -535,7 +535,7 @@ class LecodeIsostasy(object):
                              Please check your set up. The resolution might
                              also be insufficient to resolve the
                              material...""".format(self.reference_mat.name))
-        
+
         botMeanDensities0 = botMeanDensities0.mean(axis=0)
         botMeanDensities0 = np.array(botMeanDensities0)
 
