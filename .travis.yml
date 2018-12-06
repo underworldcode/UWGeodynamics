@@ -7,7 +7,7 @@ services:
 
 before_install:
   - cd docker-dev
-  - docker build -t underworld .
+  - docker pull --name underworld underworldcode/uwgeodynamics:dev 
   - docker run underworld /bin/bash -c "pip3 install pytest; cp -rf /opt/UWGeodynamics /workspace; cd /workspace/UWGeodynamics; python -m pytest -v"
 
 script:
