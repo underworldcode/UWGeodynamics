@@ -74,7 +74,7 @@ bibliography: paper.bib
 # Summary
 
 The UWGeodynamics module facilitates development of 2D and 3D thermo-mechanical
-geodynamic models (Subduction, Basins, Orogenic systems).
+geodynamic models (Subduction, Rift, Passive Margins, Orogenic systems etc.).
 It is designed to be used for research and teaching, and combined the flexibility
 of the Underworld Application Programming Interface, 
 [@Moresi2002, @Moresi2003, @Moresi2007] with a structured workflow.
