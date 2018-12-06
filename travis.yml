@@ -1,0 +1,14 @@
+language: python
+
+os: ubuntu
+
+services:
+  - docker
+
+before_install:
+  - cd docker-dev
+  - docker build -t underworld -f Dockerfile
+  - docker run -p 8888:8888 --name underworld underworld -c "pip3 install pytest; cd /opt/UWGeodynamics; python -m pytest -v"
+
+script:
+  - python -m pytest -v
