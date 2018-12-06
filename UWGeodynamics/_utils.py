@@ -319,7 +319,33 @@ class Balanced_InflowOutflow(object):
 
         return velocity
 
+
 def circles_grid(radius, minCoord, maxCoord, npoints=72):
+    """ This function creates a set of circles using passive tracers
+
+    Parameters
+    ----------
+
+        radius :
+            radius of the circles
+        minCoord :
+            minimum coordinates defining the extent of the grid
+        maxCoord :
+            maximum coordinates defining the extent of the grid
+        npoints :
+            number of points used to draw each circle.
+
+    example
+    -------
+
+    >>> import UWGeodynamics as GEO
+    >>> u = GEO.u
+
+    >>> x_c, y_c = GEO.circles_grid(radius = 2.0 * u.kilometer,
+    ...                 minCoord=[Model.minCoord[0], 20. * u.kilometer],
+    ...                 maxCoord=[Model.maxCoord[0], 40. * u.kilometer])
+
+    """
 
     if len(minCoord) == 2:
         # Create points on circle

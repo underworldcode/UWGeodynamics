@@ -333,6 +333,7 @@ class Model(Material):
 
     @time.setter
     def time(self, value):
+        """Model time"""
         self._nd_time = nd(value)
 
     @property
@@ -357,9 +358,22 @@ class Model(Material):
 
     @outputDir.setter
     def outputDir(self, value):
+        """ Output Directory """
         self._outputDir = value
 
     def restart(self, step, restartDir=None):
+        """Restart the Model from step using output in restartDir directory.
+
+        Parameters
+        ----------
+
+            step : int
+                step to restart from
+
+            restartDir : path
+                directory which contains the files to restart from
+
+        """
 
         if not step:
             return
@@ -415,6 +429,7 @@ class Model(Material):
 
     @property
     def strainRateField(self):
+        """ Strain Rate Field """
         self._strainRateField.data[:] = (
             self.strainRate_2ndInvariant.evaluate(self.mesh.subMesh))
         return self._strainRateField
@@ -535,6 +550,54 @@ class Model(Material):
                 Define conditions on the front side of the Model.
                 Conditions are defined for each Model direction (x, y, [z])
 
+        examples:
+
+        Setting the temperature at the top of a model to be 500kelvin at the top
+        and 1600kelvin at the bottom:
+
+        >>> import UWGeodynamics as GEO
+        >>> u = GEO.u
+        >>> Model = GEO.Model()
+
+        >>> Model.set_temperatureBCs(top=500. * u.degK, bottom=1600. * u.degK)
+        ...
+
+        You can of course define temperatures on the sidewalls:
+
+        >>> import UWGeodynamics as GEO
+        >>> u = GEO.u
+        >>> Model = GEO.Model()
+
+        >>> Model.set_temperatureBCs(right=500. * u.degK, left=1600. * u.degK)
+        ...
+
+        Fix the temperature of a Material
+
+        >>> import UWGeodynamics as GEO
+        >>> u = GEO.u
+        >>> Model = GEO.Model()
+
+        >>> Model.set_temperatureBCs(top=500. * u.degK,
+        ...                          bottom=-0.022 * u.milliwatt / u.metre**2,
+        ...                          bottom_material=Model,
+        ...                          materials=[(air, 273. * u.Kelvin)])
+        ...
+
+        Fix the temperature of internal nodes
+
+        You can assign a temperature to a list of nodes by passing a list of node indices (global).
+
+        >>> import UWGeodynamics as GEO
+        >>> u = GEO.u
+        >>> Model = GEO.Model()
+
+        >>> nodes = [0, 1, 2]
+        >>> Model.set_temperatureBCs(top=500. * u.degK,
+        ...                          bottom=-0.022 * u.milliwatt / u.metre**2,
+        ...                          bottom_material=Model,
+        ...                          nodeSets=[(273. * u.Kelvin, nodes)])
+        ...
+
         """
 
         if not self.temperature:
@@ -609,6 +672,21 @@ class Model(Material):
                 Define conditions on the front side of the Model.
                 Conditions are defined for each Model direction (x, y, [z])
 
+        example:
+        --------
+
+        Heat Flux can be assign as follow:
+
+        >>> import UWGeodynamics as GEO
+
+        >>> u = GEO.u
+
+        >>> Model = GEO.Model()
+        >>> Material = Model.add_material(shape=GEO.Layer(top=Model.top,
+        ...                                               bottom=Model.bottom)
+        >>> Model.set_heatFlowBCs(bottom=(-0.22 * u.milliwatt / u.metre**2,
+        ...                               Material))
+        ...
         """
 
         if not self.temperature:
@@ -1384,14 +1462,29 @@ class Model(Material):
 
         self._solution_exist.value = True
 
-    def init_model(self, temperature=True, pressureField=True):
+    def init_model(self, temperature=True, pressureField=True,
+                   defaultStrainRate=1e15 / u.second):
         """ Initialize the Temperature Field as steady state,
             Initialize the Pressure Field as Lithostatic
+            Initialize the viscosity field based on default
+            strain rate.
 
         Parameters:
         -----------
             temperature: (bool) default to True
             pressure: (bool) default to True
+
+        example:
+        --------
+
+        >>> import UWGeodynamics as GEO
+        >>> u = GEO.u
+
+        >>> Model = GEO.Model()
+        >>> Model.density = 2000. * u.kilogram / u.metre**3
+        >>> Model.init_model(temperature=False, pressure=True)
+        ...
+
         """
 
         # Init Temperature Field
@@ -1404,6 +1497,7 @@ class Model(Material):
 
         # Init ViscosityField
         if any([material.viscosity for material in self.materials]):
+            self.defaultStrainRate = defaultStrainRate
             self.viscosityField
         return
 
@@ -1657,6 +1751,47 @@ class Model(Material):
                 Model (default to True)
             centroids : if a list of centroids is provided, the pattern defined
                 by the vertices is reproduced around each centroid.
+
+        example:
+        --------
+
+        >>> import UWGeodynamics as GEO
+        >>> import numpy as np
+
+        >>> u = GEO.u
+
+        >>> Model = GEO.Model()
+        >>> x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
+        >>> y = 32. * u.kilometre
+        >>> tracers = Model.add_passive_tracers(vertices=[x,y])
+
+
+        You can pass a list of centroids to the Model.add_passive_tracers method.
+        In that case, the coordinates of the passive tracers are relative
+        to the position of the centroids. The pattern is repeated around
+        each centroid.
+
+        >>> import UWGeodynamics as GEO
+        >>> import numpy as np
+
+        >>> u = GEO.u
+        >>> Model = GEO.Model()
+        >>> cxpos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer), 5)
+        >>> cypos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer), 5)
+        >>> cxpos, cypos = np.meshgrid(cxpos, cypos)
+        >>> tracers = Model.add_passive_tracers(vertices=[0,0],
+        ...                                     centroids=[cxpos.ravel(),
+        ...                                                cypos.ravel())
+
+
+        We provide a function to create circles on a grid:
+
+        >>> import UWGeodynamics as GEO
+
+        >>> x_c, y_c = GEO.circles_grid(radius = 2.0 * u.kilometer,
+        ...                 minCoord=[Model.minCoord[0], lowercrust.bottom],
+        ...                 maxCoord=[Model.maxCoord[0], 0.*u.kilometer])
+
         """
 
         if centroids and not isinstance(centroids, list):

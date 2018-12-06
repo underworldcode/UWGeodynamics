@@ -1393,22 +1393,34 @@ Heat Flux can be assign as follow:
 
    >>> Model = GEO.Model()
    >>> Material = Model.add_material(shape=GEO.Layer(top=Model.top,
-                                                     bottom=Model.bottom)
+   ...                                               bottom=Model.bottom)
    >>> Model.set_heatFlowBCs(bottom=(-0.22 * u.milliwatt / u.metre**2,
-                                     Material))
+   ...                               Material))
    ...
 
 Model initialization
 --------------------
 
 Initialization of the pressure and temperature fields is done by using the
-::code::python`Model.init_model` method.
+
+``Model.init_model`` method.
 
 The default behavior is to initialise the temperature field to a steady-state
 while the pressure field is initialized to the lithostatic pressure.
 
 You can deactivate pressure or temperature initialization by setting the
 corresponding argument to `False` (`Model.init_model(temperature=False)`)
+
+.. code:: python
+
+   >>> import UWGeodynamics as GEO
+   >>> u = GEO.u
+
+   >>> Model = GEO.Model()
+   >>> Model.density = 2000. * u.kilogram / u.metre**3
+   >>> Model.init_model(temperature=False, pressure=True)
+   ...
+
 
 .. warning::
 

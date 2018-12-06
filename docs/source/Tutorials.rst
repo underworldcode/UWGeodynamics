@@ -14,6 +14,7 @@ We provide a series of tutorials as Jupyter notebook:
 8. `Tutorial 8 ViscoElasticity`_
 9. `Tutorial 9 Passive Margins`_
 10. `Tutorial 10 Thrust Wedge`_
+10. `Tutorial 11 Coupling with Badlands`_
 
 .. _Tutorial 1 Simple Rift: http://nbviewer.jupyter.org/github/underworldcode/UWGeodynamics/blob/master/tutorials/Tutorial_1_ThermoMechanical_Model.ipynb
 .. _Tutorial 2 Melt: http://nbviewer.jupyter.org/github/underworldcode/UWGeodynamics/blob/master/tutorials/Tutorial_2_Melt.ipynb
@@ -25,3 +26,4 @@ We provide a series of tutorials as Jupyter notebook:
 .. _Tutorial 8 ViscoElasticity: http://nbviewer.jupyter.org/github/underworldcode/UWGeodynamics/blob/master/tutorials/Tutorial_8_Subduction_ViscoElastic.ipynb
 .. _Tutorial 9 Passive Margins: http://nbviewer.jupyter.org/github/underworldcode/UWGeodynamics/blob/master/tutorials/Tutorial_9_passive_margins.ipynb
 .. _Tutorial 10 Thrust Wedge: http://nbviewer.jupyter.org/github/underworldcode/UWGeodynamics/blob/master/tutorials/Tutorial_10_Thrust_Wedges.ipynb
+.. _Tutorial 11 Coupling with Badlands: http://nbviewer.jupyter.org/github/underworldcode/UWGeodynamics/blob/master/tutorials/Tutorial_11_Coupling_with_Badlands.ipynb
