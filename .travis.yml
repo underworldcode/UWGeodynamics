@@ -7,7 +7,7 @@ services:
 
 before_install:
   - cd docker-dev
-  - docker build -t underworld -f Dockerfile
+  - docker build -t underworld .
   - docker run -p 8888:8888 --name underworld underworld -c "pip3 install pytest; cd /opt/UWGeodynamics; python -m pytest -v"
 
 script:
