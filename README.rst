@@ -17,6 +17,9 @@ Underworld Geodynamics project
     :target: http://uwgeodynamics.readthedocs.org/
     :alt: Docs
 
+.. image:: https://travis-ci.org/underworldcode/UWGeodynamics.svg?branch=development
+    :target: https://travis-ci.org/underworldcode/UWGeodynamics
+
 .. image:: https://dockerbuildbadges.quelltext.eu/status.svg?organization=underworldcode&repository=uwgeodynamics
     :target: https://cloud.docker.com/u/underworldcode/repository/docker/underworldcode/uwgeodynamics
     :alt: Docker 
