@@ -33,8 +33,8 @@ def test_tutorial6():
     _notebook_run("tutorials/Tutorial_6_Simple_Surface_Processes.ipynb")
 
 
-def test_tutorial7():
-    _notebook_run("tutorials/Tutorial_7_3D_Lithospheric_Model.ipynb")
+#def test_tutorial7():
+#    _notebook_run("tutorials/Tutorial_7_3D_Lithospheric_Model.ipynb")
 
 
 def test_tutorial8():
