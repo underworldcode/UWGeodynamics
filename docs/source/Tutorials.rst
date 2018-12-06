@@ -11,9 +11,6 @@ We provide a series of tutorials as Jupyter notebook:
 
 2. `Tutorial 2 Melt`_
 
-.. image:: img/Rey_et_al2009
-   :target: http://nbviewer.jupyter.org/github/underworldcode/UWGeodynamics/blob/master/tutorials/Tutorial_2_Melt.ipynb
-   
 3. `Tutorial 3 Sandbox Extension`_
 
 .. image:: img/underworld.png
