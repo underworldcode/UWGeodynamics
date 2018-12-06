@@ -102,9 +102,8 @@ class Model(Material):
             >>> import UWGeodynamics as GEO
             >>> u = GEO.UnitRegistry
             >>> Model = Model = GEO.Model(
-                    elementRes=(64, 64),
-                    minCoord=(0., 0.),
-                    maxCoord=(64. * u.kilometer, 64. * u.kilometer))
+            ...        elementRes=(64, 64), minCoord=(0., 0.),
+            ...        maxCoord=(64. * u.kilometer, 64. * u.kilometer))
 
         """
 
@@ -862,11 +861,12 @@ class Model(Material):
         >>> import UWGeodynamics as GEO
         >>> u = GEO.u
         >>> Model = GEO.Model(elementRes=(64, 64),
-                              minCoord=(-1. * u.meter, -50. * u.centimeter),
-                              maxCoord=(1. * u.meter, 50. * u.centimeter))
-        >>> Model.set_velocityBCs(left=[0, None], right=[0,None], top=[None,0],
-                                  bottom=[None, 0])
-
+        ...                   minCoord=(-1. * u.meter, -50. * u.centimeter),
+        ...                   maxCoord=(1. * u.meter, 50. * u.centimeter))
+        >>> velocityBCs = Model.set_velocityBCs(left=[0, None],
+        ...                                     right=[0,None],
+        ...                                     top=[None,0],
+        ...                                     bottom=[None, 0])
         """
 
         self._velocityBCs = VelocityBCs(
