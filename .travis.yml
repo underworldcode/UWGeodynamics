@@ -5,8 +5,9 @@ os: ubuntu
 services:
   - docker
 
-before_install:
+before_script:
   - cd docker-dev
   - docker build -t underworld .
-  - docker run underworld /bin/bash -c "pip3 install pytest; cp -rf /opt/UWGeodynamics /workspace; cd /workspace/UWGeodynamics; python -m pytest -v"
 
+script:
+  - docker run underworld /bin/bash -c "pip3 install pytest; cp -rf /opt/UWGeodynamics /workspace; cd /workspace/UWGeodynamics; python -m pytest -v"
