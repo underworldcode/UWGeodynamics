@@ -191,16 +191,15 @@ class PassiveTracers(object):
         uw.barrier()
 
         # get swarm parameters - serially read from hdf5 file to get size
-        h5f = h5py.File(name=swarm_fpath, mode="r", driver="mpio",
-                        comm=MPI.COMM_WORLD)
-        dset = h5f.get('data')
-        if dset == None:
-            raise RuntimeError("Can't find 'data' in file '{}'.\n".format(swarm_fname))
-        globalCount = len(dset)
-        dim = self.swarm.mesh.dim
-        h5f.close()
 
         if uw.rank() == 0:
+            with h5py.File(name=swarm_fpath, mode="r") as h5f:
+                dset = h5f.get('data')
+                if dset is None:
+                    raise RuntimeError("Can't find 'data' in file '{}'.\n".format(swarm_fname))
+                globalCount = len(dset)
+                dim = self.swarm.mesh.dim
+
             string += "\t<Attribute Type=\"Scalar\" Center=\"Node\" Name=\"Coordinates\">\n"
             string += """\t\t\t<DataItem Format=\"HDF\" NumberType=\" Float\"
                          Precision=\"8\" Dimensions=\"{0} {1}\">{2}:/data</DataItem>\n""".format(globalCount, dim, swarm_fname)
@@ -320,7 +319,33 @@ class Balanced_InflowOutflow(object):
 
         return velocity
 
+
 def circles_grid(radius, minCoord, maxCoord, npoints=72):
+    """ This function creates a set of circles using passive tracers
+
+    Parameters
+    ----------
+
+        radius :
+            radius of the circles
+        minCoord :
+            minimum coordinates defining the extent of the grid
+        maxCoord :
+            maximum coordinates defining the extent of the grid
+        npoints :
+            number of points used to draw each circle.
+
+    example
+    -------
+
+    >>> import UWGeodynamics as GEO
+    >>> u = GEO.u
+
+    >>> x_c, y_c = GEO.circles_grid(radius = 2.0 * u.kilometer,
+    ...                 minCoord=[Model.minCoord[0], 20. * u.kilometer],
+    ...                 maxCoord=[Model.maxCoord[0], 40. * u.kilometer])
+
+    """
 
     if len(minCoord) == 2:
         # Create points on circle

@@ -85,8 +85,8 @@ class Material(object):
         Example
         -------
 
-        >>>import UWGeodynamics as GEO
-        >>>crust = GEO.Material(name="Crust")
+        >>> import UWGeodynamics as GEO
+        >>> crust = GEO.Material(name="Crust")
 
         """
 

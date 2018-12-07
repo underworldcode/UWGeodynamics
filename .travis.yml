@@ -1,0 +1,14 @@
+language: python
+
+os: ubuntu
+
+services:
+  - docker
+
+before_install:
+  - cd docker-dev
+  - docker pull underworldcode/uwgeodynamics:dev 
+  - docker run underworldcode/uwgeodynamics:dev /bin/bash -c "pip3 install pytest; cp -rf /opt/UWGeodynamics /workspace; cd /workspace/UWGeodynamics; python -m pytest -v"
+
+script:
+  - python -m pytest -v

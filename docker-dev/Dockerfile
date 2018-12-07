@@ -9,7 +9,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install cgdb sudo && \
 
 # UWGeodynamics
 WORKDIR /opt
-RUN pip3 clone -b development https://github.com/underworldcode/UWGeodynamics.git && \
+RUN git clone -b development https://github.com/underworldcode/UWGeodynamics.git && \
     pip3 install -e /opt/UWGeodynamics
 
 # Badlands dependency

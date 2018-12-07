@@ -42,11 +42,12 @@ class Model(Material):
               _dim_gravity])
     def __init__(self, elementRes=(64, 64),
                  minCoord=(0., 0.), maxCoord=(64. * u.km, 64 * u.km),
-                 name=None, gravity=None, periodic=None, elementType="Q1/dQ0",
-                 temperatureBCs=None, heatFlowBCs=None, velocityBCs=None,
-                 stressBCs=None, materials=None, outputDir=None,
-                 frictionalBCs=None, surfaceProcesses=None,
-                 isostasy=None, visugrid=None):
+                 name="Model", gravity=(0., 9.81 * u.m / u.s**2),
+                 periodic=None, elementType="Q1/dQ0",
+                 temperatureBCs=None, heatFlowBCs=None,
+                 velocityBCs=None, stressBCs=None, materials=None,
+                 outputDir="outputs", frictionalBCs=None,
+                 surfaceProcesses=None, isostasy=None, visugrid=None):
         """Create a Model object
 
         Parameters
@@ -101,19 +102,15 @@ class Model(Material):
             >>> import UWGeodynamics as GEO
             >>> u = GEO.UnitRegistry
             >>> Model = Model = GEO.Model(
-                    elementRes=(64, 64),
-                    minCoord=(0., 0.),
-                    maxCoord=(64. * u.kilometer, 64. * u.kilometer))
+            ...        elementRes=(64, 64), minCoord=(0., 0.),
+            ...        maxCoord=(64. * u.kilometer, 64. * u.kilometer))
 
         """
 
         super(Model, self).__init__()
 
         # Process __init__ arguments
-        if not name:
-            self.name = rcParams["model.name"]
-        else:
-            self.name = name
+        self.name = name
 
         self.minCoord = minCoord
         self.maxCoord = maxCoord
@@ -134,10 +131,7 @@ class Model(Material):
 
         self.elementRes = elementRes
 
-        if outputDir:
-            self.outputDir = outputDir
-        else:
-            self.outputDir = rcParams["output.directory"]
+        self.outputDir = outputDir
 
         # Compute model dimensions
         self.length = maxCoord[0] - minCoord[0]
@@ -339,6 +333,7 @@ class Model(Material):
 
     @time.setter
     def time(self, value):
+        """Model time"""
         self._nd_time = nd(value)
 
     @property
@@ -363,9 +358,22 @@ class Model(Material):
 
     @outputDir.setter
     def outputDir(self, value):
+        """ Output Directory """
         self._outputDir = value
 
     def restart(self, step, restartDir=None):
+        """Restart the Model from step using output in restartDir directory.
+
+        Parameters
+        ----------
+
+            step : int
+                step to restart from
+
+            restartDir : path
+                directory which contains the files to restart from
+
+        """
 
         if not step:
             return
@@ -421,6 +429,7 @@ class Model(Material):
 
     @property
     def strainRateField(self):
+        """ Strain Rate Field """
         self._strainRateField.data[:] = (
             self.strainRate_2ndInvariant.evaluate(self.mesh.subMesh))
         return self._strainRateField
@@ -541,6 +550,54 @@ class Model(Material):
                 Define conditions on the front side of the Model.
                 Conditions are defined for each Model direction (x, y, [z])
 
+        examples:
+
+        Setting the temperature at the top of a model to be 500kelvin at the top
+        and 1600kelvin at the bottom:
+
+        >>> import UWGeodynamics as GEO
+        >>> u = GEO.u
+        >>> Model = GEO.Model()
+
+        >>> Model.set_temperatureBCs(top=500. * u.degK, bottom=1600. * u.degK)
+        ...
+
+        You can of course define temperatures on the sidewalls:
+
+        >>> import UWGeodynamics as GEO
+        >>> u = GEO.u
+        >>> Model = GEO.Model()
+
+        >>> Model.set_temperatureBCs(right=500. * u.degK, left=1600. * u.degK)
+        ...
+
+        Fix the temperature of a Material
+
+        >>> import UWGeodynamics as GEO
+        >>> u = GEO.u
+        >>> Model = GEO.Model()
+
+        >>> Model.set_temperatureBCs(top=500. * u.degK,
+        ...                          bottom=-0.022 * u.milliwatt / u.metre**2,
+        ...                          bottom_material=Model,
+        ...                          materials=[(air, 273. * u.Kelvin)])
+        ...
+
+        Fix the temperature of internal nodes
+
+        You can assign a temperature to a list of nodes by passing a list of node indices (global).
+
+        >>> import UWGeodynamics as GEO
+        >>> u = GEO.u
+        >>> Model = GEO.Model()
+
+        >>> nodes = [0, 1, 2]
+        >>> Model.set_temperatureBCs(top=500. * u.degK,
+        ...                          bottom=-0.022 * u.milliwatt / u.metre**2,
+        ...                          bottom_material=Model,
+        ...                          nodeSets=[(273. * u.Kelvin, nodes)])
+        ...
+
         """
 
         if not self.temperature:
@@ -615,6 +672,21 @@ class Model(Material):
                 Define conditions on the front side of the Model.
                 Conditions are defined for each Model direction (x, y, [z])
 
+        example:
+        --------
+
+        Heat Flux can be assign as follow:
+
+        >>> import UWGeodynamics as GEO
+
+        >>> u = GEO.u
+
+        >>> Model = GEO.Model()
+        >>> Material = Model.add_material(shape=GEO.Layer(top=Model.top,
+        ...                                               bottom=Model.bottom)
+        >>> Model.set_heatFlowBCs(bottom=(-0.22 * u.milliwatt / u.metre**2,
+        ...                               Material))
+        ...
         """
 
         if not self.temperature:
@@ -717,7 +789,7 @@ class Model(Material):
                                            mapping=HeatProdMap)
 
         # Add Viscous dissipation Heating
-        if rcParams["shearHeating"]:
+        if rcParams["shear.heating"]:
             stress = fn.tensor.second_invariant(self._stressFn)
             strain = self.strainRate_2ndInvariant
             self.HeatProdFn += stress * strain
@@ -773,16 +845,12 @@ class Model(Material):
                     fn_bodyforce=self._buoyancyFn,
                     fn_stresshistory=self._elastic_stressFn,
                     fn_one_on_lambda=self._lambdaFn)
-                    #useEquationResidual=rcParams["useEquationResidual"])
 
                 solver = uw.systems.Solver(self._stokes_SLE)
                 solver.set_inner_method(rcParams["solver"])
 
                 if rcParams["penalty"]:
                     solver.set_penalty(rcParams["penalty"])
-
-                if rcParams["mg.levels"]:
-                    solver.options.mg.levels = rcParams["mg.levels"]
 
             return solver
         else:
@@ -871,11 +939,12 @@ class Model(Material):
         >>> import UWGeodynamics as GEO
         >>> u = GEO.u
         >>> Model = GEO.Model(elementRes=(64, 64),
-                              minCoord=(-1. * u.meter, -50. * u.centimeter),
-                              maxCoord=(1. * u.meter, 50. * u.centimeter))
-        >>> Model.set_velocityBCs(left=[0, None], right=[0,None], top=[None,0],
-                                  bottom=[None, 0])
-
+        ...                   minCoord=(-1. * u.meter, -50. * u.centimeter),
+        ...                   maxCoord=(1. * u.meter, 50. * u.centimeter))
+        >>> velocityBCs = Model.set_velocityBCs(left=[0, None],
+        ...                                     right=[0,None],
+        ...                                     top=[None,0],
+        ...                                     bottom=[None, 0])
         """
 
         self._velocityBCs = VelocityBCs(
@@ -1085,13 +1154,16 @@ class Model(Material):
         Parameters
         ----------
 
-        name : name of the mesh field
-        nodeDofCount : degree of freedom, default is 1
-        dataType : type of data to be recorded, default is "double"
-        init_value : default value of the field, default is to initialise
-            the field to 0.
-        restart_variable: boolean, specifies if the variable is needed
-            for a restart.
+        name : str
+            name of the mesh field
+        nodeDofCount : int
+            degree of freedom, default is 1
+        dataType : str
+            type of data to be recorded, default is "double"
+        init_value : float
+            default value of the field, default is to initialise the field to 0.
+        restart_variable: bool,
+            specifies if the variable is needed for a restart.
 
         Returns
         -------
@@ -1113,13 +1185,16 @@ class Model(Material):
         Parameters
         ----------
 
-        name : name of the submesh field
-        nodeDofCount : degree of freedom, default is 1
-        dataType : type of data to be recorded, default is "double"
-        init_value : default value of the field, default is to initialise
-            the field to 0.
-        restart_variable: boolean, specifies if the variable is needed
-            for a restart.
+        name : str
+            name of the mesh field
+        nodeDofCount : int
+            degree of freedom, default is 1
+        dataType : str
+            type of data to be recorded, default is "double"
+        init_value : float
+            default value of the field, default is to initialise the field to 0.
+        restart_variable: bool,
+            specifies if the variable is needed for a restart.
 
         Returns
         -------
@@ -1191,7 +1266,6 @@ class Model(Material):
     @property
     def _stressFn(self):
         """Stress Function Builder"""
-        stressMap = {}
         viscousStressFn = self._viscous_stressFn()
         elasticStressFn = self._elastic_stressFn
         return  viscousStressFn + elasticStressFn
@@ -1234,13 +1308,6 @@ class Model(Material):
         veStressFn_data = self._stressFn.evaluate(self.swarm)
         self._previousStressField.data[:] *= (1. - phi)
         self._previousStressField.data[:] += phi * veStressFn_data[:]
-
-    @property
-    def _yieldStressFn(self):
-        """ Calculate Yield stress function from viscosity and strain rate"""
-        eij = self.strainRate_2ndInvariant
-        eijdef = nd(self.defaultStrainRate)
-        return 2.0 * self._viscosityFn * fn.misc.max(eij, eijdef)
 
     def _phaseChangeFn(self):
         for material in self.materials:
@@ -1395,14 +1462,29 @@ class Model(Material):
 
         self._solution_exist.value = True
 
-    def init_model(self, temperature=True, pressureField=True):
+    def init_model(self, temperature=True, pressureField=True,
+                   defaultStrainRate=1e15 / u.second):
         """ Initialize the Temperature Field as steady state,
             Initialize the Pressure Field as Lithostatic
+            Initialize the viscosity field based on default
+            strain rate.
 
         Parameters:
         -----------
             temperature: (bool) default to True
             pressure: (bool) default to True
+
+        example:
+        --------
+
+        >>> import UWGeodynamics as GEO
+        >>> u = GEO.u
+
+        >>> Model = GEO.Model()
+        >>> Model.density = 2000. * u.kilogram / u.metre**3
+        >>> Model.init_model(temperature=False, pressure=True)
+        ...
+
         """
 
         # Init Temperature Field
@@ -1415,6 +1497,7 @@ class Model(Material):
 
         # Init ViscosityField
         if any([material.viscosity for material in self.materials]):
+            self.defaultStrainRate = defaultStrainRate
             self.viscosityField
         return
 
@@ -1668,6 +1751,47 @@ class Model(Material):
                 Model (default to True)
             centroids : if a list of centroids is provided, the pattern defined
                 by the vertices is reproduced around each centroid.
+
+        example:
+        --------
+
+        >>> import UWGeodynamics as GEO
+        >>> import numpy as np
+
+        >>> u = GEO.u
+
+        >>> Model = GEO.Model()
+        >>> x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
+        >>> y = 32. * u.kilometre
+        >>> tracers = Model.add_passive_tracers(vertices=[x,y])
+
+
+        You can pass a list of centroids to the Model.add_passive_tracers method.
+        In that case, the coordinates of the passive tracers are relative
+        to the position of the centroids. The pattern is repeated around
+        each centroid.
+
+        >>> import UWGeodynamics as GEO
+        >>> import numpy as np
+
+        >>> u = GEO.u
+        >>> Model = GEO.Model()
+        >>> cxpos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer), 5)
+        >>> cypos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer), 5)
+        >>> cxpos, cypos = np.meshgrid(cxpos, cypos)
+        >>> tracers = Model.add_passive_tracers(vertices=[0,0],
+        ...                                     centroids=[cxpos.ravel(),
+        ...                                                cypos.ravel())
+
+
+        We provide a function to create circles on a grid:
+
+        >>> import UWGeodynamics as GEO
+
+        >>> x_c, y_c = GEO.circles_grid(radius = 2.0 * u.kilometer,
+        ...                 minCoord=[Model.minCoord[0], lowercrust.bottom],
+        ...                 maxCoord=[Model.maxCoord[0], 0.*u.kilometer])
+
         """
 
         if centroids and not isinstance(centroids, list):
