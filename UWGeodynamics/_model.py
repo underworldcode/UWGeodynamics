@@ -1463,7 +1463,7 @@ class Model(Material):
         self._solution_exist.value = True
 
     def init_model(self, temperature=True, pressureField=True,
-                   defaultStrainRate=1e15 / u.second):
+                   defaultStrainRate=1e-15 / u.second):
         """ Initialize the Temperature Field as steady state,
             Initialize the Pressure Field as Lithostatic
             Initialize the viscosity field based on default
