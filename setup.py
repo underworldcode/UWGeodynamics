@@ -6,11 +6,11 @@ import os
 import subprocess
 from os import path
 
-MAJOR               = 0
-MINOR               = 9
-MICRO               = 8
-ISRELEASED          = False
-VERSION             = '%d.%d.%db' % (MAJOR, MINOR, MICRO)
+MAJOR               = 1
+MINOR               = 0
+MICRO               = 0
+ISRELEASED          = True
+VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 here = path.abspath(path.dirname(__file__))
 
