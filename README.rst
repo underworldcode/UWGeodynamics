@@ -65,5 +65,5 @@ Versioning
 
 Current releases (**DOI** citable): 
 
-[![DOI](https://zenodo.org/badge/114189389.svg)](https://zenodo.org/badge/latestdoi/114189389)
+`DOI <https://zenodo.org/badge/114189389.svg)](https://zenodo.org/badge/latestdoi/114189389>`_
 
