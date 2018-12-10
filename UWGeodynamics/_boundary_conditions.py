@@ -208,6 +208,15 @@ class BoundaryConditions(object):
             return uw.conditions.DirichletCondition(
                 variable=self.field, indexSetsPerDof=self._indices)
         elif self.condition_type is "Neumann":
+            _neumann_indices = []
+
+            # Remove empty Sets
+            for val in self._indices:
+                if val.data.size > 0:
+                    _neumann_indices.append(val)
+                else:
+                    _neumann_indices.append(None)
+            self._indices = tuple(_neumann_indices)
             return uw.conditions.NeumannCondition(
                 fn_flux=self.field,
                 variable=self.varfield,
