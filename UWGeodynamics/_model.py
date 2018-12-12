@@ -1430,13 +1430,13 @@ class Model(Material):
             underworld IndexSet
 
         """
-        mat = self.projMaterialField.evaluate(self.mesh.data[0:self.mesh.nodesLocal])
+        mat = self.projMaterialField.evaluate(self.mesh)
         # Round to closest integer
         mat = np.rint(mat)
         # convert array as integer
         mat = mat.astype("int")[:, 0]
         # Get nodes corresponding to material
-        nodes = np.arange(0, self.mesh.nodesLocal)[mat == material.index]
+        nodes = np.arange(0, self.mesh.nodesDomain)[mat == material.index]
         return uw.mesh.FeMesh_IndexSet(self.mesh, topologicalIndex=0,
                                        size=self.mesh.nodesGlobal,
                                        fromObject=nodes)
