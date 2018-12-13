@@ -147,6 +147,7 @@ def test_passive_tracers():
 
 def test_set_velocity_boundary_conditions_in_3D():
     Model = GEO.Model(elementRes=(10, 10, 10),
+                      gravity=(0.,0.,-9.81*u.m/u.s**2),
                       minCoord=(0. * u.kilometer,
                                 0. * u.kilometer,
                                 0. * u.kilometer),
