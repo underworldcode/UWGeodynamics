@@ -42,7 +42,7 @@ class Model(Material):
               _dim_gravity])
     def __init__(self, elementRes=(64, 64),
                  minCoord=(0., 0.), maxCoord=(64. * u.km, 64 * u.km),
-                 name="Model", gravity=(0., 9.81 * u.m / u.s**2),
+                 name="Model", gravity=(0., -9.81 * u.m / u.s**2),
                  periodic=None, elementType="Q1/dQ0",
                  temperatureBCs=None, heatFlowBCs=None,
                  velocityBCs=None, stressBCs=None, materials=None,
@@ -118,11 +118,14 @@ class Model(Material):
         self.bottom = minCoord[-1]
 
         if not gravity:
-            self.gravity = [0.0 for val in maxCoord]
-            self.gravity[-1] = -1.0 * rcParams["gravity"]
-            self.gravity = tuple(self.gravity)
-        else:
-            self.gravity = gravity
+            raise ValueError("""The gravity vector is missing""")
+        if len(gravity) != len(self.minCoord):
+            raise ValueError("""Your Model is {0}D but you have provided a {1}D
+                             gravity vector, please
+                             change""".format(len(self.minCoord),
+                                              len(gravity)))
+
+        self.gravity = gravity
 
         if not elementType:
             self.elementType = rcParams["element.type"]
