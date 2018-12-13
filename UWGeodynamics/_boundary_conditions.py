@@ -152,7 +152,7 @@ class BoundaryConditions(object):
                 mask = nodes.fn.evaluate(self.Model.mesh)
             else:
                 mask = nodes.evaluate(self.Model.mesh)
-            nodes = np.arange(self.Model.mesh.nodesLocal)
+            nodes = np.arange(self.Model.mesh.nodesDomain)
             nodes = nodes.astype("int")[mask.ravel()]
 
         # Convert nodes numpy arrays / list to UW IndexSet
