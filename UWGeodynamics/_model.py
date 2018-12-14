@@ -235,9 +235,8 @@ class Model(Material):
 
         # Mesh advector
         self._advector = None
-
-        # init solver
         self._solver = None
+        self._stokes_SLE = None
 
         # Initialise remaining attributes
         self.defaultStrainRate = 1e-15 / u.second
@@ -246,7 +245,6 @@ class Model(Material):
         self._temperature = None
         self.DiffusivityFn = None
         self.HeatProdFn = None
-        self._buoyancyFn = None
         self._freeSurface = False
         self.callback_post_solve = None
         self._mesh_saved = False
@@ -735,12 +733,10 @@ class Model(Material):
     @property
     def solver(self):
         if not self._solver:
-            return self.get_stokes_solver()
+            self._solver = uw.systems.Solver(self.stokes_SLE)
+        else:
+            self._solver._stokes_SLE = self.stokes_SLE
         return self._solver
-
-    @solver.setter
-    def solver(self, value):
-        self._solver = value
 
     @property
     def temperature(self):
@@ -824,40 +820,33 @@ class Model(Material):
             )
         return obj
 
-    def get_stokes_solver(self):
-        """ Stokes solver """
+    @property
+    def _buoyancyFn(self):
+        gravity = tuple([nd(val) for val in self.gravity])
+        return self._densityFn * gravity
 
-        if not self._solver:
-            gravity = tuple([nd(val) for val in self.gravity])
-            self._buoyancyFn = self._densityFn * gravity
-            self._buoyancyFn = self._buoyancyFn
+    @property
+    def stokes_SLE(self):
+        """ Stokes SLE """
 
-            if any([material.viscosity for material in self.materials]):
+        if any([material.viscosity for material in self.materials]):
 
-                conditions = list()
-                conditions.append(self.velocityBCs)
+            conditions = list()
+            conditions.append(self.velocityBCs)
 
-                if self._stressBCs:
-                    conditions.append(self.stressBCs)
+            if self._stressBCs:
+                conditions.append(self.stressBCs)
 
-                self._stokes_SLE = uw.systems.Stokes(
-                    velocityField=self.velocityField,
-                    pressureField=self.pressureField,
-                    conditions=conditions,
-                    fn_viscosity=self._viscosityFn,
-                    fn_bodyforce=self._buoyancyFn,
-                    fn_stresshistory=self._elastic_stressFn,
-                    fn_one_on_lambda=self._lambdaFn)
+            self._stokes_SLE = uw.systems.Stokes(
+                velocityField=self.velocityField,
+                pressureField=self.pressureField,
+                conditions=conditions,
+                fn_viscosity=self._viscosityFn,
+                fn_bodyforce=self._buoyancyFn,
+                fn_stresshistory=self._elastic_stressFn,
+                fn_one_on_lambda=self._lambdaFn)
 
-                solver = uw.systems.Solver(self._stokes_SLE)
-                solver.set_inner_method(rcParams["solver"])
-
-                if rcParams["penalty"]:
-                    solver.set_penalty(rcParams["penalty"])
-
-            return solver
-        else:
-            return self._solver
+        return self._stokes_SLE
 
     def _init_melt_fraction(self):
         """ Initialize the Melt Fraction Field """
@@ -1456,7 +1445,7 @@ class Model(Material):
             minIterations = rcParams["nonlinear.min.iterations"]
             maxIterations = rcParams["nonlinear.max.iterations"]
 
-        self.get_stokes_solver().solve(
+        self.solver.solve(
             nonLinearIterate=True,
             nonLinearMinIterations=minIterations,
             nonLinearMaxIterations=maxIterations,
@@ -1464,6 +1453,9 @@ class Model(Material):
             nonLinearTolerance=self._curTolerance)
 
         self._solution_exist.value = True
+
+        if rcParams["rebuild.solver"]:
+            self._solver = False
 
     def init_model(self, temperature=True, pressureField=True,
                    defaultStrainRate=1e-15 / u.second):
@@ -1502,6 +1494,10 @@ class Model(Material):
         if any([material.viscosity for material in self.materials]):
             self.defaultStrainRate = defaultStrainRate
             self.viscosityField
+
+        # Get a solver
+        self._solver = uw.systems.Solver(self.stokes_SLE)
+
         return
 
     @u.check([None, "[time]", "[time]", None, None, None, "[time]", None, None])
