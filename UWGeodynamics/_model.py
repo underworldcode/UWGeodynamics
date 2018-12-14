@@ -2561,6 +2561,10 @@ class _RestartFunction(object):
             swarm_file = os.path.join(self.restartDir, "swarm-%s.h5" % step)
             with h5py.File(swarm_file, "r") as h5f:
                 Model.time = u.Quantity(h5f.attrs.get("time"))
+        else:
+            Model.time = None
+
+        MPI.COMM_WORLD.bcast(Model.time, root=0)
 
         if uw.rank() == 0:
             print(80 * "=" + "\n")
