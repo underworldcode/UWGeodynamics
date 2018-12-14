@@ -337,7 +337,7 @@ class Model(Material):
     @time.setter
     def time(self, value):
         """Model time"""
-        self._nd_time = nd(value)
+        self._ndtime = nd(value)
 
     @property
     def x(self):
