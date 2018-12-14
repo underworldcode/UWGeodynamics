@@ -107,6 +107,10 @@ class ViscosityLimiter(object):
             maxBound = fn.misc.min(viscosityField, nd(self.maxViscosity))
             minMaxBound = fn.misc.max(maxBound, nd(self.minViscosity))
             return minMaxBound
+        elif self.maxViscosity:
+            return fn.misc.min(viscosityField, nd(self.maxViscosity))
+        elif self.minViscosity:
+            return fn.misc.max(viscosityField, nd(self.minViscosity))
         else:
             return viscosityField
 
