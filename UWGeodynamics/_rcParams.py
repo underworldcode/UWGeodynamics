@@ -8,8 +8,7 @@ rcParams =  {
 
     "CFL": [0.5, validate_float],
 
-    "solver" : ["mg", validate_solver],
-    "penalty" : [0.0, validate_float],
+    "rebuild.solver": [False, validate_bool],
 
     "initial.nonlinear.tolerance": [1e-2, validate_float],
     "nonlinear.tolerance": [1e-2, validate_float],
