@@ -17,7 +17,7 @@ Underworld Geodynamics project
     :target: http://uwgeodynamics.readthedocs.org/
     :alt: Docs
 
-.. image:: https://travis-ci.org/underworldcode/UWGeodynamics.svg?branch=development
+.. image:: https://travis-ci.org/underworldcode/UWGeodynamics.svg?branch=master
     :target: https://travis-ci.org/underworldcode/UWGeodynamics
 
 .. image:: https://github.com/underworldcode/UWGeodynamics/blob/development/tutorials/images/Tutorial1.gif
