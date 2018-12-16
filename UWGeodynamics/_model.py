@@ -170,7 +170,6 @@ class Model(Material):
                                restart_variable=True)
         self.add_mesh_variable("velocityField", nodeDofCount=self.mesh.dim,
                                restart_variable=True)
-        self.add_mesh_variable("tractionField", nodeDofCount=self.mesh.dim)
         self.add_submesh_field("_strainRateField", nodeDofCount=1)
 
         # symmetric component of the gradient of the flow velocityField.
@@ -256,6 +255,8 @@ class Model(Material):
         """_initialize
         Model Initialisation
         """
+
+        self.add_mesh_variable("tractionField", nodeDofCount=self.mesh.dim)
 
         self.swarm_advector = uw.systems.SwarmAdvector(
             swarm=self.swarm,
@@ -1538,7 +1539,7 @@ class Model(Material):
 
         if uw.rank() == 0:
             print("""Running with UWGeodynamics version {0}""".format(full_version))
-            print("""Petsc {0}""".format(self.solver.print_petsc_options())) 
+            print("""Petsc {0}""".format(self.solver.print_petsc_options()))
             sys.stdout.flush()
 
         self.stepDone = 0
