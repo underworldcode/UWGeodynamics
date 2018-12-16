@@ -1542,6 +1542,7 @@ class Model(Material):
 
         if uw.rank() == 0:
             print("""Running with UWGeodynamics version {0}""".format(full_version))
+            print("""Petsc {0}""".format(self.solver.print_petsc_options())) 
             sys.stdout.flush()
 
         self.stepDone = 0
@@ -2664,10 +2665,10 @@ class _RestartFunction(object):
             setattr(Model, attr_name, obj)
             Model.passive_tracers[key] = obj
 
-        if uw.rank() == 0:
-            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            print("{0} loaded".format(tracer.name) + '(' + now  + ')')
-            sys.stdout.flush()
+            if uw.rank() == 0:
+                now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                print("{0} loaded".format(tracer.name) + '(' + now  + ')')
+                sys.stdout.flush()
 
     def restart_badlands(self):
 
