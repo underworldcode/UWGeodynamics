@@ -122,8 +122,11 @@ class BoundaryConditions(object):
                                           self.Model.front_wall),
                                 "back": (self.back,
                                          self.Model.back_wall)}
-        self.order_wall_conditions = ["bottom", "top", "front", "back",
-                                      "left", "right"]
+
+        self.order_wall_conditions = order_wall_conditions
+        if not self.order_wall_conditions:
+            self.order_wall_conditions = ["bottom", "top", "front", "back",
+                                          "left", "right"]
 
     def __getitem__(self, name):
         return self.__dict__[name]
