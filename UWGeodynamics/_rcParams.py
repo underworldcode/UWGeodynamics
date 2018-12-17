@@ -38,6 +38,7 @@ rcParams =  {
     "popcontrol.particles.per.cell.3D" : [120, validate_int],
 
     "time.SIunits": [u.years, validate_quantity],
+    "timeField.SIunits": [u.years, validate_quantity],
     "viscosityField.SIunits" : [u.pascal * u.second, validate_quantity],
     "densityField.SIunits" : [u.kilogram / u.metre**3, validate_quantity],
     "velocityField.SIunits" : [u.centimeter / u.year, validate_quantity],

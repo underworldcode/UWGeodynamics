@@ -284,7 +284,8 @@ class Model(Material):
         self.add_swarm_variable("_viscosityField", dataType="double", count=1)
         self.add_swarm_variable("_densityField", dataType="double", count=1)
         self.add_swarm_variable("meltField", dataType="double", count=1)
-        self.add_swarm_variable("timeField", dataType="double", count=1)
+        self.add_swarm_variable("timeField", dataType="double", count=1,
+                                restart_variable=True)
         self.timeField.data[...] = 0.0
         self.materialField.data[...] = self.index
 
