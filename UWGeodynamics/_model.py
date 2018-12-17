@@ -734,6 +734,7 @@ class Model(Material):
 
     @property
     def solver(self):
+        # Get a solver
         if not self._solver:
             self._solver = uw.systems.Solver(self.stokes_SLE)
         else:
@@ -1496,9 +1497,6 @@ class Model(Material):
         if any([material.viscosity for material in self.materials]):
             self.defaultStrainRate = defaultStrainRate
             self.viscosityField
-
-        # Get a solver
-        self._solver = uw.systems.Solver(self.stokes_SLE)
 
         return
 
