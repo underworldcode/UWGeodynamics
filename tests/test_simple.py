@@ -145,21 +145,21 @@ def test_passive_tracers():
     P = Model.add_passive_tracers(name="Tracers", vertices=[x, y])
 
 
-def test_set_velocity_boundary_conditions_in_3D():
-    Model = GEO.Model(elementRes=(10, 10, 10),
-                      gravity=(0.,0.,-9.81*u.m/u.s**2),
-                      minCoord=(0. * u.kilometer,
-                                0. * u.kilometer,
-                                0. * u.kilometer),
-                      maxCoord=(10. * u.kilometer,
-                                10. * u.kilometer,
-                                10. * u.kilometer))
-
-    velocityBCs = Model.set_velocityBCs(
-        left=[1.0 * u.centimetre / u.year, None, 0.],
-        right=[-1.0 * u.centimetre / u.year, None, 0.],
-        bottom=[None, None, 0.],
-        top=[None, None, 0.],
-        front=[None, 0., None],
-        back=[None, 0., None])
-    assert(isinstance(velocityBCs, uw.conditions.DirichletCondition))
+#def test_set_velocity_boundary_conditions_in_3D():
+#    Model = GEO.Model(elementRes=(10, 10, 10),
+#                      gravity=(0.,0.,-9.81*u.m/u.s**2),
+#                      minCoord=(0. * u.kilometer,
+#                                0. * u.kilometer,
+#                                0. * u.kilometer),
+#                      maxCoord=(10. * u.kilometer,
+#                                10. * u.kilometer,
+#                                10. * u.kilometer))
+#
+#    velocityBCs = Model.set_velocityBCs(
+#        left=[1.0 * u.centimetre / u.year, None, 0.],
+#        right=[-1.0 * u.centimetre / u.year, None, 0.],
+#        bottom=[None, None, 0.],
+#        top=[None, None, 0.],
+#        front=[None, 0., None],
+#        back=[None, 0., None])
+#    assert(isinstance(velocityBCs, uw.conditions.DirichletCondition))
