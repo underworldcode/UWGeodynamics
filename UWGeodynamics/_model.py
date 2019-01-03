@@ -1539,8 +1539,8 @@ class Model(Material):
         if uw.rank() == 0:
             print("""Running with UWGeodynamics version {0}""".format(full_version))
             sys.stdout.flush()
-
-#         print("""Petsc {0}""".format(self.solver.print_petsc_options()))
+        if self.solver.print_petsc_options():
+            print("""Petsc {0}""".format(self.solver.print_petsc_options()))
 
         self.stepDone = 0
         self.restart(restartStep, restartDir)
