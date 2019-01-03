@@ -1541,6 +1541,7 @@ class Model(Material):
             sys.stdout.flush()
         if self.solver.print_petsc_options():
             print("""Petsc {0}""".format(self.solver.print_petsc_options()))
+            sys.stdout.flush()
 
         self.stepDone = 0
         self.restart(restartStep, restartDir)
