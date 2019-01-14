@@ -737,8 +737,6 @@ class Model(Material):
         # Get a solver
         if not self._solver:
             self._solver = uw.systems.Solver(self.stokes_SLE)
-        else:
-            self._solver._stokes_SLE = self.stokes_SLE
         return self._solver
 
     @property
@@ -1536,13 +1534,6 @@ class Model(Material):
 
         """
 
-        if uw.rank() == 0:
-            print("""Running with UWGeodynamics version {0}""".format(full_version))
-            sys.stdout.flush()
-        if self.solver.print_petsc_options():
-            print("""Petsc {0}""".format(self.solver.print_petsc_options()))
-            sys.stdout.flush()
-
         self.stepDone = 0
         self.restart(restartStep, restartDir)
 
@@ -1564,6 +1555,14 @@ class Model(Material):
             user_dt = nd(dt)
         else:
             user_dt = None
+
+        if uw.rank() == 0:
+            print("""Running with UWGeodynamics version {0}""".format(full_version))
+            sys.stdout.flush()
+
+        if self.solver.print_petsc_options():
+            print("""Petsc {0}""".format(self.solver.print_petsc_options()))
+            sys.stdout.flush()
 
         while (ndduration and self._ndtime < ndduration) or self.stepDone < nstep:
 
@@ -2580,6 +2579,11 @@ class _RestartFunction(object):
         Model._initialize()
         self.reload_restart_variables(step)
         self.reload_passive_tracers(step)
+
+        if Model._solver:
+            solver_options = Model._solver.options
+            Model._solver = None
+            Model.solver.options = solver_options
 
         if isinstance(Model.surfaceProcesses,
                       (surfaceProcesses.SedimentationThreshold,
