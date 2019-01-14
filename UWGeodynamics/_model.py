@@ -1738,7 +1738,7 @@ class Model(Material):
         self._advector = Mesh_advector(self, axis)
 
     def add_passive_tracers(self, name, vertices=None,
-                            particleEscape=True, centroids=None, zOnly=False):
+                            particleEscape=True, centroids=None):
         """ Add a swarm of passive tracers to the Model
 
         Parameters:
@@ -1804,8 +1804,7 @@ class Model(Material):
                                      self.velocityField,
                                      name=name,
                                      vertices=vertices,
-                                     particleEscape=particleEscape,
-                                     zOnly=zOnly)
+                                     particleEscape=particleEscape)
 
         else:
             x = np.array(vertices[0])[..., np.newaxis] + np.array(centroids[0]).ravel()
@@ -1820,8 +1819,7 @@ class Model(Material):
                                      self.velocityField,
                                      name=name,
                                      vertices=vertices,
-                                     particleEscape=particleEscape,
-                                     zOnly=zOnly)
+                                     particleEscape=particleEscape)
 
         self.passive_tracers[name] = tracers
         setattr(self, name.lower() + "_tracers", tracers)
