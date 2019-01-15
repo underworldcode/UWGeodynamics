@@ -100,8 +100,14 @@ class PassiveTracers(object):
         else:
             self.advector.integrate(dt, **kwargs)
 
+        # Integrate tracked field variables over time
+        for field in self.tracked_field:
+            if field["timeIntegration"]:
+                obj = getattr(self, field["name"])
+                obj.data[...] += field["value"].evaluate(self.swarm) * dt
+
     def add_tracked_field(self, value, name, units, dataType, count=1,
-                          overwrite=True):
+                          overwrite=True, timeIntegration=False):
         """ Add a field to be tracked """
         if not isinstance(value, fn.Function):
             raise ValueError("%s is not an Underworld function")
@@ -117,12 +123,14 @@ class PassiveTracers(object):
                     field["units"] = units
                     field["value"] = value
                     field["dataType"] = dataType
+                    field["timeIntegration"] = timeIntegration
                     setattr(self, name, self.swarm.add_variable(dataType, count=count))
                     return
 
-        self.tracked_field.append({"value":value,
+        self.tracked_field.append({"value": value,
                                    "name": name,
                                    "units": units,
+                                   "timeIntegration": timeIntegration,
                                    "dataType": dataType})
         setattr(self, name, self.swarm.add_variable(dataType, count=count))
 
@@ -151,7 +159,7 @@ class PassiveTracers(object):
 
         x = self.swarm.particleCoordinates.data[:, 0] * fact
         y = self.swarm.particleCoordinates.data[:, 1] * fact
-        w.poly(parts=list(zip(x,y)))
+        w.poly(parts=list(zip(x, y)))
         w.record(self.name, str(units))
         w.save(filename)
 
@@ -191,7 +199,8 @@ class PassiveTracers(object):
                 self.name + "_" + field["name"] + '-%s' % checkpointID)
 
             obj = getattr(self, field["name"])
-            obj.data[...] = field["value"].evaluate(self.swarm)
+            if not field["timeIntegration"]:
+                obj.data[...] = field["value"].evaluate(self.swarm)
             handle = obj.save('%s.h5' % file_prefix, units=field["units"])
 
             if uw.rank() == 0:
@@ -699,3 +708,4 @@ def extract_profile(field,
     values = field.evaluate(pts)
 
     return distances, values
+
