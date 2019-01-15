@@ -55,10 +55,12 @@ class PressureSmoother(object):
 class PassiveTracers(object):
 
     def __init__(self, mesh, velocityField, name=None, vertices=None,
-                 particleEscape=True, shapeType="line"):
+                 particleEscape=True, shapeType="line", zOnly=False):
 
         self.name = name
+        self.velocityField = velocityField
         self.particleEscape = particleEscape
+        self.zOnly = zOnly
 
         for dim, _ in enumerate(vertices):
             vertices[dim] = nd(vertices[dim])
@@ -72,9 +74,10 @@ class PassiveTracers(object):
         self.swarm = Swarm(mesh=mesh, particleEscape=particleEscape)
         self.swarm.add_particles_with_coordinates(points)
 
-        self.advector = uw.systems.SwarmAdvector(swarm=self.swarm,
-                                                 velocityField=velocityField,
-                                                 order=2)
+        self.advector = uw.systems.SwarmAdvector(
+            swarm=self.swarm,
+            velocityField=self.velocityField, order=2)
+
         indices = np.arange(self.swarm.particleLocalCount)
         rank = uw.rank()
         ranks = np.repeat(rank, self.swarm.particleLocalCount)
@@ -88,7 +91,14 @@ class PassiveTracers(object):
 
     def integrate(self, dt, **kwargs):
         """ Integrate swarm velocity in time """
-        self.advector.integrate(dt, **kwargs)
+        if self.zOnly:
+            saved_velocities = np.copy(self.velocityField.data)
+            self.velocityField.data[:, :-1] = 0.
+            self.advector.integrate(dt, **kwargs)
+            self.velocityField.data[...] = saved_velocities
+            self.velocityField.syncronise()
+        else:
+            self.advector.integrate(dt, **kwargs)
 
     def add_tracked_field(self, value, name, units, dataType, count=1,
                           overwrite=True):
