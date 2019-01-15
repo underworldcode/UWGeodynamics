@@ -1560,9 +1560,12 @@ class Model(Material):
             print("""Running with UWGeodynamics version {0}""".format(full_version))
             sys.stdout.flush()
 
-        if self.solver.print_petsc_options():
-            print("""Petsc {0}""".format(self.solver.print_petsc_options()))
-            sys.stdout.flush()
+        try:
+            if self.solver.print_petsc_options():
+                print("""Petsc {0}""".format(self.solver.print_petsc_options()))
+                sys.stdout.flush()
+        except AttributeError:
+            pass
 
         while (ndduration and self._ndtime < ndduration) or self.stepDone < nstep:
 
