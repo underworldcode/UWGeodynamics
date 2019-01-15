@@ -323,8 +323,8 @@ class SPM(object):
         """
 
         # Calculate number of nodes from required resolution.
-        nx = np.int((maxCoord[0] - minCoord[0]) / resolution)
-        ny = np.int((maxCoord[1] - minCoord[1]) / resolution)
+        nx = np.int((maxCoord[0] - minCoord[0]) / resolution) + 1
+        ny = np.int((maxCoord[1] - minCoord[1]) / resolution) + 1
 
         if self.mesh.dim == 2:
             minCoord = (minCoord[0], minCoord[0])
