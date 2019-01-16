@@ -94,6 +94,7 @@ class PassiveTracers(object):
         if self.zOnly:
             saved_velocities = np.copy(self.velocityField.data)
             self.velocityField.data[:, :-1] = 0.
+            self.velocityField.syncronise()
             self.advector.integrate(dt, **kwargs)
             self.velocityField.data[...] = saved_velocities
             self.velocityField.syncronise()
