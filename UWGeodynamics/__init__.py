@@ -35,13 +35,13 @@ from ._density import ConstantDensity, LinearDensity
 from ._melt import Solidus, Liquidus, SolidusRegistry, LiquidusRegistry
 from ._utils import Balanced_InflowOutflow
 from ._utils import circles_grid, fn_Tukey_window, circle_points_tracers, sphere_points_tracers
-from ._utils import LogFile
 from ._utils import MovingWall
 from ._utils import PhaseChange, WaterFill
 from ._utils import extract_profile
 from .version import full_version as __version__
 from .version import git_revision as __git_revision__
 from . import _net
+from . import postprocessing
 
 __author__ = "Romain Beucher"
 __copyright__ = "Copyright 2018, The University of Melbourne"
