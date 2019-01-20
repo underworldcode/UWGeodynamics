@@ -2666,6 +2666,7 @@ class _RestartFunction(object):
                                      Model.velocityField,
                                      tracer.name,
                                      vertices=vertices,
+                                     zOnly=tracers.zOnly,
                                      particleEscape=tracer.particleEscape)
 
             attr_name = tracer.name.lower() + "_tracers"
