@@ -25,6 +25,7 @@ rcParams =  {
                           "projTimeField",
                           "projMaterialField",
                           "projViscosityField",
+                          "projMeltField",
                           "projPlasticStrain",
                           "projDensityField"], validate_stringlist],
 
