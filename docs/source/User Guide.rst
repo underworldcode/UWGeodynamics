@@ -1461,6 +1461,11 @@ UWGeodynamics calculates the time step automatically based on some
 numerical stability criteria. You can force a specific time step or
 force the time step to be constant throughout
 
+.. code:: python
+
+   Model.run_for(1.0*u.megayears, dt=10000. * u.years)
+
+
 Saving data
 ~~~~~~~~~~~
 

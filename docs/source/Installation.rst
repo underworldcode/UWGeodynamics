@@ -121,6 +121,7 @@ It can then be installed globally on your system using
 
   pip install UWGeodynamics/
 
+
 HPC Installation
 ----------------
 
@@ -227,7 +228,7 @@ Python 3
 .. code:: bash
 
   module purge
-  module load python/3.6.2 openmpi/3.1.2 hdf5/1.10.2p 
+  module load python3/3.6.2 openmpi/3.1.2 hdf5/1.10.2p 
   cd ~
   pip install --user virtualenv
   ~/.local/bin/virtualenv python-3.6.2-venv
