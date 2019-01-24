@@ -125,7 +125,9 @@ class PassiveTracers(object):
                     field["value"] = value
                     field["dataType"] = dataType
                     field["timeIntegration"] = timeIntegration
-                    setattr(self, name, self.swarm.add_variable(dataType, count=count))
+                    svar = self.swarm.add_variable(dataType, count=count)
+                    svar.data[...] = 0.
+                    setattr(self, name, svar)
                     return
 
         self.tracked_field.append({"value": value,
@@ -133,7 +135,9 @@ class PassiveTracers(object):
                                    "units": units,
                                    "timeIntegration": timeIntegration,
                                    "dataType": dataType})
-        setattr(self, name, self.swarm.add_variable(dataType, count=count))
+        svar = self.swarm.add_variable(dataType, count=count)
+        svar.data[...] = 0.
+        setattr(self, name, svar)
 
     def write_to_shapefile(self, filename, units=None, overwrite=False):
 
