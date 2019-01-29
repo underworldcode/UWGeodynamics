@@ -2691,7 +2691,7 @@ class _RestartFunction(object):
         tree = etree.parse(xmf)
         root = tree.getroot()
         badlands_time = float(root[0][0][0].attrib["Value"])
-        uw_time = self.time.to(u.years).magnitude
+        uw_time = Model.time.to(u.years).magnitude
 
         if np.abs(badlands_time - uw_time) > 1:
             raise ValueError("""Time in Underworld and Badlands outputs
