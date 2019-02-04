@@ -41,7 +41,7 @@ an image).
 
   docker run -d \
      --name my_container \
-     --port 8888:8888 \
+     -p 8888:8888 \
      --mount source=myvol,target=/workspace/user-data \
      underworldcode/uwgeodynamics
 
