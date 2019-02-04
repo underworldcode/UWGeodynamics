@@ -519,7 +519,31 @@
       },
       "preExponentialFactor": {
         "units": "1 / pascal ** 4.7 / second",
-        "value": 0.000008
+        "value": 5.0476587558415345e-28
+      },
+      "stressExponent": {
+        "units": "None",
+        "value": 4.7
+      }
+    }
+  },
+  "Dry Columbia Diabase, Viscous Dislocation Creep, Mackwell et al., 1998": {
+    "citation": "Mackwell, S. J., Zimmerman, M. E., & Kohlstedt, D. L. (1998). High-temperature deformation of dry diabase with application to tectonics on Venus. Journal of Geophysical Research: Solid Earth, 103(B1), 975-984.",
+    "onlinePDF": "https://onlinelibrary.wiley.com/doi/pdf/10.1029/97JB02671",
+    "Mineral": "Dry Columbia Diabase",
+    "Type": "Viscous Dislocation Creep",
+    "coefficients": {
+      "activationEnergy": {
+        "units": "kilojoule / mole",
+        "value": 485
+      },
+      "activationVolume": {
+        "units": "meter ** 3 / mole",
+        "value": 0.0
+      },
+      "preExponentialFactor": {
+        "units": "1 / pascal ** 4.7 / second",
+        "value": 1.1988189545123645e-26
       },
       "stressExponent": {
         "units": "None",
