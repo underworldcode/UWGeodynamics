@@ -4,6 +4,7 @@ USER root
 
 WORKDIR /opt
 RUN git clone --depth 1 https://github.com/rbeucher/UWGeodynamics.git
+RUN pip install pandas
 RUN pip install -e /opt/UWGeodynamics
 
 RUN mkdir /workspace/UWGeodynamics
