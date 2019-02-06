@@ -9,7 +9,6 @@ rcParams =  {
     "CFL": [0.5, validate_float],
 
     "rebuild.solver": [False, validate_bool],
-
     "initial.nonlinear.tolerance": [1e-2, validate_float],
     "nonlinear.tolerance": [1e-2, validate_float],
     "initial.nonlinear.min.iterations": [2, validate_int],
@@ -25,6 +24,7 @@ rcParams =  {
                           "projTimeField",
                           "projMaterialField",
                           "projViscosityField",
+                          "projStressField",
                           "projMeltField",
                           "projPlasticStrain",
                           "projDensityField"], validate_stringlist],
