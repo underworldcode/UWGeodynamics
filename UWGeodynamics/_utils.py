@@ -59,6 +59,8 @@ class PassiveTracers(object):
 
         self.name = name
         self.velocityField = velocityField
+        self.angular_velocity = 0.5*(self.velocityField.fn_gradient[1] -
+                                     self.velocityField.fn_gradient[2])
         self.particleEscape = particleEscape
         self.zOnly = zOnly
 
@@ -105,7 +107,13 @@ class PassiveTracers(object):
         for field in self.tracked_field:
             if field["timeIntegration"]:
                 obj = getattr(self, field["name"])
-                obj.data[...] += field["value"].evaluate(self.swarm) * dt
+                if self.mesh.dim == 2 and obj.data.shape[-1] > 2:
+                    ang_vel = self.angular_velocity
+                    dtheta = dt * ang_vel.evaluate(self.swarm).reshape(1, -1)
+                    rotateTensor2D(obj.data[:, 0:3], dtheta)
+                    obj.data[:, 0:3] += field["value"].evaluate(self.swarm)
+                else:
+                    obj.data[...] += field["value"].evaluate(self.swarm) * dt
 
     def add_tracked_field(self, value, name, units, dataType, count=1,
                           overwrite=True, timeIntegration=False):
@@ -645,3 +653,27 @@ def extract_profile(field,
 
     return distances, values
 
+
+def rotateTensor2D(t, theta):
+    # vectorized version of
+    # t' = [Q^T] [t] [Q]
+
+    '''
+    # In the case tensor is a 2,2 numpy array. eg
+    # t  = [[10, 3],[3,5]]
+
+    Q = np.array([
+            [ np.cos(theta) , -np.sin(theta) ],
+            [ np.sin(theta) ,  np.cos(theta) ]])
+
+    x = np.matmul(t,Q)
+    return np.matmul(Q.T,x)
+    '''
+
+    # for symmetric tensor t. Using Q as above this simplifies to a 3x3
+    t_ = t.copy()
+    t_[:,0] = t[:,0]*np.cos(theta)**2 + t[:,1]*np.sin(theta)**2 + t[:,2]*np.sin(2*theta[:])
+    t_[:,1] = t[:,0]*np.sin(theta)**2 + t[:,1]*np.cos(theta)**2 - t[:,2]*np.sin(2*theta[:])
+    t_[:,2] = ( t[:,1] - t[:,0] ) *np.cos(theta[:])*np.sin(theta[:])  + t[:,2]*np.cos(2*theta[:])
+
+    return t_
