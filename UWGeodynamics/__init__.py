@@ -329,6 +329,9 @@ _deprecated_map = {
 _deprecated_ignore_map = {
     }
 
+_deprecated_abort = {"solver": "Model.solver.set_inner_method()",
+                     "penalty": "Model.solver.set_penalty()"}
+
 _obsolete_set = set()
 _all_deprecated = set(chain(_deprecated_ignore_map,
                             _deprecated_map, _obsolete_set))
@@ -364,6 +367,9 @@ class RcParams(dict):
                 alt = _deprecated_ignore_map[key]
                 warnings.warn(self.msg_depr_ignore % (key, alt))
                 return
+            elif key in _deprecated_abort:
+                alt = _deprecated_abort[key]
+                raise ValueError(self.msg_depr % (key, alt))
             try:
                 cval = self.validate[key](val)
             except ValueError as ve:
@@ -384,6 +390,9 @@ See rcParams.keys() for a list of valid parameters.' % (key,))
             alt = _deprecated_ignore_map[key]
             warnings.warn(self.msg_depr_ignore % (key, alt))
             key = alt
+        elif key in _deprecated_abort:
+            alt = _deprecated_abort[key]
+            raise ValueError(self.msg_depr % (key, alt))
 
         val = dict.__getitem__(self, key)
         if inverse_alt is not None:
