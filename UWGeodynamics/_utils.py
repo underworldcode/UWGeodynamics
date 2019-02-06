@@ -224,7 +224,7 @@ class PassiveTracers(object):
                 globalCount = len(dset)
                 dim = self.swarm.mesh.dim
 
-            string += "\t<Attribute Type=\"Scalar\" Center=\"Node\" Name=\"Coordinates\">\n"
+            string += "\t<Attribute Type=\"Vector\" Center=\"Node\" Name=\"Coordinates\">\n"
             string += """\t\t\t<DataItem Format=\"HDF\" NumberType=\" Float\"
                          Precision=\"8\" Dimensions=\"{0} {1}\">{2}:/data</DataItem>\n""".format(globalCount, dim, swarm_fname)
             string += "\t</Attribute>\n"
