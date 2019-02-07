@@ -6,8 +6,8 @@ import os
 import subprocess
 from os import path
 
-MAJOR               = 1
-MINOR               = 0
+MAJOR               = 2
+MINOR               = 6
 MICRO               = 1
 ISRELEASED          = True
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
