@@ -20,6 +20,10 @@ Underworld Geodynamics project
 .. image:: https://travis-ci.org/underworldcode/UWGeodynamics.svg?branch=development
     :target: https://travis-ci.org/underworldcode/UWGeodynamics
 
+.. image:: https://mybinder.org/badge_logo.svg
+ :target: https://mybinder.org/v2/gh/rbeucher/UWGeodynamics-binder/master
+
+
 .. image:: https://github.com/underworldcode/UWGeodynamics/blob/development/tutorials/images/Tutorial1.gif
 
 The UWGeodynamics module facilitates prototyping of geodynamics models using Underworld. 
