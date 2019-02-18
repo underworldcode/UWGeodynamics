@@ -131,22 +131,11 @@ class BoundaryConditions(object):
     def __getitem__(self, name):
         return self.__dict__[name]
 
-    def _apply_conditions_nodes(self, condition, nodes):
-        """ Apply condition to a set of nodes
+    def _convert_nodes_to_indexSets(self, nodes):
+        """ Convert nodes to indexSet """
 
-        Parameters:
-        -----------
-            condition:
-                condition
-            nodes: np.array, list, IndexSet, Shape, Function
-                set of nodes
-        """
-
-        # Expect a list or tuple of dimension equal to the dof of the
-        # field on which the condition is used
-
-        if isinstance(condition, (float, int, u.Quantity)):
-            condition = [condition]
+        if isinstance(nodes, uw.mesh.FeMesh_IndexSet):
+            return nodes
 
         # If nodes is a shape get the corresponding local
         # nodes
@@ -165,6 +154,30 @@ class BoundaryConditions(object):
                 size=self.Model.mesh.nodesGlobal,
                 fromObject=nodes)
 
+        return nodes
+
+    def _add_to_indices(self, dim, nodes):
+        self._indices[dim] -= nodes
+        self._indices[dim] += nodes
+
+    def _apply_conditions_nodes(self, condition, nodes):
+        """ Apply condition to a set of nodes
+
+        Parameters:
+        -----------
+            condition:
+                condition
+            nodes: np.array, list, IndexSet, Shape, Function
+                set of nodes
+        """
+
+        nodes = self._convert_nodes_to_indexSets(nodes)
+
+        # Expect a list or tuple of dimension equal to the dof of the
+        # field on which the condition is used
+        if isinstance(condition, (float, int, u.Quantity)):
+            condition = [condition]
+
         # Check that the domain actually contains some boundary nodes
         if isinstance(condition, (list, tuple)) and nodes.data.size > 0:
             for dim in range(self.field.data.shape[1]):
@@ -172,7 +185,7 @@ class BoundaryConditions(object):
                 # Scalar condition
                 if isinstance(condition[dim], (u.Quantity, float, int)):
                     self.field.data[nodes.data, dim] = nd(condition[dim])
-                    self._indices[dim] += nodes
+                    self._add_to_indices(dim, nodes)
 
                 # If it's an Underworld function
                 elif isinstance(condition[dim], fn.Function):
@@ -180,7 +193,7 @@ class BoundaryConditions(object):
                     self.field.data[nodes.data, dim] = (
                         func.evaluate(
                             self.Model.mesh.data[nodes.data])[:, dim])
-                    self._indices[dim] += nodes
+                    self._add_to_indices(dim, nodes)
                 elif condition[dim] is not None:
                     raise ValueError("""Wrong condition""")
 
@@ -328,6 +341,7 @@ class VelocityBCs(BoundaryConditions):
             nodes: np.array, list, IndexSet, Shape, Function
                 set of nodes
         """
+        nodes = self._convert_nodes_to_indexSets(nodes)
 
         # Special case (Bottom LecodeIsostasy)
         if isinstance(condition, LecodeIsostasy):
@@ -348,7 +362,7 @@ class VelocityBCs(BoundaryConditions):
             }
             self.Model._isostasy.vertical_walls_conditions = (
                 vertical_walls_conditions)
-            self._indices[-1] += self.Model.bottom_wall
+            self._add_to_indices(-1, self.Model.bottom_wall)
             return
 
         if isinstance(condition, MovingWall):
@@ -367,10 +381,9 @@ class VelocityBCs(BoundaryConditions):
                 if ISet.data.size > 0:
                     if (dim == axis):
                         self.field.data[ISet.data, dim] = func.evaluate(ISet)[:, 0]
-                        self._indices[dim] += ISet
                     else:
                         self.field.data[ISet.data, dim] = 0.
-                        self._indices[dim] += ISet
+                    self._add_to_indices(dim, ISet)
 
             return
 
@@ -387,7 +400,7 @@ class VelocityBCs(BoundaryConditions):
                     obj._get_side_flow()
                     self.Model.velocityField.data[nodes.data, dim] = (
                         obj._get_side_flow())
-                    self._indices[dim] += nodes
+                    self._add_to_indices(dim, nodes)
 
         super(VelocityBCs, self)._apply_conditions_nodes(condition, nodes)
 
