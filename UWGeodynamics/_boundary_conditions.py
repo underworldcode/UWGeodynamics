@@ -190,9 +190,11 @@ class BoundaryConditions(object):
                 # If it's an Underworld function
                 elif isinstance(condition[dim], fn.Function):
                     func = condition[dim]
-                    self.field.data[nodes.data, dim] = (
+                    values = (
                         func.evaluate(
-                            self.Model.mesh.data[nodes.data])[:, dim])
+                            self.Model.mesh.data[nodes.data]))
+                    axis = dim if values.shape[1] > 1 else 0
+                    self.field.data[nodes.data, dim] = values[:, axis]
                     self._add_to_indices(dim, nodes)
                 elif condition[dim] is not None:
                     raise ValueError("""Wrong condition""")
