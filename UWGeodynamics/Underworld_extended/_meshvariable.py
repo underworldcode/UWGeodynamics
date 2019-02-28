@@ -206,7 +206,7 @@ class MeshVariable(uw.mesh.MeshVariable):
         True
 
         >>> # clean up:
-        >>> if uw.rank() == 0:
+        >>> if uw.mpi.rank == 0:
         ...     import os;
         ...     os.remove( "saved_mesh_variable.h5" )
 

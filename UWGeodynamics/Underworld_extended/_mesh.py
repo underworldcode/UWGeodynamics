@@ -101,7 +101,7 @@ class FeMesh_Cartesian(uw.mesh.FeMesh_Cartesian):
         True
 
         >>> # clean up:
-        >>> if uw.rank() == 0:
+        >>> if uw.mpi.rank == 0:
         ...     import os;
         ...     os.remove( "saved_mesh.h5" )
 

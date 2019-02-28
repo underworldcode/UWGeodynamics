@@ -43,6 +43,7 @@ from .version import git_revision as __git_revision__
 from . import _net
 from . import postprocessing
 
+
 __author__ = "Romain Beucher"
 __copyright__ = "Copyright 2018, The University of Melbourne"
 __credits__ = ["Romain Beucher",
@@ -555,7 +556,7 @@ def rc_params_from_file(fname, fail_on_error=False, use_default_template=True):
                                       if key not in _all_deprecated])
     config.update(config_from_file)
 
-    if underworld.rank() == 0:
+    if uw.mpi.rank == 0:
         print('loaded rc file %s' % fname)
         sys.stdout.flush()
 
@@ -572,7 +573,7 @@ def _in_doctest():
 
 # lets shoot off some usage metrics
 # send metrics *only* if we are rank=0, and if we are not running inside a doctest.
-if (underworld.rank() == 0) and not _in_doctest():
+if (uw.mpi.rank == 0) and not _in_doctest():
     def _sendData():
         # disable collection of data if requested
         if "UW_NO_USAGE_METRICS" not in os.environ:

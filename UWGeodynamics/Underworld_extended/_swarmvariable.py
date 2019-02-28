@@ -184,7 +184,7 @@ class SwarmVariable(uw.swarm.SwarmVariable):
         True
 
         >>> # clean up:
-        >>> if uw.rank() == 0:
+        >>> if uw.mpi.rank() == 0:
         ...     import os;
         ...     os.remove( "saved_swarm.h5" )
         ...     os.remove( "saved_swarm_variable.h5" )

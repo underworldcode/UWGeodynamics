@@ -57,7 +57,7 @@ class Mesh_advector(object):
             values = newValues.flatten()
             self._mesh2nd.data[:, axis] = values[self._mesh2nd.data_nodegId.ravel()]
 
-        uw.barrier()
+        uw.mpi.barrier()
 
         with self.Model.mesh.deform_mesh():
             self.Model.mesh.data[:, axis] = self._mesh2nd.data[:, axis]
@@ -94,10 +94,10 @@ class Mesh_advector(object):
             minV[0] = velocities.min()
 
         # reduce operation
-        uw.barrier()
+        uw.mpi.barrier()
         comm.Allreduce(MPI.IN_PLACE, maxV, op=MPI.MAX)
         comm.Allreduce(MPI.IN_PLACE, minV, op=MPI.MIN)
-        uw.barrier()
+        uw.mpi.barrier()
 
         return minV, maxV
 
@@ -119,10 +119,10 @@ class Mesh_advector(object):
         maxVal[0] = self.Model.mesh.data[:, axis].max()
         minVal[0] = self.Model.mesh.data[:, axis].min()
 
-        uw.barrier()
+        uw.mpi.barrier()
         comm.Allreduce(MPI.IN_PLACE, maxVal, op=MPI.MAX)
         comm.Allreduce(MPI.IN_PLACE, minVal, op=MPI.MIN)
-        uw.barrier()
+        uw.mpi.barrier()
 
         return minVal, maxVal
 
