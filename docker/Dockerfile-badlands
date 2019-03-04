@@ -1,4 +1,4 @@
-FROM underworldcode/underworld2:2.7.0b
+FROM underworldcode/underworld2:2.6.0b
 
 USER root
 
@@ -9,7 +9,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install cgdb sudo && \
 
 # UWGeodynamics
 WORKDIR /opt
-RUN git clone -b development https://github.com/underworldcode/UWGeodynamics.git && \
+RUN git clone -b v2.6.1 https://github.com/underworldcode/UWGeodynamics.git && \
     pip install -e /opt/UWGeodynamics
 RUN mkdir /workspace/UWGeodynamics && \
     mkdir /workspace/MODELS_RESULTS && \
