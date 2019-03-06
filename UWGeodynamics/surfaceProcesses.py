@@ -5,6 +5,7 @@ import underworld.function as fn
 import numpy as np
 import sys
 from scipy.ndimage.filters import gaussian_filter
+from scipy.interpolate import griddata, interp1d
 from .scaling import nonDimensionalize as nd
 from .scaling import Dimensionalize
 from .scaling import UnitRegistry as u
@@ -60,7 +61,6 @@ class Badlands(SurfaceProcesses):
         self.restartStep = restartStep
         self.restartFolder = restartFolder
 
-        self.Model = Model
         self.airIndex = airIndex
         self.sedimentIndex = sedimentIndex
         self.resolution = nd(resolution)
@@ -69,22 +69,25 @@ class Badlands(SurfaceProcesses):
         self.timeField = timeField
         self.XML = XML
         self.time_years = 0.
+        self.minCoord = minCoord
+        self.maxCoord = maxCoord
+        self.Model = Model
 
-        if minCoord:
-            self.minCoord = tuple([nd(val) for val in minCoord])
+    def _init_model(self):
+
+        if self.minCoord:
+            self.minCoord = tuple([nd(val) for val in self.minCoord])
         else:
             self.minCoord = self.Model.mesh.minCoord
 
-        if maxCoord:
-            self.maxCoord = tuple([nd(val) for val in maxCoord])
+        if self.maxCoord:
+            self.maxCoord = tuple([nd(val) for val in self.maxCoord])
         else:
             self.maxCoord = self.Model.mesh.maxCoord
 
-        if self.mesh.dim == 2:
+        if self.Model.mesh.dim == 2:
             self.minCoord = (self.minCoord[0], self.minCoord[0])
             self.maxCoord = (self.maxCoord[0], self.maxCoord[0])
-
-    def _init_model(self):
 
         if uw.mpi.rank == 0:
             from pyBadlands.model import Model as BadlandsModel
@@ -122,7 +125,8 @@ class Badlands(SurfaceProcesses):
 
             # Override the checkpoint/display interval in the Badlands model to
             # ensure BL and UW are synced
-            self.badlands_model.input.tDisplay = self.checkpoint_interval
+            self.badlands_model.input.tDisplay = (
+            Dimensionalize(self.checkpoint_interval, u.years).magnitude)
 
             # Set Badlands minimal distance between nodes before regridding
             self.badlands_model.force.merge3d = (
@@ -135,13 +139,13 @@ class Badlands(SurfaceProcesses):
             # It would be nice if this wasn't the case.
             self.badlands_model.force.next_display = 0
 
-        uw.mpi.Barrier()
+        uw.mpi.barrier()
 
         self._disp_inserted = False
 
         # Transfer the initial DEM state to Underworld
         self._update_material_types()
-        uw.mpi.Barrier()
+        uw.mpi.barrier()
 
     def _generate_dem(self):
         """
@@ -182,7 +186,7 @@ class Badlands(SurfaceProcesses):
         dem[:, 0] = Dimensionalize(coordsX.flatten(), u.meter).magnitude
         dem[:, 1] = Dimensionalize(coordsY.flatten(), u.meter).magnitude
 
-        coordsZ = self.elevation.evaluate(dem[:, :1])
+        coordsZ = self.surfElevation.evaluate(dem[:, :1])
 
         dem[:, 2] = Dimensionalize(coordsZ.flatten(), u.meter).magnitude
         return dem
@@ -197,24 +201,26 @@ class Badlands(SurfaceProcesses):
         np_surface = None
         if uw.mpi.rank == 0:
             rg = self.badlands_model.recGrid
-            if self.mesh.dim == 2:
+            if self.Model.mesh.dim == 2:
                 zVals = rg.regZ.mean(axis=1)
                 np_surface = np.column_stack((rg.regX, zVals))
 
-            if self.mesh.dim == 3:
+            if self.Model.mesh.dim == 3:
                 np_surface = np.column_stack((rg.rectX, rg.rectY, rg.rectZ))
 
         np_surface = uw.mpi.comm.bcast(np_surface, root=0)
-        uw.mpi.Barrier()
+        uw.mpi.barrier()
 
         # Get Velocity Field at the surface
-        nd_coords = nd(np.surface)
+        nd_coords = nd(np_surface)
         tracer_velocity = self.Model.velocityField.evaluate_global(nd_coords)
 
         if uw.mpi.rank == 0:
-            tracer_disp = Dimensionalize(tracer_velocity * dt, u.meter)
-            dt_years = Dimensionalize(dt, u.years)
-            self._inject_badlands_displacement(self.time_years, dt_years, tracer_disp, sigma)
+            tracer_disp = Dimensionalize(tracer_velocity * dt, u.meter).magnitude
+            dt_years = Dimensionalize(dt, u.years).magnitude
+            self._inject_badlands_displacement(self.time_years,
+                                               dt_years,
+                                               tracer_disp, sigma)
 
             # Run the Badlands model to the same time point
             self.badlands_model.run_to_time(self.time_years + dt_years)
@@ -223,7 +229,7 @@ class Badlands(SurfaceProcesses):
 
         # TODO: Improve the performance of this function
         self._update_material_types()
-        uw.mpi.Barrier()
+        uw.mpi.barrier()
 
         if uw.mpi.rank == 0 and self.verbose:
             purple = "\033[0;35m"
@@ -252,16 +258,16 @@ class Badlands(SurfaceProcesses):
         xs = uw.mpi.comm.bcast(xs, root=0)
         ys = uw.mpi.comm.bcast(ys, root=0)
 
-        uw.mpi.Barrier()
+        uw.mpi.barrier()
 
         grid_x, grid_y = np.meshgrid(xs, ys)
-        interpolate_z = np.griddata(known_xy,
-                                    known_z,
-                                    (grid_x, grid_y),
-                                    method='nearest').T
+        interpolate_z = griddata(known_xy,
+                                 known_z,
+                                 (grid_x, grid_y),
+                                 method='nearest').T
         interpolate_z = interpolate_z.mean(axis=1)
 
-        f = np.interp1d(xs, interpolate_z)
+        f = interp1d(xs, interpolate_z)
 
         uw_surface = self.Model.swarm.particleCoordinates.data
         bdl_surface = f(uw_surface[:, 0])
@@ -292,7 +298,7 @@ class Badlands(SurfaceProcesses):
         known_xy = uw.mpi.comm.bcast(known_xy, root=0)
         known_z = uw.mpi.comm.bcast(known_z, root=0)
 
-        uw.mpi.Barrier()
+        uw.mpi.barrier()
 
         volume = self.Model.swarm.particleCoordinates.data
 
@@ -301,10 +307,10 @@ class Badlands(SurfaceProcesses):
         # NOTE: we're using nearest neighbour interpolation. This should be
         # sufficient as Badlands will normally run at a much higher resolution
         # than Underworld. 'linear' interpolation is much, much slower.
-        interpolate_z = np.griddata(points=known_xy,
-                                    values=known_z,
-                                    xi=interpolate_xy,
-                                    method='nearest')
+        interpolate_z = griddata(points=known_xy,
+                                 values=known_z,
+                                 xi=interpolate_xy,
+                                 method='nearest')
 
         # True for sediment, False for air
         flags = volume[:, 2] < nd(interpolate_z * u.meter)
@@ -314,9 +320,9 @@ class Badlands(SurfaceProcesses):
     def _update_material_types(self):
 
         # What do the materials (in air/sediment terms) look like now?
-        if self.mesh.dim == 3:
+        if self.Model.mesh.dim == 3:
             material_flags = self._determine_particle_state()
-        if self.mesh.dim == 2:
+        if self.Model.mesh.dim == 2:
             material_flags = self._determine_particle_state_2D()
 
         # If any materials changed state, update the Underworld material types
@@ -354,7 +360,7 @@ class Badlands(SurfaceProcesses):
             self._disp_inserted = True
 
         # Extent the velocity field in the third dimension
-        if self.mesh.dim == 2:
+        if self.Model.mesh.dim == 2:
             dispX = np.tile(disp[:, 0], self.badlands_model.recGrid.rny)
             dispY = np.zeros((self.badlands_model.recGrid.rnx * self.badlands_model.recGrid.rny,))
             dispZ = np.tile(disp[:, 1], self.badlands_model.recGrid.rny)
