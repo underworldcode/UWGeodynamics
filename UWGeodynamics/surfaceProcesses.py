@@ -212,12 +212,13 @@ class Badlands(SurfaceProcesses):
         uw.mpi.barrier()
 
         # Get Velocity Field at the surface
-        nd_coords = nd(np_surface)
+        nd_coords = nd(np_surface * u.meter)
         tracer_velocity = self.Model.velocityField.evaluate_global(nd_coords)
+
+        dt_years = Dimensionalize(dt, u.years).magnitude
 
         if uw.mpi.rank == 0:
             tracer_disp = Dimensionalize(tracer_velocity * dt, u.meter).magnitude
-            dt_years = Dimensionalize(dt, u.years).magnitude
             self._inject_badlands_displacement(self.time_years,
                                                dt_years,
                                                tracer_disp, sigma)
