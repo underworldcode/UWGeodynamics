@@ -7,7 +7,7 @@ from UWGeodynamics.scaling import Dimensionalize
 from UWGeodynamics.scaling import nonDimensionalize
 from UWGeodynamics.scaling import UnitRegistry as u
 from UWGeodynamics.version import git_revision as __git_revision__
-
+from UWGeodynamics import uwmpi
 
 class SwarmVariable(uw.swarm.SwarmVariable):
 
@@ -184,7 +184,7 @@ class SwarmVariable(uw.swarm.SwarmVariable):
         True
 
         >>> # clean up:
-        >>> if uw.mpi.rank() == 0:
+        >>> if uwmpi.rank() == 0:
         ...     import os;
         ...     os.remove( "saved_swarm.h5" )
         ...     os.remove( "saved_swarm_variable.h5" )
