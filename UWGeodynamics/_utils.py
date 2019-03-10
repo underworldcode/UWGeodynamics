@@ -10,6 +10,7 @@ from .scaling import nonDimensionalize as nd
 from .scaling import Dimensionalize
 from .scaling import UnitRegistry as u
 from .Underworld_extended import Swarm
+from UWGeodynamics import uwmpi
 from scipy import spatial
 from mpi4py import MPI
 
@@ -82,7 +83,7 @@ class PassiveTracers(object):
             velocityField=self.velocityField, order=2)
 
         indices = np.arange(self.swarm.particleLocalCount)
-        rank = uw.mpi.rank
+        rank = uwmpi.rank
         ranks = np.repeat(rank, self.swarm.particleLocalCount)
         pairs = np.array(list(zip(ranks, indices)), dtype=[("a", np.int32),
                                                            ("b", np.int32)])
@@ -186,7 +187,7 @@ class PassiveTracers(object):
 
         sH = self.swarm.save(swarm_fpath, units=u.kilometers, time=time)
 
-        if uw.mpi.rank == 0:
+        if uwmpi.rank == 0:
             filename = self.name + '-%s.xdmf' % checkpointID
             filename = os.path.join(outputDir, filename)
 
@@ -194,16 +195,16 @@ class PassiveTracers(object):
             string = uw.utils._xdmfheader()
             string += uw.utils._swarmspacetimeschema(sH, swarm_fname, time)
 
-        uw.mpi.barrier()
+        uwmpi.barrier()
 
         # Save global index
         file_prefix = os.path.join(
             outputDir, self.name + '_global_index-%s' % checkpointID)
         handle = self.global_index.save('%s.h5' % file_prefix)
 
-        if uw.mpi.rank == 0:
+        if uwmpi.rank == 0:
             string += uw.utils._swarmvarschema(handle, "global_index")
-        uw.mpi.barrier()
+        uwmpi.barrier()
 
         # Save each tracked field
         for field in self.tracked_field:
@@ -217,15 +218,15 @@ class PassiveTracers(object):
                 obj.data[...] = field["value"].evaluate(self.swarm)
             handle = obj.save('%s.h5' % file_prefix, units=field["units"])
 
-            if uw.mpi.rank == 0:
+            if uwmpi.rank == 0:
                 # Add attribute to xdmf file
                 string += uw.utils._swarmvarschema(handle, field["name"])
 
-        uw.mpi.barrier()
+        uwmpi.barrier()
 
         # get swarm parameters - serially read from hdf5 file to get size
 
-        if uw.mpi.rank == 0:
+        if uwmpi.rank == 0:
             with h5py.File(name=swarm_fpath, mode="r") as h5f:
                 dset = h5f.get('data')
                 if dset is None:
@@ -245,7 +246,7 @@ class PassiveTracers(object):
             xdmfFH = open(filename, "w")
             xdmfFH.write(string)
             xdmfFH.close()
-        uw.mpi.barrier()
+        uwmpi.barrier()
 
 
 class Balanced_InflowOutflow(object):

@@ -20,6 +20,7 @@ except ImportError as e:
 import urllib
 import uuid
 import underworld as uw
+from UWGeodynamics import uwmpi
 
 GA_TRACKING_ID = "UA-115593169-1"
 GA_CLIENT_ID = uw._id
@@ -93,8 +94,8 @@ def PostGAEvent( category, action, label=None, value=None ):
         "ea" : action,          # Event Action. Required.
         "el" : label,           # Event label.
         "ev" : value,           # Event value.
-        "cm2": uw.mpi.nProcs(),     # Number of processes used. Stored into custom metric 2.
-        "cd5": str(uw.mpi.nProcs()),# Number of processes used. Stored into custom dim 2. Not sure if necessary.
+        "cm2": uwmpi.nProcs(),     # Number of processes used. Stored into custom metric 2.
+        "cd5": str(uwmpi.nProcs()),# Number of processes used. Stored into custom dim 2. Not sure if necessary.
         }
         import os
         # add user id if set

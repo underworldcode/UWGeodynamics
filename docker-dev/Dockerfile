@@ -12,6 +12,8 @@ WORKDIR /opt
 RUN git clone -b development https://github.com/underworldcode/UWGeodynamics.git && \
     pip3 install -e /opt/UWGeodynamics
 
+RUN pip3 install jupyterlab
+
 # Badlands dependency
 RUN pip3 install --no-cache-dir pandas \
                 ez_setup \ 

@@ -60,7 +60,7 @@ class FreeSurfaceProcessor(object):
             f = interp1d(x2, y2, kind='cubic', fill_value='extrapolate')
 
             self.TField.data[self.top.data, 0] = f(x)
-        uw.mpi.barrier()
+        uwmpi.barrier()
         self.TField.syncronise()
 
     def _update_mesh(self):

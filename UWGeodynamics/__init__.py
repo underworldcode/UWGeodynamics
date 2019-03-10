@@ -3,6 +3,11 @@ import warnings
 
 try:
     import underworld
+    uw = underworld
+    if int(uw.__version__.split(".")[1]) > 7:
+        uwmpi = uw.mpi
+    else:
+        uwmpi = uw
 except ImportError:
     raise ImportError("Can not find Underworld, please check your installation")
 
@@ -55,7 +60,6 @@ __email__ = "romain.beucher@unimelb.edu.au"
 
 _id = str(_uuid.uuid4())
 
-uw = underworld
 nd = nonDimensionalize
 dim = Dimensionalize
 u = UnitRegistry
@@ -556,7 +560,7 @@ def rc_params_from_file(fname, fail_on_error=False, use_default_template=True):
                                       if key not in _all_deprecated])
     config.update(config_from_file)
 
-    if uw.mpi.rank == 0:
+    if uwmpi.rank == 0:
         print('loaded rc file %s' % fname)
         sys.stdout.flush()
 
@@ -573,7 +577,7 @@ def _in_doctest():
 
 # lets shoot off some usage metrics
 # send metrics *only* if we are rank=0, and if we are not running inside a doctest.
-if (uw.mpi.rank == 0) and not _in_doctest():
+if (uwmpi.rank == 0) and not _in_doctest():
     def _sendData():
         # disable collection of data if requested
         if "UW_NO_USAGE_METRICS" not in os.environ:
