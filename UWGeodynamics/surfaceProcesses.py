@@ -9,8 +9,12 @@ from scipy.interpolate import griddata, interp1d
 from .scaling import nonDimensionalize as nd
 from .scaling import Dimensionalize
 from .scaling import UnitRegistry as u
+from mpi4py import MPI as _MPI
 from tempfile import gettempdir
 
+comm = _MPI.COMM_WORLD
+rank = comm.rank
+size = comm.size
 
 ABC = abc.ABCMeta('ABC', (object,), {})
 _tempdir = gettempdir()
@@ -89,7 +93,7 @@ class Badlands(SurfaceProcesses):
             self.minCoord = (self.minCoord[0], self.minCoord[0])
             self.maxCoord = (self.maxCoord[0], self.maxCoord[0])
 
-        if uw.mpi.rank == 0:
+        if rank == 0:
             from pyBadlands.model import Model as BadlandsModel
             self.badlands_model = BadlandsModel()
             self.badlands_model.load_xml(self.XML)
@@ -139,13 +143,13 @@ class Badlands(SurfaceProcesses):
             # It would be nice if this wasn't the case.
             self.badlands_model.force.next_display = 0
 
-        uw.mpi.barrier()
+        comm.Barrier()
 
         self._disp_inserted = False
 
         # Transfer the initial DEM state to Underworld
         self._update_material_types()
-        uw.mpi.barrier()
+        comm.Barrier()
 
     def _generate_dem(self):
         """
@@ -192,14 +196,14 @@ class Badlands(SurfaceProcesses):
         return dem
 
     def solve(self, dt, sigma=0):
-        if uw.mpi.rank == 0 and self.verbose:
+        if rank == 0 and self.verbose:
             purple = "\033[0;35m"
             endcol = "\033[00m"
             print(purple + "Processing surface with Badlands" + endcol)
             sys.stdout.flush()
 
         np_surface = None
-        if uw.mpi.rank == 0:
+        if rank == 0:
             rg = self.badlands_model.recGrid
             if self.Model.mesh.dim == 2:
                 zVals = rg.regZ.mean(axis=1)
@@ -208,8 +212,8 @@ class Badlands(SurfaceProcesses):
             if self.Model.mesh.dim == 3:
                 np_surface = np.column_stack((rg.rectX, rg.rectY, rg.rectZ))
 
-        np_surface = uw.mpi.comm.bcast(np_surface, root=0)
-        uw.mpi.barrier()
+        np_surface = comm.bcast(np_surface, root=0)
+        comm.Barrier()
 
         # Get Velocity Field at the surface
         nd_coords = nd(np_surface * u.meter)
@@ -217,7 +221,7 @@ class Badlands(SurfaceProcesses):
 
         dt_years = Dimensionalize(dt, u.years).magnitude
 
-        if uw.mpi.rank == 0:
+        if rank == 0:
             tracer_disp = Dimensionalize(tracer_velocity * dt, u.meter).magnitude
             self._inject_badlands_displacement(self.time_years,
                                                dt_years,
@@ -230,9 +234,9 @@ class Badlands(SurfaceProcesses):
 
         # TODO: Improve the performance of this function
         self._update_material_types()
-        uw.mpi.barrier()
+        comm.Barrier()
 
-        if uw.mpi.rank == 0 and self.verbose:
+        if rank == 0 and self.verbose:
             purple = "\033[0;35m"
             endcol = "\033[00m"
             print(purple + "Processing surface with Badlands...Done" + endcol)
@@ -246,7 +250,7 @@ class Badlands(SurfaceProcesses):
         known_z = None
         xs = None
         ys = None
-        if uw.mpi.rank == 0:
+        if rank == 0:
             # points that we have known elevation for
             known_xy = self.badlands_model.recGrid.tinMesh['vertices']
             # elevation for those points
@@ -254,12 +258,12 @@ class Badlands(SurfaceProcesses):
             xs = self.badlands_model.recGrid.regX
             ys = self.badlands_model.recGrid.regY
 
-        known_xy = uw.mpi.comm.bcast(known_xy, root=0)
-        known_z = uw.mpi.comm.bcast(known_z, root=0)
-        xs = uw.mpi.comm.bcast(xs, root=0)
-        ys = uw.mpi.comm.bcast(ys, root=0)
+        known_xy = comm.bcast(known_xy, root=0)
+        known_z = comm.bcast(known_z, root=0)
+        xs = comm.bcast(xs, root=0)
+        ys = comm.bcast(ys, root=0)
 
-        uw.mpi.barrier()
+        comm.Barrier()
 
         grid_x, grid_y = np.meshgrid(xs, ys)
         interpolate_z = griddata(known_xy,
@@ -291,15 +295,15 @@ class Badlands(SurfaceProcesses):
 
         known_xy = None
         known_z = None
-        if uw.mpi.rank == 0:
+        if rank == 0:
             # points that we have known elevation for
             known_xy = self.badlands_model.recGrid.tinMesh['vertices']
             known_z = self.badlands_model.elevation
 
-        known_xy = uw.mpi.comm.bcast(known_xy, root=0)
-        known_z = uw.mpi.comm.bcast(known_z, root=0)
+        known_xy = comm.bcast(known_xy, root=0)
+        known_z = comm.bcast(known_z, root=0)
 
-        uw.mpi.barrier()
+        comm.Barrier()
 
         volume = self.Model.swarm.particleCoordinates.data
 
