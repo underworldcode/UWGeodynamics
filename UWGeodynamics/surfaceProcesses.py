@@ -250,13 +250,14 @@ class Badlands(SurfaceProcesses):
         known_z = None
         xs = None
         ys = None
+        fact = Dimensionalize(1.0, u.meter).magnitude
         if rank == 0:
             # points that we have known elevation for
-            known_xy = self.badlands_model.recGrid.tinMesh['vertices']
+            known_xy = self.badlands_model.recGrid.tinMesh['vertices'] / fact
             # elevation for those points
-            known_z = self.badlands_model.elevation
-            xs = self.badlands_model.recGrid.regX
-            ys = self.badlands_model.recGrid.regY
+            known_z = self.badlands_model.elevation / fact
+            xs = self.badlands_model.recGrid.regX / fact
+            ys = self.badlands_model.recGrid.regY / fact
 
         known_xy = comm.bcast(known_xy, root=0)
         known_z = comm.bcast(known_z, root=0)
@@ -277,7 +278,7 @@ class Badlands(SurfaceProcesses):
         uw_surface = self.Model.swarm.particleCoordinates.data
         bdl_surface = f(uw_surface[:, 0])
 
-        flags = uw_surface[:, 1] < nd(bdl_surface * u.meter)
+        flags = uw_surface[:, 1] < bdl_surface
 
         return flags
 
@@ -295,10 +296,11 @@ class Badlands(SurfaceProcesses):
 
         known_xy = None
         known_z = None
+        fact = Dimensionalize(1.0, u.meter).magnitude
         if rank == 0:
             # points that we have known elevation for
-            known_xy = self.badlands_model.recGrid.tinMesh['vertices']
-            known_z = self.badlands_model.elevation
+            known_xy = self.badlands_model.recGrid.tinMesh['vertices'] / fact
+            known_z = self.badlands_model.elevation / fact
 
         known_xy = comm.bcast(known_xy, root=0)
         known_z = comm.bcast(known_z, root=0)
@@ -318,7 +320,7 @@ class Badlands(SurfaceProcesses):
                                  method='nearest')
 
         # True for sediment, False for air
-        flags = volume[:, 2] < nd(interpolate_z * u.meter)
+        flags = volume[:, 2] < interpolate_z
 
         return flags
 
