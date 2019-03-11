@@ -3,10 +3,9 @@ from copy import copy
 import underworld as uw
 import numpy as np
 import sys
-from . import uwmpi
-from mpi4py import MPI
+from mpi4py import MPI as _MPI
 
-comm = MPI.COMM_WORLD
+comm = _MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
 
@@ -58,7 +57,7 @@ class Mesh_advector(object):
             values = newValues.flatten()
             self._mesh2nd.data[:, axis] = values[self._mesh2nd.data_nodegId.ravel()]
 
-        uwmpi.barrier()
+        comm.Barrier()
 
         with self.Model.mesh.deform_mesh():
             self.Model.mesh.data[:, axis] = self._mesh2nd.data[:, axis]
@@ -95,10 +94,10 @@ class Mesh_advector(object):
             minV[0] = velocities.min()
 
         # reduce operation
-        uwmpi.barrier()
-        comm.Allreduce(MPI.IN_PLACE, maxV, op=MPI.MAX)
-        comm.Allreduce(MPI.IN_PLACE, minV, op=MPI.MIN)
-        uwmpi.barrier()
+        comm.Barrier()
+        comm.Allreduce(_MPI.IN_PLACE, maxV, op=_MPI.MAX)
+        comm.Allreduce(_MPI.IN_PLACE, minV, op=_MPI.MIN)
+        comm.Barrier()
 
         return minV, maxV
 
@@ -120,10 +119,10 @@ class Mesh_advector(object):
         maxVal[0] = self.Model.mesh.data[:, axis].max()
         minVal[0] = self.Model.mesh.data[:, axis].min()
 
-        uwmpi.barrier()
-        comm.Allreduce(MPI.IN_PLACE, maxVal, op=MPI.MAX)
-        comm.Allreduce(MPI.IN_PLACE, minVal, op=MPI.MIN)
-        uwmpi.barrier()
+        comm.Barrier()
+        comm.Allreduce(_MPI.IN_PLACE, maxVal, op=_MPI.MAX)
+        comm.Allreduce(_MPI.IN_PLACE, minVal, op=_MPI.MIN)
+        comm.Barrier()
 
         return minVal, maxVal
 

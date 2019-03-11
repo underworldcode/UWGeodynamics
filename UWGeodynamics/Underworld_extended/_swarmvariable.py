@@ -7,7 +7,6 @@ from UWGeodynamics.scaling import Dimensionalize
 from UWGeodynamics.scaling import nonDimensionalize
 from UWGeodynamics.scaling import UnitRegistry as u
 from UWGeodynamics.version import git_revision as __git_revision__
-from UWGeodynamics import uwmpi
 
 class SwarmVariable(uw.swarm.SwarmVariable):
 
@@ -184,7 +183,7 @@ class SwarmVariable(uw.swarm.SwarmVariable):
         True
 
         >>> # clean up:
-        >>> if uwmpi.rank() == 0:
+        >>> if uw.mpi.rank == 0:
         ...     import os;
         ...     os.remove( "saved_swarm.h5" )
         ...     os.remove( "saved_swarm_variable.h5" )
@@ -227,7 +226,7 @@ class SwarmVariable(uw.swarm.SwarmVariable):
 
         # let's reopen in serial to write the attrib.
         # not sure if this really is necessary.
-        comm.barrier()
+        comm.Barrier()
         if comm.rank == 0:
             with h5py.File(name=filename, mode="a") as h5f:
                 # attribute of the proc offsets - used for loading from checkpoint

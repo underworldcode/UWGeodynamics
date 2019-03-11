@@ -2,7 +2,11 @@ from __future__ import print_function, absolute_import
 from scipy.interpolate import interp1d
 import underworld as uw
 from UWGeodynamics import nd
+from mpi4py import MPI as _MPI
 
+comm = _MPI.COMM_WORLD
+rank = comm.rank
+size = comm.size
 
 class FreeSurfaceProcessor(object):
     """FreeSurfaceProcessor"""
@@ -60,7 +64,7 @@ class FreeSurfaceProcessor(object):
             f = interp1d(x2, y2, kind='cubic', fill_value='extrapolate')
 
             self.TField.data[self.top.data, 0] = f(x)
-        uwmpi.barrier()
+        comm.Barrier()
         self.TField.syncronise()
 
     def _update_mesh(self):

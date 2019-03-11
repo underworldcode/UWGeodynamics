@@ -10,10 +10,12 @@ from .scaling import nonDimensionalize as nd
 from .scaling import Dimensionalize
 from .scaling import UnitRegistry as u
 from .Underworld_extended import Swarm
-from UWGeodynamics import uwmpi
 from scipy import spatial
-from mpi4py import MPI
+from mpi4py import MPI as _MPI
 
+comm = _MPI.COMM_WORLD
+rank = comm.rank
+size = comm.size
 
 class PhaseChange(object):
 
@@ -83,7 +85,6 @@ class PassiveTracers(object):
             velocityField=self.velocityField, order=2)
 
         indices = np.arange(self.swarm.particleLocalCount)
-        rank = uwmpi.rank
         ranks = np.repeat(rank, self.swarm.particleLocalCount)
         pairs = np.array(list(zip(ranks, indices)), dtype=[("a", np.int32),
                                                            ("b", np.int32)])
@@ -187,7 +188,7 @@ class PassiveTracers(object):
 
         sH = self.swarm.save(swarm_fpath, units=u.kilometers, time=time)
 
-        if uwmpi.rank == 0:
+        if rank == 0:
             filename = self.name + '-%s.xdmf' % checkpointID
             filename = os.path.join(outputDir, filename)
 
@@ -195,16 +196,16 @@ class PassiveTracers(object):
             string = uw.utils._xdmfheader()
             string += uw.utils._swarmspacetimeschema(sH, swarm_fname, time)
 
-        uwmpi.barrier()
+        comm.Barrier()
 
         # Save global index
         file_prefix = os.path.join(
             outputDir, self.name + '_global_index-%s' % checkpointID)
         handle = self.global_index.save('%s.h5' % file_prefix)
 
-        if uwmpi.rank == 0:
+        if rank == 0:
             string += uw.utils._swarmvarschema(handle, "global_index")
-        uwmpi.barrier()
+        comm.Barrier()
 
         # Save each tracked field
         for field in self.tracked_field:
@@ -218,15 +219,15 @@ class PassiveTracers(object):
                 obj.data[...] = field["value"].evaluate(self.swarm)
             handle = obj.save('%s.h5' % file_prefix, units=field["units"])
 
-            if uwmpi.rank == 0:
+            if rank == 0:
                 # Add attribute to xdmf file
                 string += uw.utils._swarmvarschema(handle, field["name"])
 
-        uwmpi.barrier()
+        comm.Barrier()
 
         # get swarm parameters - serially read from hdf5 file to get size
 
-        if uwmpi.rank == 0:
+        if rank == 0:
             with h5py.File(name=swarm_fpath, mode="r") as h5f:
                 dset = h5f.get('data')
                 if dset is None:
@@ -246,7 +247,7 @@ class PassiveTracers(object):
             xdmfFH = open(filename, "w")
             xdmfFH.write(string)
             xdmfFH.close()
-        uwmpi.barrier()
+        comm.Barrier()
 
 
 class Balanced_InflowOutflow(object):
@@ -520,6 +521,7 @@ class MovingWall(object):
 
         self._Model = None
         self._wall = None
+        self._time = None
 
         self.velocity = velocity
         self.material = None
@@ -549,6 +551,8 @@ class MovingWall(object):
     @Model.setter
     def Model(self, value):
         self._Model = value
+        self._time = fn.misc.constant(self._Model._ndtime)
+        self._Model._rebuild_solver = True
         self.wall_init_pos = {"left": value.minCoord[0],
                          "right": value.maxCoord[0],
                          "front": value.minCoord[1],
@@ -590,7 +594,7 @@ class MovingWall(object):
         operator = self.wall_operators[self._wall]
         axis = self.wall_direction_axis[self._wall]
         pos = self.wall_init_pos[self._wall]
-        condition = [(operator(fn.input()[axis],(nd(self.Model.time) *
+        condition = [(operator(fn.input()[axis],(self._time *
                                         self.velocityFn +
                                         nd(pos))), True),
                      (True, False)]
@@ -601,18 +605,24 @@ class MovingWall(object):
 
         # Return new indexSet for the wall
         mesh = self.Model.mesh
-        swarm = self.Model.swarm
-
-        nodes = mesh.data_nodegId[self.wallFn.evaluate(mesh)]
-
-        # Update Material Field
-        condition = [(self.wallFn, self.material.index), (True, self.Model.materialField)]
-        func = fn.branching.conditional(condition)
-        self.Model.materialField.data[...] = func.evaluate(swarm)
+        nodes = np.arange(mesh.nodesLocal).astype(np.int)
+        mask = self.wallFn.evaluate(mesh)
+        nodes = nodes[mask.flatten()]
 
         axis = self.wall_direction_axis[self.wall]
 
         return nodes, axis
+
+    def update_material_field(self):
+        # Update Material Field
+        self._time.value = self.Model._ndtime
+        condition = [(self.wallFn, self.material.index), (True, self.Model.materialField)]
+        func = fn.branching.conditional(condition)
+        self.Model.materialField.data[...] = func.evaluate(self.Model.swarm)
+
+    def move_wall(self):
+        self.update_material_field()
+        return self.get_wall_indices()
 
 
 def extract_profile(field,
@@ -627,8 +637,6 @@ def extract_profile(field,
         nsamples: number of sampling points
     """
 
-    comm = MPI.COMM_WORLD
-    size = comm.Get_size()
     if size > 1:
         raise NotImplementedError("""The extract_profile function will not work
                                   in parallel""")

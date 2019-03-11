@@ -369,15 +369,14 @@ class VelocityBCs(BoundaryConditions):
 
         if isinstance(condition, MovingWall):
             condition.wall = nodes
-            set_, axis = condition.get_wall_indices()
+            set_, axis = condition.move_wall()
             func = condition.velocityFn
 
             # Intersect of wall nodes and current local domain
-            intersect = np.intersect1d(self.Model.mesh.data_nodegId, set_.data)
             ISet = uw.mesh.FeMesh_IndexSet(
                 self.Model.mesh, topologicalIndex=0,
                 size=self.Model.mesh.nodesGlobal,
-                fromObject=intersect)
+                fromObject=set_.data)
 
             for dim in range(self.Model.mesh.dim):
                 if ISet.data.size > 0:
