@@ -4,10 +4,6 @@ import warnings
 try:
     import underworld
     uw = underworld
-    if int(uw.__version__.split(".")[1]) > 7:
-        uwmpi = uw.mpi
-    else:
-        uwmpi = uw
 except ImportError:
     raise ImportError("Can not find Underworld, please check your installation")
 
@@ -20,6 +16,7 @@ import locale
 import uuid as _uuid
 from itertools import chain
 import six
+from mpi4py import MPI as _MPI
 from . import shapes
 from . import surfaceProcesses
 from . import utilities
@@ -48,6 +45,9 @@ from .version import git_revision as __git_revision__
 from . import _net
 from . import postprocessing
 
+comm = _MPI.COMM_WORLD
+rank = comm.rank
+size = comm.size
 
 __author__ = "Romain Beucher"
 __copyright__ = "Copyright 2018, The University of Melbourne"
@@ -560,7 +560,7 @@ def rc_params_from_file(fname, fail_on_error=False, use_default_template=True):
                                       if key not in _all_deprecated])
     config.update(config_from_file)
 
-    if uwmpi.rank == 0:
+    if rank == 0:
         print('loaded rc file %s' % fname)
         sys.stdout.flush()
 
@@ -577,7 +577,7 @@ def _in_doctest():
 
 # lets shoot off some usage metrics
 # send metrics *only* if we are rank=0, and if we are not running inside a doctest.
-if (uwmpi.rank == 0) and not _in_doctest():
+if (rank == 0) and not _in_doctest():
     def _sendData():
         # disable collection of data if requested
         if "UW_NO_USAGE_METRICS" not in os.environ:
