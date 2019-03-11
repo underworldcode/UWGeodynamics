@@ -187,13 +187,13 @@ class Badlands(SurfaceProcesses):
         coordsX, coordsY = np.meshgrid(x, y)
 
         dem = np.zeros((nx * ny, 3))
-        dem[:, 0] = Dimensionalize(coordsX.flatten(), u.meter).magnitude
-        dem[:, 1] = Dimensionalize(coordsY.flatten(), u.meter).magnitude
+        dem[:, 0] = coordsX.flatten()
+        dem[:, 1] = coordsY.flatten()
 
-        coordsZ = self.surfElevation.evaluate(dem[:, :1])
+        coordsZ = self.surfElevation.evaluate(dem[:, :2])
 
-        dem[:, 2] = Dimensionalize(coordsZ.flatten(), u.meter).magnitude
-        return dem
+        dem[:, 2] = coordsZ.flatten()
+        return Dimensionalize(dem, u.meter).magnitude
 
     def solve(self, dt, sigma=0):
         if rank == 0 and self.verbose:
