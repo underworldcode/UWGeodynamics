@@ -604,6 +604,8 @@ class CompositeViscosity(Rheology):
 
     def __init__(self, viscosities):
 
+        super(CompositeViscosity, self).__init__()
+
         if not isinstance(viscosities, (list, tuple)):
             raise ValueError('viscosities must be a list of viscosities')
 
