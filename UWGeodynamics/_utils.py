@@ -2,7 +2,6 @@ from __future__ import print_function,  absolute_import
 import numpy as np
 import underworld as uw
 import underworld.function as fn
-import shapefile
 import h5py
 import os
 import operator as op
@@ -149,35 +148,6 @@ class PassiveTracers(object):
         svar = self.swarm.add_variable(dataType, count=count)
         svar.data[...] = 0.
         setattr(self, name, svar)
-
-    def write_to_shapefile(self, filename, units=None, overwrite=False):
-
-        if os.path.exists(filename) and not overwrite:
-            r = shapefile.Reader(filename)
-            w = shapefile.Writer(r.shapeType)
-            # Copy over the existing dbf fields
-            w.fields = list(r.fields)
-            # Copy over the existing dbf records
-            w.records.extend(r.records())
-            # Copy over the existing polygons
-            w._shapes.extend(r.shapes())
-
-        else:
-
-            w = shapefile.Writer(shapeType=shapefile.POLYLINEZ)
-            w.field("name", "C")
-            w.field("units", "C")
-
-        fact = 1.0
-        if units:
-            fact = Dimensionalize(1.0, units=units)
-            fact = fact.magnitude
-
-        x = self.swarm.particleCoordinates.data[:, 0] * fact
-        y = self.swarm.particleCoordinates.data[:, 1] * fact
-        w.poly(parts=list(zip(x, y)))
-        w.record(self.name, str(units))
-        w.save(filename)
 
     def save(self, outputDir, checkpointID, time):
         """ Save to h5 and create an xdmf file for each tracked field """
