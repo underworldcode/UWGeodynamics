@@ -1390,21 +1390,32 @@ class Model(Material):
 
         return self.temperature
 
-    def get_lithostatic_pressureField(self):
+    def initialize_pressure_to_lithostatic(self):
         """ Calculate the lithostatic Pressure Field
 
         Returns:
         --------
-            Pressure Field, array containing the pressures
+            Pressure Field (MeshVariable), array containing the pressures
             at the bottom of the Model
         """
 
-        gravity = np.abs(nd(self.gravity[-1]))
-        lithoPress = LithostaticPressure(self.mesh, self._densityFn, gravity)
-        self.pressureField.data[:], LPressBot = lithoPress.solve()
+        self.pressureField.data[...] = self.lithostatic_pressureField.data[...]
         self.pressSmoother.smooth()
 
-        return self.pressureField, LPressBot
+        return self.pressureField
+
+    @property
+    def lithostatic_pressureField(self):
+        """
+        Returns:
+        --------
+            Lithostatic pressure field as a mesh variable
+
+        """
+        gravity = np.abs(nd(self.gravity[-1]))
+        lithoPress = LithostaticPressure(self.mesh, self._densityFn, gravity)
+        self._lithostatic_pressureField, _ = lithoPress.solve()
+        return self._lithostatic_pressureField
 
     def _calibrate_pressureField(self):
         """ Pressure Calibration callback function """
@@ -1502,7 +1513,7 @@ class Model(Material):
 
         # Init pressureField Field
         if self.pressureField and pressureField:
-            self.get_lithostatic_pressureField()
+            self.initialize_pressure_to_lithostatic()
 
         # Init ViscosityField
         if any([material.viscosity for material in self.materials]):
