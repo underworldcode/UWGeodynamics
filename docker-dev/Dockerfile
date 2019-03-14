@@ -29,7 +29,8 @@ RUN pip3 install -e /opt/pyBadlands_serial
 RUN git clone https://github.com/matplotlib/cmocean.git /tmp/cmocean && \
     pip3 install /tmp/cmocean/ && \ 
     rm -rf /tmp/cmocean
-RUN pip3 install colorlover matplotlib==2.1.2
+RUN pip3 install git+https://github.com/matplotlib/legacycontour.git
+RUN pip3 install colorlover matplotlib
 
 # pyBadlands companion
 RUN git clone https://github.com/badlands-model/pyBadlands-Companion.git && \
