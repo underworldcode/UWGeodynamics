@@ -48,6 +48,7 @@ from . import postprocessing
 comm = _MPI.COMM_WORLD
 rank = comm.rank
 size = comm.size
+nProcs = size
 
 __author__ = "Romain Beucher"
 __copyright__ = "Copyright 2018, The University of Melbourne"
@@ -596,7 +597,7 @@ if (rank == 0) and not _in_doctest():
                                       args=("runtime",
                                             "import",
                                             label,
-                                            underworld.nProcs()))
+                                            nProcs))
             thread.daemon = True
             thread.start()
 
