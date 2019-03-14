@@ -121,7 +121,7 @@ class LithostaticPressure(object):
 
         local_pressure = Tpressure.flatten()[all_nodes]
 
-        self.lithostatic_field.data[all_nodes.flatten()] = local_pressure
+        self.lithostatic_field.data[:] = local_pressure
         self.lithostatic_field.syncronise()
 
         return self.lithostatic_field, bottom
@@ -210,7 +210,7 @@ class LithostaticPressure(object):
 
         local_pressure = Tpressure.flatten()[all_nodes]
 
-        self.lithostatic_field.data[all_nodes.flatten()] = local_pressure
+        self.lithostatic_field.data[:] = local_pressure
         self.lithostatic_field.syncronise()
 
         return self.lithostatic_field, bottom
