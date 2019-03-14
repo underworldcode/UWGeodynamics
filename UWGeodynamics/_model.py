@@ -38,6 +38,7 @@ size = comm.size
 _dim_gravity = {'[length]': 1.0, '[time]': -2.0}
 _dim_time = {'[time]': 1.0}
 
+
 class Model(Material):
     """UWGeodynamic Model Class"""
 
@@ -249,11 +250,13 @@ class Model(Material):
         self.DiffusivityFn = None
         self.HeatProdFn = None
         self._freeSurface = False
-        self.callback_post_solve = None
         self._mesh_saved = False
         self._initialize()
 
         self._viscosity_processor = _ViscosityFunction(self)
+        self.callback_functions = OrderedDict()
+        self.post_solve_functions = OrderedDict()
+        self.pre_solve_functions = OrderedDict()
 
     def _initialize(self):
         """_initialize
@@ -1451,7 +1454,7 @@ class Model(Material):
             nonLinearIterate=True,
             nonLinearMinIterations=minIterations,
             nonLinearMaxIterations=maxIterations,
-            callback_post_solve=self.callback_post_solve,
+            callback_post_solve=self._callback_post_solve,
             nonLinearTolerance=self._curTolerance)
 
         self._solution_exist.value = True
@@ -1570,7 +1573,7 @@ class Model(Material):
 
         while (ndduration and self._ndtime < ndduration) or self.stepDone < nstep:
 
-            self.preSolveHook()
+            self._pre_solve()
 
             self.solve()
 
@@ -1622,43 +1625,40 @@ class Model(Material):
                 sys.stdout.write(string)
                 sys.stdout.flush()
 
-            self.postSolveHook()
+            self._post_solve()
 
         return 1
 
-    @staticmethod
-    def preSolveHook():
+    def _pre_solve(self):
         """ Entry point for functions to be run before attempting a solve """
-        pass
+        for key, val in self.pre_solve_functions.items():
+            if not callable(val):
+                raise ValueError("""The function {0} must be
+                                 callable""".format(key))
 
-    @staticmethod
-    def postSolveHook():
+    def _post_solve(self):
         """ Entry point for functions to be run after the solve """
-        pass
+        for key, val in self.post_solve_functions.items():
+            if not callable(val):
+                raise ValueError("""The function {0} must be
+                                 callable""".format(key))
+            val()
 
-    @property
-    def callback_post_solve(self):
-        """ Function called right after a non-linear iteration or a linear
-        solve"""
-        return self._callback_post_solve
-
-    @callback_post_solve.setter
-    def callback_post_solve(self, value):
-        def callback():
-            if callable(value):
-                value()
-            if rcParams["surface.pressure.normalization"]:
-                self._calibrate_pressureField()
-            if rcParams["pressure.smoothing"]:
-                self.pressSmoother.smooth()
-            if self._isostasy:
-                self._isostasy.solve()
-            for material in self.materials:
-                if material.viscosity:
-                    material.viscosity.firstIter.value = False
-
-            self._solution_exist.value = True
-        self._callback_post_solve = callback
+    def _callback_post_solve(self):
+        if rcParams["surface.pressure.normalization"]:
+            self._calibrate_pressureField()
+        if rcParams["pressure.smoothing"]:
+            self.pressSmoother.smooth()
+        if self._isostasy:
+            self._isostasy.solve()
+        for material in self.materials:
+            if material.viscosity:
+                material.viscosity.firstIter.value = False
+        for key, val in self.callback_functions.items():
+            if not callable(val):
+                raise ValueError("""The function {0} must be
+                                 callable""".format(key))
+        self._solution_exist.value = True
 
     def _update(self):
         """ Update Function
