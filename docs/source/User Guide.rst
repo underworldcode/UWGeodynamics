@@ -1011,8 +1011,7 @@ move below the 0. level.
 
    >>> air = Model.add_material(name="air")
    >>> water = Model.add_material(name="water")
-   >>> air.phase_changes = GEO.PhaseChange((Model.swarm.particleCoordinates[:,1] < 0.),
-   ...                                     water.index)
+   >>> air.phase_changes = GEO.PhaseChange((Model.y < 0.), water.index)
 
 The above example essentially fills the basins with water. For such a specific
 purpose you can use the ``WaterFill`` class.
