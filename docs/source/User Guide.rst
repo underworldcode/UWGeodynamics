@@ -606,7 +606,7 @@ Several shapes can be combined to form a material shape:
    >>> disk2 = GEO.shapes.Disk(center=(20. * u.kilometre, 20. * u.kilometre),
    ...                         radius=5.*u.kilometre)
 
-   >>> shape = GEO.shapes.CombinedShape([disk1, disk2])
+   >>> shape = disk1 & disk2
    >>> material = Model.add_material(name="Material", shape=shape)
 
    >>> Fig = glucifer.Figure(figsize=(400,400))
@@ -686,6 +686,9 @@ defined by the normal vector.
    >>> halfspace2 = GEO.shapes.HalfSpace(normal=(0.,0.,1.), origin=(7000. * u.km, 1000. * u.km, 0. * u.km))
    >>> halfspace3 = GEO.shapes.HalfSpace(normal=(1.,0.,0.), origin=(9000. * u.km, 1000. * u.km, -500. * u.km))
    >>> halfspace4 = GEO.shapes.HalfSpace(normal=(0.,0.,-1.), origin=(6500. * u.km, 1000. * u.km, -1000. * u.km))
+
+   >>> compositeShape = halfspace1 & halfspace2 & halfspace3 & halfspace4
+   >>> polygon= Model.add_material(name="polygon", shape=CompositeShape)
 
    >>> Fig = glucifer.Figure()
    >>> Fig.Points(Model.swarm, Model.materialField, cullface=False, opacity=1.)
