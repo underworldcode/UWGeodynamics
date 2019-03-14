@@ -30,6 +30,7 @@ from .Underworld_extended import SwarmVariable
 from datetime import datetime
 from .version import full_version
 from ._freesurface import FreeSurfaceProcessor
+from ._remeshing import remesh as _remesh
 
 comm = _MPI.COMM_WORLD
 rank = comm.rank
@@ -370,6 +371,9 @@ class Model(Material):
     def outputDir(self, value):
         """ Output Directory """
         self._outputDir = value
+
+    def remesh(self, x=None, y=None, z=None):
+        _remesh(self.mesh, x, y, z)
 
     def restart(self, step, restartDir=None):
         """Restart the Model from step using output in restartDir directory.
