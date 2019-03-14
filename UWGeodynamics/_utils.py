@@ -523,6 +523,9 @@ class MovingWall(object):
         self._Model = value
         self._time = fn.misc.constant(self._Model._ndtime)
         self._Model._rebuild_solver = True
+        self._Model.post_solve_functions["MovingWall"] = (
+            self.update_material_field
+        )
         self.wall_init_pos = {"left": value.minCoord[0],
                          "right": value.maxCoord[0],
                          "front": value.minCoord[1],
@@ -577,10 +580,12 @@ class MovingWall(object):
         mesh = self.Model.mesh
         nodes = np.arange(mesh.nodesLocal).astype(np.int)
         mask = self.wallFn.evaluate(mesh)
+        mask = mask[:mesh.nodesLocal]
         nodes = nodes[mask.flatten()]
 
         axis = self.wall_direction_axis[self.wall]
 
+        self.update_material_field()
         return nodes, axis
 
     def update_material_field(self):
@@ -589,10 +594,6 @@ class MovingWall(object):
         condition = [(self.wallFn, self.material.index), (True, self.Model.materialField)]
         func = fn.branching.conditional(condition)
         self.Model.materialField.data[...] = func.evaluate(self.Model.swarm)
-
-    def move_wall(self):
-        self.update_material_field()
-        return self.get_wall_indices()
 
 
 def extract_profile(field,
