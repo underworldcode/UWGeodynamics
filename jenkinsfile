@@ -12,7 +12,7 @@ pipeline {
         image 'underworldcode/underworld2:dev'
         
         // special label to jenkins config. See http://130.56.252.251:32779/computer/
-        label 'uwgeo-jasper'
+        label 'uwgeo-hector'
       }
   }
 
