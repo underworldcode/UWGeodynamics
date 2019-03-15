@@ -1,5 +1,5 @@
-from __future__ import print_function,  absolute_import
-from .scaling import u
+from __future__ import print_function, absolute_import
+from UWGeodynamics import u
 from pint import UndefinedUnitError
 import six
 try:

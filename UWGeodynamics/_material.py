@@ -4,7 +4,7 @@ from copy import copy
 from collections import OrderedDict
 import json
 import pkg_resources
-from .scaling import u
+from UWGeodynamics import u
 from ._utils import PhaseChange
 from ._rheology import ConstantViscosity
 from ._density import ConstantDensity

@@ -2,7 +2,7 @@ from __future__ import print_function,  absolute_import
 import numpy as np
 import underworld as uw
 import underworld.function as fn
-from .scaling import nonDimensionalize as nd
+from UWGeodynamics import non_dimensionalise as nd
 
 
 class Shape(object):

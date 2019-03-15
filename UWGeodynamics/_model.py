@@ -11,9 +11,9 @@ from mpi4py import MPI as _MPI
 import UWGeodynamics.shapes as shapes
 import UWGeodynamics.surfaceProcesses as surfaceProcesses
 from . import rcParams
-from .scaling import Dimensionalize
-from .scaling import nonDimensionalize as nd
-from .scaling import UnitRegistry as u
+from UWGeodynamics import dimensionalise
+from UWGeodynamics import non_dimensionalise as nd
+from UWGeodynamics import UnitRegistry as u
 from .lithopress import LithostaticPressure
 from ._utils import PressureSmoother, PassiveTracers
 from ._rheology import ViscosityLimiter, StressLimiter
@@ -30,7 +30,7 @@ from .Underworld_extended import SwarmVariable
 from datetime import datetime
 from .version import full_version
 from ._freesurface import FreeSurfaceProcessor
-from ._remeshing import remesh as _remesh
+from ._remeshing import ReMesher
 
 comm = _MPI.COMM_WORLD
 rank = comm.rank
@@ -252,6 +252,7 @@ class Model(Material):
         self.HeatProdFn = None
         self._freeSurface = False
         self._mesh_saved = False
+        self._remesher = None
         self._initialize()
 
         self._viscosity_processor = _ViscosityFunction(self)
@@ -340,7 +341,7 @@ class Model(Material):
     @property
     def time(self):
         """Model time"""
-        return Dimensionalize(self._ndtime, rcParams["time.SIunits"])
+        return dimensionalise(self._ndtime, rcParams["time.SIunits"])
 
     @time.setter
     def time(self, value):
@@ -372,8 +373,16 @@ class Model(Material):
         """ Output Directory """
         self._outputDir = value
 
-    def remesh(self, x=None, y=None, z=None):
-        _remesh(self.mesh, x, y, z)
+    def remesh(self, x=None, y=None, z=None, reset=True):
+        import warnings
+        warnings.warn("This functionality is experimental")
+        if not self._remesher:
+            self._remesher = ReMesher(self, x, y, z, reset)
+        self._remesher.x = x
+        self._remesher.y = y
+        self._remesher.z = z
+        self._remesher.reset = reset
+        self._remesher.remesh()
 
     def restart(self, step, restartDir=None):
         """Restart the Model from step using output in restartDir directory.
@@ -1644,7 +1653,7 @@ class Model(Material):
             if rank == 0:
                 string = """Step: {0:5d} Model Time: {1:5.2f} dt: {2:5.2f} ({3})\n""".format(
                     self.stepDone, self.time.to(output_time_units),
-                    Dimensionalize(self._dt, output_dt_units),
+                    dimensionalise(self._dt, output_dt_units),
                     datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 sys.stdout.write(string)
                 sys.stdout.flush()

@@ -7,6 +7,26 @@ try:
 except ImportError:
     raise ImportError("Can not find Underworld, please check your installation")
 
+try: 
+    from uw.scaling import get_coefficients
+    from uw.scaling import units as UnitRegistry
+    from uw.scaling import non_dimensionalise
+    from uw.scaling import dimensionalise
+
+except ImportError:
+    
+    # Fall back to local submodule if the underworld version
+    # does not have the scaling
+    from .scaling import get_coefficients
+    from .scaling import units as UnitRegistry
+    from .scaling import non_dimensionalise
+    from .scaling import dimensionalise
+
+scaling_coefficients = get_coefficients()
+nd = non_dimensionalise
+dim = dimensionalise
+u = UnitRegistry
+
 import glucifer
 import sys
 import os
@@ -21,10 +41,6 @@ from . import shapes
 from . import surfaceProcesses
 from . import utilities
 from ._rcParams import rcParams as defaultParams
-from .scaling import COEFFICIENTS as scaling_coefficients
-from .scaling import UnitRegistry
-from .scaling import nonDimensionalize
-from .scaling import Dimensionalize
 from .LecodeIsostasy import LecodeIsostasy
 from .lithopress import LithostaticPressure
 from ._rheology import Rheology, ConstantViscosity, ViscousCreep
@@ -61,13 +77,17 @@ __email__ = "romain.beucher@unimelb.edu.au"
 
 _id = str(_uuid.uuid4())
 
-nd = nonDimensionalize
-dim = Dimensionalize
-u = UnitRegistry
 
-rheologies = ViscousCreepRegistry()
-yieldCriteria = PlasticityRegistry()
-scaling = scaling_coefficients
+def Dimensionalize(*args, **kwargs):
+    import warnings
+    warnings.warn("""'Dimensionalize' has been changed to 'dimensionalise', please use the later""")
+    return dimensionalise(*args, **kwargs)
+
+
+def nonDimensionalize(*args, **kwargs):
+    import warnings
+    warnings.warn("""'nonDimensionalize' has been changed to 'non_dimensionalise', please use the later""")
+    return non_dimensionalise(*args, **kwargs)
 
 
 def mkdirs(newdir, mode=0o777):

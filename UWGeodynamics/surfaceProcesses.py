@@ -1,14 +1,13 @@
 from __future__ import print_function,  absolute_import
 import abc
-import underworld as uw
 import underworld.function as fn
 import numpy as np
 import sys
 from scipy.ndimage.filters import gaussian_filter
 from scipy.interpolate import griddata, interp1d
-from .scaling import nonDimensionalize as nd
-from .scaling import Dimensionalize
-from .scaling import UnitRegistry as u
+from UWGeodynamics import non_dimensionalise as nd
+from UWGeodynamics import dimensionalise
+from UWGeodynamics import UnitRegistry as u
 from mpi4py import MPI as _MPI
 from tempfile import gettempdir
 
@@ -130,7 +129,7 @@ class Badlands(SurfaceProcesses):
             # Override the checkpoint/display interval in the Badlands model to
             # ensure BL and UW are synced
             self.badlands_model.input.tDisplay = (
-            Dimensionalize(self.checkpoint_interval, u.years).magnitude)
+            dimensionalise(self.checkpoint_interval, u.years).magnitude)
 
             # Set Badlands minimal distance between nodes before regridding
             self.badlands_model.force.merge3d = (
@@ -153,26 +152,8 @@ class Badlands(SurfaceProcesses):
 
     def _generate_dem(self):
         """
-        Generate a flat DEM. This can be used as the initial Badlands state.
+        Generate a badlands DEM. This can be used as the initial Badlands state.
 
-        minCoord: tuple of (X, Y, Z) coordinates defining the minimum bounds of
-                  the DEM. Only the X and Y coordinates are used.
-        maxCoord: tuple of (X, Y, Z) coordinates defining the maximum bounds of
-                  the DEM. Only the X and Y coordinates are used.
-        resolution: resolution of the model. Badlands assumes dx = dy.
-        elevation: the Z parameter that each point is created at
-        scale: the scaling factor between the 2 codes
-
-        For your convenience, minCoord and maxCoord are designed to have the
-        same formatting as the Underworld FeMesh_Cartesian minCoord and
-        maxCoord parameters.
-
-        IMPORTANT: minCoord and maxCoord are defined in terms of the Underworld
-        coordinate system, but the returned DEM uses the Badlands coordinate
-        system.
-
-        Note that the initial elevation of the Badlands surface should coincide
-        with the material transition in Underworld.
         """
 
         # Calculate number of nodes from required resolution.
@@ -193,7 +174,7 @@ class Badlands(SurfaceProcesses):
         coordsZ = self.surfElevation.evaluate(dem[:, :2])
 
         dem[:, 2] = coordsZ.flatten()
-        return Dimensionalize(dem, u.meter).magnitude
+        return dimensionalise(dem, u.meter).magnitude
 
     def solve(self, dt, sigma=0):
         if rank == 0 and self.verbose:
@@ -219,10 +200,10 @@ class Badlands(SurfaceProcesses):
         nd_coords = nd(np_surface * u.meter)
         tracer_velocity = self.Model.velocityField.evaluate_global(nd_coords)
 
-        dt_years = Dimensionalize(dt, u.years).magnitude
+        dt_years = dimensionalise(dt, u.years).magnitude
 
         if rank == 0:
-            tracer_disp = Dimensionalize(tracer_velocity * dt, u.meter).magnitude
+            tracer_disp = dimensionalise(tracer_velocity * dt, u.meter).magnitude
             self._inject_badlands_displacement(self.time_years,
                                                dt_years,
                                                tracer_disp, sigma)
@@ -250,7 +231,7 @@ class Badlands(SurfaceProcesses):
         known_z = None
         xs = None
         ys = None
-        fact = Dimensionalize(1.0, u.meter).magnitude
+        fact = dimensionalise(1.0, u.meter).magnitude
         if rank == 0:
             # points that we have known elevation for
             known_xy = self.badlands_model.recGrid.tinMesh['vertices'] / fact
@@ -296,7 +277,7 @@ class Badlands(SurfaceProcesses):
 
         known_xy = None
         known_z = None
-        fact = Dimensionalize(1.0, u.meter).magnitude
+        fact = dimensionalise(1.0, u.meter).magnitude
         if rank == 0:
             # points that we have known elevation for
             known_xy = self.badlands_model.recGrid.tinMesh['vertices'] / fact

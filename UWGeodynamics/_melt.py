@@ -1,7 +1,7 @@
 from __future__ import print_function,  absolute_import
-from .scaling import nonDimensionalize as nd
-from .scaling import UnitRegistry as u
-from .scaling import Dimensionalize
+from UWGeodynamics import non_dimensionalise as nd
+from UWGeodynamics import UnitRegistry as u
+from UWGeodynamics import dimensionalise
 import json
 from copy import copy
 
@@ -24,8 +24,8 @@ class _Polynom(object):
 
     def plot(self, pressure):
         import pylab as plt
-        temperature = Dimensionalize(self.temperature(pressure), u.kelvin)
-        pressure = Dimensionalize(pressure, u.pascal)
+        temperature = dimensionalise(self.temperature(pressure), u.kelvin)
+        pressure = dimensionalise(pressure, u.pascal)
         plt.plot(temperature, pressure)
         plt.gca().invert_yaxis()
         plt.show()

@@ -3,9 +3,9 @@ import underworld as uw
 import h5py
 import numpy as np
 from mpi4py import MPI
-from UWGeodynamics.scaling import Dimensionalize
-from UWGeodynamics.scaling import nonDimensionalize
-from UWGeodynamics.scaling import UnitRegistry as u
+from UWGeodynamics import dimensionalise
+from UWGeodynamics import non_dimensionalise
+from UWGeodynamics import UnitRegistry as u
 from UWGeodynamics.version import git_revision as __git_revision__
 
 class SwarmVariable(uw.swarm.SwarmVariable):
@@ -124,7 +124,7 @@ class SwarmVariable(uw.swarm.SwarmVariable):
         h5f.close()
 
         if units:
-            self.data[:] = nonDimensionalize(self.data * units)
+            self.data[:] = nondimensionalise(self.data * units)
 
     def save( self, filename, collective=False, units=None, time=None):
         """
@@ -216,7 +216,7 @@ class SwarmVariable(uw.swarm.SwarmVariable):
                                        dtype=self.data.dtype)
             fact = 1.0
             if units:
-                fact = Dimensionalize(1.0, units=units).magnitude
+                fact = dimensionalise(1.0, units=units).magnitude
 
             if collective:
                 with dset.collective:

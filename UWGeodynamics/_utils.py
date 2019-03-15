@@ -5,9 +5,9 @@ import underworld.function as fn
 import h5py
 import os
 import operator as op
-from .scaling import nonDimensionalize as nd
-from .scaling import Dimensionalize
-from .scaling import UnitRegistry as u
+from UWGeodynamics import non_dimensionalise as nd
+from UWGeodynamics import dimensionalise
+from UWGeodynamics import UnitRegistry as u
 from .Underworld_extended import Swarm
 from scipy import spatial
 from mpi4py import MPI as _MPI

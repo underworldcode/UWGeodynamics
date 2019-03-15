@@ -2,9 +2,9 @@ from __future__ import print_function,  absolute_import
 import underworld as uw
 import h5py
 from mpi4py import MPI
-from UWGeodynamics.scaling import Dimensionalize
-from UWGeodynamics.scaling import nonDimensionalize
-from UWGeodynamics.scaling import UnitRegistry as u
+from UWGeodynamics import dimensionalise
+from UWGeodynamics import non_dimensionalise
+from UWGeodynamics import UnitRegistry as u
 from UWGeodynamics.version import git_revision as __git_revision__
 from . import _meshvariable as var
 
@@ -117,7 +117,7 @@ class FeMesh_Cartesian(uw.mesh.FeMesh_Cartesian):
 
         fact = 1.0
         if units:
-            fact = Dimensionalize(1.0, units=units).magnitude
+            fact = dimensionalise(1.0, units=units).magnitude
             h5f.attrs['units'] = str(units)
 
         # save attributes and simple data - MUST be parallel as driver is mpio
@@ -225,7 +225,7 @@ class FeMesh_Cartesian(uw.mesh.FeMesh_Cartesian):
         with self.deform_mesh(isRegular=h5f.attrs['regular']):
             with dset.collective:
                 if units:
-                    self.data[0:self.nodesLocal] = nonDimensionalize(
+                    self.data[0:self.nodesLocal] = non_dimensionalise(
                         dset[self.data_nodegId[0:self.nodesLocal], :] * units)
                 else:
                     self.data[0:self.nodesLocal] = dset[self.data_nodegId[0:self.nodesLocal], :]

@@ -3,8 +3,8 @@ import underworld as uw
 import h5py
 import numpy as np
 from mpi4py import MPI
-from UWGeodynamics.scaling import nonDimensionalize
-from UWGeodynamics.scaling import UnitRegistry as u
+from UWGeodynamics import non_dimensionalise
+from UWGeodynamics import UnitRegistry as u
 from . import _swarmvariable as svar
 
 
@@ -214,14 +214,14 @@ class Swarm(uw.swarm.Swarm):
             if firstChunk and collective:
                 with dset.collective:
                     if units:
-                        vals = nonDimensionalize(dset[ chunkStart : chunkEnd] * units)
+                        vals = non_dimensionalise(dset[ chunkStart : chunkEnd] * units)
                         ztmp = self.add_particles_with_coordinates(vals)
                     else:
                         ztmp = self.add_particles_with_coordinates(dset[ chunkStart : chunkEnd ])
                     firstChunk = False
             else:
                 if units:
-                    vals = nonDimensionalize(dset[ chunkStart : chunkEnd] * units)
+                    vals = non_dimensionalise(dset[ chunkStart : chunkEnd] * units)
                     ztmp = self.add_particles_with_coordinates(vals)
                 else:
                     ztmp = self.add_particles_with_coordinates(dset[ chunkStart : chunkEnd ])

@@ -1,5 +1,5 @@
 import numpy as np
-from .scaling import nonDimensionalize as nd
+from UWGeodynamics import non_dimensionalise as nd
 from .Underworld_extended import MeshVariable
 from scipy.interpolate import interp1d
 import copy
