@@ -82,11 +82,11 @@ class ReMesher(object):
         if self.y:
 
             if isinstance(self.y, tuple):
-                pts = new_points(intervals, elements)
                 intervals, elements = self.y
                 intervals = [nd(val) for val in intervals]
                 elements = [nd(val) for val in elements]
                 check_vals(intervals, elements, 1)
+                pts = new_points(intervals, elements)
             if isinstance(self.y, MeshVariable):
                 pts = new_points_from_field(self.y, 1)
 
