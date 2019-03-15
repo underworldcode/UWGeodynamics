@@ -1651,9 +1651,9 @@ class Model(Material):
             checkpointer.checkpoint()
 
             if rank == 0:
-                string = """Step: {0:5d} Model Time: {1:5.2f} dt: {2:5.2f} ({3})\n""".format(
-                    self.stepDone, self.time.to(output_time_units),
-                    dimensionalise(self._dt, output_dt_units),
+                string = """Step: {0:5d} Model Time: {1:6.1f} dt: {2:6.1f} ({3})\n""".format(
+                    self.stepDone, _adjust_time_units(self.time),
+                    _adjust_time_units(self._dt),
                     datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 sys.stdout.write(string)
                 sys.stdout.flush()
@@ -2787,3 +2787,29 @@ def _apply_saved_options_on_solver(solver, options):
         for key2, val2 in val.items():
             solver.options.__dict__[key].__dict__[key2] = val2
     return solver
+
+
+def _adjust_time_units(val):
+    """ Adjust the units used depending on the value """
+    if isinstance(val, u.Quantity):
+        mag = val.to(u.years).magnitude
+    else:
+        val = dimensionalise(val, u.years)
+        mag = val.magnitude
+    exponent = int("{0:.3E}".format(mag).split("E")[-1])
+
+    if exponent >= 9:
+        units = u.gigayear
+    elif exponent >= 6:
+        units = u.megayear
+    elif exponent >= 0:
+        units = u.years
+    elif exponent > -3:
+        units = u.days
+    elif exponent > -5:
+        units = u.hours
+    elif exponent > -7:
+        units = u.minutes
+    else:
+        units = u.seconds
+    return val.to(units)
