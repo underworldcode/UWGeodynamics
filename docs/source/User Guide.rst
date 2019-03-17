@@ -737,7 +737,6 @@ Temperature and Pressure dependent densities can be assigned to a Material using
 the ``GEO.LinearDensity`` function which calculates:
 
 .. math::
-
    :label: linearDensity
 
    `\rho = \rho_0 (1 + (\beta * \delta P) - (\alpha * \delta T))`
