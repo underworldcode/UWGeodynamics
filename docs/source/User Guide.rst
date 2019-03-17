@@ -98,7 +98,7 @@ variables (e.g. projMaterialField, projViscosityField etc.)
 
 .. note::
 
-   Fields can be dimensionalized using the GEO.Dimensionalize function (see below)
+   Fields can be dimensionalized using the GEO.dimensionalise function (see below)
 
 *Plot Velocity Fields* or any vector field.
 
@@ -238,10 +238,10 @@ Arguments with units will be scaled by the *UWGeodynamics* functions.
    >>> GEO.scaling_coefficients["[mass]"]= KM
    >>> GEO.scaling_coefficients["[temperature]"] = KT
 
-Dimensionalize / non-Dimensionalize
+dimensionalise / non-dimensionalise
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We provide 2 functions :code:`GEO.nonDimensionalize` and :code:`GEO.Dimensionalize`
+We provide 2 functions :code:`GEO.non_dimensionalise` and :code:`GEO.dimensionalise`
 to convert between non-dimensional and dimensional values.
 The function are also available respectively as :code:`GEO.nd` and
 :code:`GEO.dim`.
@@ -263,7 +263,7 @@ The function are also available respectively as :code:`GEO.nd` and
    >>> scaled_length = GEO.nd(length)
    >>> print(scaled_length)
    1.0
-   >>> length_metres = GEO.Dimensionalize(scaled_length, u.metre)
+   >>> length_metres = GEO.dimensionalise(scaled_length, u.metre)
    >>> print(length_metres)
    300000.0 meter
 
