@@ -287,7 +287,7 @@
       }
     }
   },
-  "Dry Olivine, Viscous Dislocation Creep, Karato and Wu, 1990": {
+  "Dry Olivine, Viscous Dislocation Creep, Karato and Wu, 1993": {
     "citation": "Karato, S., & Wu, P. (1993). Rheology of the Upper Mantle: A Synthesis. Science, 260(5109), 771-778.0",
     "onlinePDF": "http://www.jstor.org.vu-nl.idm.oclc.org/stable/288116",
     "Mineral": "Dry Olivine",
@@ -308,6 +308,30 @@
       "stressExponent": {
         "units": "None",
         "value": 3.5
+      }
+    }
+  },
+  "Wet Olivine, Viscous Dislocation Creep, Karato and Wu, 1993": {
+    "citation": "Karato, S., & Wu, P. (1993). Rheology of the Upper Mantle: A Synthesis. Science, 260(5109), 771-778.0",
+    "onlinePDF": "http://www.jstor.org.vu-nl.idm.oclc.org/stable/288116",
+    "Mineral": "Wet Olivine",
+    "Type": "Viscous Dislocation Creep",
+    "coefficients": {
+      "activationEnergy": {
+        "units": "kilojoule / mole",
+        "value": 430
+      },
+      "activationVolume": {
+        "units": "meter ** 3 / mole",
+        "value": 15e-6
+      },
+      "preExponentialFactor": {
+        "units": "1 / pascal ** 3.0 / second",
+        "value": 1.7578e-14
+      },
+      "stressExponent": {
+        "units": "None",
+        "value": 3.0
       }
     }
   },
