@@ -220,7 +220,8 @@ class BoundaryConditions(object):
         if self.materials:
             for (material, condition) in self.materials:
                 nodes = self.Model._get_material_indices(material)
-                self._apply_conditions_nodes(condition, nodes)
+                if nodes:
+                    self._apply_conditions_nodes(condition, nodes)
 
         if self.condition_type is "Dirichlet":
             return uw.conditions.DirichletCondition(

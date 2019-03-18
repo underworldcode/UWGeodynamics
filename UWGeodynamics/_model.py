@@ -1464,10 +1464,12 @@ class Model(Material):
         from decimal import Decimal
         mat = self.projMaterialField.evaluate(self.mesh)
         # Get nodes corresponding to material
-        nodes = np.arange(0, self.mesh.nodesDomain)[mat == Decimal(material.index)]
-        return uw.mesh.FeMesh_IndexSet(self.mesh, topologicalIndex=0,
-                                       size=self.mesh.nodesGlobal,
-                                       fromObject=nodes)
+        mask = (mat == Decimal(material.index))
+        if mask:
+            nodes = np.arange(0, self.mesh.nodesDomain)[mat == mask]
+            return uw.mesh.FeMesh_IndexSet(self.mesh, topologicalIndex=0,
+                                           size=self.mesh.nodesGlobal,
+                                           fromObject=nodes)
 
     def solve(self):
         """ Solve Stokes """
