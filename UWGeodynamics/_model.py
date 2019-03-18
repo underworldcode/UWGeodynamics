@@ -1413,7 +1413,9 @@ class Model(Material):
             at the bottom of the Model
         """
 
-        self.pressureField.data[...] = self.lithostatic_pressureField.data[...]
+        self.pressureField.data[...] = (
+            self.lithostatic_pressureField.evaluate(self.mesh.subMesh)
+        )
         self.pressSmoother.smooth()
 
         return self.pressureField

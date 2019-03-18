@@ -35,7 +35,10 @@ class LithostaticPressure(object):
         self._densityFn = densityFn
         self.gravity = gravity
 
+        self.lithostatic_field_nodes = uw.mesh.MeshVariable(self.mesh, nodeDofCount=1)
         self.lithostatic_field = uw.mesh.MeshVariable(self.mesh.subMesh, nodeDofCount=1)
+        self.Cell2Nodes = uw.utils.MeshVariable_Projection(
+            self.lithostatic_field_nodes, self.lithostatic_field, type=0)
         # Create Utilities
         self.DensityVar = uw.mesh.MeshVariable(self.mesh, nodeDofCount=1)
         self.projectorDensity = uw.utils.MeshVariable_Projection(self.DensityVar, self._densityFn, type=0 )
@@ -124,7 +127,9 @@ class LithostaticPressure(object):
         self.lithostatic_field.data[:] = local_pressure
         self.lithostatic_field.syncronise()
 
-        return self.lithostatic_field, bottom
+        self.Cell2Nodes.solve()
+
+        return self.lithostatic_field_nodes, bottom
 
     def _lithoPressure3D(self):
 
@@ -213,4 +218,6 @@ class LithostaticPressure(object):
         self.lithostatic_field.data[:] = local_pressure
         self.lithostatic_field.syncronise()
 
-        return self.lithostatic_field, bottom
+        self.Cell2Nodes.solve()
+
+        return self.lithostatic_field_nodes, bottom
