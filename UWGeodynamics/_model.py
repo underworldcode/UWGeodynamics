@@ -1420,16 +1420,15 @@ class Model(Material):
             underworld IndexSet
 
         """
+        from decimal import Decimal
         mat = self.projMaterialField.evaluate(self.mesh)
-        # Round to closest integer
-        mat = np.rint(mat)
-        # convert array as integer
-        mat = mat.astype("int")[:, 0]
         # Get nodes corresponding to material
-        nodes = np.arange(0, self.mesh.nodesDomain)[mat == material.index]
+        mask = (mat == Decimal(material.index))
+        nodes = np.arange(0, self.mesh.nodesDomain)[mask.flatten()]
         return uw.mesh.FeMesh_IndexSet(self.mesh, topologicalIndex=0,
-                                       size=self.mesh.nodesGlobal,
-                                       fromObject=nodes)
+                                           size=self.mesh.nodesGlobal,
+                                           fromObject=nodes)
+
 
     def solve(self):
         """ Solve Stokes """
