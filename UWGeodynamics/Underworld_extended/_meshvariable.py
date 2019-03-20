@@ -148,9 +148,9 @@ class MeshVariable(uw.mesh.MeshVariable):
         if units:
             if units.units == "degC":
                 units = u.degK
-                self.data[:] = nondimensionalise((self.data[:]+273.15)*units)
+                self.data[:] = non_dimensionalise((self.data[:]+273.15)*units)
             else:
-                self.data[:] = nondimensionalise(self.data[:]*units)
+                self.data[:] = non_dimensionalise(self.data[:]*units)
 
         uw.libUnderworld.StgFEM._FeVariable_SyncShadowValues( self._cself )
         h5f.close()
