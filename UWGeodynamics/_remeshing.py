@@ -28,7 +28,10 @@ class ReMesher(object):
         if self.reset:
             self.reset_mesh()
 
-        nx, ny = self.mesh.elementRes
+        if self.mesh.dim > 2:
+            nx, ny, nz = self.mesh.elementRes
+        else:
+            nx, ny = self.mesh.elementRes
 
         def new_points(intervals, elements):
             pts = []
@@ -64,6 +67,10 @@ class ReMesher(object):
             vals = func(ys)
             return vals
 
+        new_valsx = None
+        new_valsy = None
+        new_valsz = None
+
         if self.x:
 
             if isinstance(self.x, tuple):
@@ -75,9 +82,11 @@ class ReMesher(object):
             if isinstance(self.x, MeshVariable):
                 pts = new_points_from_field(self.x, 0)
 
-            with self.mesh.deform_mesh():
-                new_vals = np.tile(pts, ny + 1)
-                self.mesh.data[:, 0] = new_vals[self.mesh.data_nodegId.flatten()]
+            if self.mesh.dim > 2:
+                new_valsx = np.tile(pts.flatten(), nz + 1) 
+                new_valsx = np.tile(new_valsx.flatten(), ny + 1)
+            else:
+                new_valsx = np.tile(pts.flatten(), ny + 1)
 
         if self.y:
 
@@ -90,8 +99,34 @@ class ReMesher(object):
             if isinstance(self.y, MeshVariable):
                 pts = new_points_from_field(self.y, 1)
 
-            with self.mesh.deform_mesh():
-                vals = np.repeat(pts, nx + 1)
-                self.mesh.data[:, 1] = vals[self.mesh.data_nodegId.flatten()]
+            if self.mesh.dim > 2:
+                new_valsy = np.repeat(pts.flatten(), nz + 1)
+                new_valsy = np.tile(new_valsy.flatten(), nx + 1)
+            else:
+                new_valsy = np.repeat(pts.flatten(), nx + 1)
+
+        if self.z:
+
+            if isinstance(self.z, tuple):
+                intervals, elements = self.z
+                intervals = [nd(val) for val in intervals]
+                elements = [nd(val) for val in elements]
+                check_vals(intervals, elements, -1)
+                pts = new_points(intervals, elements)
+            if isinstance(self.z, MeshVariable):
+                raise ValueError("""This functionality has not been implemented
+                                 for 3D meshes""")
+
+            new_valsz = np.repeat(pts, nx + 1)
+            new_valsz = np.repeat(new_valsz, ny + 1)
+
+        with self.mesh.deform_mesh():
+            if new_valsx is not None:
+                self.mesh.data[:, 0] = new_valsx[self.mesh.data_nodegId.flatten()]
+            if new_valsy is not None:
+                self.mesh.data[:, 1] = new_valsy[self.mesh.data_nodegId.flatten()]
+            if new_valsz is not None:
+                self.mesh.data[:, -1] = new_valsz[self.mesh.data_nodegId.flatten()]
+
         return self.mesh
 
