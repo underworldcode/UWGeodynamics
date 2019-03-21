@@ -1091,10 +1091,7 @@ class Model(Material):
         self.materials.reverse()
 
         if mat.shape:
-            if isinstance(mat.shape, shapes.Shape):
-                condition = [(mat.shape.fn, mat.index), (True, self.materialField)]
-            elif isinstance(mat.shape, uw.function.Function):
-                condition = [(mat.shape, mat.index), (True, self.materialField)]
+            condition = [(mat.shape, mat.index), (True, self.materialField)]
             func = fn.branching.conditional(condition)
             self.materialField.data[:] = func.evaluate(self.swarm)
 

@@ -8,7 +8,6 @@ from .LecodeIsostasy import LecodeIsostasy
 from ._material import Material
 from ._utils import Balanced_InflowOutflow
 from ._utils import MovingWall
-from .shapes import Shape
 
 
 class BoundaryConditions(object):
@@ -139,11 +138,8 @@ class BoundaryConditions(object):
 
         # If nodes is a shape get the corresponding local
         # nodes
-        if isinstance(nodes, (Shape, fn.Function)):
-            if isinstance(nodes, Shape):
-                mask = nodes.fn.evaluate(self.Model.mesh)
-            else:
-                mask = nodes.evaluate(self.Model.mesh)
+        if isinstance(nodes, fn.Function):
+            mask = nodes.evaluate(self.Model.mesh)
             nodes = np.arange(self.Model.mesh.nodesDomain)
             nodes = nodes.astype("int")[mask.ravel()]
 
@@ -167,7 +163,7 @@ class BoundaryConditions(object):
         -----------
             condition:
                 condition
-            nodes: np.array, list, IndexSet, Shape, Function
+            nodes: np.array, list, IndexSet, Function
                 set of nodes
         """
 
@@ -339,7 +335,7 @@ class VelocityBCs(BoundaryConditions):
         -----------
             condition:
                 condition
-            nodes: np.array, list, IndexSet, Shape, Function
+            nodes: np.array, list, IndexSet, Function
                 set of nodes
         """
         nodes = self._convert_nodes_to_indexSets(nodes)

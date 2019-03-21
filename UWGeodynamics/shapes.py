@@ -5,37 +5,7 @@ import underworld.function as fn
 from UWGeodynamics import non_dimensionalise as nd
 
 
-class Shape(object):
-    """Base Class for Shape objects"""
-
-    def __init__(self):
-        self._fn = None
-        return
-
-    @property
-    def fn(self):
-        return self._fn
-
-    @fn.setter
-    def fn(self, value):
-        self._fn = value
-
-    def __and__(self, B):
-        newShape = Shape()
-        newShape.fn = self._fn & B._fn
-        return newShape
-
-    def __add__(self, B):
-        newShape = CombinedShape([self, B])
-        return newShape
-
-    def __or__(self, B):
-        newShape = Shape()
-        newShape.fn = self._fn | B._fn
-        return newShape
-
-
-class Polygon(Shape):
+class Polygon(fn.Function):
     """Polygon Shape Class"""
 
     def __init__(self, vertices):
@@ -56,9 +26,11 @@ class Polygon(Shape):
         self.bottom = max([y for x, y in self.vertices])
         vertices = [(nd(x), nd(y)) for x, y in self.vertices]
         self._fn = uw.function.shape.Polygon(np.array(vertices))
+        super(Polygon, self).__init__(argument_fns=None)
+        self._fncself = self._fn._fncself
 
 
-class HalfSpace(Shape):
+class HalfSpace(fn.Function):
     """ Class to define a HalfSpace
 
         A plan defined by a normal vector is used to split the space
@@ -99,8 +71,6 @@ class HalfSpace(Shape):
 
         self.reverse = reverse
 
-    @property
-    def _fn(self):
         coords = fn.input()
         new_coords = coords - self.origin
         func = fn.math.dot(self.normal, new_coords)
@@ -111,84 +81,12 @@ class HalfSpace(Shape):
         else:
             conditions = [(func >= 0., True), (func < 0., False)]
 
-        return fn.branching.conditional(conditions)
+        self._fn = fn.branching.conditional(conditions)
+        super(HalfSpace, self).__init__(argument_fns=None)
+        self._fncself = self._fn._fncself
 
 
-class CombinedShape(Shape):
-    """CombinedShape class"""
-
-    def __init__(self, shapes):
-        """Combine a list of shapes into one
-
-        Parameters
-        ----------
-
-        shapes : list of Shape objects
-
-        Returns
-        -------
-
-        An UWGeodynamics Shape object
-        """
-        self.shapes = shapes
-        self.top = max([shape.top for shape in shapes])
-        self.bottom = min([shape.top for shape in shapes])
-
-    @property
-    def _fn(self):
-        import operator
-        import functools
-        self._fnlist = []
-        for shape in self.shapes:
-            self._fnlist.append(shape._fn)
-        func = functools.reduce(
-            operator.or_,
-            self._fnlist,
-            fn.misc.constant(False))
-        return func
-
-
-class MultiShape(CombinedShape):
-
-    def __init__(self, shapes):
-
-        Warning("MultiShape is now deprecated, use CombinedShape instead")
-        super(MultiShape, self).__init__(shapes)
-
-
-class IntersectShape(Shape):
-    """IntersectShape class"""
-
-    def __init__(self, shapes):
-        """ Take the intersection of some shapes
-
-        Parameters
-        ----------
-
-        shapes : A list of Shapes
-
-        Returns
-        -------
-
-        An UWGeodynamics Shape object
-        """
-        self.shapes = shapes
-
-    @property
-    def _fn(self):
-        import operator
-        import functools
-        self._fnlist = []
-        for shape in self.shapes:
-            self._fnlist.append(shape._fn)
-        func = functools.reduce(
-            operator.and_,
-            self._fnlist,
-            fn.misc.constant(True))
-        return func
-
-
-class Layer(Shape):
+class Layer(fn.Function):
     """Layer 2D"""
 
     def __init__(self, top, bottom):
@@ -208,15 +106,14 @@ class Layer(Shape):
         self.top = top
         self.bottom = bottom
 
-    @property
-    def _fn(self):
         coord = fn.input()
-        func = ((coord[1] <= nd(self.top)) &
-                (coord[1] >= nd(self.bottom)))
-        return func
+        self._fn = ((coord[1] <= nd(self.top)) &
+                    (coord[1] >= nd(self.bottom)))
+        super(Layer, self).__init__(argument_fns=None)
+        self._fncself = self._fn._fncself
 
 
-class Layer3D(Layer):
+class Layer3D(fn.Function):
     """Layer3D"""
 
     def __init__(self, top, bottom):
@@ -236,12 +133,12 @@ class Layer3D(Layer):
         self.top = top
         self.bottom = bottom
 
-    @property
-    def _fn(self):
         coord = fn.input()
-        func = ((coord[2] <= nd(self.top)) &
-                (coord[2] >= nd(self.bottom)))
-        return func
+        self._fn = ((coord[2] <= nd(self.top)) &
+                    (coord[2] >= nd(self.bottom)))
+        super(Layer, self).__init__(argument_fns=None)
+        self._fncself = self._fn._fncself
+
 
 class Layer2D(Layer):
 
@@ -250,7 +147,8 @@ class Layer2D(Layer):
         Warning("Layer2D is now deprecated, use Layer instead")
         super(Layer2D, self).__init__(top, bottom)
 
-class Box(Shape):
+
+class Box(fn.Function):
     """Box"""
 
     def __init__(self, top, bottom, minX=0., maxX=0., minY=None, maxY=None):
@@ -279,8 +177,6 @@ class Box(Shape):
         self.minY = minY
         self.maxY = maxY
 
-    @property
-    def _fn(self):
         coord = fn.input()
         if (self.minY is not None) and (self.maxY is not None):
             func = ((coord[1] <= nd(self.maxY)) &
@@ -294,10 +190,12 @@ class Box(Shape):
                     (coord[1] >= nd(self.bottom)) &
                     (coord[0] <= nd(self.maxX)) &
                     (coord[0] >= nd(self.minX)))
-        return func
+        self._fn = func
+        super(Box, self).__init__(argument_fns=None)
+        self._fncself = self._fn._fncself
 
 
-class Disk(Shape):
+class Disk(fn.Function):
     """Disk"""
 
     def __init__(self, center, radius):
@@ -319,18 +217,18 @@ class Disk(Shape):
         self.top = center[1] + self.radius
         self.bottom = center[1] - self.radius
 
-    @property
-    def _fn(self):
         center = tuple(nd(x) for x in list(self.center))
         radius = nd(self.radius)
         coord = fn.input() - center
-        return fn.math.dot(coord, coord) < radius**2
+        self._fn = fn.math.dot(coord, coord) < radius**2
+        super(Disk, self).__init__(argument_fns=None)
+        self._fncself = self._fn._fncself
 
 
 Sphere = Disk
 
 
-class Annulus(Shape):
+class Annulus(fn.Function):
     """Annulus"""
 
     def __init__(self, center, r1, r2):
@@ -354,10 +252,10 @@ class Annulus(Shape):
         self.bottom = center[1] - self.r2
         self.top = center[1] + self.r2
 
-    @property
-    def _fn(self):
         center = tuple(nd(x) for x in list(self.center))
         r1 = nd(self.r1)
         r2 = nd(self.r2)
         coord = fn.input() - center
-        return (fn.math.dot(coord, coord) < r2**2) & (fn.math.dot(coord, coord) > r1**2)
+        self._fn = (fn.math.dot(coord, coord) < r2**2) & (fn.math.dot(coord, coord) > r1**2)
+        super(Annulus, self).__init__(argument_fns=None)
+        self._fncself = self._fn._fncself
