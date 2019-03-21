@@ -83,59 +83,46 @@ def linearFrictionWeakening(cumulativeTotalStrain, FrictionCoef,
     return fn.math.atan(frictionVal)
 
 
-class ViscosityLimiter(object):
+class Limiter(fn.Function):
     """ Viscosity Limiter Class """
 
-    def __init__(self, minViscosity, maxViscosity):
+    def __init__(self, value, min_value=None, max_value=None):
 
-        self.minViscosity = minViscosity
-        self.maxViscosity = maxViscosity
+        self.value = fn.Function.convert(value)
+        self.min_value = fn.Function.convert(nd(min_value))
+        self.max_value = fn.Function.convert(nd(max_value))
 
-    def apply(self, viscosityField):
-        """Apply a viscosity limit to a viscosity function.
-
-        Parameters
-        ----------
-            viscosityField : viscosity function or field
-
-        Returns
-        -------
-            viscosity function
-
-        """
-        if self.maxViscosity and self.minViscosity:
-            maxBound = fn.misc.min(viscosityField, nd(self.maxViscosity))
-            minMaxBound = fn.misc.max(maxBound, nd(self.minViscosity))
-            return minMaxBound
-        elif self.maxViscosity:
-            return fn.misc.min(viscosityField, nd(self.maxViscosity))
-        elif self.minViscosity:
-            return fn.misc.max(viscosityField, nd(self.minViscosity))
+        if self.max_value and self.min_value:
+            self._fn = fn.misc.min(self.value, self.max_value)
+            self._fn = fn.misc.max(self._fn, self.min_value)
+        elif self.max_value:
+            self._fn = fn.misc.min(self.value, self.max_value)
+        elif self.min_value:
+            self._fn = fn.misc.max(self.value, self.min_value)
         else:
-            return viscosityField
+            self._fn = self.value
+
+        super(Limiter, self).__init__(
+            argument_fns=[self.value,
+                          self.min_value,
+                          self.max_value])
+        self._fncself = self._fn._fncself
 
 
-class StressLimiter(object):
-    """Stress Limiter Class"""
+class Viscosity_limiter(Limiter):
 
-    def __init__(self, maxStress):
-        # Add unit check
-        self.maxStress = maxStress
+    def __init__(self, viscosity, min_viscosity, max_viscosity):
+        self.min_viscosity = min_viscosity
+        self.max_viscosity = max_viscosity
+        super(Viscosity_limiter, self).__init__(viscosity, min_viscosity,
+                                                max_viscosity)
 
-    def apply(self, stress):
-        """Apply a stress limit to a stress function.
 
-        Parameters
-        ----------
-            stress : stress function or field.
+class Stress_limiter(Limiter):
 
-        Returns
-        -------
-            stress function
-
-        """
-        maxBound = fn.misc.min(stress, nd(self.maxStress))
-        return maxBound
+    def __init__(self, stress, max_stress):
+        self.max_stress = max_stress
+        super(Stress_limiter, self).__init__(stress, max_value=max_stress)
 
 
 class Rheology(ABC):

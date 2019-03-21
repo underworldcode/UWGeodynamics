@@ -16,7 +16,7 @@ from UWGeodynamics import non_dimensionalise as nd
 from UWGeodynamics import UnitRegistry as u
 from .lithopress import LithostaticPressure
 from ._utils import PressureSmoother, PassiveTracers
-from ._rheology import ViscosityLimiter, StressLimiter
+from ._rheology import Viscosity_limiter, Stress_limiter
 from ._material import Material
 from ._visugrid import Visugrid
 from ._boundary_conditions import TemperatureBCs, HeatFlowBCs
@@ -2138,11 +2138,9 @@ class _ViscosityFunction():
                     yieldStress = YieldHandler._get_yieldStress3D()
 
                 if material.stressLimiter:
-                    stressLimiter = StressLimiter(material.stressLimiter)
-                    yieldStress = stressLimiter.apply(yieldStress)
+                    yieldStress = Stress_limiter(yieldStress, material.stressLimiter)
                 elif Model.stressLimiter:
-                    stressLimiter = StressLimiter(Model.stressLimiter)
-                    yieldStress = stressLimiter.apply(yieldStress)
+                    yieldStress = Stress_limiter(yieldStress, Model.stressLimiter)
 
                 if material.elasticity:
                     ElasticityHandler = material.elasticity
@@ -2227,8 +2225,7 @@ class _ViscosityFunction():
 
         Model = self.Model
 
-        default = ViscosityLimiter(Model.minViscosity, Model.maxViscosity)
-        default = default.apply(eta)
+        default = Viscosity_limiter(eta, Model.minViscosity, Model.maxViscosity)
         limiter_map = {}
 
         for material in Model.materials:
@@ -2238,8 +2235,7 @@ class _ViscosityFunction():
                 minViscosity = material.minViscosity
             if material.maxViscosity:
                 maxViscosity = material.maxViscosity
-            limiter = ViscosityLimiter(minViscosity, maxViscosity)
-            limiter_map[material.index] = limiter.apply(eta)
+            limiter = Viscosity_limiter(eta, minViscosity, maxViscosity)
 
         if limiter_map:
             return fn.branching.map(fn_key=Model.materialField,
