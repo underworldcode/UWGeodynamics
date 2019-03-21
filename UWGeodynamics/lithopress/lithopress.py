@@ -2,6 +2,7 @@ from __future__ import print_function,  absolute_import
 # Romain Beucher romain.beucher@unimelb.edu.au
 
 import underworld as uw
+import underworld.function as fn
 import numpy as np
 from mpi4py import MPI
 
@@ -13,7 +14,7 @@ supported_elem_mesh = ["Q1", "Q2"]
 supported_elem_subMesh = ["DQ1", "DQ0"]
 
 
-class LithostaticPressure(object):
+class Lithostatic_pressure(fn.Function):
     """Class that calculates the lithostatic pressure field based on
     material densities.
 
@@ -32,8 +33,8 @@ class LithostaticPressure(object):
     def __init__(self, mesh, densityFn, gravity):
 
         self.mesh = mesh
-        self._densityFn = densityFn
-        self.gravity = gravity
+        self._densityFn = fn.Function.convert(densityFn)
+        self.gravity = fn.Function.convert(gravity)
 
         self.lithostatic_field_nodes = uw.mesh.MeshVariable(self.mesh, nodeDofCount=1)
         self.lithostatic_field = uw.mesh.MeshVariable(self.mesh.subMesh, nodeDofCount=1)
@@ -49,14 +50,17 @@ class LithostaticPressure(object):
         if not self.mesh.subMesh.elementType.upper() in supported_elem_subMesh:
             raise ValueError("Unsupported element: {0}".format(self.mesh.subMesh.elementType))
 
-    def solve(self):
-
+        super(Lithostatic_pressure, self).__init__(
+            argument_fns=[self._densityFn,
+                          self.gravity])
         # 2D case
         if self.mesh.dim == 2:
-            return self._lithoPressure2D()
+            self._fn = self._lithoPressure2D()
         # 3D case
         if self.mesh.dim == 3:
-            return self._lithoPressure3D()
+            self._fn = self._lithoPressure3D()
+
+        self._fncself = self._fn._fncself
 
     def _lithoPressure2D(self):
 
@@ -108,10 +112,10 @@ class LithostaticPressure(object):
 
         # Calculate pressure from the top half of the element.
         # (Takes the average density of the 2 top nodes)
-        EpressureTop = self.gravity * dy / 2.0 * (global_density[1:, :-1] + global_density[1:, 1:]) / 2.0
+        EpressureTop = self.gravity.value * dy / 2.0 * (global_density[1:, :-1] + global_density[1:, 1:]) / 2.0
         # Calculate pressure from the bottom half of the element.
         # (Takes the average density of the 2 bottom nodes)
-        EpressureBot = self.gravity * dy / 2.0 * (global_density[:-1, :-1] + global_density[:-1, 1:]) / 2.0
+        EpressureBot = self.gravity.value * dy / 2.0 * (global_density[:-1, :-1] + global_density[:-1, 1:]) / 2.0
 
         # Add pressure from element above except at the top.
         pressure = np.copy(EpressureTop)
@@ -129,7 +133,7 @@ class LithostaticPressure(object):
 
         self.Cell2Nodes.solve()
 
-        return self.lithostatic_field_nodes, bottom
+        return self.lithostatic_field_nodes
 
     def _lithoPressure3D(self):
 
@@ -191,14 +195,14 @@ class LithostaticPressure(object):
 
         # Calculate pressure from the top half of the element.
         # (Takes the average density of the 2 top nodes)
-        EpressureTop = (self.gravity * dy / 2.0 *
+        EpressureTop = (self.gravity.value * dy / 2.0 *
                        (global_density[1:, :-1, :-1] +
                         global_density[1:, 1:, :-1] +
                         global_density[1:, 1:, 1:] +
                         global_density[1:, :-1, 1:]) / 4.0)
         # Calculate pressure from the bottom half of the element.
         # (Takes the average density of the 2 bottom nodes)
-        EpressureBot = (self.gravity * dy / 2.0 *
+        EpressureBot = (self.gravity.value * dy / 2.0 *
                        (global_density[:-1, :-1, :-1] +
                         global_density[:-1, 1:, :-1] +
                         global_density[:-1, 1:, 1:] +
@@ -220,4 +224,4 @@ class LithostaticPressure(object):
 
         self.Cell2Nodes.solve()
 
-        return self.lithostatic_field_nodes, bottom
+        return self.lithostatic_field_nodes

@@ -14,7 +14,7 @@ from . import rcParams
 from UWGeodynamics import dimensionalise
 from UWGeodynamics import non_dimensionalise as nd
 from UWGeodynamics import UnitRegistry as u
-from .lithopress import LithostaticPressure
+from .lithopress import Lithostatic_pressure
 from ._utils import PressureSmoother, PassiveTracers
 from ._rheology import Viscosity_limiter, Stress_limiter
 from ._material import Material
@@ -1429,9 +1429,7 @@ class Model(Material):
 
         """
         gravity = np.abs(nd(self.gravity[-1]))
-        lithoPress = LithostaticPressure(self.mesh, self._densityFn, gravity)
-        self._lithostatic_pressureField, _ = lithoPress.solve()
-        return self._lithostatic_pressureField
+        return Lithostatic_pressure(self.mesh, self._densityFn, gravity)
 
     def _calibrate_pressureField(self):
         """ Pressure Calibration callback function """

@@ -42,7 +42,7 @@ from . import surfaceProcesses
 from . import utilities
 from ._rcParams import rcParams as defaultParams
 from .LecodeIsostasy import LecodeIsostasy
-from .lithopress import LithostaticPressure
+from .lithopress import Lithostatic_pressure
 from ._rheology import Rheology, ConstantViscosity, ViscousCreep
 from ._rheology import DruckerPrager, VonMises
 from ._rheology import CompositeViscosity
