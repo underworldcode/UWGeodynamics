@@ -55,17 +55,32 @@ class PressureSmoother(object):
         self.Nodes2Cell.solve()
 
 
-class PassiveTracers(object):
+class PassiveTracers(Swarm):
 
-    def __init__(self, mesh, velocityField, name=None, vertices=None,
-                 particleEscape=True, shapeType="line", zOnly=False):
+    def __init__(self, mesh, velocityField, name=None,
+                 particleEscape=True, zOnly=False):
 
+        super(PassiveTracers, self).__init__(mesh,
+                                             particleEscape=particleEscape)
         self.name = name
         self.velocityField = velocityField
-        self.angular_velocity = 0.5*(self.velocityField.fn_gradient[1] -
-                                     self.velocityField.fn_gradient[2])
+        self.angular_velocity = 0.5 * (self.velocityField.fn_gradient[1] -
+                                       self.velocityField.fn_gradient[2])
         self.particleEscape = particleEscape
         self.zOnly = zOnly
+
+        self.tracked_field = list()
+
+    def _global_indices(self):
+        indices = np.arange(self.particleLocalCount)
+        ranks = np.repeat(rank, self.particleLocalCount)
+        pairs = np.array(list(zip(ranks, indices)), dtype=[("a", np.int32),
+                                                           ("b", np.int32)])
+        # Get rank
+        self.global_index = self.add_variable(dataType="long", count=1)
+        self.global_index.data[:, 0] = pairs.view(np.int64)
+
+    def add_particles_with_coordinates(self, vertices, **kwargs):
 
         for dim, _ in enumerate(vertices):
             vertices[dim] = nd(vertices[dim])
@@ -75,23 +90,15 @@ class PassiveTracers(object):
 
         for dim, _ in enumerate(vertices):
             points[:, dim] = vertices[dim]
-
-        self.swarm = Swarm(mesh=mesh, particleEscape=particleEscape)
-        self.swarm.add_particles_with_coordinates(points)
-
+        vals = super(PassiveTracers,
+                     self).add_particles_with_coordinates(points,
+                                                          **kwargs)
         self.advector = uw.systems.SwarmAdvector(
-            swarm=self.swarm,
+            swarm=self,
             velocityField=self.velocityField, order=2)
 
-        indices = np.arange(self.swarm.particleLocalCount)
-        ranks = np.repeat(rank, self.swarm.particleLocalCount)
-        pairs = np.array(list(zip(ranks, indices)), dtype=[("a", np.int32),
-                                                           ("b", np.int32)])
-        # Get rank
-        self.global_index = self.swarm.add_variable(dataType="long", count=1)
-        self.global_index.data[:, 0] = pairs.view(np.int64)
-
-        self.tracked_field = list()
+        self._global_indices()
+        return vals
 
     def integrate(self, dt, **kwargs):
         """ Integrate swarm velocity in time """
@@ -111,11 +118,11 @@ class PassiveTracers(object):
                 obj = getattr(self, field["name"])
                 if self.mesh.dim == 2 and obj.data.shape[-1] > 2:
                     ang_vel = self.angular_velocity
-                    dtheta = dt * ang_vel.evaluate(self.swarm).reshape(1, -1)
+                    dtheta = dt * ang_vel.evaluate(self).reshape(1, -1)
                     rotateTensor2D(obj.data[:, 0:3], dtheta)
-                    obj.data[:, 0:3] += field["value"].evaluate(self.swarm)
+                    obj.data[:, 0:3] += field["value"].evaluate(self)
                 else:
-                    obj.data[...] += field["value"].evaluate(self.swarm) * dt
+                    obj.data[...] += field["value"].evaluate(self) * dt
 
     def add_tracked_field(self, value, name, units, dataType, count=1,
                           overwrite=True, timeIntegration=False):
@@ -135,7 +142,7 @@ class PassiveTracers(object):
                     field["value"] = value
                     field["dataType"] = dataType
                     field["timeIntegration"] = timeIntegration
-                    svar = self.swarm.add_variable(dataType, count=count)
+                    svar = self.add_variable(dataType, count=count)
                     svar.data[...] = 0.
                     setattr(self, name, svar)
                     return
@@ -145,7 +152,7 @@ class PassiveTracers(object):
                                    "units": units,
                                    "timeIntegration": timeIntegration,
                                    "dataType": dataType})
-        svar = self.swarm.add_variable(dataType, count=count)
+        svar = self.add_variable(dataType, count=count)
         svar.data[...] = 0.
         setattr(self, name, svar)
 
@@ -156,7 +163,8 @@ class PassiveTracers(object):
         swarm_fname = self.name + '-%s.h5' % checkpointID
         swarm_fpath = os.path.join(outputDir, swarm_fname)
 
-        sH = self.swarm.save(swarm_fpath, units=u.kilometers, time=time)
+        sH = super(PassiveTracers, self).save(
+            swarm_fpath, units=u.kilometers, time=time)
 
         if rank == 0:
             filename = self.name + '-%s.xdmf' % checkpointID
@@ -186,7 +194,7 @@ class PassiveTracers(object):
 
             obj = getattr(self, field["name"])
             if not field["timeIntegration"]:
-                obj.data[...] = field["value"].evaluate(self.swarm)
+                obj.data[...] = field["value"].evaluate(self)
             handle = obj.save('%s.h5' % file_prefix, units=field["units"])
 
             if rank == 0:
@@ -203,7 +211,7 @@ class PassiveTracers(object):
                 if dset is None:
                     raise RuntimeError("Can't find 'data' in file '{}'.\n".format(swarm_fname))
                 globalCount = len(dset)
-                dim = self.swarm.mesh.dim
+                dim = self.mesh.dim
 
             string += "\t<Attribute Type=\"Vector\" Center=\"Node\" Name=\"Coordinates\">\n"
             string += """\t\t\t<DataItem Format=\"HDF\" NumberType=\" Float\"

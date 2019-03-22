@@ -1836,9 +1836,9 @@ class Model(Material):
             tracers = PassiveTracers(self.mesh,
                                      self.velocityField,
                                      name=name,
-                                     vertices=vertices,
                                      particleEscape=particleEscape,
                                      zOnly=zOnly)
+            tracers.add_particles_with_coordinates(vertices)
 
         else:
             x = np.array(vertices[0])[..., np.newaxis] + np.array(centroids[0]).ravel()
@@ -1852,9 +1852,9 @@ class Model(Material):
             tracers = PassiveTracers(self.mesh,
                                      self.velocityField,
                                      name=name,
-                                     vertices=vertices,
                                      particleEscape=particleEscape,
                                      zOnly=zOnly)
+            tracers.add_particles_with_coordinates(vertices)
 
         self.passive_tracers[name] = tracers
         setattr(self, name.lower() + "_tracers", tracers)
