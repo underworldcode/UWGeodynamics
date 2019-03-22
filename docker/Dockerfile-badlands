@@ -1,4 +1,4 @@
-FROM underworldcode/underworld2:2.6.0b
+FROM underworldcode/underworld2:2.7.1b
 
 USER root
 
