@@ -23,6 +23,7 @@ def _notebook_run(example):
 
     args = ["jupyter", "nbconvert",
             "--to", "notebook", "--execute",
+            "--ExecutePreprocessor.kernel_name=python2",
             "--ExecutePreprocessor.timeout=0",
             "--output", outpath, outpath]
     subprocess.check_call(args)

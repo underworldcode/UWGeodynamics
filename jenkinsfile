@@ -9,7 +9,7 @@ pipeline {
   // define the docker environment to run the pipeline in.
   agent {
       docker { 
-        image 'underworldcode/underworld2:dev'
+        image 'underworldcode/uwgeodynamics:dev'
         
         // special label to jenkins config. See http://130.56.252.251:32779/computer/
         label 'uwgeo-hector'
@@ -34,7 +34,6 @@ pipeline {
     stage('Test') {
       steps {
           withEnv(["HOME=${env.WORKSPACE}"]) {
-	      sh 'cd UWGeodynamics'
 	      sh 'python -m pytest -v'
 	  }
       }
