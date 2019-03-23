@@ -24,7 +24,7 @@ pipeline {
           withEnv(["HOME=${env.WORKSPACE}"]) {
               sh 'pip install --user pytest'
 	      sh "git clone -b master https://github.com/underworldcode/UWGeodynamics.git"
-	      sh "pip install -e UWGeodynamics/ --user"
+	      sh "pip install -e UWGeodynamics/ --user
         }
       }
     }
