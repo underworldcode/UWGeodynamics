@@ -9,7 +9,7 @@ pipeline {
   // define the docker environment to run the pipeline in.
   agent {
       docker { 
-        image 'underworldcode/underworld2:v2.7.1b'
+        image 'underworldcode/underworld2:2.7.1b'
         
         // special label to jenkins config. See http://130.56.252.251:32779/computer/
         label 'uwgeo-hector'
