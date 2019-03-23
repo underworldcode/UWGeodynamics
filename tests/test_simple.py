@@ -133,33 +133,33 @@ def test_temperature_boundary_condition():
     Model.set_temperatureBCs(top=500. * u.degK,
                              bottom=1200. * u.degK)
 
-def test_passive_tracers():
-    import numpy as np
-    Model = GEO.Model(elementRes=(64,64),
-                      minCoord=(0.*u.kilometer, 0.* u.kilometer),
-                      maxCoord=(64.* u.kilometer, 64 * u.kilometer))
-
-    x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
-    y = 32. * u.kilometer
-
-    P = Model.add_passive_tracers(name="Tracers", vertices=[x, y])
-
-
-#def test_set_velocity_boundary_conditions_in_3D():
-#    Model = GEO.Model(elementRes=(10, 10, 10),
-#                      gravity=(0.,0.,-9.81*u.m/u.s**2),
-#                      minCoord=(0. * u.kilometer,
-#                                0. * u.kilometer,
-#                                0. * u.kilometer),
-#                      maxCoord=(10. * u.kilometer,
-#                                10. * u.kilometer,
-#                                10. * u.kilometer))
+#def test_passive_tracers():
+#    import numpy as np
+#    Model = GEO.Model(elementRes=(64,64),
+#                      minCoord=(0.*u.kilometer, 0.* u.kilometer),
+#                      maxCoord=(64.* u.kilometer, 64 * u.kilometer))
 #
-#    velocityBCs = Model.set_velocityBCs(
-#        left=[1.0 * u.centimetre / u.year, None, 0.],
-#        right=[-1.0 * u.centimetre / u.year, None, 0.],
-#        bottom=[None, None, 0.],
-#        top=[None, None, 0.],
-#        front=[None, 0., None],
-#        back=[None, 0., None])
-#    assert(isinstance(velocityBCs, uw.conditions.DirichletCondition))
+#    x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
+#    y = GEO.nd(32. * u.kilometer)
+#
+#    P = Model.add_passive_tracers(name="Tracers", vertices=[x, y])
+#
+#
+##def test_set_velocity_boundary_conditions_in_3D():
+##    Model = GEO.Model(elementRes=(10, 10, 10),
+##                      gravity=(0.,0.,-9.81*u.m/u.s**2),
+##                      minCoord=(0. * u.kilometer,
+##                                0. * u.kilometer,
+##                                0. * u.kilometer),
+##                      maxCoord=(10. * u.kilometer,
+##                                10. * u.kilometer,
+##                                10. * u.kilometer))
+##
+##    velocityBCs = Model.set_velocityBCs(
+##        left=[1.0 * u.centimetre / u.year, None, 0.],
+##        right=[-1.0 * u.centimetre / u.year, None, 0.],
+##        bottom=[None, None, 0.],
+##        top=[None, None, 0.],
+##        front=[None, 0., None],
+##        back=[None, 0., None])
+##    assert(isinstance(velocityBCs, uw.conditions.DirichletCondition))
