@@ -136,7 +136,7 @@ class Layer3D(fn.Function):
         coord = fn.input()
         self._fn = ((coord[2] <= nd(self.top)) &
                     (coord[2] >= nd(self.bottom)))
-        super(Layer, self).__init__(argument_fns=None)
+        super(Layer3D, self).__init__(argument_fns=None)
         self._fncself = self._fn._fncself
 
 
