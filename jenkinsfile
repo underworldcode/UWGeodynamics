@@ -34,7 +34,6 @@ pipeline {
     stage('Test') {
       steps {
           withEnv(["HOME=${env.WORKSPACE}"]) {
-	      sh 'cd UWGeodynamics'
 	      sh 'python -m pytest -v'
 	  }
       }
