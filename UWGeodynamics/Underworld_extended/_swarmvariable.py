@@ -124,7 +124,7 @@ class SwarmVariable(uw.swarm.SwarmVariable):
         h5f.close()
 
         if units:
-            self.data[:] = nondimensionalise(self.data * units)
+            self.data[:] = non_dimensionalise(self.data * units)
 
     def save( self, filename, collective=False, units=None, time=None):
         """
