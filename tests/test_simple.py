@@ -70,9 +70,8 @@ def test_shapes():
     disk1 = GEO.shapes.Disk(center=(10. * u.kilometer, 10. * u.kilometer), radius=10.*u.kilometer)
     disk2 = GEO.shapes.Disk(center=(20. * u.kilometer, 20. * u.kilometer), radius=5.*u.kilometer)
 
-    shape = GEO.shapes.CombinedShape([disk1, disk2])
-    shape2 = layer + polygon + box + disk + annulus
-    #shape3 = layer & polygon & box & disk & annulus
+    shape = disk1 | disk2
+    shape2 = layer | polygon | box | disk | annulus
 
     material = Model.add_material(name="Material", shape=layer)
     material = Model.add_material(name="Material", shape=polygon)
@@ -81,7 +80,6 @@ def test_shapes():
     material = Model.add_material(name="Material", shape=annulus)
     material = Model.add_material(name="Material", shape=shape)
     material = Model.add_material(name="Material", shape=shape2)
-    #material = Model.add_material(name="Material", shape=shape3)
 
 def test_plastic_registry():
     pl = GEO.PlasticityRegistry()
