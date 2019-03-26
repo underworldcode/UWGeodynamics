@@ -27,6 +27,7 @@ from .Underworld_extended import FeMesh_Cartesian
 from .Underworld_extended import Swarm
 from .Underworld_extended import MeshVariable
 from .Underworld_extended import SwarmVariable
+from .Underworld_extended._utils import _swarmvarschema
 from datetime import datetime
 from .version import full_version
 from ._freesurface import FreeSurfaceProcessor
@@ -2497,7 +2498,7 @@ class _CheckpointFunction(object):
                 handle = obj.save('%s.h5' % file_prefix,
                                   units=units, time=time)
                 if rank == 0:
-                    string += uw.utils._swarmvarschema(handle, field)
+                    string += _swarmvarschema(handle, field)
                 comm.Barrier()
 
         if rank == 0:

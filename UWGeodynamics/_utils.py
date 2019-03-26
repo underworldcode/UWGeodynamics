@@ -8,6 +8,7 @@ import operator as op
 from UWGeodynamics import non_dimensionalise as nd
 from UWGeodynamics import dimensionalise
 from UWGeodynamics import UnitRegistry as u
+from .Underworld_extended._utils import _swarmvarschema
 from .Underworld_extended import Swarm
 from scipy import spatial
 from mpi4py import MPI as _MPI
@@ -182,7 +183,7 @@ class PassiveTracers(Swarm):
         handle = self.global_index.save('%s.h5' % file_prefix)
 
         if rank == 0:
-            string += uw.utils._swarmvarschema(handle, "global_index")
+            string += _swarmvarschema(handle, "global_index")
         comm.Barrier()
 
         # Save each tracked field
@@ -199,7 +200,7 @@ class PassiveTracers(Swarm):
 
             if rank == 0:
                 # Add attribute to xdmf file
-                string += uw.utils._swarmvarschema(handle, field["name"])
+                string += _swarmvarschema(handle, field["name"])
 
         comm.Barrier()
 
