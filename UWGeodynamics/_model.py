@@ -2691,9 +2691,9 @@ class _RestartFunction(object):
                 obj = PassiveTracers(Model.mesh,
                                      Model.velocityField,
                                      tracer.name,
-                                     vertices=vertices,
                                      zOnly=tracer.zOnly,
                                      particleEscape=tracer.particleEscape)
+                tracers.add_particles_with_coordinates(vertices)
 
             attr_name = tracer.name.lower() + "_tracers"
             setattr(Model, attr_name, obj)
