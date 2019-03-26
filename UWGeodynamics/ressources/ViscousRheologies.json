@@ -299,11 +299,11 @@
       },
       "activationVolume": {
         "units": "meter ** 3 / mole",
-        "value": 0.000025
+        "value": 20e-6
       },
       "preExponentialFactor": {
         "units": "1 / pascal ** 3.5 / second",
-        "value": 2.4168e-15
+        "value": 2.42e-16
       },
       "stressExponent": {
         "units": "None",
@@ -327,7 +327,7 @@
       },
       "preExponentialFactor": {
         "units": "1 / pascal ** 3.0 / second",
-        "value": 1.7578e-14
+        "value": 3.9e-15
       },
       "stressExponent": {
         "units": "None",
