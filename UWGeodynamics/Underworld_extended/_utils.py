@@ -4,17 +4,17 @@ from underworld.utils._utils import _xdmfAttributeschema
 
 
 _dtypes_to_xdmf = {
-    '<f8>': ("Float", "8"),
-    '<f4>': ("Float", "4"),
-    '<f1>': ("Float", "1"),
-    '<i8>': ("Int", "8"),
-    '<i4>': ("Int", "4"),
-    '<i2>': ("Int", "2"),
-    '<i1>': ("Int", "1"),
-    '<u8>': ("UInt", "8"),
-    '<u4>': ("UInt", "4"),
-    '<u2>': ("UInt", "2"),
-    '<u1>': ("UInt", "1"),
+    '<f8': ("Float", "8"),
+    '<f4': ("Float", "4"),
+    '<f1': ("Float", "1"),
+    '<i8': ("Int", "8"),
+    '<i4': ("Int", "4"),
+    '<i2': ("Int", "2"),
+    '<i1': ("Int", "1"),
+    '<u8': ("UInt", "8"),
+    '<u4': ("UInt", "4"),
+    '<u2': ("UInt", "2"),
+    '<u1': ("UInt", "1"),
 }
 
 
