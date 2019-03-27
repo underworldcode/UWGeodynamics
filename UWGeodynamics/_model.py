@@ -2626,7 +2626,7 @@ class _RestartFunction(object):
 
         # Restart Badlands if we are running a coupled model
         if isinstance(Model.surfaceProcesses, surfaceProcesses.Badlands):
-            self.restart_badlands()
+            self.restart_badlands(step)
 
         return
 
@@ -2705,13 +2705,26 @@ class _RestartFunction(object):
                 print("{0} loaded".format(tracer.name) + '(' + now  + ')')
                 sys.stdout.flush()
 
-    def restart_badlands(self):
+    def restart_badlands(self, step):
+        """ Restart Badlands from step
+            Note that step is only used if no restartStep has been
+            defined on the badlands_model object """
 
         Model = self.Model
 
         badlands_model = Model.surfaceProcesses
         restartFolder = badlands_model.restartFolder
         restartStep = badlands_model.restartStep
+
+        if badlands_model.restartFolder:
+            restartFolder = badlands_model.restartFolder
+        else:
+            restartFolder = badlands_model.outputDir
+
+        if badlands_model.restartStep:
+            restartStep = badlands_model.restartStep
+        else:
+            restartStep = step
 
         # Parse xmf for the last timestep time
         import xml.etree.ElementTree as etree

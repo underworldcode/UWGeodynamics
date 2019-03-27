@@ -49,7 +49,7 @@ class Badlands(SurfaceProcesses):
 
     def __init__(self, airIndex,
                  sedimentIndex, XML, resolution, checkpoint_interval,
-                 surfElevation=0., verbose=True, Model=None,
+                 surfElevation=0., verbose=True, Model=None, outputDir="outbdls",
                  restartFolder=None, restartStep=None, timeField=None,
                  minCoord=None, maxCoord=None):
         try:
@@ -61,6 +61,7 @@ class Badlands(SurfaceProcesses):
                               variables""")
 
         self.verbose = verbose
+        self.outputDir = outputDir
         self.restartStep = restartStep
         self.restartFolder = restartFolder
 
@@ -121,6 +122,7 @@ class Badlands(SurfaceProcesses):
             # Build Mesh
             self.badlands_model.build_mesh(self._demfile, verbose=False)
 
+            self.badlands_model.input.outDir = self.outputDir
             self.badlands_model.input.disp3d = True  # enable 3D displacements
             self.badlands_model.input.region = 0  # TODO: check what this does
             self.badlands_model.input.tStart = self.time_years
