@@ -50,7 +50,7 @@ def _swarmvarschema(varSavedData, varname):
 
     dof_count = var.data.shape[1]
     vartype, precision = _dtypes_to_xdmf[var.data.dtype.str]
-    variableType = "NumberType=\"{0}\"Precision=\"{1}\"".format(vartype, precision)
+    variableType = "NumberType=\"{0}\" Precision=\"{1}\"".format(vartype, precision)
 
     out = _xdmfAttributeschema(varname, variableType, "Node", globalCount, dof_count, refName )
 
