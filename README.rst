@@ -50,6 +50,66 @@ Getting started
 
 The full documentation is available on `ReadTheDocs <http://uwgeodynamics.readthedocs.org/>`_
 
+Contributing
+------------
+
+If you want to contribute to the UWGeodynamics projects and make it better, your help is very welcome.
+
+So how can you contribute?
+
+- Found a bug? Submit an issue using the issue tracker here on GitHub
+- Have some suggestions? You can create an issue. Just add [Feature Request] in the title.
+
+If you have developed some code and you think that it should be included in UWGeodynamics, you
+can create a Pull Request and We will be happy to review it.
+
+How to create a Pull Request (PR)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Create a personal fork of the project on Github.
+
+   You will need a Github Account to do that. Just click on
+   the Fork button at the top right corner of this repository.
+
+1. Clone the fork on your local machine. Your remote repo on Github is called origin.
+
+   `git clone https://github.com/your-github-name/UWGeodynamics`
+
+   replacing "your-github-name" with your actual github name...
+
+1. Add the original repository as a remote called upstream.
+
+   `git add remote upstream https://github.com/underworldcode/UWGeodynamics`
+
+1. If you created your fork a while ago be sure to pull upstream changes into your local repository.
+
+   `git pull upstream`
+
+1. Create a new branch to work on! Branch from development!
+
+   `git checkout upstream/development`
+   `git checkout -b newFeature`
+
+1. Implement/fix your feature, comment your code.
+
+1. Follow the code style of the project, including indentation.
+
+1. Include some tests or usage cases
+
+1. Add or change the documentation as needed.
+   The UWGeodynamics documentation is located in the `docs` directory.
+
+1. Push your branch to your fork on Github, the remote origin.
+   `git push origin newFeature`
+
+1. From your fork open a pull request in the correct branch. Target the project's `development`.
+
+Always write your commit messages in the present tense.
+Your commit message should describe what the commit, when applied, does to the code – not what you did to the code.
+
+
+There is no small contribution!
+
 
 Community driven
 ----------------
