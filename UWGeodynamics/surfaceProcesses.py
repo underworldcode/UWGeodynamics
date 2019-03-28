@@ -51,7 +51,7 @@ class Badlands(SurfaceProcesses):
                  sedimentIndex, XML, resolution, checkpoint_interval,
                  surfElevation=0., verbose=True, Model=None, outputDir="outbdls",
                  restartFolder=None, restartStep=None, timeField=None,
-                 minCoord=None, maxCoord=None):
+                 minCoord=None, maxCoord=None, aspectRatio2d=1.):
         try:
             import pyBadlands
 
@@ -90,8 +90,8 @@ class Badlands(SurfaceProcesses):
             self.maxCoord = self.Model.mesh.maxCoord
 
         if self.Model.mesh.dim == 2:
-            self.minCoord = (self.minCoord[0], self.minCoord[0])
-            self.maxCoord = (self.maxCoord[0], self.maxCoord[0])
+            self.minCoord = (self.minCoord[0], aspectRatio2d*self.minCoord[0])
+            self.maxCoord = (self.maxCoord[0], aspectRatio2d*self.maxCoord[0])
 
         if rank == 0:
             from pyBadlands.model import Model as BadlandsModel
