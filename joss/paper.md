@@ -119,6 +119,9 @@ UWGeo comes with a series of examples, benchmarks and tutorials setups that can
 be used as cookbook recipes. They also provide a wide range of teaching materials
 useful to introduce numerical geodynamic modeling to students.
 
+New functionalities are constantly added to the code and contributions are more than
+welcomed. You can access the full documentation online at https://uwgeodynamics.readthedocs.io
+
 # Audience
 
 The module is directed towards a large audience, including earth-science
