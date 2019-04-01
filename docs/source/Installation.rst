@@ -34,6 +34,18 @@ Once you have installed docker on your system you can *pull* the
 
   docker pull underworldcode/uwgeodynamics
 
+You can list all the images available on your system as follow:
+
+.. code:: bash
+
+  docker images
+
+An image can be deleted as follow:
+
+.. code:: bash
+
+  docker rmi underworldcode/uwgeodynamics
+
 You can then start a docker container. (An instance of
 an image).
 
@@ -55,6 +67,31 @@ It is also possible to ssh into the container as follow:
 
   docker exec -it my_container /bin/bash
 
+You can list the containers currently existing on your machine by running:
+
+.. code:: bash
+
+  docker ps -a
+
+The "a" means "all container". The :code:`docker ps` command only list
+running containers.
+
+Docker containers can be stop (so that they do not use CPU or RAM ressource):
+
+.. code:: bash
+
+  docker stop my_container
+
+They can also be deleted:
+
+.. code:: bash
+
+  docker rm my_container
+
+.. warning::
+
+  It's a good idea to keep track of how many containers have been created as
+  they can rapidly take a lot of space on your machine.
 
 Kitematic_
 ~~~~~~~~~~
