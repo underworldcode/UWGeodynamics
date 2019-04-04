@@ -609,15 +609,7 @@ class CompositeViscosity(Rheology):
         if not isinstance(viscosities, (list, tuple)):
             raise ValueError('viscosities must be a list of viscosities')
 
-        for viscosity in viscosities:
-            if not isinstance(viscosity, ViscousCreep):
-                raise ValueError('The viscosity entered is not of ViscousCreep type')
-
         self.viscosities = viscosities
-
-        self.pressureField = None
-        self.strainRateInvariantField = None
-        self.temperatureField = None
 
     @property
     def muEff(self):
@@ -625,7 +617,7 @@ class CompositeViscosity(Rheology):
         for viscosity in self.viscosities:
             viscosity.pressureField = self.pressureField
             viscosity.strainRateInvariantField = self.strainRateInvariantField
-            viscosity.temperature = self.temperatureField
+            viscosity.temperatureField = self.temperatureField
             muEff += 1.0 / viscosity.muEff
 
         return 1.0 / muEff
