@@ -2694,7 +2694,7 @@ class _RestartFunction(object):
                                      tracer.name,
                                      zOnly=tracer.zOnly,
                                      particleEscape=tracer.particleEscape)
-                tracers.add_particles_with_coordinates(vertices)
+                obj.add_particles_with_coordinates(vertices)
 
             attr_name = tracer.name.lower() + "_tracers"
             setattr(Model, attr_name, obj)
