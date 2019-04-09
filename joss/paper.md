@@ -1,5 +1,5 @@
 ---
-title: 'UWGeodynamics: A teaching an research tool for numerical geodynamic modelling'
+title: 'UWGeodynamics: A teaching and research tool for numerical geodynamic modelling'
 tags:
   - Python
   - geodynamics
