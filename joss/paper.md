@@ -90,10 +90,10 @@ on multiple CPUs on personal computers and/or High Performance Computing systems
 Although UWGeodynamics has been primarily designed to address geodynamic
 problems, it can also be used to teach fluid dynamics and material mechanics.
 
-UWGeodynamics uses the flexibility of the python language and the Jupyter
-notebook environment which allows leveraging the wide range of scientific
-libraries available from the python community.
-It also facilitates the coupling with existing scientific python modules such
+UWGeodynamics uses the flexibility of the Python language and the Jupyter
+Notebook environment, which allows leveraging the wide range of scientific
+libraries available from the Python community.
+It also facilitates the coupling with existing scientific Python modules such
 as Badlands [@Salles2018].
 
 The functionalities include:
@@ -113,13 +113,13 @@ The functionalities include:
 - Partial melt calculation and associated change in viscosity / heat production.
 - Simple definition of passive tracers and grid of tracers.
 - Simple Phase changes
-- 2 way coupling with the surface processes model pyBadlands [@Salles2018].
+- 2-way coupling with the surface processes model pyBadlands [@Salles2018].
 
-UWGeo comes with a series of examples, benchmarks and tutorials setups that can
-be used as cookbook recipes. They also provide a wide range of teaching materials
+UWGeo comes with a series of examples, benchmarks and tutorial setups that can
+be used as cookbook recipes. They provide a wide range of teaching materials
 useful to introduce numerical geodynamic modeling to students.
 
-New functionalities are constantly added to the code and contributions are more than
+New functionalities are constantly being added to the code and contributions are more than
 welcomed. You can access the full documentation online at https://uwgeodynamics.readthedocs.io
 
 # Audience
