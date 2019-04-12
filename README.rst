@@ -1,6 +1,9 @@
 Underworld Geodynamics project
 ==============================
 
+.. image:: http://joss.theoj.org/papers/10.21105/joss.01136/status.svg
+   :target: https://doi.org/10.21105/joss.01136
+
 .. image:: https://zenodo.org/badge/114189389.svg
     :target: https://zenodo.org/badge/latestdoi/114189389
     :alt: DOI      
