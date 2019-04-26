@@ -199,6 +199,7 @@ class Model(Material):
         self.checkpointID = 0
         self._ndtime = 0.0
         self.step = 0
+        self.nlstep = 0
         self._dt = None
 
         self.materials = list(materials) if materials is not None else list()
@@ -1165,8 +1166,8 @@ class Model(Material):
         return newField
 
     def add_mesh_variable(self, name, nodeDofCount=1,
-                       dataType="double", init_value=0.,
-                       restart_variable=False, **kwargs):
+                          dataType="double", init_value=0.,
+                          restart_variable=False, **kwargs):
         """Add a new mesh field to the model
 
         Parameters
@@ -1465,11 +1466,13 @@ class Model(Material):
         mask = (mat == Decimal(material.index))
         nodes = np.arange(0, self.mesh.nodesDomain)[mask.flatten()]
         return uw.mesh.FeMesh_IndexSet(self.mesh, topologicalIndex=0,
-                                           size=self.mesh.nodesGlobal,
-                                           fromObject=nodes)
+                                       size=self.mesh.nodesGlobal,
+                                       fromObject=nodes)
 
     def solve(self):
         """ Solve Stokes """
+
+        self.nlstep = 0
 
         if self.step == 0:
             self._curTolerance = rcParams["initial.nonlinear.tolerance"]
@@ -1573,8 +1576,6 @@ class Model(Material):
 
         ndduration = self._ndtime + nd(duration) if duration else None
 
-        output_time_units = _get_output_units(
-            duration, checkpoint_interval, output_units)
         output_dt_units = _get_output_units(
             output_units, checkpoint_interval, duration)
 
@@ -1689,6 +1690,7 @@ class Model(Material):
                 raise ValueError("""The function {0} must be
                                  callable""".format(key))
         self._solution_exist.value = True
+        self.nlstep += 1
 
     def _update(self):
         """ Update Function
@@ -1922,8 +1924,8 @@ class Model(Material):
                     materialMap[material.index] = nd(material.compressibility)
 
             return (uw.function.branching.map(fn_key=self.materialField,
-                                                  mapping=materialMap,
-                                                  fn_default=0.0))
+                                              mapping=materialMap,
+                                              fn_default=0.0))
         return
 
     @property
@@ -1934,7 +1936,6 @@ class Model(Material):
     def freeSurface(self, value):
         if value:
             self._freeSurface = FreeSurfaceProcessor(self)
-
 
     def add_visugrid(self, elementRes, minCoord=None, maxCoord=None):
         """ Add a tracking grid to the Model
@@ -2016,6 +2017,11 @@ class _ViscosityFunction():
 
         return new_function(self)
 
+    def _use_initial_viscosity(self, material):
+        return (material.initial_viscosity and
+                not self.Model._solution_exist and
+                self.Model.nlstep == 0)
+
     def get_effective_eta(self, averaging_scheme):
         """ Effective viscosity"""
 
@@ -2080,6 +2086,9 @@ class _ViscosityFunction():
 
         # Viscous behavior
         for material in Model.materials:
+            if self._use_initial_viscosity(material):
+                ViscosityMap[material.index] = material._initial_viscosity
+                continue
             if material.viscosity:
                 ViscosityHandler = material.viscosity
                 ViscosityHandler.pressureField = Model.pressureField
@@ -2099,6 +2108,8 @@ class _ViscosityFunction():
 
         melt_modif = {}
         for material in Model.materials:
+            if self._use_initial_viscosity(material):
+                continue
             if material.viscosity and material.viscosityChange != 1.0:
                 X1 = material.viscosityChangeX1
                 X2 = material.viscosityChangeX2
@@ -2121,6 +2132,8 @@ class _ViscosityFunction():
 
         PlasticityMap = {}
         for material in Model.materials:
+            if self._use_initial_viscosity(material):
+                continue
             if material.plasticity:
 
                 YieldHandler = material.plasticity
@@ -2202,6 +2215,8 @@ class _ViscosityFunction():
         ElasticEtaMap = {}
 
         for material in Model.materials:
+            if self._use_initial_viscosity(material):
+                continue
             if material.elasticity:
                 ElasticityHandler = material.elasticity
                 ElasticityHandler.viscosity = self.viscous_eta

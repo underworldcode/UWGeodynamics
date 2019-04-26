@@ -20,6 +20,7 @@ _dim_stress = {'[length]': -1.0, '[mass]': 1.0, '[time]': -2.0}
 _dim_rate = {'[time]': -1.0}
 
 
+
 class Material(object):
     """ Material class object """
 
@@ -32,9 +33,10 @@ class Material(object):
     def __init__(self, name="Undefined", shape=None,
                  density=0.*u.kilogram/u.metre**3, diffusivity=None,
                  capacity=None, radiogenicHeatProd=0.0*u.microwatt/u.meter**3,
-                 viscosity=None, plasticity=None, elasticity=None,
-                 minViscosity=None, maxViscosity=None, stressLimiter=None,
-                 healingRate=0.0 / u.year,
+                 initial_viscosity=None, viscosity=None,
+                 plasticity=None, elasticity=None,
+                 minViscosity=None, maxViscosity=None,
+                 stressLimiter=None, healingRate=0.0 / u.year,
                  solidus=None, liquidus=None,
                  latentHeatFusion=0.0, meltExpansion=0.0, meltFraction=0.0,
                  meltFractionLimit=1.0, viscosityChangeX1=0.15,
@@ -123,6 +125,8 @@ class Material(object):
 
         self._viscosity = None
         self.viscosity = viscosity
+        self._initial_viscosity = None
+        self.initial_viscosity = initial_viscosity
         self._plasticity = None
         self.plasticity = plasticity
 
@@ -143,20 +147,15 @@ class Material(object):
 
     @viscosity.setter
     def viscosity(self, value):
-        if isinstance(value, (u.Quantity, float)):
-            # Check dimensionality
-            if (isinstance(value, u.Quantity) and
-               value.dimensionality != _dim_viscosity):
-                _dim_vals = u.get_dimensionality(_dim_viscosity)
-                raise DimensionalityError(value, 'a quantity of',
-                                          value.dimensionality,
-                                          _dim_vals)
+        self._viscosity = _process_viscosity_value(value)
 
-            self._viscosity = ConstantViscosity(value)
-        elif isinstance(value, str):
-            self._viscosity = get_viscosity_from_registry(value)
-        else:
-            self._viscosity = value
+    @property
+    def initial_viscosity(self):
+        return self._initial_viscosity
+
+    @initial_viscosity.setter
+    def initial_viscosity(self, value):
+        self._initial_viscosity = _process_viscosity_value(value)
 
     @property
     def plasticity(self):
@@ -345,6 +344,24 @@ class MaterialRegistry(object):
     def __getattr__(self, item):
         # Make sure to return a new instance of ViscousCreep
         return copy(self._dir[item])
+
+
+def _process_viscosity_value(value):
+    """ Process the value assign to the viscosity attribute """
+    if isinstance(value, (u.Quantity, float)):
+        # Check dimensionality
+        if (isinstance(value, u.Quantity) and
+           value.dimensionality != _dim_viscosity):
+            _dim_vals = u.get_dimensionality(_dim_viscosity)
+            raise DimensionalityError(value, 'a quantity of',
+                                      value.dimensionality,
+                                      _dim_vals)
+
+        return ConstantViscosity(value)
+    elif isinstance(value, str):
+        return get_viscosity_from_registry(value)
+    else:
+        return value
 
 
 def get_viscosity_from_registry(rheology_name):
