@@ -21,7 +21,7 @@ RUN pip3 install --no-cache-dir pandas \
                 git+https://github.com/awickert/gFlex.git
 
 # pyBadlands serial
-RUN git clone -b python3 https://github.com/rbeucher/pyBadlands_serial.git
+RUN git clone https://github.com/rbeucher/pyBadlands_serial.git
 RUN cd /opt/pyBadlands_serial/pyBadlands/libUtils && make
 RUN pip3 install -e /opt/pyBadlands_serial
 
