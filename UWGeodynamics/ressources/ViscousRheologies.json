@@ -47,10 +47,10 @@
       }
     }
   },
-  "Wet Quartz, Viscous Dislocation Creep, Goetze et al., 1978": {
+  "Wet Olivine, Viscous Dislocation Creep, Goetze et al., 1978": {
     "citation": "Goetze, C. (1978). The mechanisms of creep in olivine. Phil. Trans. R. Soc. Lond. A, 288(1350), 99-119.",
     "onlinePDF": "http://rsta.royalsocietypublishing.org/content/288/1350/99.short",
-    "Mineral": "Wet Quartz",
+    "Mineral": "Wet Olivine",
     "Type": "Viscous Dislocation Creep",
     "coefficients": {
       "activationEnergy": {
