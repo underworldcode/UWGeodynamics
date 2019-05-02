@@ -758,14 +758,15 @@ class Model(Material):
         # This can be done by switching the _rebuild_solver flag
         # to true.
         if not self._solver or self._rebuild_solver:
-            if self._rebuild_solver and self._solver:
+            if self._rebuild_solver:
                 # Save current options in a dictionary
                 options = _solver_options_dictionary(self._solver)
-            self._solver = uw.systems.Solver(self.stokes_SLE)
-            if self._rebuild_solver and self._solver:
+                # Rebuild solver
+                self._solver = uw.systems.Solver(self.stokes_SLE)
                 # Apply saved options on *new* solver
-                options = _solver_options_dictionary(self._solver)
                 _apply_saved_options_on_solver(self._solver, options)
+            else:
+                self._solver = uw.systems.Solver(self.stokes_SLE)
         return self._solver
 
     @property
@@ -2791,9 +2792,12 @@ def _solver_options_dictionary(solver):
     """Return a dictionary of all the solver options"""
     dd = {}
     for key, val in solver.options.__dict__.items():
-        dd2 = {}
-        for key2, val2, in val.__dict__.items():
-            dd2[key2] = val2
+        if isinstance(val, dict):
+            dd2 = {}
+            for key2, val2, in val.__dict__.items():
+                dd2[key2] = val2
+        else:
+            dd2 = val
         dd[key] = dd2
     return dd
 
@@ -2805,8 +2809,11 @@ def _apply_saved_options_on_solver(solver, options):
     options: python dictionary
     """
     for key, val in options.items():
-        for key2, val2 in val.items():
-            solver.options.__dict__[key].__dict__[key2] = val2
+        if isinstance(val, dict):
+            for key2, val2 in val.items():
+                solver.options.__dict__[key].__dict__[key2] = val2
+        else:
+            solver.options.__dict__[key] = val
     return solver
 
 
