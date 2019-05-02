@@ -764,7 +764,6 @@ class Model(Material):
             self._solver = uw.systems.Solver(self.stokes_SLE)
             if self._rebuild_solver and self._solver:
                 # Apply saved options on *new* solver
-                options = _solver_options_dictionary(self._solver)
                 _apply_saved_options_on_solver(self._solver, options)
         return self._solver
 
@@ -2791,9 +2790,12 @@ def _solver_options_dictionary(solver):
     """Return a dictionary of all the solver options"""
     dd = {}
     for key, val in solver.options.__dict__.items():
-        dd2 = {}
-        for key2, val2, in val.__dict__.items():
-            dd2[key2] = val2
+        if isinstance(val, dict):
+            dd2 = {}
+            for key2, val2, in val.__dict__.items():
+                dd2[key2] = val2
+        else:
+            dd2 = val
         dd[key] = dd2
     return dd
 
@@ -2805,8 +2807,11 @@ def _apply_saved_options_on_solver(solver, options):
     options: python dictionary
     """
     for key, val in options.items():
-        for key2, val2 in val.items():
-            solver.options.__dict__[key].__dict__[key2] = val2
+        if isinstance(val, dict):
+            for key2, val2 in val.items():
+                solver.options.__dict__[key].__dict__[key2] = val2
+        else:
+            solver.options.__dict__[key] = val
     return solver
 
 
