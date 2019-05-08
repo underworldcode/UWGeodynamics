@@ -101,7 +101,7 @@
             },
             "frictionAfterSoftening": {
                 "units": "None",
-                "value": 0.2308
+                "value": 0.02308
             },
             "frictionCoefficient": {
                 "units": "None",
