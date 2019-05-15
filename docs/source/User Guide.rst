@@ -1530,13 +1530,13 @@ In practice, this means the user must run all commands preceding the
 **Model.run_for** command.
 
 The user can then restart a model using the **restartStep** and
-**restartFolder** arguments:
+**restartDir** arguments:
 
 -  **restartStep** is *None* by default.
    The step numbercyou want to restart from. If -1, restarts from the last available
-   step in **restartFolder**
+   step in **restartDir**
 
--  **restartFolder** is the folder where the program should look for
+-  **restartDir** is the folder where the program should look for
    previously saved data or checkpoints. It is set to **Model.outputs** by default.
 
 .. code:: python
@@ -1549,11 +1549,11 @@ The user can then restart a model using the **restartStep** and
                      minCoord=(0. * u.kilometre, 0. * u.kilometre),
                      maxCoord=(64. * u.kilometre, 64. * u.kilometre))
 
-   # Default (restart, restartFolder are optional in this case)
-   Model.run_for(2.0 * u.megayears, restartStep=-1, restartFolder="your_restart_folder")
+   # Default (restart, restartDir are optional in this case)
+   Model.run_for(2.0 * u.megayears, restartStep=-1, restartDir="your_restart_directory")
 
    # Restart from step 10
-   Model.run_for(2.0 * u.megayears, restartStep=10, restartFolder="your_restart_folder")
+   Model.run_for(2.0 * u.megayears, restartStep=10, restartDir="your_restart_directory")
 
    # Overwrite existing outputs
    Model.run_for(2.0 * u.megayears, restartStep=False)
