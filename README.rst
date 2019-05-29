@@ -1,5 +1,6 @@
 
 .. image:: /docs/source/img/logos.png
+    :target: https://www.earthbyte.org/the-basin-genesis-hub
 
 Underworld Geodynamics project
 ==============================
