@@ -1,3 +1,6 @@
+
+.. image:: /docs/source/img/logos.png
+
 Underworld Geodynamics project
 ==============================
 
