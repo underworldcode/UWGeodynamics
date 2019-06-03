@@ -1,4 +1,3 @@
-import pandas as pd
 import os, re, glob
 import h5py
 
@@ -26,7 +25,7 @@ def extract_global_indices(output_folder, tracers_name, index):
     return global_indices.ravel()
 
 def extract_tracers_data(output_folder, tracers_name, csv=True):
-
+    import pandas as pd
     swarm_files, indices = find_swarm_files(output_folder, tracers_name)
     if not swarm_files:
         raise ValueError("""Cannot find tracers {0}""".format(tracers_name))
