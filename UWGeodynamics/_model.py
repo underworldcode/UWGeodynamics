@@ -32,6 +32,7 @@ from datetime import datetime
 from .version import full_version
 from ._freesurface import FreeSurfaceProcessor
 from ._remeshing import ReMesher
+from ._rheology import ViscousCreep
 
 comm = _MPI.COMM_WORLD
 rank = comm.rank
@@ -2091,12 +2092,12 @@ class _ViscosityFunction():
                 ViscosityMap[material.index] = material._initial_viscosity
                 continue
             if material.viscosity:
-                ViscosityHandler = material.viscosity
-                ViscosityHandler.pressureField = Model.pressureField
-                ViscosityHandler.strainRateInvariantField = (
+                viscosity_function = material.viscosity
+                viscosity_function.pressureField = Model.pressureField
+                viscosity_function.strainRateInvariantField = (
                     Model.strainRate_2ndInvariant)
-                ViscosityHandler.temperatureField = Model.temperature
-                ViscosityMap[material.index] = ViscosityHandler.muEff
+                viscosity_function.temperatureField = Model.temperature
+                ViscosityMap[material.index] = viscosity_function
 
         self.viscous_eta = fn.branching.map(fn_key=Model.materialField,
                                             mapping=ViscosityMap)

@@ -276,8 +276,12 @@ def _material_html_repr(Material):
     </tr>""".format(type_)
 
     if Material.viscosity:
+        try:
+            viscosity_name = Material.viscosity.name
+        except AttributeError:
+            viscosity_name = "User Defined"
         html += "<tr><td>{0}</td><td>{1}</td></tr>".format(
-            "Viscosity", Material.viscosity.name)
+            "Viscosity", viscosity_name)
     if Material.plasticity:
         html += "<tr><td>{0}</td><td>{1}</td></tr>".format(
             "Plasticity", Material.plasticity.name)
@@ -356,7 +360,6 @@ def _process_viscosity_value(value):
             raise DimensionalityError(value, 'a quantity of',
                                       value.dimensionality,
                                       _dim_vals)
-
         return ConstantViscosity(value)
     elif isinstance(value, str):
         return get_viscosity_from_registry(value)

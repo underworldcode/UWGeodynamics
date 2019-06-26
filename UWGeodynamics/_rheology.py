@@ -125,29 +125,55 @@ class Stress_limiter(Limiter):
         super(Stress_limiter, self).__init__(stress, max_value=max_stress)
 
 
-class Rheology(ABC):
+class Rheology(fn.Function):
     """Rheology Base Class"""
 
-    def __init__(self, pressureField=None, strainRateInvariantField=None,
-                 temperatureField=None, viscosityLimiter=None,
-                 stressLimiter=None):
+    def __init__(self, argument_fns=None, *args, **kwargs):
 
-        self.pressureField = pressureField
-        self.strainRateInvariantField = strainRateInvariantField
-        self.temperatureField = temperatureField
-        self.stressLimiter = stressLimiter
-        self.firstIter = fn.misc.constant(True)
+        self._pressureField = None
+        self._strainRateInvariantField = None
+        self._temperatureField = None
+        self._stressLimiter = None
 
         self.viscosity = None
         self.plasticity = None
         self.cohesion = None
         self.friction = None
 
+        self.firstIter = fn.misc.constant(True)
+        super(Rheology, self).__init__(argument_fns=argument_fns)
+
         return
 
-    @abc.abstractmethod
-    def muEff(self):
-        pass
+    @property
+    def temperatureField(self):
+        return self._temperatureField
+
+    @temperatureField.setter
+    def temperatureField(self, value):
+        self._temperatureField = value
+        self._build_fn()
+
+    @property
+    def pressureField(self):
+        return self._pressureField
+
+    @pressureField.setter
+    def pressureField(self, value):
+        self._pressureField = value
+        self._build_fn()
+
+    @property
+    def strainRateInvariantField(self):
+        return self._strainRateInvariantField
+
+    @strainRateInvariantField.setter
+    def strainRateInvariantField(self, value):
+        self._strainRateInvariantField = value
+        self._build_fn()
+
+    def _build_fn(self):
+        return
 
 
 class DruckerPrager(object):
@@ -357,16 +383,11 @@ class ConstantViscosity(Rheology):
             An UWGeodynamics ConstantViscosity Class
 
         """
-        super(ConstantViscosity, self).__init__()
+        super(ConstantViscosity, self).__init__(argument_fns=None)
         self.viscosity = viscosity
         self.name = "Constant ({0})".format(str(viscosity))
-
-    @property
-    def muEff(self):
-        return self._effectiveViscosity()
-
-    def _effectiveViscosity(self):
-        return fn.Function.convert(nd(self.viscosity))
+        self.fn = fn.misc.constant(nd(self.viscosity))
+        self._fncself = self.fn._fncself
 
 
 class ViscousCreep(Rheology):
@@ -387,7 +408,10 @@ class ViscousCreep(Rheology):
                  f=1.0,
                  BurgersVectorLength=0.5e-9 * u.metre,
                  mineral="unspecified",
-                 creep_type="unspecified"):
+                 creep_type="unspecified",
+                 strainRateField=None,
+                 temperatureField=None,
+                 pressureField=None):
         """ Viscous Creep Rheology
 
         Deformation of materials on long timescale is predominantly achieved
@@ -445,8 +469,6 @@ class ViscousCreep(Rheology):
 
         """
 
-        super(ViscousCreep, self).__init__()
-
         self.name = name
         self.mineral = mineral
         self.creep_type = creep_type
@@ -464,8 +486,24 @@ class ViscousCreep(Rheology):
         self.constantGas = 8.3144621 * u.joule / u.mole / u.degK
         self.BurgersVectorLength = BurgersVectorLength
 
+        self._temperatureField = None
+        self._pressureField = None
+        self._strainRateInvariantField = None
+
+        if pressureField:
+            self._pressureField = pressureField
+
+        if temperatureField:
+            self._temperatureField = temperatureField
+
+        if strainRateField:
+            self._strainRateInvariantField = strainRateField
+
         self.onlinePDF = None
         self.citation = None
+
+        super(ViscousCreep, self).__init__(argument_fns=None)
+        self._build_fn()
 
     def __mul__(self, other):
         self.f = other
@@ -508,14 +546,9 @@ class ViscousCreep(Rheology):
             if val is not None:
                 html += '<tr><td style="text-align:left;width:20%;">{0}</td><td style="text-align:left;width:80%">{1}</td></tr>'.format(key, val)
 
-
         return header + html + footer
 
-    @property
-    def muEff(self):
-        return self._effectiveViscosity()
-
-    def _effectiveViscosity(self):
+    def _build_fn(self):
         """
         Return effective viscosity based on
 
@@ -567,7 +600,7 @@ class ViscousCreep(Rheology):
 
         mu_eff = f * 0.5 * A**(-1.0 / n)
 
-        if np.abs(n - 1.0) > 1e-5:
+        if np.abs(n - 1.0) > 1e-5 and I:
             mu_eff *= I**((1.0 - n) / n)
 
         # Grain size dependency
@@ -584,22 +617,22 @@ class ViscousCreep(Rheology):
         if T:
             mu_eff *= fn.math.exp((Q + P * Va) / (R * T * n))
 
-        return mu_eff
+        self.fn = fn.Function.convert(mu_eff)
+        self._fncself = self.fn._fncself
 
 
 class CompositeViscosity(Rheology):
 
     def __init__(self, viscosities):
 
-        super(CompositeViscosity, self).__init__()
+        super(CompositeViscosity, self).__init__(argument_fns=None)
 
         if not isinstance(viscosities, (list, tuple)):
             raise ValueError('viscosities must be a list of viscosities')
 
         self.viscosities = viscosities
 
-    @property
-    def muEff(self):
+    def _build_fn(self):
         muEff = fn.misc.constant(0.0)
         for viscosity in self.viscosities:
             viscosity.pressureField = self.pressureField
@@ -607,24 +640,26 @@ class CompositeViscosity(Rheology):
             viscosity.temperatureField = self.temperatureField
             muEff += 1.0 / viscosity.muEff
 
-        return 1.0 / muEff
+        self.fn = 1.0 / muEff
+        self._fncself = self.fn._fncself
 
 
-class TemperatureAndDepthDependentViscosity(Rheology):
-
-    def __init__(self, eta0, beta, gamma, reference, temperatureField=None):
-
-        self._eta0 = nd(eta0)
-        self._gamma = gamma
-        self._beta = gamma
-        self._reference = nd(reference)
-
-    @property
-    def muEff(self):
-        coord = fn.input()
-        return (self._eta0 * fn.math.exp(self._gamma *
-                                         (coord[-1] - self._reference)))
-
+#class TemperatureAndDepthDependentViscosity(Rheology):
+#
+#    def __init__(self, eta0, beta, gamma, reference, temperatureField=None):
+#
+#        super(CompositeViscosity, self).__init__(argument_fns=None)
+#        self._eta0 = nd(eta0)
+#        self._gamma = gamma
+#        self._beta = gamma
+#        self._reference = nd(reference)
+#
+#    @property
+#    def muEff(self):
+#        coord = fn.input()
+#        return (self._eta0 * fn.math.exp(self._gamma *
+#                                         (coord[-1] - self._reference)))
+#
 
 class ViscousCreepRegistry(object):
     def __init__(self, filename=None):
