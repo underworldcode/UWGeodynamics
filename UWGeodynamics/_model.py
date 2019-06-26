@@ -829,27 +829,17 @@ class Model(Material):
         conditions.append(self.temperatureBCs)
         if self._heatFlowBCs:
             conditions.append(self.heatFlowBCs)
-
-        if rcParams["advection.diffusion.method"] is "SLCN":
-
-            obj = uw.systems.SLCN_AdvectionDiffusion(
-                self.temperature,
+        
+        obj = uw.systems.AdvectionDiffusion(
+                method=rcParams["advection.diffusion.method"],
+                phiField=self.temperature,
+                phiDotField=self._temperatureDot,
                 velocityField=self.velocityField,
                 fn_diffusivity=self.DiffusivityFn,
                 fn_sourceTerm=self.HeatProdFn,
                 conditions=conditions
-            )
+        )
 
-        if rcParams["advection.diffusion.method"] is "SUPG":
-
-            obj = uw.systems.AdvectionDiffusion(
-                self.temperature,
-                self._temperatureDot,
-                velocityField=self.velocityField,
-                fn_diffusivity=self.DiffusivityFn,
-                fn_sourceTerm=self.HeatProdFn,
-                conditions=conditions
-            )
         return obj
 
     @property
