@@ -25,4 +25,5 @@ USER jovyan
 ENV PATH $PATH:/opt/pyBadlands/pyBadlands/libUtils
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/pyBadlands/pyBadlands/libUtils
 
+WORKDIR /home/jovyan
 CMD ["jupyter", "notebook", "--ip='0.0.0.0'", "--no-browser"]
