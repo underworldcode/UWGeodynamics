@@ -1,0 +1,22 @@
+
+version: '3' 
+services:     
+    underworld:
+        container_name: UWGeodynamics-dev
+        image: underworldcode/uwgeodynamics:dev
+        build:
+          context: $PWD
+          dockerfile: Dockerfile
+        hostname: "uw-container"
+        environment:
+          - PYTHONPATH=/opt/UWGeodynamics:/usr/lib:/usr/local/underworld2/lib
+        volumes:
+          - $PWD:/opt/UWGeodynamics  
+          - $PWD/examples:/workspace/user_data/examples
+          - $PWD/tutorials:/workspace/user_data/tutorials
+        working_dir: /workspace/user_data
+        command: "jupyter notebook --ip=0.0.0.0 --no-browser"
+        ports:
+          - "8888:8888"
+          - "9999:9999"        
+
