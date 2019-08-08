@@ -1,0 +1,8 @@
+# Version 2.8
+
+- Compatible with UW 2.8 (Python 3 only)
+- Support for SLADE (Semi Lagrangian Crank Nicholson method for Advection Diffusion)
+- Add option to use pre-defined initial viscosities of the materials for the first solve.
+- Add option to pass the Lithostatic field as an initial stress condition.
+- Single simplified Dockerfile / Docker Image
+- Fix bugs
