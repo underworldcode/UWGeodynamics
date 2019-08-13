@@ -606,7 +606,7 @@ Several shapes can be combined to form a material shape:
    >>> disk2 = GEO.shapes.Disk(center=(20. * u.kilometre, 20. * u.kilometre),
    ...                         radius=5.*u.kilometre)
 
-   >>> shape = disk1 & disk2
+   >>> shape = disk1 | disk2
    >>> material = Model.add_material(name="Material", shape=shape)
 
    >>> Fig = glucifer.Figure(figsize=(400,400))
@@ -614,28 +614,6 @@ Several shapes can be combined to form a material shape:
    >>> Fig.show()
 
 .. image:: /img/multishape.png
-
-The following is equivalent:
-
-.. code:: python
-
-  >>> import UWGeodynamics as GEO
-  >>> import glucifer
-
-  >>> u = GEO.u
-  >>> Model = GEO.Model()
-  >>> disk1 = GEO.shapes.Disk(center=(32. * u.kilometre, 32. * u.kilometre),
-  ...                         radius=10.*u.kilometre)
-  >>> disk2 = GEO.shapes.Disk(center=(32. * u.kilometre, 22. * u.kilometre),
-  ...                         radius=10.*u.kilometre)
-
-  >>> shape = disk1 + disk2
-  >>> material = Model.add_material(name="Material", shape=shape)
-
-  >>> Fig = glucifer.Figure(figsize=(400,400))
-  >>> Fig.Points(Model.swarm, Model.materialField)
-  >>> Fig.show()
-
 
 You can also take the intersection of some shapes:
 
@@ -658,6 +636,7 @@ You can also take the intersection of some shapes:
   >>> Fig.Points(Model.swarm, Model.materialField)
   >>> Fig.show()
 
+.. image:: /img/multishape-1.png
 
 **HalfSpace**
 
@@ -679,6 +658,7 @@ defined by the normal vector.
    >>> u = GEO.UnitRegistry
 
    >>> Model = GEO.Model(elementRes=(34, 34, 12),
+   ...                   gravity=(0., 0., -9.81 * u.m / u.s**2),
    ...                   minCoord=(0. * u.km, 0. * u.km, -2880. * u.km),
    ...                   maxCoord=(9000. * u.km, 2000. * u.km, 20. * u.km))
 
@@ -688,7 +668,7 @@ defined by the normal vector.
    >>> halfspace4 = GEO.shapes.HalfSpace(normal=(0.,0.,-1.), origin=(6500. * u.km, 1000. * u.km, -1000. * u.km))
 
    >>> compositeShape = halfspace1 & halfspace2 & halfspace3 & halfspace4
-   >>> polygon= Model.add_material(name="polygon", shape=CompositeShape)
+   >>> polygon= Model.add_material(name="polygon", shape=compositeShape)
 
    >>> Fig = glucifer.Figure()
    >>> Fig.Points(Model.swarm, Model.materialField, cullface=False, opacity=1.)
@@ -1313,6 +1293,21 @@ across the border/boundary.
 
    >>> Model.set_stressBCs(bottom=[None, 10.*u.megapascal])
    ...
+
+Lithostatic Pressure Condition (stress)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The lithostatic pressure field can be passed as a boundary condition (stress)
+
+.. code:: python
+
+   >>> import UWGeodynamics as GEO
+   >>> u = GEO.u
+   >>> Model = GEO.Model()
+
+   >>> Model.set_stressBCs(left=[-Model.lithostatic_pressureField, None])
+   ...
+
 
 Thermal Boundary Conditions
 ---------------------------
