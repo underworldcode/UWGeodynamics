@@ -1,11 +1,11 @@
-FROM underworldcode/underworld2:dev
+FROM underworldcode/underworld2:v2.8.0b
 
 USER root
 
 # Badlands dependency
 RUN pip3 install --no-cache-dir pandas \
                 ez_setup \ 
-                git+https://github.com/badlands-model/triangle.git \
+                tribad \
                 git+https://github.com/awickert/gFlex.git \
                 git+https://github.com/matplotlib/legacycontour.git \
                 git+https://github.com/matplotlib/cmocean.git \
@@ -14,7 +14,7 @@ RUN pip3 install --no-cache-dir pandas \
 WORKDIR /opt
 
 # Compile and install pyBadlands
-RUN git clone https://github.com/badlands-model/pyBadlands_serial.git pyBadlands &&\
+RUN git clone https://github.com/rbeucher/pyBadlands_serial.git pyBadlands &&\
     cd pyBadlands/pyBadlands/libUtils && \
     make && \
     cd /opt && \
