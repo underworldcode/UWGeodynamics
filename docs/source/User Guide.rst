@@ -1515,6 +1515,47 @@ This is done passing the *restart_checkpoint* argument to the
 By default, the swarm and the swarm variables are saved every time the
 model reaches a checkpoint time (``restart_checkpoint=1``).
 
+
+Pre / Post-solve hook functions
+-------------------------------
+
+We provide 2 access points for injection of custom functions.
+
+.. code:: python
+
+   def my_functionA():
+       # do something
+       print("Hello, I am running a pre-solve function")
+       return
+   
+   def my_functionB():
+       # do something
+       print("Hello, I am running a post-solve function")
+       return
+
+   Model.pre_solve_function["A"] = my_functionA
+   Model.post_solve_function["B"] = my_functionB
+
+Note that the functions are executed in the order they were defined.
+
+
+Solver Callback functions
+-------------------------
+
+User can provide custom callback functions to the solver itself. The function(s) will be executed
+after each solve. This gives the possibility to tweak the behaviour of the non-linear iterations loop.
+
+
+.. code:: python
+
+   def my_function()
+       # do something
+       print("Hello, This is a solver callback")
+
+   Model.callback_function["my_function"] = my_function
+
+
+
 Restarting the Model
 --------------------
 
