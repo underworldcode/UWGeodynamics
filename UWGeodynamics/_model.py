@@ -1282,7 +1282,7 @@ class Model(Material):
 
     def _viscous_stressFn(self):
         """Viscous Stress Function Builder"""
-        return 2. * self._viscosityField * self.strainRate
+        return 2. * self.viscosityField * self.strainRate
 
     @property
     def _elastic_stressFn(self):
