@@ -306,7 +306,7 @@ How to create a Pull Request (PR)
 
 #. Add the original repository as a remote called upstream.
 
-   :code:`git add remote upstream https://github.com/underworldcode/UWGeodynamics`
+   :code:`git remote add upstream https://github.com/underworldcode/UWGeodynamics`
 
 #. If you created your fork a while ago be sure to pull upstream changes into your local repository.
 
