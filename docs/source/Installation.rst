@@ -165,7 +165,7 @@ HPC Installation
 requirements
 ^^^^^^^^^^^^
 
-- python >= 2.7.11
+- python >= 3.6
 - openmpi >= 1.8
 - hdf5 >= 1.8
 
