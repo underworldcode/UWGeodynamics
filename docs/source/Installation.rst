@@ -172,146 +172,98 @@ requirements
 NCI Raijin
 ~~~~~~~~~~
 
-Python 2:
-^^^^^^^^^
-
-1. Install a python-2.7.11 virtual environment in your HOME:
+The following script install Underworld and UWGeodynamics on raijin:
 
 .. code:: bash
 
+  #!/bin/sh
+  # This script installs underworld on raijin.nci.org.au
+  # 
+  # Usage:
+  #  sh ./nci_raijin.sh <destfolder>
+  #
+  # exit when any command fails
+  set -e
+  
+  DATE=`date +%d%b%Y` # could be used to date checkout eg,
+  INSTALLPATH=`pwd`/$1
+  UW_DIR=$INSTALLPATH/underworld-$DATE
+  
+  mkdir $INSTALLPATH
+  
+  cd $INSTALLPATH
+  git clone https://github.com/underworldcode/underworld2.git $UW_DIR
+  cd $UW_DIR
+  git checkout master  # checkout the requested version
+  
+  # setup modules
   module purge
-  module load python/2.7.11 openmpi/3.1.2 hdf5/1.10.2p 
-  cd ~
-  pip install --user virtualenv
-  ~/.local/bin/virtualenv python-2.7.11-venv
-  source python-2.7.11-venv/bin/activate
-  export HDF5_VERSION=1.10.2
-  pip install --no-binary=mpi4py mpi4py
-  CC="mpicc" HDF5_MPI="ON" HDF5_DIR=$HDF5_DIR pip install --no-binary=h5py h5py
+  RUN_MODS='pbs dot mpi4py/3.0.2-py36-ompi3'
+  module load hdf5/1.10.2p petsc/3.9.4 gcc/5.2.0 mesa/11.2.2 swig/3.0.12 scons/3.0.1 $RUN_MODS
+  echo "*** The module list is: ***"
+  module list -t
+  
+  # setup python environment with preinstalled packages (h5py, lavavu, pint)
+  export PYTHONPATH=/apps/underworld/opt/h5py/2.9.0-py36-ompi3/lib/python3.6/site-packages/h5py-2.9.0-py3.6-linux-x86_64.egg/:/apps/underworld/opt/lavavu/1.4.1_rc/:/apps/underworld/opt/pint/0.9_py36/lib/python3.6/site-packages/:$PYTHONPATH
+  echo "*** New PYTHONPATH: $PYTHONPATH ***"
+  
+  # build and install code
+  cd libUnderworld
+  CONFIG="./configure.py  --python-dir=`python3-config --prefix` --with-debugging=0"
+  echo "*** The config line is: ***"
+  echo "$CONFIG"
+  echo ""
+  
+  $CONFIG
+  ./compile.py -j4
+  cd .. ; source updatePyPath.sh 
+  cd $INSTALLPATH
+  
+  # UWGeodynamics
+  
+  pip3 install git+https://github.com/underworldcode/uwgeodynamics --prefix=$INSTALLPATH
+  
+  cd $INSTALLPATH
+  touch module_paths.sh
+  
+  echo "#!/bin/bash" >> module_paths.sh
+  echo "source $UW_DIR/updatePyPath.sh" >> module_paths.sh
+  echo "module purge" >> module_paths.sh
+  echo "module load $RUN_MODS" >> module_paths.sh
+  echo "" >> module_paths.sh
+  echo "export PYTHONPATH=$UW_DIR:$UW_DIR/glucifer:$PYTHONPATH" >> module_paths.sh
+  echo "" >> module_paths.sh
+  echo "export PATH=$PATH" >> module_paths.sh
+  echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> module_paths.sh
+  
+  echo "#####################################################################"
+  echo "Underworld2 built successfully at:                                   "
+  echo "  $UW_DIR                                                            "
+  echo "#####################################################################"
 
 
-2. Install Underworld
-
-.. code:: bash
-   
-   UW_DIR=path-to-your-install
-   git clone https://github.com/underworldcode/underworld2.git $UW_DIR
-   
-   module purge
-   module load gcc/5.2.0 hdf5/1.10.2p petsc/3.8.4 swig/3.0.12 python/2.7.11 openmpi/3.1.2
-   source path-to-your-python-venv
-   export HDF5_VERSION=1.10.2
-   
-   cd $UW_DIR/libUnderworld
-   ./configure.py --with-debugging=0
-   ./compile.py -j4
-
-.pth files can be created to automatically add underworld to sys.path:
-
-.. code:: bash
-
-    cd ~/python-2.7.11/lib/python2.7/site-packages
-    echo "/short/q97/Underworld/your-underworld-install" > underworld.pth
-    echo "/short/q97/Underworld/your-underworld-install/glucifer" > glucifer.pth
-
-
-Now try to import underworld
-
-.. code:: bash
- 
-    cd ~
-    source python-2.7.11/bin/activate
-    python -c "import underworld"
-
-If it succeeds, you can install UWGeodynamics:
-
-.. code:: bash
-
-    git clone https://github.com/underworldcode/UWGeodynamics.git
-    pip install UWGeodynamics/
-    python -c "import UWGeodynamics
-    rm -rf UWGeodynamics
-
-**PBS script minimal example**
+We provide a minimal PBS script:
 
 .. code:: bash
-
-    #PBS -P q97
-    #PBS -q express
-    #PBS -l walltime=00:10:00
-    #PBS -l mem=1GB
-    #PBS -l jobfs=10MB
-    #PBS -l ncpus=10
-    #PBS -l software=underworld
-    #PBS -l wd
-    #PBS -N test
-    
-    module purge
-    module load pbs dot gcc/5.2.0 hdf5/1.10.2p petsc/3.8.4 swig/3.0.12 python/2.7.11 openmpi/3.1.2
-    source /short/q97/Underworld/python-2.7.11-venv/bin/activate
-    
-    MODELNAME="test"
-    OUTPUTPATH=`pwd`
-    SCRIPT="your-script.py"
-    
-    mpiexec --mca mpi_warn_on_fork 0 --mca opal_abort_print_stack 1 --mca mpi_param_check 1 \
-     --mca mpi_add_procs_cutoff 256 python ./$SCRIPT 1> $OUTPUTPATH/$MODELNAME.$PBS_JOBID.log 2> $OUTPUTPATH/$MODELNAME.$PBS_JOBID.err
-
-Python 3
-^^^^^^^^
-
-1. Install a python-3.6.2 virtual environment in your HOME:
-
-.. code:: bash
-
-  module purge
-  module load python3/3.6.2 openmpi/3.1.2 hdf5/1.10.2p 
-  cd ~
-  pip install --user virtualenv
-  ~/.local/bin/virtualenv python-3.6.2-venv
-  source python-3.6.2-venv/bin/activate
-  export HDF5_VERSION=1.10.2
-  pip install --no-binary=mpi4py mpi4py
-  CC="mpicc" HDF5_MPI="ON" HDF5_DIR=$HDF5_DIR pip install --no-binary=h5py h5py
-
-2. Install Underworld
-
-.. code:: bash
-   
-   UW_DIR=path-to-your-install
-   git clone https://github.com/underworldcode/underworld2.git $UW_DIR
-   
-   module purge
-   module load gcc/5.2.0 hdf5/1.10.2p petsc/3.8.4 swig/3.0.12 python3/3.6.2 openmpi/3.1.2 scons
-   source path-to-your-python-venv
-   export HDF5_VERSION=1.10.2
-   
-   cd $UW_DIR/libUnderworld
-   python ./configure.py --python-dir=/apps/python3/3.6.2 --with-debugging=0
-   ./compile.py -j4
-
-
-.pth files can be created to automatically add underworld to sys.path:
-
-.. code:: bash
-
-    cd ~/python-3.6.2/lib/python3.6/site-packages
-    echo "/short/q97/Underworld/your-underworld-install" > underworld.pth
-    echo "/short/q97/Underworld/your-underworld-install/glucifer" > glucifer.pth
-
-Now try to import underworld
-
-.. code:: bash
- 
-    cd ~
-    source python-3.6.2/bin/activate
-    python -c "import underworld"
-
-If it succeeds, you can install UWGeodynamics:
-
-.. code:: bash
-
-    pip install UWGeodynamics
+  #PBS -P project
+  #PBS -q normal
+  #PBS -l walltime=1:00:00
+  #PBS -l mem=1GB
+  #PBS -l jobfs=10MB
+  #PBS -l ncpus=6
+  #PBS -l software=underworld
+  #PBS -l wd
+  #PBS -N name
+  
+  source path-to-your-underworld-installation/module_paths.sh
+  
+  MODELNAME="Model"
+  OUTPUTPATH=`pwd`
+  SCRIPT="Model.py"
+  
+  mpiexec --mca mpi_warn_on_fork 0 --mca opal_abort_print_stack 1 --mca mpi_param_check 1 \
+   --mca mpi_add_procs_cutoff 256 python ./$SCRIPT 1> $OUTPUTPATH/$MODELNAME.$PBS_JOBID.log 2> $OUTPUTPATH/$MODELNAME.$PBS_JOBID.err
+  
 
 Pawsey MAGNUS
 -------------
