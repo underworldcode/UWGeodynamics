@@ -47,10 +47,10 @@
       }
     }
   },
-  "Wet Olivine, Viscous Dislocation Creep, Goetze et al., 1978": {
-    "citation": "Goetze, C. (1978). The mechanisms of creep in olivine. Phil. Trans. R. Soc. Lond. A, 288(1350), 99-119.",
-    "onlinePDF": "http://rsta.royalsocietypublishing.org/content/288/1350/99.short",
-    "Mineral": "Wet Olivine",
+  "Dry Quartz, Viscous Dislocation Creep, Brace and Kohlstedt, 1980": {
+    "citation": "Brace, W. F., & Kohlstedt, D. L. (1980). Limits on lithospheric stress imposed by laboratory experiments. Journal of Geophysical Research: Solid Earth, 85(B11), 6248-6252.",
+    "onlinePDF": "https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JB085iB11p06248",
+    "Mineral": "Dry Quartz",
     "Type": "Viscous Dislocation Creep",
     "coefficients": {
       "activationEnergy": {
@@ -64,6 +64,30 @@
       "preExponentialFactor": {
         "units": "1 / megapascal ** 3 / second",
         "value": 0.000005
+      },
+      "stressExponent": {
+        "units": "None",
+        "value": 3.0
+      }
+    }
+  },
+  "Wet Olivine, Viscous Dislocation Creep, Goetze et al., 1978": {
+    "citation": "Goetze, C. (1978). The mechanisms of creep in olivine. Phil. Trans. R. Soc. Lond. A, 288(1350), 99-119.",
+    "onlinePDF": "http://rsta.royalsocietypublishing.org/content/288/1350/99.short",
+    "Mineral": "Wet Olivine",
+    "Type": "Viscous Dislocation Creep",
+    "coefficients": {
+      "activationEnergy": {
+        "units": "kilojoule / mole",
+        "value": 523
+      },
+      "activationVolume": {
+        "units": "meter ** 3 / mole",
+        "value": 0.0
+      },
+      "preExponentialFactor": {
+        "units": "1 / megapascal ** 3 / second",
+        "value": 70000
       },
       "stressExponent": {
         "units": "None",
