@@ -2239,7 +2239,7 @@ class _ViscosityFunction():
                 minViscosity = material.minViscosity
             if material.maxViscosity:
                 maxViscosity = material.maxViscosity
-            limiter = Viscosity_limiter(eta, minViscosity, maxViscosity)
+            limiter_map[material.index] = Viscosity_limiter(eta, minViscosity, maxViscosity)
 
         if limiter_map:
             return fn.branching.map(fn_key=Model.materialField,
