@@ -1,4 +1,4 @@
-FROM underworldcode/underworld2:latest
+FROM underworldcode/underworld2:dev
 
 USER root
 ENV NB_USER jovyan
@@ -6,7 +6,7 @@ ENV NB_WORK /home/$NB_USER
 
 WORKDIR /opt
 
-RUN git clone -b master https://github.com/underworldcode/UWGeodynamics.git UWGeodynamics&& \
+RUN git clone -b development https://github.com/underworldcode/UWGeodynamics.git UWGeodynamics&& \
     pip3 install --no-cache-dir UWGeodynamics/ && \
     rm -rf $NB_WORK/UWGeodynamics && \
     mkdir $NB_WORK/UWGeodynamics && \
