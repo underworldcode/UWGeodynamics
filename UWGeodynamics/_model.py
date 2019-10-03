@@ -1680,6 +1680,8 @@ class Model(Material):
             if not callable(val):
                 raise ValueError("""The function {0} must be
                                  callable""".format(key))
+            else:
+                val()
         self._solution_exist.value = True
         self.nlstep += 1
 
