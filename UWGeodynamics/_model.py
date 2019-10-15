@@ -758,7 +758,7 @@ class Model(Material):
         # This can be done by switching the _rebuild_solver flag
         # to true.
         if not self._solver or self._rebuild_solver:
-            if self._rebuild_solver:
+            if self._rebuild_solver and not self.step == 0:
                 # Save current options in a dictionary
                 options = _solver_options_dictionary(self._solver)
                 # Rebuild solver
