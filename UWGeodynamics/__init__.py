@@ -27,7 +27,7 @@ nd = non_dimensionalise
 dim = dimensionalise
 u = UnitRegistry
 
-import glucifer
+import underworld.visualisation as visualisation
 import sys
 import os
 import errno
