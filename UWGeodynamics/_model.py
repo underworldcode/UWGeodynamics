@@ -1657,6 +1657,7 @@ class Model(Material):
             if not callable(val):
                 raise ValueError("""The function {0} must be
                                  callable""".format(key))
+            val()
 
     def _post_solve(self):
         """ Entry point for functions to be run after the solve """
