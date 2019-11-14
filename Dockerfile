@@ -1,26 +1,48 @@
 FROM underworldcode/underworld2:dev
 
+# Stage 1: Inherit from underworldcode/underworld2:dev and install dependency packages for Badlands
+##########
+FROM underworldcode/underworld2:dev as base_runtime
+MAINTAINER https://github.com/underworldcode/
+# install runtime requirements
 USER root
-ENV NB_USER jovyan
-ENV NB_WORK /home/$NB_USER
+RUN apt-get update -qq \
+&&  DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
+        libxml2 \
+        libpython3.7
+RUN PYTHONPATH= /usr/bin/pip3 install --no-cache-dir setuptools scons 
+# setup further virtualenv to avoid double copying back previous packages (h5py,mpi4py,etc)
+RUN /usr/bin/python3 -m virtualenv --python=/usr/bin/python3 ${VIRTUAL_ENV}
 
 WORKDIR /opt
 
-RUN git clone -b development https://github.com/underworldcode/UWGeodynamics.git UWGeodynamics&& \
-    pip3 install --no-cache-dir UWGeodynamics/ && \
-    rm -rf $NB_WORK/UWGeodynamics && \
-    mkdir $NB_WORK/UWGeodynamics && \
-    mv ./UWGeodynamics/examples $NB_WORK/UWGeodynamics/. && \
-    mv ./UWGeodynamics/tutorials $NB_WORK/UWGeodynamics/. && \
-    mv ./UWGeodynamics/benchmarks $NB_WORK/UWGeodynamics/. && \
-    mv ./UWGeodynamics/docs $NB_WORK/UWGeodynamics/ && \
-    rm -rf UWGeodynamics && \
-    chown -R $NB_USER:users $NB_WORK/UWGeodynamics
-
-#Badlands
+# Stage 2: Build and install Badlands
+##########
+FROM base_runtime AS build_base
+# install build requirements
+RUN apt-get update -qq 
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
+        build-essential \
+        gfortran \
+        python3-dev \
+        swig \
+        libxml2-dev
+RUN PYTHONPATH= /usr/bin/pip3 install --no-cache-dir setuptools scons 
+# setup further virtualenv to avoid double copying back previous packages (h5py,mpi4py,etc)
+RUN /usr/bin/python3 -m virtualenv --python=/usr/bin/python3 ${VIRTUAL_ENV}
+# Compile and install Badlands
 RUN pip3 install badlands
 
-USER jovyan
 
+# Stage 3: Resultant images
+##########
+FROM base_runtime
+COPY --from=build_base ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+# Record Python packages, but only record system packages! 
+# Not venv packages, which will be copied directly in.
+RUN PYTHONPATH= /usr/bin/pip3 freeze >/opt/requirements.txt
+# Record manually install apt packages.
+RUN apt-mark showmanual >/opt/installed.txt
+USER $NB_USER
 WORKDIR $NB_WORK
 CMD ["jupyter", "notebook", "--ip='0.0.0.0'", "--no-browser"]
