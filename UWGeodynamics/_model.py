@@ -1145,9 +1145,13 @@ class Model(Material):
             projector_name = name + "Projector"
         else:
             projector_name = "_" + name + "Projector"
+        if self.elementType.split("/")[0] != "Q2":
+            voronoi_swarm = self.swarm
+        else:
+            voronoi_swarm = None
         projector = uw.utils.MeshVariable_Projection(projected,
                                                      newField,
-                                                     voronoi_swarm=self.swarm,
+                                                     voronoi_swarm=voronoi_swarm,
                                                      type=0)
         setattr(self, projector_name, projector)
 
