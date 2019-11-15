@@ -42,18 +42,29 @@ class PressureSmoother(object):
 
         self.mesh = mesh
         self.pressureField = pressureField
-
-        self.NodePressure = uw.mesh.MeshVariable(self.mesh, nodeDofCount=1)
-
-        self.Cell2Nodes = uw.utils.MeshVariable_Projection(
-            self.NodePressure, self.pressureField, type=0)
-        self.Nodes2Cell = uw.utils.MeshVariable_Projection(
-            self.pressureField, self.NodePressure, type=0)
+        if self.mesh.dim > 2:
+            self.array = np.zeros((self.mesh.elementRes[2], self.mesh.elementRes[1], self.mesh.elementRes[0])).ravel()
+        else:
+            self.array = np.zeros((self.mesh.elementRes[1], self.mesh.elementRes[0])).ravel()
 
     def smooth(self):
-
-        self.Cell2Nodes.solve()
-        self.Nodes2Cell.solve()
+        self.array[self.mesh.data_elgId.ravel()] = self.pressureField.data[:,0]
+        if self.mesh.dim >2:
+            array = self.array.reshape((self.mesh.elementRes[2], self.mesh.elementRes[1], self.mesh.elementRes[0])) 
+            array = np.pad(array, pad_width=1, mode="edge")
+            on_mesh = (array[:-1,:-1,:-1] + array[:-1,1:,:-1] + array[:-1,1:, 1:] + array[:-1,:-1,:-1]) 
+            on_mesh += (array[1:,:-1,:-1] + array[1:,1:,:-1] + array[1:,1:, 1:] + array[1:,:-1,:-1])
+            on_mesh /= 8
+            on_cell = (on_mesh[:-1,:-1,:-1] + on_mesh[:-1,1:, :-1] + on_mesh[:-1,1:, 1:] + on_mesh[:-1,:-1,:-1])
+            on_cell += (on_mesh[:-1,:-1,:-1] + on_mesh[:-1,1:, :-1] + on_mesh[:-1,1:, 1:] + on_mesh[:-1,:-1,:-1])
+            on_cell /= 8
+        else:
+            array = self.array.reshape((self.mesh.elementRes[1], self.mesh.elementRes[0])) 
+            array = np.pad(array, pad_width=1, mode="edge")
+            on_mesh = (array[:-1,:-1] + array[1:, :-1] + array[1:, 1:] + array[:-1,:-1]) / 4.0  
+            on_cell = (on_mesh[:-1,:-1] + on_mesh[1:, :-1] + on_mesh[1:, 1:] + on_mesh[:-1,:-1]) / 4.0 
+        self.pressureField.data[:self.mesh.nodesLocal,0] = on_cell.ravel()[self.mesh.data_elgId.ravel()[:self.mesh.nodesLocal]]
+        self.pressureField.syncronise()
 
 
 class PassiveTracers(Swarm):
