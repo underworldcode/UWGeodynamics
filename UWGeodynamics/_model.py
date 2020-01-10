@@ -1844,9 +1844,10 @@ class Model(Material):
         else:
             x = np.array(vertices[0])[..., np.newaxis] + np.array(centroids[0]).ravel()
             y = np.array(vertices[1])[..., np.newaxis] + np.array(centroids[1]).ravel()
-            vertices = [x.ravel(), y.ravel()]
 
-            if self.mesh.dim > 2:
+            if self.mesh.dim == 2:
+                vertices = [x.ravel(), y.ravel()]
+            else:
                 z = np.array(vertices[2])[..., np.newaxis]  + np.array(centroids[2]).ravel()
                 vertices = [x.ravel(), y.ravel(), z.ravel()]
 
