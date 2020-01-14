@@ -269,12 +269,11 @@ Pawsey MAGNUS
 -------------
 
 The recommended way to run Underworld / UWGeodynamics model is to use
-Shifter. Shifter is a wrapper around Docker that allows us to run docker
-containers on Magnus.
+Singularity.
 
 You can have a look at the `Pawsey
-documentation <https://support.pawsey.org.au/documentation/display/US/Shifter>`__
-if you want to know more about Shifter:
+documentation <https://support.pawsey.org.au/documentation/display/US/Singularity>`__
+if you want to know more about Singularity:
 
 Pre-requisites
 ~~~~~~~~~~~~~~
@@ -283,19 +282,32 @@ Pre-requisites
 
    ssh username@magnus-1.pawsey.org.au
 
-**A UWGeodynamics docker image is already available on Magnus**
+Singularity module needs to be loaded:
 
 .. code:: bash
 
-   user@magnus-1:~>module load shifter
-   user@magnus-1:~>shifter images
-   magnus     docker     READY    17cc3c02ba   2018-05-09T08:47:59 underworldcode/uwgeodynamics:magnus
+   module load singularity
+
 
 The following command will pull the latest version of the image:
 
 .. code:: bash
 
-   shifter pull docker:underworldcode/uwgeodynamics:magnus
+   singularity pull --dir $MYGROUP/singularity/UWGeodynamics docker://underworldcode/uwgeodynamics:latest
+
+NOTE: You might need to create the $MYGROUP/singularity/UWGeodynamics directory.
+
+You can list images that are already present in the cache using the following command:
+
+.. code:: bash
+
+    singularity cache list
+    
+Once you have finished, we recommend you clean the cache:
+
+.. code:: bash
+
+    singularity cache clean -a
 
 Setting up a job
 ~~~~~~~~~~~~~~~~
@@ -318,11 +330,12 @@ Tutorial 1 on 1 node using 4 cores:
 
 .. code:: bash
 
-   #!/bin/bash
-
+   #!/bin/bash -l
    #SBATCH --nodes=1
    #SBATCH --time=00:10:00
    #SBATCH --account=q97
+   #SBATCH --partition=workq
+   #SBATCH --export=NONE
 
    echo "PRINTING ENVIRONMENT"
    env
@@ -330,9 +343,12 @@ Tutorial 1 on 1 node using 4 cores:
    echo "PRINTING SLURM SCRIPT"
    scontrol show job ${SLURM_JOBID} -ddd
 
-   module load shifter
+   module load singularity
+   
+   export myRepository=$MYGROUP/singularity/UWGeodynamics
+   export containerImage=$myRepository/uwgeodynamics_latest.sif 
 
-   srun -n4 shifter run --mpi underworldcode/uwgeodynamics:magnus python Tutorial_1_ThermoMechanical_Model.py 
+   srun --export=ALL singularity exec -C -B $PWD:/home/jovyan $containerImage python Tutorial_1_ThermoMechanical_Model.py 
 
 Running a job
 ~~~~~~~~~~~~~
