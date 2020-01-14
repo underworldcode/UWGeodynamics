@@ -1780,7 +1780,7 @@ model than in the thermo-mechanical model.
     If the thermomechanical model is 3D the coupling is done in 3D.
 
 
-.. _documentation: https://github.com/badlands-model/pyBadlands
+.. _documentation: https://github.com/badlands-model/badlands
 .. _XML example: ressources/badlands.xml
 
 Deforming Mesh
@@ -1933,4 +1933,4 @@ See below for a sample.
 .. _Lavavu: https://github.com/OKaluza/LavaVu
 .. _HDF5: http://portal.hdfgroup.org/display/support
 .. _Paraview: https://www.paraview.org/
-.. _Badlands: https://github.com/badlands-model/pyBadlands
+.. _Badlands: https://github.com/badlands-model/badlands

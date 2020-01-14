@@ -53,10 +53,10 @@ class Badlands(SurfaceProcesses):
                  restartFolder=None, restartStep=None, timeField=None,
                  minCoord=None, maxCoord=None, aspectRatio2d=1.):
         try:
-            import pyBadlands
+            import badlands
 
         except ImportError:
-            raise ImportError("""pyBadlands import as failed. Please check your
+            raise ImportError("""badlands import as failed. Please check your
                               installation, PYTHONPATH and PATH environment
                               variables""")
 
@@ -95,7 +95,7 @@ class Badlands(SurfaceProcesses):
             self.maxCoord = (self.maxCoord[0], self.aspectRatio2d*self.maxCoord[0])
 
         if rank == 0:
-            from pyBadlands.model import Model as BadlandsModel
+            from badlands.model import Model as BadlandsModel
             self.badlands_model = BadlandsModel()
             self.badlands_model.load_xml(self.XML)
 
