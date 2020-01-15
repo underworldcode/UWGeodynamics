@@ -1,5 +1,3 @@
-FROM underworldcode/underworld2:dev
-
 # Stage 1: Inherit from underworldcode/underworld2:dev and install dependency packages for Badlands
 ##########
 FROM underworldcode/underworld2:dev as base_runtime
@@ -13,8 +11,6 @@ RUN apt-get update -qq \
 RUN PYTHONPATH= /usr/bin/pip3 install --no-cache-dir setuptools scons 
 # setup further virtualenv to avoid double copying back previous packages (h5py,mpi4py,etc)
 RUN /usr/bin/python3 -m virtualenv --python=/usr/bin/python3 ${VIRTUAL_ENV}
-
-WORKDIR /opt
 
 # Stage 2: Build and install Badlands
 ##########
