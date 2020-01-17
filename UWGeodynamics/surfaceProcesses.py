@@ -121,7 +121,7 @@ class Badlands(SurfaceProcesses):
             np.savetxt(self._demfile, self.dem)
 
             # Build Mesh
-            self.badlands_model.build_mesh(self._demfile, verbose=False)
+            self.badlands_model._build_mesh(self._demfile, verbose=False)
 
             self.badlands_model.input.outDir = self.outputDir
             self.badlands_model.input.disp3d = True  # enable 3D displacements
