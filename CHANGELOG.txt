@@ -1,23 +1,7 @@
-# Version 2.8
+# Version 2.9
 
-- Compatible with UW 2.8 (Python 3 only)
-- Fix bugs reported on Github
-- Update documentation on ReadTheDocs
-- Support for SLCN (Semi Lagrangian Crank Nicholson method for Advection Diffusion)
-  The default advection-diffusion remains SUPG but the user can switch to SLCN
-  by setting GEO.rcParams["advection.diffusion.method"] = "SLCN"
-  I have added a simple example that illustrate the advection of the isotherm when
-  a column of materials is extended (Thanks to P.Lovely).
-- Add option to use pre-defined initial viscosities of the materials for the first solve.
-  (ex: myMaterial.initial_viscosity = 1e22 * u.Pa * u.s)
-- Add option to pass the Lithostatic field as an initial stress condition.
-  Note that the value used at the boundary is not updated as the conditions evolve during
-  a simulation.
-- Simplified Dockerfile / Docker Image
-- UWGeodynamics Shape now behave as normal UW function.
-  This means that classic UW function can be used to define a shape.
-- **IMPORTANT** Shape Combination: The & operator now define the intersection of shapes, combining shapes is done
-  using |. This is to be consistent with the previous point.
-  The use of the (+) and (-) operator have also been removed as it was causing confusions.
-- Passive Tracers now directly inherit from Swarm. There is no swarm method on the PassiveTracer
-  object anymore. User can use it as a normal swarm.
+- Compatible with UW 2.9
+- Renaming glucifer -> vis.
+- Bug Fix: passive tracer initialisation in 3D.
+- Upgrade to Dockerfile configuration, using "muli-stage" builds.
+
