@@ -161,11 +161,12 @@ an image).
   docker run -d \
      --name my_container \
      -p 8888:8888 \
-     --mount source=myvol,target=/workspace/user-data \
+     -v $HOME:/home/jovyan/workspace
      underworldcode/uwgeodynamics
 
 You can access the container via your browser at the following
-address: http://localhost:8888
+address: http://localhost:8888. Your directory `$HOME` should be available at 
+`/home/jovyan/workspace`.
 
 It is also possible to ssh into the container as follow:
 
