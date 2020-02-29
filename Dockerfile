@@ -1,6 +1,6 @@
-# Stage 1: Inherit from underworldcode/underworld2:v29 and install dependency packages for Badlands
+# Stage 1: Inherit from underworldcode/underworld2:2.9.1b and install dependency packages for Badlands
 ##########
-FROM underworldcode/underworld2:v29 as base_runtime
+FROM underworldcode/underworld2:2.9.1b as base_runtime
 MAINTAINER https://github.com/underworldcode/
 # install runtime requirements
 USER root

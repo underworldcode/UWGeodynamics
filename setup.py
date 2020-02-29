@@ -8,7 +8,7 @@ from os import path
 
 MAJOR               = 2
 MINOR               = 9
-MICRO               = 0
+MICRO               = 1
 ISRELEASED          = True
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
