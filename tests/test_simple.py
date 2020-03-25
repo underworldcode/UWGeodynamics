@@ -3,6 +3,16 @@ import underworld as uw
 
 u = GEO.u
 
+Model = GEO.Model()
+Model3D = GEO.Model(elementRes=(10, 10, 10),
+                    gravity=(0.,0.,-9.81*u.m/u.s**2),
+                    minCoord=(0. * u.kilometer,
+                              0. * u.kilometer,
+                              0. * u.kilometer),
+                    maxCoord=(10. * u.kilometer,
+                              10. * u.kilometer,
+                              10. * u.kilometer))
+
 def test_scaling():
 
     velocity = 1.0 * u.centimeter / u.hour
@@ -20,21 +30,13 @@ def test_scaling():
     GEO.scaling_coefficients["[mass]"] = KM
     GEO.scaling_coefficients["[temperature]"] = KT
 
-
-def test_model_creation():
-    Model = GEO.Model()
-    assert(isinstance(Model, GEO.Model))
-
-
 def test_adding_materials():
-    Model = GEO.Model()
     air = Model.add_material(
         name="Air",
         shape=GEO.shapes.Layer(top=Model.top,
                                bottom=Model.bottom)
     )
     assert(isinstance(air, GEO.Material))
-
 
 def test_material_attributes():
     Material = GEO.Material(name="Material")
@@ -44,7 +46,6 @@ def test_material_attributes():
     Material.capacity = 1000. * u.joule / (u.kelvin * u.kilogram)
     Material.radiogenicHeatProd = 0.7 * u.microwatt / u.metre**3
 
-
 def test_viscous_registry():
     rh = GEO.ViscousCreepRegistry()
     Material = GEO.Material(name="Material")
@@ -52,8 +53,6 @@ def test_viscous_registry():
         Material.viscosity = rheology
 
 def test_shapes():
-    Model = GEO.Model()
-
 
     layer = GEO.shapes.Layer2D(top=30.*u.kilometer, bottom=0.*u.kilometer)
     polygon = GEO.shapes.Polygon(vertices=[(10.* u.kilometer, 10.*u.kilometer),
@@ -88,14 +87,12 @@ def test_plastic_registry():
         Material.plasticity = rheology
 
 def test_set_velocity_boundary_conditions():
-    Model = GEO.Model()
     velocityBCs = Model.set_velocityBCs(
         left=[1.0 * u.centimetre / u.year, None],
         right=[-1.0 * u.centimetre / u.year, None],
         bottom=[None, 0.],
         top=[None, 0.])
     assert(isinstance(velocityBCs, uw.conditions.DirichletCondition))
-
 
 def test_user_defined_viscous_creep():
     viscosity = GEO.ViscousCreep(preExponentialFactor=1.0,
@@ -111,7 +108,6 @@ def test_user_defined_viscous_creep():
                                  f=1.0)
     assert(isinstance(viscosity, GEO.ViscousCreep))
 
-
 def test_user_defined_drucker_prager():
     plasticity = GEO.DruckerPrager(cohesion=10. * u.megapascal,
                                    cohesionAfterSoftening=10. * u.megapascal,
@@ -122,42 +118,25 @@ def test_user_defined_drucker_prager():
     assert(isinstance(plasticity, GEO.DruckerPrager))
 
 def test_temperature_boundary_condition():
-    Model = GEO.Model()
     Model.set_temperatureBCs(top=500. * u.degK,
                              bottom=1000. * u.degK)
-    Model = GEO.Model()
     Model.capacity = 1000. * u.joule / (u.kelvin * u.kilogram)
     Model.density = 1000. * u.kilogram / u.metre**3
     Model.set_temperatureBCs(top=500. * u.degK,
                              bottom=1200. * u.degK)
 
-#def test_passive_tracers():
-#    import numpy as np
-#    Model = GEO.Model(elementRes=(64,64),
-#                      minCoord=(0.*u.kilometer, 0.* u.kilometer),
-#                      maxCoord=(64.* u.kilometer, 64 * u.kilometer))
-#
-#    x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
-#    y = GEO.nd(32. * u.kilometer)
-#
-#    P = Model.add_passive_tracers(name="Tracers", vertices=[x, y])
-#
-#
-##def test_set_velocity_boundary_conditions_in_3D():
-##    Model = GEO.Model(elementRes=(10, 10, 10),
-##                      gravity=(0.,0.,-9.81*u.m/u.s**2),
-##                      minCoord=(0. * u.kilometer,
-##                                0. * u.kilometer,
-##                                0. * u.kilometer),
-##                      maxCoord=(10. * u.kilometer,
-##                                10. * u.kilometer,
-##                                10. * u.kilometer))
-##
-##    velocityBCs = Model.set_velocityBCs(
-##        left=[1.0 * u.centimetre / u.year, None, 0.],
-##        right=[-1.0 * u.centimetre / u.year, None, 0.],
-##        bottom=[None, None, 0.],
-##        top=[None, None, 0.],
-##        front=[None, 0., None],
-##        back=[None, 0., None])
-##    assert(isinstance(velocityBCs, uw.conditions.DirichletCondition))
+def test_passive_tracers():
+    import numpy as np
+    x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
+    y = GEO.nd(32. * u.kilometer)
+    P = Model.add_passive_tracers(name="Tracers", vertices=[x, y])
+
+def test_set_velocity_boundary_conditions_in_3D():
+    velocityBCs = Model3D.set_velocityBCs(
+        left=[1.0 * u.centimetre / u.year, None, 0.],
+        right=[-1.0 * u.centimetre / u.year, None, 0.],
+        bottom=[None, None, 0.],
+        top=[None, None, 0.],
+        front=[None, 0., None],
+        back=[None, 0., None])
+    assert(isinstance(velocityBCs, uw.conditions.DirichletCondition))
