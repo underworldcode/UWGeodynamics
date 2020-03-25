@@ -4,4 +4,4 @@
 - Renaming glucifer -> vis.
 - Bug Fix: passive tracer initialisation in 3D.
 - Upgrade to Dockerfile configuration, using "muli-stage" builds.
-
+- New Numpy Pressure Smoother
