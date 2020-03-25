@@ -68,8 +68,8 @@ class BoundaryConditions(object):
                 The condition can be an Underworld Function, A Pint
                 Quantity of a scalar.
 
-            order_wall_conditions: list of str, [left, right, top, bottom,
-                front, back]
+            order_wall_conditions: list of str, [bottom, top, front, back,
+                left, right]
                 Order in which the boundaries are processed.
 
             condition_type: str

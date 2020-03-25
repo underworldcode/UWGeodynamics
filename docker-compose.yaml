@@ -1,19 +1,18 @@
 
-version: '3' 
+version: '3.7' 
 services:     
     underworld:
-        container_name: UWGeodynamics-dev
-        image: underworldcode/uwgeodynamics:dev
+        container_name: UWGeodynamics
+        image: underworldcode/uwgeodynamics:2.9.4
         build:
           context: $PWD
           dockerfile: Dockerfile
         hostname: "uw-container"
-        environment:
-          - PYTHONPATH=/opt/UWGeodynamics:/usr/lib:/usr/local/underworld2/lib
         volumes:
-          - $PWD:/opt/UWGeodynamics  
+          - $PWD/UWGeodynamics:/opt/venv/lib/python3.7/site-packages/UWGeodynamics  
           - $PWD/examples:/workspace/user_data/examples
           - $PWD/tutorials:/workspace/user_data/tutorials
+          - $PWD/benchmarks:/workspace/user_data/benchmarks
         working_dir: /workspace/user_data
         command: "jupyter notebook --ip=0.0.0.0 --no-browser"
         ports:

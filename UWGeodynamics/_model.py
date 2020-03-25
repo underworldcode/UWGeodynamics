@@ -1145,9 +1145,13 @@ class Model(Material):
             projector_name = name + "Projector"
         else:
             projector_name = "_" + name + "Projector"
+        if self.elementType.split("/")[0] != "Q2":
+            voronoi_swarm = self.swarm
+        else:
+            voronoi_swarm = None
         projector = uw.utils.MeshVariable_Projection(projected,
                                                      newField,
-                                                     voronoi_swarm=self.swarm,
+                                                     voronoi_swarm=voronoi_swarm,
                                                      type=0)
         setattr(self, projector_name, projector)
 
@@ -1840,9 +1844,10 @@ class Model(Material):
         else:
             x = np.array(vertices[0])[..., np.newaxis] + np.array(centroids[0]).ravel()
             y = np.array(vertices[1])[..., np.newaxis] + np.array(centroids[1]).ravel()
-            vertices = [x.ravel(), y.ravel()]
 
-            if self.mesh.dim > 2:
+            if self.mesh.dim == 2:
+                vertices = [x.ravel(), y.ravel()]
+            else:
                 z = np.array(vertices[2])[..., np.newaxis]  + np.array(centroids[2]).ravel()
                 vertices = [x.ravel(), y.ravel(), z.ravel()]
 

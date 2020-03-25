@@ -1,5 +1,5 @@
 
-.. image:: /docs/source/img/logos.png
+.. image:: https://raw.githubusercontent.com/rbeucher/UWGeodynamics/master/docs/source/img/logos.png
     :target: https://www.earthbyte.org/the-basin-genesis-hub
 
 Underworld Geodynamics project
@@ -27,9 +27,9 @@ Underworld Geodynamics project
 .. image:: https://travis-ci.org/underworldcode/UWGeodynamics.svg?branch=development
     :target: https://travis-ci.org/underworldcode/UWGeodynamics
 
-.. image:: https://github.com/underworldcode/UWGeodynamics/blob/development/tutorials/images/Tutorial1.gif
+.. image:: https://raw.githubusercontent.com/rbeucher/UWGeodynamics/master/tutorials/images/Tutorial1.gif
 
-.. image:: https://github.com/underworldcode/UWGeodynamics/blob/development/docs/source/img/collision_wedge.gif
+.. image:: https://raw.githubusercontent.com/rbeucher/UWGeodynamics/master/docs/source/img/collision_wedge.gif
 
 The UWGeodynamics module facilitates prototyping of geodynamics models using Underworld. 
 It can be seen as a set of high-level functions within the Underworld ecosystem.
@@ -52,7 +52,7 @@ We hope that the user will naturally move to the low-level functionalities as he
 or her gets more confident, and by doing so will access the wide range of 
 possibilities offered by Underworld.
 
-.. image:: /docs/source/img/SandboxCompression.gif
+.. image:: https://raw.githubusercontent.com/rbeucher/UWGeodynamics/master/docs/source/img/SandboxCompression.gif
 
 UWGeodynamics and Underworld
 ----------------------------
@@ -161,11 +161,12 @@ an image).
   docker run -d \
      --name my_container \
      -p 8888:8888 \
-     --mount source=myvol,target=/workspace/user-data \
+     -v $HOME:/home/jovyan/workspace
      underworldcode/uwgeodynamics
 
 You can access the container via your browser at the following
-address: http://localhost:8888
+address: http://localhost:8888. Your directory `$HOME` should be available at 
+`/home/jovyan/workspace`.
 
 It is also possible to ssh into the container as follow:
 
@@ -306,7 +307,7 @@ How to create a Pull Request (PR)
 
 #. Add the original repository as a remote called upstream.
 
-   :code:`git add remote upstream https://github.com/underworldcode/UWGeodynamics`
+   :code:`git remote add upstream https://github.com/underworldcode/UWGeodynamics`
 
 #. If you created your fork a while ago be sure to pull upstream changes into your local repository.
 

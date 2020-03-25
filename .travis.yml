@@ -7,7 +7,6 @@ services:
 
 before_install:
   - docker --version
-  - cd docker-dev
 
 install:
   - docker build -t underworld .
