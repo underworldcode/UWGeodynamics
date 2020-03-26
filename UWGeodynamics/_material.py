@@ -26,10 +26,6 @@ class Material(object):
 
     _ids = count(0)
 
-    @u.check([None, None, _dim_density, _dim_diffusivity, _dim_capacity,
-              _dim_radiogenicHeatProduction, None, None, None, _dim_viscosity,
-              _dim_viscosity, _dim_stress, _dim_rate, None, None, None,
-              None, None, None, None, None, None])
     def __init__(self, name="Undefined", shape=None,
                  density=0.*u.kilogram/u.metre**3, diffusivity=None,
                  capacity=None, radiogenicHeatProd=0.0*u.microwatt/u.meter**3,

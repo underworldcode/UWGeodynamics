@@ -44,8 +44,6 @@ _dim_time = {'[time]': 1.0}
 class Model(Material):
     """UWGeodynamic Model Class"""
 
-    @u.check([None, (None, None), ("[length]", "[length]"), None,
-              _dim_gravity])
     def __init__(self, elementRes=(64, 64),
                  minCoord=(0., 0.), maxCoord=(64. * u.km, 64 * u.km),
                  name="Model", gravity=(0., -9.81 * u.m / u.s**2),
@@ -1530,7 +1528,6 @@ class Model(Material):
 
         return
 
-    @u.check([None, "[time]", "[time]", None, None, None, "[time]", None, None])
     def run_for(self, duration=None, checkpoint_interval=None, nstep=None,
                 checkpoint_times=None, restart_checkpoint=1, dt=None,
                 restartStep=None, restartDir=None, output_units=None):
@@ -2525,7 +2522,6 @@ class _CheckpointFunction(object):
 
         comm.Barrier()
 
-    @u.check([None, None, None, "[time]", None])
     def checkpoint_tracers(self, tracers=None, checkpointID=None,
                            time=None, outputDir=None):
         """ Checkpoint the tracers
