@@ -3,7 +3,7 @@ version: '3.7'
 services:     
     underworld:
         container_name: UWGeodynamics
-        image: underworldcode/uwgeodynamics:2.9.4
+        image: underworldcode/uwgeodynamics:2.9.4b
         build:
           context: $PWD
           dockerfile: Dockerfile
