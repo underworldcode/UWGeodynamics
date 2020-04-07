@@ -27,7 +27,15 @@ nd = non_dimensionalise
 dim = dimensionalise
 u = UnitRegistry
 
-import underworld.visualisation as visualisation
+try:
+    import underworld.visualisation as visualisation
+except ImportError:
+    try:
+        import glucifer as visualisation
+    except ImportError:
+        print("No visualisation module found")
+        pass
+
 import sys
 import os
 import errno
