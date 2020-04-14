@@ -2688,16 +2688,19 @@ class _RestartFunction(object):
                 sys.stdout.flush()
 
     def reload_passive_tracers(self, step):
+        
 
         Model = self.Model
 
         for key, tracer in Model.passive_tracers.items():
+
             fname = tracer.name + '-%s.h5' % step
             fpath = os.path.join(self.restartDir, fname)
+            tracked_fields = tracer.tracked_fields
 
             with h5py.File(fpath, "r", driver="mpio", comm=comm) as h5f:
 
-                vertices = h5f["data"].value * u.Quantity(h5f.attrs["units"])
+                vertices = h5f["data"][()] * u.Quantity(h5f.attrs["units"])
                 vertices = [vertices[:, dim] for dim in range(Model.mesh.dim)]
                 obj = PassiveTracers(Model.mesh,
                                      Model.velocityField,
@@ -2705,6 +2708,20 @@ class _RestartFunction(object):
                                      zOnly=tracer.zOnly,
                                      particleEscape=tracer.particleEscape)
                 obj.add_particles_with_coordinates(vertices)
+
+            # Reload global indices
+            fpath = os.path.join(self.restartDir, tracer.name + '_global_index-%s.h5' % step)
+            with h5py.File(fpath, "r", driver="mpio", comm=comm) as h5f:
+                obj.global_index.data[...] = h5f["data"][()]
+
+            # Create and Reload all tracked fields
+            for name, kwargs in tracked_fields.items():
+                field = obj.add_tracked_field(name=name, overwrite=True, **kwargs)
+                svar_fname = tracer.name +"_" + name + '-%s.h5' % step
+                svar_fpath = os.path.join(self.restartDir, svar_fname)
+                
+                with h5py.File(svar_fpath, "r", driver="mpio", comm=comm) as h5f:
+                    field.data[...] = h5f["data"][()]
 
             attr_name = tracer.name.lower() + "_tracers"
             setattr(Model, attr_name, obj)

@@ -81,7 +81,7 @@ class PassiveTracers(Swarm):
         self.particleEscape = particleEscape
         self.zOnly = zOnly
 
-        self.tracked_field = list()
+        self.tracked_fields = {}
 
     def _global_indices(self):
         indices = np.arange(self.particleLocalCount)
@@ -125,9 +125,9 @@ class PassiveTracers(Swarm):
             self.advector.integrate(dt, **kwargs)
 
         # Integrate tracked field variables over time
-        for field in self.tracked_field:
+        for name, field in self.tracked_fields.items():
             if field["timeIntegration"]:
-                obj = getattr(self, field["name"])
+                obj = getattr(self, name)
                 if self.mesh.dim == 2 and obj.data.shape[-1] > 2:
                     ang_vel = self.angular_velocity
                     dtheta = dt * ang_vel.evaluate(self).reshape(1, -1)
@@ -142,31 +142,24 @@ class PassiveTracers(Swarm):
         if not isinstance(value, fn.Function):
             raise ValueError("%s is not an Underworld function")
 
+        name = name.lower().replace(" ", "_")
         # Check that the tracer does not exist already
-        for field in self.tracked_field:
-            if (name == field["name"]) or (value == field["value"]):
+        for key, field in self.tracked_fields.items():
+            if (key == name) or (value == field["value"]):
                 if not overwrite:
                     raise ValueError(""" %s name already exist or already tracked
                                      with a different name """ % name)
-                else:
-                    field["name"] = name
-                    field["units"] = units
-                    field["value"] = value
-                    field["dataType"] = dataType
-                    field["timeIntegration"] = timeIntegration
-                    svar = self.add_variable(dataType, count=count)
-                    svar.data[...] = 0.
-                    setattr(self, name, svar)
-                    return
-
-        self.tracked_field.append({"value": value,
-                                   "name": name,
-                                   "units": units,
-                                   "timeIntegration": timeIntegration,
-                                   "dataType": dataType})
+        
+        new_field = {}
+        new_field["units"] = units
+        new_field["value"] = value
+        new_field["dataType"] = dataType
+        new_field["timeIntegration"] = timeIntegration
         svar = self.add_variable(dataType, count=count)
         svar.data[...] = 0.
         setattr(self, name, svar)
+        self.tracked_fields[name] = new_field
+        return getattr(self, name)
 
     def save(self, outputDir, checkpointID, time):
         """ Save to h5 and create an xdmf file for each tracked field """
@@ -198,20 +191,19 @@ class PassiveTracers(Swarm):
         comm.Barrier()
 
         # Save each tracked field
-        for field in self.tracked_field:
-
+        for name, field in self.tracked_fields.items():
             file_prefix = os.path.join(
                 outputDir,
-                self.name + "_" + field["name"] + '-%s' % checkpointID)
+                self.name + "_" + name + '-%s' % checkpointID)
 
-            obj = getattr(self, field["name"])
+            obj = getattr(self, name)
             if not field["timeIntegration"]:
                 obj.data[...] = field["value"].evaluate(self)
             handle = obj.save('%s.h5' % file_prefix, units=field["units"])
 
             if rank == 0:
                 # Add attribute to xdmf file
-                string += _swarmvarschema(handle, field["name"])
+                string += _swarmvarschema(handle, name)
 
         comm.Barrier()
 
