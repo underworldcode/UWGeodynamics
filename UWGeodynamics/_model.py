@@ -290,6 +290,10 @@ class Model(Material):
                                 restart_variable=True, init_value=self.index)
         self.add_swarm_variable("plasticStrain", dataType="double", count=1,
                                 restart_variable=True)
+        self.add_swarm_variable("viscousStrain", dataType="double", count=1,
+                                restart_variable=True)
+        self.add_swarm_variable("cumulativeStrain", dataType="double", count=1,
+                                restart_variable=True)
         self.add_swarm_variable("_viscosityField", dataType="double", count=1)
         self.add_swarm_variable("_densityField", dataType="double", count=1)
         self.add_swarm_variable("meltField", dataType="double", count=1)
@@ -1698,7 +1702,7 @@ class Model(Material):
 
         dt = self._dt
 
-        # Heal plastic strain
+        # Heal strain
         if any([material.healingRate for material in self.materials]):
             healingRates = {}
             for material in self.materials:
@@ -1714,6 +1718,20 @@ class Model(Material):
         _isYielding = self._viscosity_processor._isYielding
         plasticStrainIncrement = dt * _isYielding.evaluate(self.swarm)
         self.plasticStrain.data[:] += plasticStrainIncrement
+
+        # Increment viscous strain
+        _viscousStrainRate = fn.tensor.second_invariant(
+            2. * self._viscosity_processor.viscous_eta * self.strainRate
+        )
+        _viscousStrainRate = (
+            0.5 * _viscousStrainRate / self._viscosity_processor.viscous_eta
+        )
+
+        viscousStrainIncrement = dt * _viscousStrainRate.evaluate(self.swarm)
+        self.viscousStrain.data[:] += viscousStrainIncrement
+
+        self.cumulativeStrain.data[:] = self.plasticStrain.data[:]
+        self.cumulativeStrain.data[:] += self.viscousStrain.data[:]
 
         if any([material.melt for material in self.materials]):
             # Calculate New meltField
@@ -2087,6 +2105,7 @@ class _ViscosityFunction():
                 continue
             if material.viscosity:
                 ViscosityHandler = material.viscosity
+                ViscosityHandler.viscousStrain = Model.plasticStrain
                 ViscosityHandler.pressureField = Model.pressureField
                 ViscosityHandler.strainRateInvariantField = (
                     Model.strainRate_2ndInvariant)

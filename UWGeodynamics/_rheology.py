@@ -83,6 +83,18 @@ def linearFrictionWeakening(cumulativeTotalStrain, FrictionCoef,
     return fn.math.atan(frictionVal)
 
 
+def viscousWeakeningFn(viscousStrain, alpha1, alpha2, alphaFn, epsilon1, epsilon2):
+
+    alphaVal = [(viscousStrain <= epsilon1, alpha1),
+                 (viscousStrain >= epsilon2, alpha2),
+                 (True, alpha1 + ((alphaFn - alpha1)/ (epsilon2 - epsilon1))*
+                 (viscousStrain - epsilon1))]
+
+    alphaVal = fn.branching.conditional(alphaVal) 
+
+    return alphaVal
+
+
 class Limiter(fn.Function):
     """ Viscosity Limiter Class """
 
@@ -387,7 +399,12 @@ class ViscousCreep(Rheology):
                  f=1.0,
                  BurgersVectorLength=0.5e-9 * u.metre,
                  mineral="unspecified",
-                 creep_type="unspecified"):
+                 creep_type="unspecified",
+                 alphaFn=None,
+                 alpha1=None,
+                 alpha2=None,
+                 epsilon1=0.0,
+                 epsilon2=0.2):
         """ Viscous Creep Rheology
 
         Deformation of materials on long timescale is predominantly achieved
@@ -437,6 +454,12 @@ class ViscousCreep(Rheology):
                 Mineral associated to the flow law
             creep_type :
                 "Dislocation, Diffusion"
+            alpha1 :
+            alpha2 :
+            epsilon1 :
+                Start of weakening (fraction of accumulated plastic strain)
+            epsilon2 :
+                End of weakening (fraction of accumulated plastic strain)
 
         Returns
         -------
@@ -463,6 +486,14 @@ class ViscousCreep(Rheology):
         self.f = f
         self.constantGas = 8.3144621 * u.joule / u.mole / u.degK
         self.BurgersVectorLength = BurgersVectorLength
+        self.alphaFn = alphaFn
+        self._alpha1 = alpha1
+        self.alpha2 = alpha2
+        self.epsilon1 = epsilon1
+        self.epsilon2 = epsilon2
+
+        self.viscousStrain = None
+        self.viscousWeakeningFn = viscousWeakeningFn
 
         self.onlinePDF = None
         self.citation = None
@@ -510,6 +541,27 @@ class ViscousCreep(Rheology):
 
 
         return header + html + footer
+    
+    @property
+    def alpha1(self):
+        return self._alpha1
+
+    @alpha1.setter
+    def alpha1(self, value):
+        self._alpha1 = value
+
+    def _weakeningFn(self):
+        alpha = None
+        if self.viscousStrain and self.alphaFn:
+            alpha = self.viscousWeakeningFn(
+                self.viscousStrain,
+                alpha1=self.alpha1,
+                alpha2=self.alpha2,
+                alphaFn=self.alphaFn,
+                epsilon1=self.epsilon1,
+                epsilon2=self.epsilon2
+            )
+        return alpha
 
     @property
     def muEff(self):
@@ -564,6 +616,7 @@ class ViscousCreep(Rheology):
         #alpha = self.meltFractionFactor
         R = nd(self.constantGas)
         b = nd(self.BurgersVectorLength)
+        strain_weakening = self._weakeningFn()
 
         mu_eff = f * 0.5 * A**(-1.0 / n)
 
@@ -583,6 +636,9 @@ class ViscousCreep(Rheology):
 
         if T:
             mu_eff *= fn.math.exp((Q + P * Va) / (R * T * n))
+
+        if strain_weakening:
+            mu_eff *= strain_weakening**(-1.0 / n)
 
         return mu_eff
 
