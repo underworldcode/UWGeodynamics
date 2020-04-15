@@ -74,7 +74,7 @@ The ressource are however limited and you should not try to run model with high 
    :maxdepth: 2
 
    Installation
-   UserGuide
+   User Guide <UserGuide>
    Troubleshoot
 
    Examples
