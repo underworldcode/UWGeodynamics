@@ -26,8 +26,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
 RUN PYTHONPATH= /usr/bin/pip3 install --no-cache-dir setuptools scons 
 # setup further virtualenv to avoid double copying back previous packages (h5py,mpi4py,etc)
 RUN /usr/bin/python3 -m virtualenv --python=/usr/bin/python3 ${VIRTUAL_ENV}
-# Compile and install Badlands
-RUN pip3 install badlands
+# Compile and install the latest UWGeodynamics & Badlands
+RUN pip3 install -U UWGeodynamics badlands
 
 
 # Stage 3: Resultant images
