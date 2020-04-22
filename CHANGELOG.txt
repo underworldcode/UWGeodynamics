@@ -1,12 +1,12 @@
 # Version 2.9
 
 ### User related changes:
-- 'visualisation' module replaces 'glucifer' module (as per UW 2.9) 
-To update in your model replace the line 
+- The 'visualisation' python module replaces the 'glucifer' python module (as per UW 2.9) 
+To update in your model, replace the line 
      `import glucifer`
   with
      `from UWGeodynamics import visualisation as vis`
-  'vis' be used as 'glucifer' was.
+  'vis' can be used as 'glucifer' was.
 
 - Compatible with UW 2.9
 - New Numpy Pressure Smoother
