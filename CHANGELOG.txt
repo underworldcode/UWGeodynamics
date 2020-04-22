@@ -1,7 +1,19 @@
 # Version 2.9
 
+### User related changes:
+- 'glucifer' module replaces 'visualisation' module (as per UW 2.9) 
+To update in your model replace the line 
+     `import glucifer`
+  with
+     `from UWGeodynamics import visualisation as vis`
+  'vis' be used as 'glucifer' was.
+
 - Compatible with UW 2.9
-- Renaming glucifer -> vis.
-- Bug Fix: passive tracer initialisation in 3D.
-- Upgrade to Dockerfile configuration, using "muli-stage" builds.
 - New Numpy Pressure Smoother
+
+### Enhancements:
+- Upgrade to Dockerfile configuration, using "muli-stage" builds.
+
+### Bug Fixes:
+- Passive tracer initialisation in 3D.
+- Restarting with track fields and swarm global indices.
