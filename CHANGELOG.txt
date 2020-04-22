@@ -1,7 +1,7 @@
 # Version 2.9
 
 ### User related changes:
-- 'glucifer' module replaces 'visualisation' module (as per UW 2.9) 
+- 'visualisation' module replaces 'glucifer' module (as per UW 2.9) 
 To update in your model replace the line 
      `import glucifer`
   with
