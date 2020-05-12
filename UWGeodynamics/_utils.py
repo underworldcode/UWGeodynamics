@@ -94,16 +94,8 @@ class PassiveTracers(Swarm):
 
     def add_particles_with_coordinates(self, vertices, **kwargs):
 
-        for dim, _ in enumerate(vertices):
-            vertices[dim] = nd(vertices[dim])
-
-        sizes = np.array([np.array(x).size for x in vertices])
-        points = np.zeros((sizes.max(), len(vertices)))
-
-        for dim, _ in enumerate(vertices):
-            points[:, dim] = vertices[dim]
         vals = super(PassiveTracers,
-                     self).add_particles_with_coordinates(points,
+                     self).add_particles_with_coordinates(nd(vertices),
                                                           **kwargs)
         self.advector = uw.systems.SwarmAdvector(
             swarm=self,
@@ -381,9 +373,14 @@ def circles_grid(radius, minCoord, maxCoord, npoints=72):
         coords[:, 0] = x
         coords[:, 1] = y
         points = points[:, np.newaxis] + coords
-        x, y = points[:, :, 0].ravel(), points[:, :, 1].ravel()
 
-        return x, y
+        # Finally, returns a 2D array
+        x, y = points[:, :, 0].ravel(), points[:, :, 1].ravel()
+        coords = np.ndarray((x.size, 2))
+        coords[:, 0] = x
+        coords[:, 1] = y
+
+        return coords
 
     if len(minCoord) == 3:
         # Create points on circle
@@ -418,8 +415,14 @@ def circles_grid(radius, minCoord, maxCoord, npoints=72):
         x = points[:, :, 0].ravel()
         y = points[:, :, 1].ravel()
         z = points[:, :, 2].ravel()
+        
+        # Finally, returns a 2D array
+        coords = np.ndarray((x.size, 2))
+        coords[:, 0] = x
+        coords[:, 1] = y
+        coords[:, 2] = z
 
-        return x, y, z
+        return coords
 
 
 def circle_points_tracers(radius, centre=tuple([0., 0.]), npoints=72):
@@ -427,7 +430,10 @@ def circle_points_tracers(radius, centre=tuple([0., 0.]), npoints=72):
     radius = nd(radius)
     x = radius * np.cos(np.radians(angles)) + nd(centre[0])
     y = radius * np.sin(np.radians(angles)) + nd(centre[1])
-    return x, y
+    coords = np.ndarray((x.size, 2))
+    coords[:, 0] = x
+    coords[:, 1] = y
+    return coords
 
 
 def sphere_points_tracers(radius, centre=tuple([0., 0., 0.]), npoints=30):
@@ -444,7 +450,13 @@ def sphere_points_tracers(radius, centre=tuple([0., 0., 0.]), npoints=30):
     y += nd(centre[1])
     z += nd(centre[2])
 
-    return x, y, z
+    # Finally, returns a 2D array
+    coords = np.ndarray((x.size, 2))
+    coords[:, 0] = x
+    coords[:, 1] = y
+    coords[:, 2] = z
+   
+    return coords
 
 
 class Nearest_neighbors_projector(object):
