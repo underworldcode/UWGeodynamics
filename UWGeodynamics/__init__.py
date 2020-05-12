@@ -8,10 +8,10 @@ except ImportError:
     raise ImportError("Can not find Underworld, please check your installation")
 
 try: 
-    from uw.scaling import get_coefficients
-    from uw.scaling import units as UnitRegistry
-    from uw.scaling import non_dimensionalise
-    from uw.scaling import dimensionalise
+    from underworld.scaling import get_coefficients
+    from underworld.scaling import units as UnitRegistry
+    from underworld.scaling import non_dimensionalise
+    from underworld.scaling import dimensionalise
 
 except ImportError:
     

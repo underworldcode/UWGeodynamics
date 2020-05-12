@@ -1650,9 +1650,11 @@ Passive Tracers
    >>> u = GEO.u
 
    >>> Model = GEO.Model()
-   >>> x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
-   >>> y = 32. * u.kilometre
-   >>> tracers = Model.add_passive_tracers(vertices=[x,y])
+   >>> npoints = 1000
+   >>> coords = np.ndarray((npoints, 2))
+   >>> coords[:, 0] = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), npoints)
+   >>> coords[:, 1] = GEO.nd(32. * u.kilometre)
+   >>> tracers = Model.add_passive_tracers(vertices=coords)
 
 You can pass a list of centroids to the `Model.add_passive_tracers` method.
 In that case, the coordinates of the passive tracers are relative to the
@@ -1668,7 +1670,9 @@ position of the centroids. The pattern is repeated around each centroid.
     >>> cxpos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer),5)
     >>> cypos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer),5)
     >>> cxpos, cypos = np.meshgrid(cxpos, cypos)
-    >>> tracers = Model.add_passive_tracers(vertices=[0,0],
+    >>>
+    >>> coords = np.zeros((1, 2))
+    >>> tracers = Model.add_passive_tracers(vertices=coords,
     ...                                     centroids=[cxpos.ravel(),
     ...                                                cypos.ravel())
 
@@ -1679,9 +1683,9 @@ We provide a function to create circles on a grid:
 
    >>> import UWGeodynamics as GEO
 
-   >>> x_c, y_c = GEO.circles_grid(radius = 2.0 * u.kilometer,
-   ...                 minCoord=[Model.minCoord[0], lowercrust.bottom],
-   ...                 maxCoord=[Model.maxCoord[0], 0.*u.kilometer])
+   >>> coords = GEO.circles_grid(radius = 2.0 * u.kilometer,
+   ...                           minCoord=[Model.minCoord[0], lowercrust.bottom],
+   ...                           maxCoord=[Model.maxCoord[0], 0.*u.kilometer])
 
 Tracking Values
 ~~~~~~~~~~~~~~~
@@ -1697,11 +1701,11 @@ through time.
    >>> u = GEO.u
    >>> Model = GEO.Model()
 
-   >>> x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
-   >>> y = 32. * u.kilometre
-
-   >>> tracers = Model.add_passive_tracers(vertices=[x,y])
-   >>> P = Model.add_passive_tracers(vertices=[x,y])
+   >>> npoints = 1000
+   >>> coords = np.ndarray((npoints, 2))
+   >>> coords[:, 0] = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), npoints)
+   >>> coords[:, 1] = GEO.nd(32. * u.kilometre)
+   >>> tracers = Model.add_passive_tracers(vertices=coords)
 
    >>> tracers.add_tracked_field(Model.pressureField,
                                  name="tracers_press",

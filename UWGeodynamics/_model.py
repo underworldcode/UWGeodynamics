@@ -1839,14 +1839,22 @@ class Model(Material):
             tracers.add_particles_with_coordinates(vertices)
 
         else:
-            x = np.array(vertices[0])[..., np.newaxis] + np.array(centroids[0]).ravel()
-            y = np.array(vertices[1])[..., np.newaxis] + np.array(centroids[1]).ravel()
+            x = np.array(vertices[:, 0])[..., np.newaxis] + np.array(centroids[0]).ravel()
+            y = np.array(vertices[:, 1])[..., np.newaxis] + np.array(centroids[1]).ravel()
+            x = x.ravel()
+            y = y.ravel()
 
             if self.mesh.dim == 2:
-                vertices = [x.ravel(), y.ravel()]
+                vertices = np.ndarray((x.size, 2))
+                vertices[:, 0] = x
+                vertices[:, 1] = y
             else:
                 z = np.array(vertices[2])[..., np.newaxis]  + np.array(centroids[2]).ravel()
-                vertices = [x.ravel(), y.ravel(), z.ravel()]
+                z = z.ravel()
+                vertices = np.ndarray((x.size, 3))
+                vertices[:, 0] = x
+                vertices[:, 1] = y
+                vertices[:, 2] = z
 
             tracers = PassiveTracers(self.mesh,
                                      self.velocityField,
@@ -2701,7 +2709,6 @@ class _RestartFunction(object):
             with h5py.File(fpath, "r", driver="mpio", comm=comm) as h5f:
 
                 vertices = h5f["data"][()] * u.Quantity(h5f.attrs["units"])
-                vertices = [vertices[:, dim] for dim in range(Model.mesh.dim)]
                 obj = PassiveTracers(Model.mesh,
                                      Model.velocityField,
                                      tracer.name,
