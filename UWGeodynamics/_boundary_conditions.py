@@ -318,9 +318,13 @@ class VelocityBCs(BoundaryConditions):
         """
 
         super(VelocityBCs, self).__init__(Model, Model.velocityField, None,
-                                          left, right, top, bottom,
-                                          front, back, nodeSets, materials,
-                                          order_wall_conditions, "Dirichlet")
+                                      left=left, right=right, 
+                                      top=top, bottom=bottom,
+                                      front=front, back=back, 
+                                      nodeSets=nodeSets, 
+                                      materials=materials, 
+                                      order_wall_conditions=order_wall_conditions, 
+                                      condition_type="Dirichlet")
 
         # Link Moving Walls
         for arg in [self.left, self.right, self.top, self.bottom, self.front,
@@ -469,10 +473,13 @@ class StressBCs(BoundaryConditions):
 
         """
         super(StressBCs, self).__init__(Model, Model.tractionField,
-                                        Model.velocityField,
-                                        left, right, top, bottom,
-                                        front, back, nodeSets, materials,
-                                        order_wall_conditions, "Neumann")
+                                    Model.velocityField,
+                                    left=left, right=right, top=top,
+                                    bottom=bottom, front=front, 
+                                    back=back, nodeSets=nodeSets, 
+                                    materials=materials,
+                                    order_wall_conditions=order_wall_conditions, 
+                                    condition_type="Neumann")
 
 
 _dim_temp = {"[temperature]": 1.0}
@@ -545,10 +552,12 @@ class TemperatureBCs(BoundaryConditions):
         """
 
         super(TemperatureBCs, self).__init__(
-            Model, Model.temperature, None, left, right, top, bottom,
-            front, back, nodeSets, materials, order_wall_conditions,
-            "Dirichlet")
-
+            Model, Model.temperature, None, left=left, right=right, 
+                                top=top, bottom=bottom, front=front, 
+                                back=back, nodeSets=nodeSets, 
+                                materials=materials,
+                                order_wall_conditions=order_wall_conditions, 
+                                condition_type="Dirichlet")
 
 class HeatFlowBCs(BoundaryConditions):
 
@@ -651,9 +660,12 @@ class HeatFlowBCs(BoundaryConditions):
 
         super(HeatFlowBCs, self).__init__(
             Model, Model._heatFlux, Model.temperature,
-            left, right, top, bottom,
-            front, back, nodeSets, materials,
-            order_wall_conditions, "Neumann")
+            left=left, right=right, top=top,
+            bottom=bottom, front=front, 
+            back=back, nodeSets=nodeSets, 
+            materials=materials,
+            order_wall_conditions=order_wall_conditions, 
+            condition_type="Neumann")
 
     @staticmethod
     def _get_heat_flux(heat_flow, material):
