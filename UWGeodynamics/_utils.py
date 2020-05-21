@@ -153,6 +153,12 @@ class PassiveTracers(Swarm):
         self.tracked_fields[name] = new_field
         return getattr(self, name)
 
+    def load(self, fpath):
+        """ Load swarm from file, create global indices variable """
+        Swarm.load(self, fpath)
+        self._global_indices()
+        return self
+
     def save(self, outputDir, checkpointID, time):
         """ Save to h5 and create an xdmf file for each tracked field """
 
