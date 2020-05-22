@@ -81,6 +81,10 @@ class PassiveTracers(Swarm):
         self.particleEscape = particleEscape
         self.zOnly = zOnly
 
+        self.advector = uw.systems.SwarmAdvector(
+            swarm=self,
+            velocityField=self.velocityField, order=2)
+
         self.tracked_fields = {}
 
     def _global_indices(self):
@@ -97,10 +101,6 @@ class PassiveTracers(Swarm):
         vals = super(PassiveTracers,
                      self).add_particles_with_coordinates(nd(vertices),
                                                           **kwargs)
-        self.advector = uw.systems.SwarmAdvector(
-            swarm=self,
-            velocityField=self.velocityField, order=2)
-
         self._global_indices()
         return vals
 
