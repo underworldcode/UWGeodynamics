@@ -3,8 +3,9 @@ name: tests
 on: [push]
 
 jobs:
-  runs-on: ubuntu-latest
-  steps:
-    - uses: docker://underworldcode/underworld2
-    - name: Impoet Underworld
-    - run: python -c "import underworld"
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker://underworldcode/underworld2
+      - name: Impoet Underworld
+      - run: python -c "import underworld"
