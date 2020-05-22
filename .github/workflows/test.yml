@@ -4,7 +4,6 @@ on: [push]
 
 jobs:
   container:
-    runs-on: ubuntu-latest
     container: underworldcode/underworld2
     steps:
       - run: |
