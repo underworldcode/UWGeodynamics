@@ -3,6 +3,7 @@ name: tests
 on: [push]
 
 jobs:
+  runs-on: ubuntu-latest
   container: underworldcode/underworld2:latest
   steps:
     - run: |
