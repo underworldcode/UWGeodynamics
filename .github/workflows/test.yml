@@ -3,8 +3,9 @@ name: tests
 on: [push]
 
 jobs:
-  run_test:
+  container:
     runs-on: ubuntu-latest
+    container: underworldcode/underworld2
     steps:
-      - run: docker run -it underworldcode/underworld2 /bin/bash
-      - run: python -c "import underworld as uw"
+      - run: |
+        python -c "import underworld"
