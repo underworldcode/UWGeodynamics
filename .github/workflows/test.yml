@@ -11,3 +11,7 @@ jobs:
         run: docker-compose up -d
       - name: Test
         run: docker exec -i UWGeodynamics-dev /bin/bash 
+      - name: Install UWGeodynamics
+        run: cd workspace & pip install -e .
+      - name: Run tests
+        run: pytest -v
