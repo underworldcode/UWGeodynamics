@@ -1,0 +1,11 @@
+name: tests
+
+on: [push]
+
+jobs:
+    run_test:
+        runs_on: ubuntu-latest
+        steps:
+            - name: Run all tests
+              uses: docker://underworldcode/underworld2
+              run: python -c "import underworld as uw"
