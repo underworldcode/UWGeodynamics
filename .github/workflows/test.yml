@@ -8,4 +8,4 @@ jobs:
     steps:
       - uses: docker://underworldcode/underworld2
       - name: Impoet Underworld
-      - run: python -c "import underworld"
+        run: python -c "import underworld"
