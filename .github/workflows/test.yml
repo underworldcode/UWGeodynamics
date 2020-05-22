@@ -3,8 +3,7 @@ name: tests
 on: [push]
 
 jobs:
-  container:
-    container: underworldcode/underworld2
-    steps:
-      - run: |
-        python -c "import underworld"
+  container: underworldcode/underworld2:latest
+  steps:
+    - run: |
+      python -c "import underworld"
