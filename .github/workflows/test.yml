@@ -10,4 +10,4 @@ jobs:
       - name: Build the stack
         run: docker-compose up -d
       - name: Test
-        run: docker run container:UWGeodynamics-dev python -c "import underworld" 
+        run: docker exec UWGeodynamics-dev /bin/bash 

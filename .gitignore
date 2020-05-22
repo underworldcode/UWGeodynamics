@@ -8,7 +8,16 @@ __pycache__/
 *.so
 *~
 */.ipynb_checkpoints
+tests/test_results/*
+tutorials/*.png
+examples/*.png
+tutorials/out*
 
 # due to using tox and pytest
 .tox
 .cache
+
+*.h5
+*.xmf
+*.xdmf
+*.hdf5
