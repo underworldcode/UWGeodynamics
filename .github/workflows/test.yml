@@ -10,4 +10,4 @@ jobs:
       - name: Build the stack
         run: docker-compose up -d
       - name: Test
-        run: docker exec UWGeodynamics-dev /bin/bash 
+        run: docker exec -i UWGeodynamics-dev /bin/bash 
