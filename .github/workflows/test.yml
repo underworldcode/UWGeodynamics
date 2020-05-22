@@ -14,4 +14,4 @@ jobs:
       - name: Install UWGeodynamics
         run: cd workspace & pip install -e .
       - name: Run tests
-        run: pytest -v
+        run: pip install pytest & pytest -v
