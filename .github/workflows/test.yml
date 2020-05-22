@@ -6,6 +6,5 @@ jobs:
   run_test:
     runs-on: ubuntu-latest
     steps:
-      - run: docker run --name underworld underworldcode/underworld2
-      - run: docker exec -it underworld /bin/bash
+      - run: docker run -it underworldcode/underworld2 /bin/bash
       - run: python -c "import underworld as uw"
