@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   runs-on: ubuntu-latest
-  container: underworldcode/underworld2:latest
   steps:
-    - run: |
-      python -c "import underworld"
+    - uses: docker://underworldcode/underworld2
+    - name: Impoet Underworld
+    - run: python -c "import underworld"
