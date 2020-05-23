@@ -1739,8 +1739,9 @@ class Model(Material):
             self._update_stress_history(dt)
 
         if self.passive_tracers:
-            for key in self.passive_tracers:
-                self.passive_tracers[key].integrate(dt)
+            for key, val in self.passive_tracers.items():
+                if val.advector:
+                    val.advector.integrate(dt)
 
         # Do pop control
         self.population_control.repopulate()
@@ -1769,7 +1770,8 @@ class Model(Material):
         self._advector = Mesh_advector(self, axis)
 
     def add_passive_tracers(self, name, vertices=None,
-                            particleEscape=True, centroids=None, zOnly=False):
+                            particleEscape=True, centroids=None,
+                            advect=True):
         """ Add a swarm of passive tracers to the Model
 
         Parameters:
@@ -1832,10 +1834,8 @@ class Model(Material):
         if not centroids:
 
             tracers = PassiveTracers(self.mesh,
-                                     self.velocityField,
                                      name=name,
-                                     particleEscape=particleEscape,
-                                     zOnly=zOnly)
+                                     particleEscape=particleEscape)
             tracers.add_particles_with_coordinates(vertices)
 
         else:
@@ -1857,15 +1857,16 @@ class Model(Material):
                 vertices[:, 2] = z
 
             tracers = PassiveTracers(self.mesh,
-                                     self.velocityField,
                                      name=name,
-                                     particleEscape=particleEscape,
-                                     zOnly=zOnly)
+                                     particleEscape=particleEscape)
             tracers.add_particles_with_coordinates(vertices)
+
+        if advect:
+            tracers.advector = uw.systems.SwarmAdvector(
+                self.velocityField, tracers, order=2)
 
         self.passive_tracers[name] = tracers
         setattr(self, name.lower() + "_tracers", tracers)
-
         return tracers
 
     def _get_melt_fraction(self):
@@ -2696,7 +2697,6 @@ class _RestartFunction(object):
                 sys.stdout.flush()
 
     def reload_passive_tracers(self, step):
-        
 
         Model = self.Model
 
@@ -2707,11 +2707,11 @@ class _RestartFunction(object):
             tracked_fields = tracer.tracked_fields
 
             obj = PassiveTracers(Model.mesh,
-                                 Model.velocityField,
                                  tracer.name,
-                                 zOnly=tracer.zOnly,
                                  particleEscape=tracer.particleEscape)
             obj.load(fpath)
+            if tracer.advector:
+                tracer.advector = uw.systems.SwarmAdvector(Model.velocityField, tracer, order=2)
 
             # Reload global indices
             fpath = os.path.join(self.restartDir, tracer.name + '_global_index-%s.h5' % step)
