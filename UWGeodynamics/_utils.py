@@ -69,19 +69,24 @@ class PressureSmoother(object):
 
 class PassiveTracers(Swarm):
 
-    def __init__(self, mesh, velocityField, name=None,
-                 particleEscape=True, zOnly=False):
+    def __init__(self, mesh, name=None, particleEscape=True):
 
         super(PassiveTracers, self).__init__(mesh,
                                              particleEscape=particleEscape)
         self.name = name
-        self.velocityField = velocityField
-        self.angular_velocity = 0.5 * (self.velocityField.fn_gradient[1] -
-                                       self.velocityField.fn_gradient[2])
         self.particleEscape = particleEscape
-        self.zOnly = zOnly
-
         self.tracked_fields = {}
+        self._advector = None
+
+    @property
+    def advector(self):
+        return self._advector
+
+    @advector.setter
+    def advector(self, uw_advector):
+        if not isinstance(uw_advector, uw.systems.SwarmAdvector):
+            raise ValueError(""" The advector must be an Underworld SwarmAdvector object""")
+        self._advector = uw_advector
 
     def _global_indices(self):
         indices = np.arange(self.particleLocalCount)
@@ -93,40 +98,11 @@ class PassiveTracers(Swarm):
         self.global_index.data[:, 0] = pairs.view(np.int64)
 
     def add_particles_with_coordinates(self, vertices, **kwargs):
-
         vals = super(PassiveTracers,
                      self).add_particles_with_coordinates(nd(vertices),
                                                           **kwargs)
-        self.advector = uw.systems.SwarmAdvector(
-            swarm=self,
-            velocityField=self.velocityField, order=2)
-
         self._global_indices()
         return vals
-
-    def integrate(self, dt, **kwargs):
-        """ Integrate swarm velocity in time """
-        if self.zOnly:
-            saved_velocities = np.copy(self.velocityField.data)
-            self.velocityField.data[:, :-1] = 0.
-            self.velocityField.syncronise()
-            self.advector.integrate(dt, **kwargs)
-            self.velocityField.data[...] = saved_velocities
-            self.velocityField.syncronise()
-        else:
-            self.advector.integrate(dt, **kwargs)
-
-        # Integrate tracked field variables over time
-        for name, field in self.tracked_fields.items():
-            if field["timeIntegration"]:
-                obj = getattr(self, name)
-                if self.mesh.dim == 2 and obj.data.shape[-1] > 2:
-                    ang_vel = self.angular_velocity
-                    dtheta = dt * ang_vel.evaluate(self).reshape(1, -1)
-                    rotateTensor2D(obj.data[:, 0:3], dtheta)
-                    obj.data[:, 0:3] += field["value"].evaluate(self)
-                else:
-                    obj.data[...] += field["value"].evaluate(self) * dt
 
     def add_tracked_field(self, value, name, units, dataType, count=1,
                           overwrite=True, timeIntegration=False):
@@ -206,7 +182,6 @@ class PassiveTracers(Swarm):
         comm.Barrier()
 
         # get swarm parameters - serially read from hdf5 file to get size
-
         if rank == 0:
             with h5py.File(name=swarm_fpath, mode="r") as h5f:
                 dset = h5f.get('data')
