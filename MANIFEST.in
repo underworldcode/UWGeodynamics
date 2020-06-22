@@ -1,5 +1,5 @@
 # Include the license file
-include LICENSE.txt
+include LICENSE.md
 include uwgeodynamicsrc.template  
 recursive-include utils *.sh
 recursive-include UWGeodynamics/ressources *.json
