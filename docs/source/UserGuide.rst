@@ -1295,7 +1295,7 @@ across the border/boundary.
    ...
 
 Lithostatic Pressure Condition (stress)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The lithostatic pressure field can be passed as a boundary condition (stress)
 
