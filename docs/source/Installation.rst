@@ -169,102 +169,12 @@ requirements
 - openmpi >= 1.8
 - hdf5 >= 1.8
 
-NCI Raijin
+NCI Gadi
 ~~~~~~~~~~
 
-The following script install Underworld and UWGeodynamics on raijin:
-
-.. code:: bash
-
-  #!/bin/sh
-  # This script installs underworld on raijin.nci.org.au
-  # 
-  # Usage:
-  #  sh ./nci_raijin.sh <destfolder>
-  #
-  # exit when any command fails
-  set -e
-  
-  DATE=`date +%d%b%Y` # could be used to date checkout eg,
-  INSTALLPATH=`pwd`/$1
-  UW_DIR=$INSTALLPATH/underworld-$DATE
-  
-  mkdir $INSTALLPATH
-  
-  cd $INSTALLPATH
-  git clone https://github.com/underworldcode/underworld2.git $UW_DIR
-  cd $UW_DIR
-  git checkout master  # checkout the requested version
-  
-  # setup modules
-  module purge
-  RUN_MODS='pbs dot mpi4py/3.0.2-py36-ompi3'
-  module load hdf5/1.10.2p petsc/3.9.4 gcc/5.2.0 mesa/11.2.2 swig/3.0.12 scons/3.0.1 $RUN_MODS
-  echo "*** The module list is: ***"
-  module list -t
-  
-  # setup python environment with preinstalled packages (h5py, lavavu, pint)
-  export PYTHONPATH=/apps/underworld/opt/h5py/2.9.0-py36-ompi3/lib/python3.6/site-packages/h5py-2.9.0-py3.6-linux-x86_64.egg/:/apps/underworld/opt/lavavu/1.4.1_rc/:/apps/underworld/opt/pint/0.9_py36/lib/python3.6/site-packages/:$PYTHONPATH
-  echo "*** New PYTHONPATH: $PYTHONPATH ***"
-  
-  # build and install code
-  cd libUnderworld
-  CONFIG="./configure.py  --python-dir=`python3-config --prefix` --with-debugging=0"
-  echo "*** The config line is: ***"
-  echo "$CONFIG"
-  echo ""
-  
-  $CONFIG
-  ./compile.py -j4
-  cd .. ; source updatePyPath.sh 
-  cd $INSTALLPATH
-  
-  # UWGeodynamics
-  
-  pip3 install git+https://github.com/underworldcode/uwgeodynamics --prefix=$INSTALLPATH
-  
-  cd $INSTALLPATH
-  touch module_paths.sh
-  
-  echo "#!/bin/bash" >> module_paths.sh
-  echo "source $UW_DIR/updatePyPath.sh" >> module_paths.sh
-  echo "module purge" >> module_paths.sh
-  echo "module load $RUN_MODS" >> module_paths.sh
-  echo "" >> module_paths.sh
-  echo "export PYTHONPATH=$UW_DIR:$UW_DIR/glucifer:$PYTHONPATH" >> module_paths.sh
-  echo "" >> module_paths.sh
-  echo "export PATH=$PATH" >> module_paths.sh
-  echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> module_paths.sh
-  
-  echo "#####################################################################"
-  echo "Underworld2 built successfully at:                                   "
-  echo "  $UW_DIR                                                            "
-  echo "#####################################################################"
-
-
-We provide a minimal PBS script:
-
-.. code:: bash
-
-  #PBS -P project
-  #PBS -q normal
-  #PBS -l walltime=1:00:00
-  #PBS -l mem=1GB
-  #PBS -l jobfs=10MB
-  #PBS -l ncpus=6
-  #PBS -l software=underworld
-  #PBS -l wd
-  #PBS -N name
-  
-  source path-to-your-underworld-installation/module_paths.sh
-  
-  MODELNAME="Model"
-  OUTPUTPATH=`pwd`
-  SCRIPT="Model.py"
-  
-  mpiexec --mca mpi_warn_on_fork 0 --mca opal_abort_print_stack 1 --mca mpi_param_check 1 \
-   --mca mpi_add_procs_cutoff 256 python ./$SCRIPT 1> $OUTPUTPATH/$MODELNAME.$PBS_JOBID.log 2> $OUTPUTPATH/$MODELNAME.$PBS_JOBID.err
-  
+We provide a `script <https://github.com/underworldcode/UWGeodynamics/blob/master/nci_gadi/install_on_gadi.sh>`_  to install UWGeodynamics, Underworld and Badlands inside a virtual
+environment on Gadi.  
+A minimal `PBS script <https://github.com/underworldcode/UWGeodynamics/blob/master/nci_gadi/script.pbs>`_ is also available.
 
 Pawsey MAGNUS
 -------------
@@ -376,3 +286,4 @@ That’s it!!!
 .. _Kitematic: https://kitematic.com/
 .. _github: https://github.com/underworldcode/UWGeodynamics.git
 .. _Pint: https://pint.readthedocs.io/en/latest
+
