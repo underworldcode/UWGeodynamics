@@ -1,0 +1,19 @@
+#PBS -P q97
+#PBS -q normal
+#PBS -l walltime=1:00:00
+#PBS -l mem=1000GB
+#PBS -l jobfs=10MB
+#PBS -l ncpus=12
+#PBS -l software=underworld
+#PBS -l wd
+#PBS -l storage=scratch/q97
+#PBS -N Model
+
+source /scratch/q97/codes/UWGeodynamics_2.9.10.sh
+
+MODELNAME="Model_Name"
+OUTPUTPATH=`pwd`
+SCRIPT="model_script.py"
+
+# execution
+mpiexec python3 ./$SCRIPT 1> $OUTPUTPATH/$MODELNAME.$PBS_JOBID.log 2> $OUTPUTPATH/$MODELNAME.$PBS_JOBID.err
