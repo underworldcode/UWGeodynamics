@@ -1,4 +1,4 @@
-[![image](https://raw.githubusercontent.com/rbeucher/UWGeodynamics/master/docs/readthedocs/src/img/logos.png)](https://www.earthbyte.org/the-basin-genesis-hub)
+[![image](docs/readthedocs/src/img/logos.png)](https://www.earthbyte.org/the-basin-genesis-hub)
 
 # Underworld Geodynamics project
 
