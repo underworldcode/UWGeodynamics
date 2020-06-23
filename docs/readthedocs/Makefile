@@ -5,7 +5,7 @@
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 SPHINXPROJ    = UWGeodynamics
-SOURCEDIR     = source
+SOURCEDIR     = src
 BUILDDIR      = build
 
 # Put it first so that "make" without argument is like "make help".

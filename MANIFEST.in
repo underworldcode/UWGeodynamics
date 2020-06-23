@@ -6,8 +6,3 @@ recursive-include UWGeodynamics/ressources *.json
 recursive-include UWGeodynamics/uwgeo-data *
 
 prune docs
-prune manual
-prune examples
-prune tutorials
-prune docker
-prune docker-dev

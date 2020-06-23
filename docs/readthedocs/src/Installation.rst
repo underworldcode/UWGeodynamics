@@ -172,9 +172,9 @@ requirements
 NCI Gadi
 ~~~~~~~~~~
 
-We provide a `script <https://github.com/underworldcode/UWGeodynamics/blob/master/nci_gadi/install_on_gadi.sh>`_  to install UWGeodynamics, Underworld and Badlands inside a virtual
+We provide a `script <https://github.com/underworldcode/UWGeodynamics/blob/master/docs/nci_gadi/install_on_gadi.sh>`_  to install UWGeodynamics, Underworld and Badlands inside a virtual
 environment on Gadi.  
-A minimal `PBS script <https://github.com/underworldcode/UWGeodynamics/blob/master/nci_gadi/script.pbs>`_ is also available.
+A minimal `PBS script <https://github.com/underworldcode/UWGeodynamics/blob/master/docs/nci_gadi/script.pbs>`_ is also available.
 
 Pawsey MAGNUS
 -------------

@@ -1670,11 +1670,13 @@ position of the centroids. The pattern is repeated around each centroid.
     >>> cxpos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer),5)
     >>> cypos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer),5)
     >>> cxpos, cypos = np.meshgrid(cxpos, cypos)
+    >>> coords_centroid = np.ndarray((cxpos.size, 2))
+    >>> coords_centroid[:, 0] = cxpos.ravel()
+    >>> coords_centroid[:, 1] = cypos.ravel()
     >>>
     >>> coords = np.zeros((1, 2))
     >>> tracers = Model.add_passive_tracers(vertices=coords,
-    ...                                     centroids=[cxpos.ravel(),
-    ...                                                cypos.ravel())
+    ...                                     centroids=coords_centroid)
 
 
 We provide a function to create circles on a grid:
