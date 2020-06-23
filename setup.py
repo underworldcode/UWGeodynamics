@@ -19,7 +19,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 
 # Write the default uwgeodynamics file
-with open('uwgeodynamicsrc.template') as fd:
+with open('docs/uwgeodynamicsrc.template') as fd:
     template = fd.read()
 with open('UWGeodynamics/uwgeo-data/uwgeodynamicsrc', 'w') as fd:
     fd.write(template)

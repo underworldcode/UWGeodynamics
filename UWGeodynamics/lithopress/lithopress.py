@@ -1,5 +1,4 @@
 from __future__ import print_function,  absolute_import
-# Romain Beucher romain.beucher@unimelb.edu.au
 
 import underworld as uw
 import underworld.function as fn
