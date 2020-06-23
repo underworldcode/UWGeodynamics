@@ -44,11 +44,6 @@ class LecodeIsostasy(object):
         self.velocityField = None
         self._densityFn = None
         self.materialIndexField = None
-
-        if not isinstance(reference_mat, Material):
-            raise ValueError("""reference_mat must be a Material, index of
-                             Material has been deprecated""")
-
         self.reference_mat = reference_mat
         self.average = average
         self.surface = surface

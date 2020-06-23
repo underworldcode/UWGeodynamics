@@ -1,3 +1,9 @@
+# Version 2.10
+
+
+- Layer2D which has now been deprecated for a while has been removed
+
+
 # Version 2.9
 
 ### User related changes:

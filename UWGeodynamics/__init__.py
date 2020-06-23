@@ -363,8 +363,8 @@ _deprecated_map = {
 _deprecated_ignore_map = {
     }
 
-_deprecated_abort = {"solver": "Model.solver.set_inner_method()",
-                     "penalty": "Model.solver.set_penalty()"}
+_deprecated_abort = {
+}
 
 _obsolete_set = set()
 _all_deprecated = set(chain(_deprecated_ignore_map,
