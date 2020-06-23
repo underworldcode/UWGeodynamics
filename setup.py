@@ -4,6 +4,7 @@ from codecs import open
 import os
 import subprocess
 from os import path
+import re
 
 MAJOR               = 2
 MINOR               = 10
@@ -17,10 +18,12 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+long_description = re.sub(r"\[image\]\(", "[image](https://raw.githubusercontent.com/underworldcode/UWGeodynamics/master/", long_description)
 
 # Write the default uwgeodynamics file
 with open('docs/uwgeodynamicsrc.template') as fd:
     template = fd.read()
+
 with open('UWGeodynamics/uwgeo-data/uwgeodynamicsrc', 'w') as fd:
     fd.write(template)
 
