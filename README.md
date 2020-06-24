@@ -40,6 +40,14 @@ access the wide range of possibilities offered by Underworld.
 
 ![image]docs/readthedocs/src/img/SandboxCompression.gif)
 
+## How to Cite?
+
+Please use the following references to cite UWGeodynamics and Underworld:
+
+Beucher et al., (2019). UWGeodynamics: A teaching and research tool for numerical geodynamic modelling. Journal of Open Source Software, 4(36), 1136, https://doi.org/10.21105/joss.01136
+
+Mansour et al., (2020). Underworld2: Python Geodynamics Modelling for Desktop, HPC and Cloud. Journal of Open Source Software, 5(47), 1797, https://doi.org/10.21105/joss.01797
+
 ## UWGeodynamics and Underworld
 
 *UWGeodynamics* uses the
