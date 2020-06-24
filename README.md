@@ -48,6 +48,10 @@ Beucher et al., (2019). UWGeodynamics: A teaching and research tool for numerica
 
 Mansour et al., (2020). Underworld2: Python Geodynamics Modelling for Desktop, HPC and Cloud. Journal of Open Source Software, 5(47), 1797, https://doi.org/10.21105/joss.01797
 
+The Current release (**DOI** citable):
+
+[![DOI](https://zenodo.org/badge/114189389.svg)](https://zenodo.org/badge/latestdoi/114189389)
+
 ## UWGeodynamics and Underworld
 
 *UWGeodynamics* uses the
@@ -84,11 +88,6 @@ The third number is used for *UWGeodynamics* only (v2.7.1, v2.7.2 etc.)
 
 The development branch is based on the current *Underworld* development
 branch.
-
-The Current release (**DOI** citable):
-
-[![DOI](https://zenodo.org/badge/114189389.svg)](https://zenodo.org/badge/latestdoi/114189389)
-
 
 ## Quick Start / Testing
 
