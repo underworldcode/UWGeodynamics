@@ -9,6 +9,8 @@
 [![Docs](https://readthedocs.org/projects/uwgeodynamics/badge)](http://uwgeodynamics.readthedocs.org/)
 ![tests](https://github.com/underworldcode/UWGeodynamics/workflows/tests/badge.svg)
 
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/rbeucher/UWGeodynamics-binder/master)
+
 ![image](docs/tutorials/images/Tutorial1.gif)
 ![image](docs/readthedocs/src/img/collision_wedge.gif)
 
@@ -92,7 +94,7 @@ branch.
 ## Quick Start / Testing
 
 We provide a docker container via
-[binder](https://mybinder.org/v2/gh/rbeucher/UWGeodynamics-binder/master).
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/rbeucher/UWGeodynamics-binder/master).
 This is a quick solution to get you started and run the examples and
 tutorials without installing anything on your machine. That is a good
 way to see if the software can actually be useful to you. The ressource
