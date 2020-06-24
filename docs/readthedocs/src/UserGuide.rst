@@ -39,26 +39,25 @@ import *UWGeodynamics*
 Visualization
 --------------
 
-*glucifer* can be used to plot the fields produced by *Underworld* / *UWGeodynamics*.
-The module is a wrapper around Lavavu_ and is readily available from
+We provide access to a wrapper around Lavavu_ , readily available from
 Underworld.
 
-It can be imported as follow
+The visualisation module can be imported as follow
 
 .. code:: python
 
-   >>> import glucifer
+   >>> from UWGeodynamics import visualisation as vis
 
 .. warning::
 
    Although many plotting modules are available, we strongly encourage people
-   to use *glucifer*. It integrates very well inside the Jupyter_ notebook,
+   to use the *visualisation* module. It integrates very well inside the Jupyter_ notebook,
    is parallel safe, and can take Underworld function as arguments.
 
 
 .. warning::
 
-   We provide some basic examples. Look at the glucifer_ documentation for more
+   We provide some basic examples. Look at the Lavavu_ documentation for more
    details.
 
 Simple examples:
@@ -69,9 +68,9 @@ viscosityField, densityField etc.):
 
 .. code:: python
 
-   >>> import glucifer
+   >>> from UWGeodynamics import visualisation as vis
    >>> Model = GEO.Model()
-   >>> Fig = glucifer.Figure(figsize=(1200,400), title="Material Field")
+   >>> Fig = vis.Figure(figsize=(1200,400), title="Material Field")
    >>> Fig.Points(Model.swarm, Model.materialField, fn_size=3.0)
    ...
    >>> Fig.show()
@@ -85,11 +84,11 @@ variables (e.g. projMaterialField, projViscosityField etc.)
 .. code:: python
 
    >>> import UWGeodynamics as GEO
-   >>> import glucifer
+   >>> from UWGeodynamics import visualisation as vis
 
    >>> u = GEO.u
    >>> Model = GEO.Model()
-   >>> Fig = glucifer.Figure(figsize=(1200,400), title="Temperature")
+   >>> Fig = vis.Figure(figsize=(1200,400), title="Temperature")
    >>> Fig.Surface(Model.mesh, GEO.dim(Model.temperature, u.degK))
    ...
    >>> Fig.show()
@@ -107,11 +106,11 @@ The example below plots a temperature field with the velocity vectors on top:
 .. code:: python
 
    >>> import UWGeodynamics as GEO
-   >>> import glucifer
+   >>> from UWGeodynamics import visualisation as vis
 
    >>> u = GEO.u
    >>> Model = GEO.Model()
-   >>> Fig = glucifer.Figure(figsize=(1200,400), title="Velocity")
+   >>> Fig = vis.Figure(figsize=(1200,400), title="Velocity")
    >>> Fig.Surface(Model.mesh, GEO.dim(Model.temperature, u.degK))
    ...
    >>> Fig.VectorArrows(Model.mesh, Model.velocityField)
@@ -481,14 +480,14 @@ There are a range of available/pre-defined shapes
 .. code:: python
 
    >>> import UWGeodynamics as GEO
-   >>> import glucifer
+   >>> from UWGeodynamics import visualisation as vis
 
    >>> u = GEO.u
    >>> Model = GEO.Model()
    >>> shape = GEO.shapes.Layer(top=30.*u.kilometre, bottom=0.*u.kilometre)
    >>> material = Model.add_material(name="Material", shape=shape)
 
-   >>> Fig = glucifer.Figure(figsize=(1200,400))
+   >>> Fig = vis.Figure(figsize=(1200,400))
    >>> Fig.Points(Model.swarm, Model.materialField)
    ...
    >>> Fig.show()
@@ -500,7 +499,7 @@ There are a range of available/pre-defined shapes
 .. code:: python
 
    >>> import UWGeodynamics as GEO
-   >>> import glucifer
+   >>> from UWGeodynamics import visualisation as vis
 
    >>> u = GEO.u
    >>> Model = GEO.Model()
@@ -509,7 +508,7 @@ There are a range of available/pre-defined shapes
    ...                                        (35.* u.kilometre, 5.*u.kilometre)])
    >>> material = Model.add_material(name="Material", shape=polygon)
 
-   >>> Fig = glucifer.Figure(figsize=(1200,400))
+   >>> Fig = vis.Figure(figsize=(1200,400))
    >>> Fig.Points(Model.swarm, Model.materialField)
    >>> Fig.show()
 
@@ -520,7 +519,7 @@ There are a range of available/pre-defined shapes
 .. code:: python
 
    >>> import UWGeodynamics as GEO
-   >>> import glucifer
+   >>> from UWGeodynamics import visualisation as vis
 
    >>> u = GEO.u
    >>> Model = GEO.Model()
@@ -528,7 +527,7 @@ There are a range of available/pre-defined shapes
    ...                      minX=10.*u.kilometre, maxX=15*u.kilometre)
    >>> material = Model.add_material(name="Material", shape=box)
 
-   >>> Fig = glucifer.Figure(figsize=(1200,400))
+   >>> Fig = vis.Figure(figsize=(1200,400))
    >>> Fig.Points(Model.swarm, Model.materialField)
    >>> Fig.show()
 
@@ -539,7 +538,7 @@ There are a range of available/pre-defined shapes
 .. code:: python
 
    >>> import UWGeodynamics as GEO
-   >>> import glucifer
+   >>> from UWGeodynamics import visualisation as vis
 
    >>> u = GEO.u
    >>> Model = GEO.Model()
@@ -547,7 +546,7 @@ There are a range of available/pre-defined shapes
    ...                        radius=10.*u.kilometre)
    >>> material = Model.add_material(name="Material", shape=disk)
 
-   >>> Fig = glucifer.Figure(figsize=(1200,400))
+   >>> Fig = vis.Figure(figsize=(1200,400))
    >>> Fig.Points(Model.swarm, Model.materialField)
    >>> Fig.show()
 
@@ -559,7 +558,6 @@ There are a range of available/pre-defined shapes
 .. code:: python
 
    >>> import UWGeodynamics as GEO
-   >>> import glucifer
 
    >>> u = GEO.u
    >>> Model = GEO.Model(elementRes=(16, 16, 16),
@@ -574,7 +572,7 @@ There are a range of available/pre-defined shapes
 .. code:: python
 
    >>> import UWGeodynamics as GEO
-   >>> import glucifer
+   >>> from UWGeodynamics import visualisation as vis
 
    >>> u = GEO.u
    >>> Model = GEO.Model()
@@ -583,7 +581,7 @@ There are a range of available/pre-defined shapes
    ...                              r2=10.*u.kilometre)
    >>> material = Model.add_material(name="Material", shape=annulus)
 
-   >>> Fig = glucifer.Figure(figsize=(400,400))
+   >>> Fig = vis.Figure(figsize=(400,400))
    >>> Fig.Points(Model.swarm, Model.materialField)
    >>> Fig.show()
 
@@ -597,7 +595,7 @@ Several shapes can be combined to form a material shape:
 .. code:: python
 
    >>> import UWGeodynamics as GEO
-   >>> import glucifer
+   >>> from UWGeodynamics import visualisation as vis
 
    >>> u = GEO.u
    >>> Model = GEO.Model()
@@ -609,7 +607,7 @@ Several shapes can be combined to form a material shape:
    >>> shape = disk1 | disk2
    >>> material = Model.add_material(name="Material", shape=shape)
 
-   >>> Fig = glucifer.Figure(figsize=(400,400))
+   >>> Fig = vis.Figure(figsize=(400,400))
    >>> Fig.Points(Model.swarm, Model.materialField)
    >>> Fig.show()
 
@@ -620,7 +618,7 @@ You can also take the intersection of some shapes:
 .. code:: python
 
   >>> import UWGeodynamics as GEO
-  >>> import glucifer
+  >>> from UWGeodynamics import visualisation as vis
 
   >>> u = GEO.u
   >>> Model = GEO.Model()
@@ -632,7 +630,7 @@ You can also take the intersection of some shapes:
   >>> shape = disk1 & disk2
   >>> material = Model.add_material(name="Material", shape=shape)
 
-  >>> Fig = glucifer.Figure(figsize=(400,400))
+  >>> Fig = vis.Figure(figsize=(400,400))
   >>> Fig.Points(Model.swarm, Model.materialField)
   >>> Fig.show()
 
@@ -653,7 +651,7 @@ defined by the normal vector.
 .. code:: python
 
    >>> import UWGeodynamics as GEO
-   >>> import glucifer
+   >>> from UWGeodynamics import visualisation as vis
 
    >>> u = GEO.UnitRegistry
 
@@ -670,7 +668,7 @@ defined by the normal vector.
    >>> compositeShape = halfspace1 & halfspace2 & halfspace3 & halfspace4
    >>> polygon= Model.add_material(name="polygon", shape=compositeShape)
 
-   >>> Fig = glucifer.Figure()
+   >>> Fig = vis.Figure()
    >>> Fig.Points(Model.swarm, Model.materialField, cullface=False, opacity=1.)
    >>> Fig.Mesh(Model.mesh)
    >>> viewer = Fig.viewer(resolution=(1200,600))
@@ -689,7 +687,7 @@ You can add as many materials as needed:
 .. code:: python
 
   >>> import UWGeodynamics as GEO
-  >>> import glucifer
+  >>> from UWGeodynamics import visualisation as vis
 
   >>> u = GEO.u
   >>> Model = GEO.Model()
@@ -703,7 +701,7 @@ You can add as many materials as needed:
 
   >>> material2 = Model.add_material(name="Material 2", shape=polygon)
 
-  >>> Fig = glucifer.Figure(figsize=(400,400))
+  >>> Fig = vis.Figure(figsize=(400,400))
   >>> Fig.Points(Model.swarm, Model.materialField, fn_size=3.)
   ...
   >>> Fig.show()
@@ -1934,7 +1932,6 @@ See below for a sample.
 .. _Kitematic: https://kitematic.com/
 .. _github: https://github.com/underworldcode/UWGeodynamics.git
 .. _Pint: https://pint.readthedocs.io/en/latest
-.. _glucifer: https://underworld2.readthedocs.io/en/latest/glucifer.html
 .. _Underworld: https://underworld2.readthedocs.io/en/latest/index.html
 .. _Lavavu: https://github.com/OKaluza/LavaVu
 .. _HDF5: http://portal.hdfgroup.org/display/support
