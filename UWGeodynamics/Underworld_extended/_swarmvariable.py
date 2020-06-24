@@ -256,20 +256,20 @@ class SwarmVariable(uw.swarm.SwarmVariable):
         -------
         >>> import math
         >>> mesh = uw.mesh.FeMesh_Cartesian()
-        >>> swarm = uw.swarm.Swarm()
-        >>> swarm.populate.using_layout(uw.swarm.layouts.PerCellGaussLayout(swarm, 2)
+        >>> swarm = uw.swarm.Swarm(mesh)
+        >>> swarm.populate_using_layout(uw.swarm.layouts.PerCellGaussLayout(swarm, 2))
         >>> svar = swarm.add_variable("double", 1)
         >>> svar.data[:] = math.exp(1.)
         >>> svarCopy = svar.copy()
-        >>> svarCopy.swarm == var.swarm
+        >>> svarCopy.swarm == svar.swarm
         True
         >>> svarCopy.dataType == svar.dataType
         True
         >>> import numpy as np
-        >>> np.allclose(svar.data,svarCopy.data)
+        >>> np.allclose(svar.data, svarCopy.data)
         False
         >>> svarCopy2 = svar.copy(deepcopy=True)
-        >>> np.allclose(svar.data,svarCopy2.data)
+        >>> np.allclose(svar.data, svarCopy2.data)
         True
 
         """

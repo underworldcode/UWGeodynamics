@@ -1,16 +1,25 @@
+import UWGeodynamics as GEO
+import pkgutil, doctest, sys
+import os
+# lets disable metrics for tests
+os.environ["UW_NO_USAGE_METRICS"] = "1"
+os.environ["DOCTEST"] = "1"
 
-if __name__ == "__main__":
-    import doctest
-    import UWGeodynamics
-    doctest.testmod(UWGeodynamics._model)
-    doctest.testmod(UWGeodynamics._boundary_conditions)
-    doctest.testmod(UWGeodynamics._freesurface)
-    doctest.testmod(UWGeodynamics._frictional_boundary)
-    doctest.testmod(UWGeodynamics._material)
-    doctest.testmod(UWGeodynamics._melt)
-    doctest.testmod(UWGeodynamics._mesh_advector)
-    doctest.testmod(UWGeodynamics._rheology)
-    doctest.testmod(UWGeodynamics.shapes)
-    doctest.testmod(UWGeodynamics.surfaceProcesses)
-    doctest.testmod(UWGeodynamics._utils)
+test_vis = True
+try:
+    import lavavu
+except ImportError:
+    test_vis = False
 
+for module in [GEO,]:
+    modIter = pkgutil.walk_packages(path=module.__path__, prefix=module.__name__+'.')
+
+    for itthing, modName, bs in modIter:
+        mod=sys.modules.get(modName)
+        if modName.startswith("underworld.visualisation"):
+            print("Not testing `{}` as `lavavu` not found.".format(modName))
+            continue
+        print("Testing "+modName)
+        res = doctest.testmod(mod)
+        if res.failed > 0:
+            raise RuntimeError("Doctest failed")
