@@ -38,7 +38,7 @@ We hope that the user will naturally move to the low-level
 functionalities as he or her gets more confident, and by doing so will
 access the wide range of possibilities offered by Underworld.
 
-![image]docs/readthedocs/src/img/SandboxCompression.gif)
+![image](docs/readthedocs/src/img/SandboxCompression.gif)
 
 ## How to Cite?
 
