@@ -93,13 +93,19 @@ branch.
 
 ## Quick Start / Testing
 
-We provide a docker container via
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/rbeucher/UWGeodynamics-binder/master).
+We provide a docker container via **Binder**.
 This is a quick solution to get you started and run the examples and
 tutorials without installing anything on your machine. That is a good
 way to see if the software can actually be useful to you. The ressource
 are however limited and you should not try to run model with high
 resolution. 3D models can not be run in the binder.
+
+| | |
+|-|-|
+| [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/rbeucher/UWGeodynamics-binder/master) | master |
+| [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/rbeucher/UWGeodynamics-binder/development) | development |
+| [![Binder](https://mybinder.org/badge.svg)](hhttps://mybinder.org/v2/gh/rbeucher/UWGeodynamics-binder/v2.10) | v2.10 |
+
 
 ## Where to find documentation?
 
