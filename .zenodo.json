@@ -1,0 +1,73 @@
+{
+    "creators": [
+        {
+            "name": "Romain Beucher",
+            "affiliation": "School of Earth Science, The University of Melbourne",
+            "orcid": "0000-0003-3891-5444"
+        },
+        {
+            "name": "Louis Moresi",
+            "affiliation": "Research School of Earth Sciences, The Australian National University; School of Earth Science, The University of Melbourne",
+            "orcid": "0000-0003-3685-174X"
+        },
+        {
+            "name": "Julian Giordani",
+            "affiliation": "School of Earth Science, The University of Melbourne",
+            "orcid": "0000-0003-4515-9296"
+        },
+        {
+            "name": "John Mansour",
+            "affiliation": "Monash eResearch Centre, Monash University",
+            "orcid": "0000-0001-5865-1664"
+        },
+        {
+            "name": "Dan Sandiford",
+            "affiliation": "University of Tasmania",
+            "orcid": "0000-0002-2207-6837"
+        },
+        {
+            "name": "Rebecca Farrington",
+            "affiliation": "School of Earth Science, The University of Melbourne",
+            "orcid": "0000-0002-2594-6965"
+        },
+        {
+            "name": "Luke Mondy",
+            "affiliation": "School of Geosciences, Earthbyte Research Group, The University of Sydney",
+            "orcid": "0000-0001-7779-509X"
+        },
+        {
+            "name": "Claire Mallard", 
+            "affiliation": "School of Geosciences, Earthbyte Research Group, The University of Sydney",
+            "orcid": "0000-0003-2595-2414"
+        },      
+        {
+            "name": "Patrice Rey",
+            "affiliation": "School of Geosciences, Earthbyte Research Group, The University of Sydney",
+            "orcid": "0000-0002-1767-8593"
+        },      
+        {
+            "name": "Guillaume Duclaux",
+            "affiliation": "Laboratoire Géoazur, Université Nice Sophia Antipolis, Nice",
+            "orcid": "0000-0002-9512-7252"
+        },      
+        {
+            "name": "owen kaluza",
+            "affiliation": "Monash eResearch Centre, Monash University",
+            "orcid": "0000-0001-6303-5671"
+        },
+        {
+            "name": "Arijit Laik", 
+            "affiliation": "Department of Earth Science, Faculty of Science, Vrije Universiteit",
+            "orcid": "0000-0002-3484-7985"
+        },      
+        {
+            "name": "Sara Morón",
+            "affiliation": "School of Geosciences, Earthbyte Research Group, The University of Sydney",
+            "orcid": "0000-0002-1270-4377"
+        }      
+    ],
+    "license": "lgpl-3.0",
+    "title": "UWGeodynamics: A teaching an research tool for numerical geodynamic modelling",
+    "upload_type": "software",
+    "access_right": "open"
+}
