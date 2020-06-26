@@ -2074,12 +2074,16 @@ class _ViscosityFunction():
 
     @property
     def _isYielding(self):
-
         Model = self.Model
 
-        yield_condition = [(self.eff_eta < self.viscous_eta,
-                            Model.strainRate_2ndInvariant),
-                           (True, 0.0)]
+        if self.elastic_eta is not None:
+            yield_condition = [(self.eff_eta < self.elastic_eta,
+                                Model.strainRate_2ndInvariant),
+                               (True, 0.0)]
+        else:
+            yield_condition = [(self.eff_eta < self.viscous_eta,
+                                Model.strainRate_2ndInvariant),
+                               (True, 0.0)]
 
         return fn.branching.conditional(yield_condition)
 
