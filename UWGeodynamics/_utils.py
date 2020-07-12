@@ -9,7 +9,7 @@ from UWGeodynamics import non_dimensionalise as nd
 from UWGeodynamics import dimensionalise
 from UWGeodynamics import UnitRegistry as u
 from .Underworld_extended._utils import _swarmvarschema
-from .Underworld_extended import Swarm
+from .Underworld_extended import Swarm, SwarmVariable
 from scipy import spatial
 from mpi4py import MPI as _MPI
 
@@ -172,7 +172,11 @@ class PassiveTracers(Swarm):
 
             obj = getattr(self, name)
             if not field["timeIntegration"]:
-                obj.data[...] = field["value"].evaluate(self)
+                if not isinstance(field["value"], SwarmVariable):
+                    obj.data[...] = field["value"].evaluate(self)
+                else:
+                    obj.data[...] = field["value"].evaluate(self.data)
+
             handle = obj.save('%s.h5' % file_prefix, units=field["units"])
 
             if rank == 0:
