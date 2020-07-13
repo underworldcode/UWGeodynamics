@@ -27,7 +27,10 @@ RUN PYTHONPATH= /usr/bin/pip3 install --no-cache-dir setuptools scons
 # setup further virtualenv to avoid double copying back previous packages (h5py,mpi4py,etc)
 RUN /usr/bin/python3 -m virtualenv --python=/usr/bin/python3 ${VIRTUAL_ENV}
 # Compile and install the latest UWGeodynamics & Badlands
-RUN pip3 install -U UWGeodynamics badlands
+WORKDIR /tmp
+COPY --chown=jovyan:users . /tmp/UWGeodynamics
+RUN pip3 install -vvv UWGeodynamics/ 
+RUN pip3 install -U badlands
 
 
 # Stage 3: Resultant images
