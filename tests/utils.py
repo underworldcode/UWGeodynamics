@@ -5,8 +5,8 @@ from shutil import copyfile
 import re
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_DIR = os.path.abspath(os.path.join(TEST_DIR, os.pardir))
-RESULT_DIR = os.path.join(PROJECT_DIR, "tests/test_results")
+PROJECT_DIR = os.path.abspath(os.path.join(TEST_DIR, "../docs"))
+RESULT_DIR = os.path.join(TEST_DIR, "test_results")
 sys.path.insert(0, PROJECT_DIR)
 
 

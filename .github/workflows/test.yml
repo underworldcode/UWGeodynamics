@@ -3,15 +3,18 @@ name: tests
 on: [push]
 
 jobs:
-  test:
+  test_in_UW_Container:
     runs-on: ubuntu-latest
+    container:
+      image: underworldcode/underworld2:2.9.4b
+      options: --user root
     steps:
-      - uses: actions/checkout@v2
-      - name: Build the stack
-        run: docker-compose up -d
-      - name: Test
-        run: docker exec -i UWGeodynamics-dev /bin/bash 
-      - name: Install UWGeodynamics
-        run: cd workspace & pip install -e .
-      - name: Run tests
-        run: pip install pytest & pytest -v
+      - name: Test in UW Container
+        run: |
+          cd /home/jovyan/workspace
+          git clone https://github.com/underworldcode/UWGeodynamics.git UWGeodynamics
+          cd UWGeodynamics
+          git checkout development
+          pip install -e .
+          pip install pytest
+          python -m pytest -vvv
