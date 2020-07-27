@@ -1851,7 +1851,7 @@ class Model(Material):
                 vertices[:, 0] = x
                 vertices[:, 1] = y
             else:
-                z = np.array(vertices[2])[..., np.newaxis]  + np.array(centroids[2]).ravel()
+                z = np.array(vertices[:,2])[..., np.newaxis]  + np.array(centroids[:,2]).ravel()
                 z = z.ravel()
                 vertices = np.ndarray((x.size, 3))
                 vertices[:, 0] = x

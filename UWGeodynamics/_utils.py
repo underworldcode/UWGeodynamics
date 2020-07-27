@@ -121,6 +121,7 @@ class PassiveTracers(Swarm):
         new_field = {}
         new_field["units"] = units
         new_field["value"] = value
+        new_field["count"] = count
         new_field["dataType"] = dataType
         new_field["timeIntegration"] = timeIntegration
         svar = self.add_variable(dataType, count=count)
