@@ -14,7 +14,7 @@ jobs:
           cd /home/jovyan/workspace
           git clone -b ${GITHUB_REF##*/} https://github.com/underworldcode/UWGeodynamics.git UWGeodynamics
           cd UWGeodynamics
-          git checkout development
+          # git checkout development
           pip install -e .
           pip install pytest
           python -m pytest -vvv
