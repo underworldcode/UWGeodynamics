@@ -75,13 +75,13 @@ size = comm.size
 nProcs = size
 
 __author__ = "Romain Beucher"
-__copyright__ = "Copyright 2018, The University of Melbourne"
+__copyright__ = "Copyright 2020, The Australian National University"
 __credits__ = ["Romain Beucher",
                "Louis Moresi",
                "Julian Giordani",
                "John Mansour"]
 __maintainer__ = "Romain Beucher"
-__email__ = "romain.beucher@unimelb.edu.au"
+__email__ = "romain.beucher@anu.edu.au"
 
 _id = str(_uuid.uuid4())
 
@@ -363,8 +363,8 @@ _deprecated_map = {
 _deprecated_ignore_map = {
     }
 
-_deprecated_abort = {"solver": "Model.solver.set_inner_method()",
-                     "penalty": "Model.solver.set_penalty()"}
+_deprecated_abort = {
+}
 
 _obsolete_set = set()
 _all_deprecated = set(chain(_deprecated_ignore_map,

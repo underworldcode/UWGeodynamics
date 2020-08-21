@@ -127,9 +127,11 @@ def test_temperature_boundary_condition():
 
 def test_passive_tracers():
     import numpy as np
-    x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
-    y = GEO.nd(32. * u.kilometer)
-    P = Model.add_passive_tracers(name="Tracers", vertices=[x, y])
+    npoints = 1000
+    coords = np.ndarray((1000, 2))
+    coords[:, 0] = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), npoints)
+    coords[:, 1] = GEO.nd(32. * u.kilometer)
+    P = Model.add_passive_tracers(name="Tracers", vertices=coords)
 
 def test_set_velocity_boundary_conditions_in_3D():
     velocityBCs = Model3D.set_velocityBCs(

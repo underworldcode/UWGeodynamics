@@ -1,6 +1,6 @@
-# Stage 1: Inherit from underworldcode/underworld2:2.9.1b and install dependency packages for Badlands
+# Stage 1: Inherit from underworldcode/underworld2:2.10.0b and install dependency packages for Badlands
 ##########
-FROM underworldcode/underworld2:2.9.4b as base_runtime
+FROM underworldcode/underworld2:2.10.0b as base_runtime
 MAINTAINER https://github.com/underworldcode/
 # install runtime requirements
 USER root
@@ -27,7 +27,10 @@ RUN PYTHONPATH= /usr/bin/pip3 install --no-cache-dir setuptools scons
 # setup further virtualenv to avoid double copying back previous packages (h5py,mpi4py,etc)
 RUN /usr/bin/python3 -m virtualenv --python=/usr/bin/python3 ${VIRTUAL_ENV}
 # Compile and install the latest UWGeodynamics & Badlands
-RUN pip3 install -U UWGeodynamics badlands
+WORKDIR /tmp
+COPY --chown=jovyan:users . /tmp/UWGeodynamics
+RUN pip3 install -vvv UWGeodynamics/ 
+RUN pip3 install -U badlands
 
 
 # Stage 3: Resultant images

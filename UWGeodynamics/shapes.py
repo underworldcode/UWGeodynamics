@@ -86,7 +86,7 @@ class HalfSpace(fn.Function):
         self._fncself = self._fn._fncself
 
 
-class Layer(fn.Function):
+class Layer2D(fn.Function):
     """Layer 2D"""
 
     def __init__(self, top, bottom):
@@ -109,9 +109,10 @@ class Layer(fn.Function):
         coord = fn.input()
         self._fn = ((coord[1] <= nd(self.top)) &
                     (coord[1] >= nd(self.bottom)))
-        super(Layer, self).__init__(argument_fns=None)
+        super(Layer2D, self).__init__(argument_fns=None)
         self._fncself = self._fn._fncself
 
+Layer = Layer2D
 
 class Layer3D(fn.Function):
     """Layer3D"""
@@ -138,14 +139,6 @@ class Layer3D(fn.Function):
                     (coord[2] >= nd(self.bottom)))
         super(Layer3D, self).__init__(argument_fns=None)
         self._fncself = self._fn._fncself
-
-
-class Layer2D(Layer):
-
-    def __init__(self, top, bottom):
-
-        Warning("Layer2D is now deprecated, use Layer instead")
-        super(Layer2D, self).__init__(top, bottom)
 
 
 class Box(fn.Function):

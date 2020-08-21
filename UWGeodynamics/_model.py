@@ -1769,7 +1769,7 @@ class Model(Material):
         """
         self._advector = Mesh_advector(self, axis)
 
-    def add_passive_tracers(self, name, vertices=None,
+    def add_passive_tracers(self, name, vertices,
                             particleEscape=True, centroids=None,
                             advect=True):
         """ Add a swarm of passive tracers to the Model
@@ -1779,7 +1779,7 @@ class Model(Material):
             name :
                 Name of the swarm of tracers.
             vertices :
-                Numpy array that contains the coordinates of the tracers.
+                nD Numpy array that contains the coordinates of the tracers.
             particleEscape : (bool)
                 Allow or prevent tracers from escaping the boundaries of the
                 Model (default to True)
@@ -1795,10 +1795,13 @@ class Model(Material):
         >>> u = GEO.u
 
         >>> Model = GEO.Model()
-        >>> x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), 1000)
-        >>> y = 32. * u.kilometre
-        >>> tracers = Model.add_passive_tracers(vertices=[x,y])
-
+        >>> npoints = 1000
+        >>> x = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), npoints)
+        >>> y = GEO.nd(32. * u.kilometre)
+        >>> coords = np.ndarray((npoints, 2))
+        >>> coords[:, 0] = x
+        >>> coords[:, 1] = y
+        >>> tracers = Model.add_passive_tracers(vertices=coords)
 
         You can pass a list of centroids to the Model.add_passive_tracers method.
         In that case, the coordinates of the passive tracers are relative
@@ -1813,34 +1816,33 @@ class Model(Material):
         >>> cxpos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer), 5)
         >>> cypos = np.linspace(GEO.nd(20*u.kilometer), GEO.nd(40*u.kilometer), 5)
         >>> cxpos, cypos = np.meshgrid(cxpos, cypos)
-        >>> tracers = Model.add_passive_tracers(vertices=[0,0],
-        ...                                     centroids=[cxpos.ravel(),
-        ...                                                cypos.ravel())
+
+        >>> coords = np.ndarray((cxpos.size, 2))
+        >>> coords[:, 0] = cxpos.ravel()
+        >>> coords[:, 1] = cypos.ravel()
+        >>> tracers = Model.add_passive_tracers(vertices=np.array([[0,0]]),
+        ...                                     centroids=coords)
 
 
         We provide a function to create circles on a grid:
 
         >>> import UWGeodynamics as GEO
 
-        >>> x_c, y_c = GEO.circles_grid(radius = 2.0 * u.kilometer,
+        >>> pts = GEO.circles_grid(radius = 2.0 * u.kilometer,
         ...                 minCoord=[Model.minCoord[0], lowercrust.bottom],
         ...                 maxCoord=[Model.maxCoord[0], 0.*u.kilometer])
 
         """
 
-        if centroids and not isinstance(centroids, list):
-            centroids = list(centroids)
-
-        if not centroids:
-
+        if centroids is None:
             tracers = PassiveTracers(self.mesh,
                                      name=name,
                                      particleEscape=particleEscape)
             tracers.add_particles_with_coordinates(vertices)
 
         else:
-            x = np.array(vertices[:, 0])[..., np.newaxis] + np.array(centroids[0]).ravel()
-            y = np.array(vertices[:, 1])[..., np.newaxis] + np.array(centroids[1]).ravel()
+            x = np.array(vertices[:, 0])[..., np.newaxis] + np.array(centroids[:, 0]).ravel()
+            y = np.array(vertices[:, 1])[..., np.newaxis] + np.array(centroids[:, 1]).ravel()
             x = x.ravel()
             y = y.ravel()
 
@@ -1849,7 +1851,7 @@ class Model(Material):
                 vertices[:, 0] = x
                 vertices[:, 1] = y
             else:
-                z = np.array(vertices[2])[..., np.newaxis]  + np.array(centroids[2]).ravel()
+                z = np.array(vertices[:,2])[..., np.newaxis]  + np.array(centroids[:,2]).ravel()
                 z = z.ravel()
                 vertices = np.ndarray((x.size, 3))
                 vertices[:, 0] = x
@@ -2074,12 +2076,16 @@ class _ViscosityFunction():
 
     @property
     def _isYielding(self):
-
         Model = self.Model
 
-        yield_condition = [(self.eff_eta < self.viscous_eta,
-                            Model.strainRate_2ndInvariant),
-                           (True, 0.0)]
+        if self.elastic_eta is not None:
+            yield_condition = [(self.eff_eta < self.elastic_eta,
+                                Model.strainRate_2ndInvariant),
+                               (True, 0.0)]
+        else:
+            yield_condition = [(self.eff_eta < self.viscous_eta,
+                                Model.strainRate_2ndInvariant),
+                               (True, 0.0)]
 
         return fn.branching.conditional(yield_condition)
 

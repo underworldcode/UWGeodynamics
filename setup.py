@@ -1,27 +1,29 @@
-# Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
 import os
 import subprocess
 from os import path
+import re
 
 MAJOR               = 2
-MINOR               = 9
-MICRO               = 6
-ISRELEASED          = True
+MINOR               = 10
+MICRO               = 0
+ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+long_description = re.sub(r"\[image\]\(", "[image](https://raw.githubusercontent.com/underworldcode/UWGeodynamics/master/", long_description)
 
 # Write the default uwgeodynamics file
-with open('uwgeodynamicsrc.template') as fd:
+with open('docs/uwgeodynamicsrc.template') as fd:
     template = fd.read()
+
 with open('UWGeodynamics/uwgeo-data/uwgeodynamicsrc', 'w') as fd:
     fd.write(template)
 
@@ -84,7 +86,6 @@ def get_version_info():
         FULLVERSION += "-dev-" + GIT_REVISION[:7] + "(" + GIT_BRANCH + ")"
 
     return FULLVERSION, GIT_REVISION
-
 
 def write_version_py(filename='UWGeodynamics/version.py'):
     cnt = """
@@ -164,7 +165,7 @@ setup(
 
     # This should be a valid email address corresponding to the author listed
     # above.
-    author_email='romain.beucher@unimelb.edu.au',  # Optional
+    author_email='romain.beucher@anu.edu.au',  # Optional
 
     # Classifiers help users find your project by categorizing it.
     #
@@ -175,7 +176,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Stable',
 
         # Indicate who your project is intended for
         'Intended Audience :: Developers',
@@ -193,6 +194,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
 
     # This field adds keywords for your project which will appear on the
@@ -218,7 +220,7 @@ setup(
     #
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['pint', 'numpy', 'scipy', 'pyshp'],  # Optional
+    install_requires=['pint', 'numpy', 'scipy'],  # Optional
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). Users will be able to install these using the "extras"
