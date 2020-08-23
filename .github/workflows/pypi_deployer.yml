@@ -4,7 +4,7 @@ on:
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 jobs:
-  # Release new version on github releases
+  #Release new version on github releases
   Github-release:
     name: Create Release
     runs-on: ubuntu-latest
