@@ -30,12 +30,18 @@ jobs:
       TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
     steps:
       - uses: actions/checkout@v2
-      - name: build and upload manylinux wheels
-        uses:  Niraj-Kamdar/manylinux-wheel-builder@master
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          python-versions: "3.*"
-        # if true then github actions won't stop even if build for this job fails
-        #continue-on-error: true
+          python-version: ${{ matrix.python-version }}
+      - name: build wheel
+        run: |
+          pip install wheel
+          python setup.py bdist_wheel --universal
+      - name: upload wheel
+        run: |
+          pip install twine
+          twine upload dist/*
 
   # Build and deploy wheels for macos and windows using setup-python action.
   # This has nothing to do with manylinux-wheel-builder.
