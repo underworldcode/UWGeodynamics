@@ -403,7 +403,7 @@ def circles_grid(radius, minCoord, maxCoord, npoints=72):
         z = points[:, :, 2].ravel()
         
         # Finally, returns a 2D array
-        coords = np.ndarray((x.size, 2))
+        coords = np.ndarray((x.size, 3))
         coords[:, 0] = x
         coords[:, 1] = y
         coords[:, 2] = z
