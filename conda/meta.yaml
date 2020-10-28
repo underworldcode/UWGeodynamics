@@ -1,0 +1,41 @@
+{% set name = "UWGeodynamics" %}
+{% set version = "2.10.0b" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  #url: https://github.com/underworldcode/UWGeodynamics/archive/v{{ version }}.tar.gz
+  #sha256: 
+  git_url: https://github.com/underworldcode/UWGeodynamics.git
+  git_tag: development
+
+build:
+  skip: true  # [win]
+  number: 0
+  script: {{ PYTHON }} -m pip install . -vv
+
+requirements:
+  host:
+    - python
+    - underworld2>=2.10
+
+  run:
+    - python
+    - underworld2>=2.10
+
+
+about:
+  home: "https://github.com/underworldcode/UWGeodynamics"
+  license: LGPL-3.0-only
+  license_family: LGPL
+  license_file:  LICENSE.md
+  summary: "Underworld Geodynamics Project"
+  doc_url: https://uwgeodynamics.readthedocs.io/
+  dev_url: https://github.com/underworldcode/UWGeodynamics/tree/development
+
+extra:
+  recipe-maintainers:
+    - rbeucher
+    - jgiordani
