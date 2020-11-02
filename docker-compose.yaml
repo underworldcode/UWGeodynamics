@@ -13,6 +13,6 @@ services:
           - "8888:8888"
           - "9999:9999"       
         volumes:
-          - "$PWD:/workspace"
+          - "$PWD:/home/jovyan/workspace"
 
 
