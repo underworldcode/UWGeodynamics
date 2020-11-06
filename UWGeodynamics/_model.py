@@ -2717,7 +2717,7 @@ class _RestartFunction(object):
                                  particleEscape=tracer.particleEscape)
             obj.load(fpath)
             if tracer.advector:
-                tracer.advector = uw.systems.SwarmAdvector(Model.velocityField, tracer, order=2)
+                obj.advector = uw.systems.SwarmAdvector(Model.velocityField, obj, order=2)
 
             # Reload global indices
             fpath = os.path.join(self.restartDir, tracer.name + '_global_index-%s.h5' % step)
