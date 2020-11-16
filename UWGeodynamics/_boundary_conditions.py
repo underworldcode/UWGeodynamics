@@ -647,7 +647,7 @@ class HeatFlowBCs(BoundaryConditions):
             right = self._get_heat_flux(right[0], right[1])
 
         if top:
-            top = self._get_heat_flux(top[0], right[1])
+            top = self._get_heat_flux(top[0], top[1])
 
         if bottom:
             bottom = self._get_heat_flux(bottom[0], bottom[1])
