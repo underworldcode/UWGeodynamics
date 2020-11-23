@@ -245,6 +245,7 @@ class Model(Material):
 
         # Initialise remaining attributes
         self.defaultStrainRate = 1e-15 / u.second
+        self.minStrainRate = 1e-20 / u.second
         self._solution_exist = fn.misc.constant(False)
         self._temperatureDot = None
         self._temperature = None
@@ -445,6 +446,11 @@ class Model(Material):
         condition = [(self._solution_exist, self._strainRate_2ndInvariant),
                      (True, fn.misc.constant(nd(self.defaultStrainRate)))]
         self._strainRate_2ndInvariant = fn.branching.conditional(condition)
+        
+        condition = [(self._strainRate_2ndInvariant<=nd(self.minStrainRate),nd(self.minStrainRate)),
+                     (True, self._strainRate_2ndInvariant)]
+        self._strainRate_2ndInvariant = fn.branching.conditional(condition)
+        
         return self._strainRate_2ndInvariant
 
     @property
@@ -632,7 +638,7 @@ class Model(Material):
 
     def set_heatFlowBCs(self, left=None, right=None,
                         top=None, bottom=None,
-                        front=None, back=None):
+                        front=None, back=None,nodeSets=None, materials=None):
 
         """ Define heat flow boundaries condition
 
@@ -714,7 +720,7 @@ class Model(Material):
 
         self._heatFlowBCs = HeatFlowBCs(self, left=left, right=right,
                                         top=top, bottom=bottom,
-                                        back=back, front=front)
+                                        back=back, front=front,nodeSets=nodeSets,materials=materials)
         return self._heatFlowBCs.get_conditions()
 
     @property
