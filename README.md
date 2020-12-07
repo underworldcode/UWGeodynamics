@@ -10,6 +10,7 @@
 ![tests](https://github.com/underworldcode/UWGeodynamics/workflows/tests/badge.svg)
 
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/rbeucher/UWGeodynamics-binder/master)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/underworldcode/UWGeodynamics.git/master)
 
 ![image](docs/tutorials/images/Tutorial1.gif)
 ![image](docs/readthedocs/src/img/collision_wedge.gif)
