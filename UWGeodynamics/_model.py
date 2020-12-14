@@ -32,6 +32,7 @@ from datetime import datetime
 from .version import full_version
 from ._freesurface import FreeSurfaceProcessor
 from ._remeshing import ReMesher
+from ._density import Density
 
 comm = _MPI.COMM_WORLD
 rank = comm.rank
@@ -1233,14 +1234,13 @@ class Model(Material):
         densityMap = {}
         for material in self.materials:
 
-            if self.temperature:
-                dens_handler = material.density
-                dens_handler.temperatureField = self.temperature
-                dens_handler.pressureField = self.pressureField
-                densityMap[material.index] = dens_handler.effective_density()
+            density = material.density
+            if isinstance(material.density, Density):
+                density.temperatureField = self.temperature
+                density.pressureField = self.pressureField
+                densityMap[material.index] = density.effective_density()
             else:
-                dens_handler = material.density
-                densityMap[material.index] = nd(dens_handler.reference_density)
+                densityMap[material.index] = density
 
             if material.meltExpansion:
                 fact = material.meltExpansion * self.meltField
