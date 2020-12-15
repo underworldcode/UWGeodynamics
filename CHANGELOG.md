@@ -1,3 +1,10 @@
+# Version 2.11
+
+- Bug fixes
+- Add option to pass UW function (or mesh variable) to the density material properties.
+- Add option to initiliase temperature and pressure fields with an UW function or a mesh variable.
+
+
 # Version 2.10
 
 

@@ -170,7 +170,6 @@ class Model(Material):
         self.restart_variables = OrderedDict()
 
         # Add common mesh variables
-        self.temperature = False
         self.add_submesh_field("pressureField", nodeDofCount=1,
                                restart_variable=True)
         self.add_mesh_variable("velocityField", nodeDofCount=self.mesh.dim,
@@ -626,9 +625,8 @@ class Model(Material):
         ...
 
         """
-
-        if not self.temperature:
-            self.temperature = True
+        if not self._temperature:
+            self._init_temperature_variables()
 
         self._temperatureBCs = TemperatureBCs(self, left=left, right=right,
                                               top=top, bottom=bottom,
@@ -715,10 +713,9 @@ class Model(Material):
         ...                               Material))
         ...
         """
-
-        if not self.temperature:
-            self.temperature = True
-
+        if not self._temperature:
+            self._init_temperature_variables()
+        
         self._heatFlowBCs = HeatFlowBCs(self, left=left, right=right,
                                         top=top, bottom=bottom,
                                         back=back, front=front,nodeSets=nodeSets,materials=materials)
@@ -778,22 +775,14 @@ class Model(Material):
     def temperature(self):
         """ Temperature Field """
         return self._temperature
-
+    
     @temperature.setter
     def temperature(self, value):
-        if value is True:
-            self._temperature = MeshVariable(mesh=self.mesh,
-                                             nodeDofCount=1)
-            self._temperatureDot = MeshVariable(mesh=self.mesh,
-                                                nodeDofCount=1)
-            self._heatFlux = MeshVariable(mesh=self.mesh,
-                                          nodeDofCount=1)
-            self._temperatureDot.data[...] = 0.
-            self._heatFlux.data[...] = 0.
-            self.mesh_variables["temperature"] = self._temperature
-            self.restart_variables["temperature"] = self._temperature
-        else:
-            self._temperature = False
+        """ Temperature Field """
+        if not self._temperature:
+            self._init_temperature_variables()
+        if isinstance(value, fn.Function):
+            self._temperature.data[...] = value.evaluate(self.mesh)
 
     @property
     def _advdiffSystem(self):
@@ -1494,7 +1483,19 @@ class Model(Material):
         if rcParams["rebuild.solver"]:
             self._solver = False
 
-    def init_model(self, temperature=True, pressureField=True,
+    def _init_temperature_variables(self):
+        self._temperature = MeshVariable(mesh=self.mesh,
+                                         nodeDofCount=1)
+        self._temperatureDot = MeshVariable(mesh=self.mesh,
+                                            nodeDofCount=1)
+        self._heatFlux = MeshVariable(mesh=self.mesh,
+                                      nodeDofCount=1)
+        self._temperatureDot.data[...] = 0.
+        self._heatFlux.data[...] = 0.
+        self.mesh_variables["temperature"] = self._temperature
+        self.restart_variables["temperature"] = self._temperature
+
+    def init_model(self, temperature=None, pressure=None,
                    defaultStrainRate=1e-15 / u.second):
         """ Initialize the Temperature Field as steady state,
             Initialize the Pressure Field as Lithostatic
@@ -1503,8 +1504,8 @@ class Model(Material):
 
         Parameters:
         -----------
-            temperature: (bool) default to True
-            pressure: (bool) default to True
+            temperature: defaults to "steady-state", can be an Underworld function
+            pressure: defaults to "lithostatic", can be an Underworld function  
 
         example:
         --------
@@ -1514,18 +1515,36 @@ class Model(Material):
 
         >>> Model = GEO.Model()
         >>> Model.density = 2000. * u.kilogram / u.metre**3
-        >>> Model.init_model(temperature=False, pressure=True)
+        >>> Model.init_model(temperature="steady-state", pressure="lithostatic")
         ...
 
         """
+        if temperature is None:
+            import warnings
+            warnings.warn("You have not passed anything to the temperature argument. The temperature field will not be initialised")
+        
+        if pressure is None:
+            import warnings
+            warnings.warn("You have not passed anything to the pressure argument. The pressure field will not be initialised")
 
         # Init Temperature Field
-        if self.temperature and temperature:
-            self.solve_temperature_steady_state()
+        if temperature is not None:
+            if not self._temperature:
+                self._init_temperature_variables()
+            if isinstance(temperature, fn.Function):
+                self._temperature.data[...] = temperature.evaluate(self.mesh)
+            elif isinstance(temperature, str) and temperature.lower() == "steady-state": 
+                self.solve_temperature_steady_state()
+            else:
+                raise ValueError()
 
         # Init pressureField Field
-        if self.pressureField and pressureField:
-            self.initialize_pressure_to_lithostatic()
+        if pressure is not None:
+            if self.pressureField:
+                if isinstance(pressure, fn.Function):
+                    self.pressureField.data[...] = pressure.evaluate(self.mesh.subMesh)
+                elif isinstance(pressure, str) and pressure.lower() == "lithostatic":
+                    self.initialize_pressure_to_lithostatic()
 
         # Init ViscosityField
         if any([material.viscosity for material in self.materials]):
@@ -1608,7 +1627,7 @@ class Model(Material):
 
             self._dt = 2.0 * rcParams["CFL"] * self.swarm_advector.get_max_dt()
 
-            if self.temperature:
+            if self.temperatureBCs:
                 # Only get a condition if using SUPG
                 if rcParams["advection.diffusion.method"] == "SUPG":
                     supg_dt = self._advdiffSystem.get_max_dt()
@@ -1726,7 +1745,7 @@ class Model(Material):
             self.update_melt_fraction()
 
         # Solve for temperature
-        if self.temperature:
+        if self.temperatureBCs:
             self._advdiffSystem.integrate(dt)
 
         if self._advector:
