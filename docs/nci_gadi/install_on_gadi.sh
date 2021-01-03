@@ -18,7 +18,7 @@ export PATH=$SWIG_PATH/bin:$PATH
 export OMPI_MCA_io=ompio
 
 export CDIR=$PWD
-export LD_PRELOAD=/apps/openmpi-mofed4.7-pbs19.2/4.0.2/lib/libmpi_usempif08_GNU.so.40:/apps/openmpi-mofed4.7-pbs19.2/4.0.2/lib/libmpi_usempi_ignore_tkr_GNU.so.40:/apps/openmpi-mofed4.7-pbs19.2/4.0.2/lib/libmpi_cxx.so.40
+export LD_PRELOAD=$OPENMPI_ROOT/lib/libmpi_usempif08_GNU.so.40:$OPENMPI_ROOT/lib/libmpi_usempi_ignore_tkr_GNU.so.40:$OPENMPI_ROOT/lib/libmpi_cxx.so.40
 
 install_swig() {
 	tmp_dir=$(mktemp -d -t ci-XXXXXXXXXX)
