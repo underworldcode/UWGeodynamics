@@ -23,7 +23,6 @@ export LD_PRELOAD=$OPENMPI_ROOT/lib/libmpi_usempif08_GNU.so.40:$OPENMPI_ROOT/lib
 export UWGEO_BRANCH=development
 export UW_BRANCH=2.10.0b
 
-
 install_swig() {
 	tmp_dir=$(mktemp -d -t ci-XXXXXXXXXX)
 	cd $tmp_dir
