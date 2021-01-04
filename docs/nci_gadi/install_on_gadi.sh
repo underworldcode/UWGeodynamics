@@ -5,7 +5,7 @@ module load openmpi/4.0.2 hdf5/1.10.5p python3/3.7.4 scons/3.1.1 petsc/3.12.2
 
 export GROUP=q97
 export USER=
-export INSTALL_NAME=UWGeodynamics_2.9.6
+export INSTALL_NAME=UWGeodynamics_2.10.4
 
 export CODES_PATH=/scratch/$GROUP/$USER/codes
 export UW_OPT_DIR=$CODES_PATH/opt
@@ -19,6 +19,9 @@ export OMPI_MCA_io=ompio
 
 export CDIR=$PWD
 export LD_PRELOAD=$OPENMPI_ROOT/lib/libmpi_usempif08_GNU.so.40:$OPENMPI_ROOT/lib/libmpi_usempi_ignore_tkr_GNU.so.40:$OPENMPI_ROOT/lib/libmpi_cxx.so.40
+
+export UWGEO_BRANCH=development
+export UW_BRANCH=2.10.0b
 
 install_swig() {
 	tmp_dir=$(mktemp -d -t ci-XXXXXXXXXX)
@@ -71,7 +74,7 @@ install_underworld(){
 	source $INSTALL_PATH/bin/activate
 	tmp_dir=$(mktemp -d -t ci-XXXXXXXXXX)
 	cd $tmp_dir
-        git clone --branch v2.9.4b https://github.com/underworldcode/underworld2.git $tmp_dir
+        git clone --branch $UW_BRANCH https://github.com/underworldcode/underworld2.git $tmp_dir
         pip3 install .
         rm -rf $tmp_dir	
 	cd $CDIR
@@ -81,7 +84,7 @@ install_uwgeodynamics(){
 	source $INSTALL_PATH/bin/activate
 	tmp_dir=$(mktemp -d -t ci-XXXXXXXXXX)
 	cd $tmp_dir
-        git clone https://github.com/underworldcode/uwgeodynamics.git $tmp_dir
+        git clone --branch $UWGEO_BRANCH https://github.com/underworldcode/uwgeodynamics.git $tmp_dir
         pip3 install .
         rm -rf $tmp_dir	
 	cd $CDIR
