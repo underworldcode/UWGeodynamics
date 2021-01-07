@@ -23,11 +23,11 @@ from ._boundary_conditions import TemperatureBCs, HeatFlowBCs
 from ._boundary_conditions import StressBCs, VelocityBCs
 from ._mesh_advector import Mesh_advector
 from ._frictional_boundary import FrictionBoundaries
-from .Underworld_extended import FeMesh_Cartesian
-from .Underworld_extended import Swarm
-from .Underworld_extended import MeshVariable
-from .Underworld_extended import SwarmVariable
-from .Underworld_extended._utils import _swarmvarschema
+from underworld.mesh import FeMesh_Cartesian
+from underworld.swarm import Swarm
+from underworld.mesh import MeshVariable
+from underworld.swarm import SwarmVariable
+from underworld.utils import _swarmvarschema
 from datetime import datetime
 from .version import full_version
 from ._freesurface import FreeSurfaceProcessor

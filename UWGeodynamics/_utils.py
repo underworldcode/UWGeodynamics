@@ -8,8 +8,8 @@ import operator as op
 from UWGeodynamics import non_dimensionalise as nd
 from UWGeodynamics import dimensionalise
 from UWGeodynamics import UnitRegistry as u
-from .Underworld_extended._utils import _swarmvarschema
-from .Underworld_extended import Swarm, SwarmVariable
+from underworld.utils import _swarmvarschema
+from underworld.swarm import Swarm, SwarmVariable
 from scipy import spatial
 from mpi4py import MPI as _MPI
 
