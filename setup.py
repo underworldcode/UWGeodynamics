@@ -8,7 +8,7 @@ import re
 
 MAJOR               = 2
 MINOR               = 10
-MICRO               = 4
+MICRO               = 5
 ISRELEASED          = True
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
