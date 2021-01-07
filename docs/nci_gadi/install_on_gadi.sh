@@ -68,7 +68,7 @@ install_python_dependencies(){
         export HDF5_VERSION=1.10.5
 	export HDF5_LIBDIR=/apps/hdf5/1.10.5p/lib/ompi3
 	export HDF5_INCLUDEDIR=/apps/hdf5/1.10.5p/include
-        CC=mpicc HDF5_MPI="ON" pip3 install --no-cache-dir --no-binary=h5py h5py==2.10.0
+        CC=mpicc HDF5_MPI="ON" pip3 install --no-cache-dir --no-binary=h5py h5py
 
 }
 
