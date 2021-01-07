@@ -7,20 +7,10 @@ try:
 except ImportError:
     raise ImportError("Can not find Underworld, please check your installation")
 
-try: 
-    from underworld.scaling import get_coefficients
-    from underworld.scaling import units as UnitRegistry
-    from underworld.scaling import non_dimensionalise
-    from underworld.scaling import dimensionalise
-
-except ImportError:
-    
-    # Fall back to local submodule if the underworld version
-    # does not have the scaling
-    from .scaling import get_coefficients
-    from .scaling import units as UnitRegistry
-    from .scaling import non_dimensionalise
-    from .scaling import dimensionalise
+from underworld.scaling import get_coefficients
+from underworld.scaling import units as UnitRegistry
+from underworld.scaling import non_dimensionalise
+from underworld.scaling import dimensionalise
 
 scaling_coefficients = get_coefficients()
 nd = non_dimensionalise
