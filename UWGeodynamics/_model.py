@@ -2324,9 +2324,9 @@ class _CheckpointFunction(object):
 
         Model = self.Model
 
-        if (((self.step_type is "time") and
+        if (((self.step_type == "time") and
              (Model._ndtime == self.next_checkpoint)) or
-            ((self.step_type is "step") and
+            ((self.step_type == "step") and
              (Model.stepDone == self.next_checkpoint))):
 
             Model.checkpointID += 1
@@ -2351,7 +2351,7 @@ class _CheckpointFunction(object):
         dt1 = None
         dt2 = None
 
-        if self.step_type is "time":
+        if self.step_type == "time":
             dt1 = self.next_checkpoint - Model._ndtime
 
         if self.checkpoint_times:
