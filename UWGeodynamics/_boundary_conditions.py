@@ -217,10 +217,10 @@ class BoundaryConditions(object):
                 if nodes:
                     self._apply_conditions_nodes(condition, nodes)
 
-        if self.condition_type is "Dirichlet":
+        if self.condition_type == "Dirichlet":
             return uw.conditions.DirichletCondition(
                 variable=self.field, indexSetsPerDof=self._indices)
-        elif self.condition_type is "Neumann":
+        elif self.condition_type == "Neumann":
             _neumann_indices = []
 
             # Remove empty Sets
