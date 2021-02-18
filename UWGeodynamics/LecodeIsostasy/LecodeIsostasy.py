@@ -498,8 +498,8 @@ class LecodeIsostasy(object):
         # data_nodegId as domain size (local+node) so we need to only take
         # the local nodes otherwise the reduce operation will results in higher
         # values where domains overlaps...
-        local_densities[self.mesh.data_nodegId[:self.mesh.nodesLocal]] = self.DensityVar.data[:self.mesh.nodesLocal]
-        local_materials[self.mesh.data_nodegId[:self.mesh.nodesLocal]] = self.MaterialVar.data[:self.mesh.nodesLocal]
+        local_densities[self.mesh.data_nodegId[:self.mesh.nodesLocal]] = self.DensityVar.data[:self.mesh.nodesLocal, 0]
+        local_materials[self.mesh.data_nodegId[:self.mesh.nodesLocal]] = self.MaterialVar.data[:self.mesh.nodesLocal, 0]
 
         # Reduce local_densities arrays to global_densities
         comm.Allreduce(local_densities, global_densities)
@@ -558,8 +558,8 @@ class LecodeIsostasy(object):
         global_materials = np.zeros((nx+1)*(ny+1)*(nz+1))
 
         # Load the densities and material into the local_densities arrays
-        local_densities[self.mesh.data_nodegId[:self.mesh.nodesLocal]] = self.DensityVar.data[:self.mesh.nodesLocal]
-        local_materials[self.mesh.data_nodegId[:self.mesh.nodesLocal]] = self.MaterialVar.data[:self.mesh.nodesLocal]
+        local_densities[self.mesh.data_nodegId[:self.mesh.nodesLocal]] = self.DensityVar.data[:self.mesh.nodesLocal, 0]
+        local_materials[self.mesh.data_nodegId[:self.mesh.nodesLocal]] = self.MaterialVar.data[:self.mesh.nodesLocal, 0]
 
         # Reduce local_densities arrays to global_densities
         comm.Allreduce(local_densities, global_densities)
