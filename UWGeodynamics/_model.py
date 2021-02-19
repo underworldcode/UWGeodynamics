@@ -723,7 +723,10 @@ class Model(Material):
 
     @property
     def temperatureBCs(self):
-        return self._temperatureBCs.get_conditions()
+        if self._temperatureBCs:
+            return self._temperatureBCs.get_conditions()
+        else:
+            return self._temperatureBCs
 
     @temperatureBCs.setter
     def temperatureBCs(self, value):
