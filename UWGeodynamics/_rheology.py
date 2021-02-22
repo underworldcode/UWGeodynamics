@@ -315,7 +315,7 @@ class DruckerPrager(object):
         P = self.pressureField
         self.yieldStress = (C * fn.math.cos(f) + P * fn.math.sin(f))
         return self.yieldStress
-
+ 
     def _get_yieldStress3D(self):
         f = self._frictionFn()
         C = self._cohesionFn()
@@ -635,10 +635,10 @@ class ViscousCreepRegistry(object):
                 __name__, "ressources/ViscousRheologies.json")
 
         with open(filename, "r") as infile:
-            self._viscousLaws = json.load(infile)
+            _viscousLaws = json.load(infile)
 
-        for key in self._viscousLaws.keys():
-            coefficients = self._viscousLaws[key]["coefficients"]
+        for key in _viscousLaws.keys():
+            coefficients = _viscousLaws[key]["coefficients"]
             for key2 in coefficients.keys():
                 value = coefficients[key2]["value"]
                 units = coefficients[key2]["units"]
@@ -647,35 +647,28 @@ class ViscousCreepRegistry(object):
                 else:
                     coefficients[key2] = value
 
-        self._dir = {}
-        for key in self._viscousLaws.keys():
-            mineral = self._viscousLaws[key]["Mineral"]
-            rh_type = self._viscousLaws[key]["Type"]
+        _dir = {}
+        for key in _viscousLaws.keys():
+            mineral = _viscousLaws[key]["Mineral"]
+            rh_type = _viscousLaws[key]["Type"]
             name = key.replace(",", "").replace(".", "")
             name = [word.strip() for word in name.split()
                     if word.lower() not in ["viscous", "creep"]]
             name = "_".join(name)
-            self._dir[name] = ViscousCreep(
-                name=key, mineral=mineral, creep_type=rh_type,
-                **self._viscousLaws[key]["coefficients"])
+            _dir[name] = {"name": key,
+                         "mineral": mineral,
+                         "creep_type": rh_type,
+                         **coefficients}
+            
+        self._dir = _dir
+        self._keys = _dir.keys()
 
-            try:
-                self._dir[name].onlinePDF = self._viscousLaws[key]["onlinePDF"]
-            except KeyError:
-                pass
-
-            try:
-                self._dir[name].citation = self._viscousLaws[key]["citation"]
-            except KeyError:
-                pass
+    def __getattr__(self, name):
+        return ViscousCreep(**self._dir[name])
 
     def __dir__(self):
         # Make all the rheology available through autocompletion
-        return list(self._dir.keys())
-
-    def __getattr__(self, item):
-        # Make sure to return a new instance of ViscousCreep
-        return copy(self._dir[item])
+        return self._keys
 
 
 class PlasticityRegistry(object):
@@ -699,30 +692,22 @@ class PlasticityRegistry(object):
                 else:
                     coefficients[key2] = value
 
-        self._dir = {}
+        _dir = {}
         for key in _plasticLaws.keys():
             name = key.replace(" ", "_").replace(",", "").replace(".", "")
             name = name.replace(")", "").replace("(", "")
-            self._dir[name] = DruckerPrager(
-                name=key, **_plasticLaws[key]["coefficients"])
+            _dir[name] = {"name": key, 
+                          **_plasticLaws[key]["coefficients"]}
 
-            try:
-                self._dir[name].onlinePDF = _plasticLaws[key]["onlinePDF"]
-            except KeyError:
-                pass
-
-            try:
-                self._dir[name].citation = _plasticLaws[key]["citation"]
-            except KeyError:
-                pass
-
+        self._dir = _dir
+        self._keys = _dir.keys()
+                
     def __dir__(self):
         # Make all the rheology available through autocompletion
-        return list(self._dir.keys())
+        return self._keys
 
-    def __getattr__(self, item):
-        # Make sure to return a new instance of ViscousCreep
-        return copy(self._dir[item])
+    def __getattr__(self, name):
+        return DruckerPrager(**self._dir[name])
 
 
 class Elasticity(Rheology):
