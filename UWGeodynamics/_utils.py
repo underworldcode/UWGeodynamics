@@ -214,8 +214,6 @@ class Balanced_InflowOutflow(object):
             conditions such as the total volume is conserved.
             Return the velocity profile.
 
-            NOTE. The current version implies uniform dy.
-
             Input:
 
             Vtop     Top Velocity condition
@@ -663,3 +661,43 @@ def rotateTensor2D(t, theta):
     t_[:,2] = ( t[:,1] - t[:,0] ) *np.cos(theta[:])*np.sin(theta[:])  + t[:,2]*np.cos(2*theta[:])
 
     return t_
+
+
+def remesh(mesh, xcoords=None, xelements=None, ycoords=None, yelements=None):
+    """ This function can be used to remesh the mesh based on
+        required number of elements along each axis.
+        
+        example: 
+        
+        Model = GEO.Model(elementRes=(128, 32), 
+                  minCoord=(-600 * u.kilometer, -600. * u.kilometer), 
+                  maxCoord=(600. * u.kilometer, 0. * u.kilometer))
+                  
+       xnodes = GEO.nd(np.array([-600, -120, 0.]) * u.km)
+       ynodes = GEO.nd(np.array([-600, 600]) * u.km)
+
+       from UWGeodynamics import remesh
+       remesh(Model.mesh, xnodes, np.array([2, 30]), ynodes, np.array([128])) 
+        
+    """
+
+    def redistribute_nodes(coords, elements):
+        data = np.array([])
+        for idx, n in enumerate(elements):
+            endpoint=True if idx + 1 == len(elements) else False
+            npts = n + 1 if idx + 1 == len(elements) else n
+            data = np.append(data, np.linspace(coords[idx], coords[idx+1], npts, endpoint=endpoint))
+        return data
+
+    if ycoords.size and yelements.size:
+        ys = redistribute_nodes(xcoords, xelements)
+    
+    if xcoords.size and xelements.size:
+        xs = redistribute_nodes(ycoords, yelements)
+
+    xs, ys = np.meshgrid(xs, ys)
+
+    with mesh.deform_mesh():
+        mesh.data[:,0] = xs.flatten()  
+        mesh.data[:,1] = ys.flatten()
+    return mesh

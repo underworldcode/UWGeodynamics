@@ -176,6 +176,7 @@ class BoundaryConditions(object):
 
         # Check that the domain actually contains some boundary nodes
         if isinstance(condition, (list, tuple)) and nodes.data.size > 0:
+
             for dim in range(self.field.data.shape[1]):
 
                 # Scalar condition
@@ -387,20 +388,16 @@ class VelocityBCs(BoundaryConditions):
 
             return
 
-        # Expect a list or tuple of dimension mesh.dim.
-        # Check that the domain actually contains some boundary nodes
-        # (nodes is not None)
-        if isinstance(condition, (list, tuple)) and nodes.data.size > 0:
-            for dim in range(self.Model.mesh.dim):
-
-                # Inflow Outflow
-                if isinstance(condition[dim], Balanced_InflowOutflow):
-                    obj = condition[dim]
-                    obj.ynodes = self.Model.mesh.data[nodes.data, 1]
-                    obj._get_side_flow()
-                    self.Model.velocityField.data[nodes.data, dim] = (
-                        obj._get_side_flow())
-                    self._add_to_indices(dim, nodes)
+        if isinstance(condition, Balanced_InflowOutflow):
+            # I don't like that, needs to be redesigned...
+            obj = condition
+            obj.ynodes = self.Model.mesh.data[nodes.data, 1]
+            self.Model.velocityField.data[nodes.data, 0] = (
+                obj._get_side_flow())
+            self.Model.velocityField.data[nodes.data, 1] = 0.
+            self._add_to_indices(0, nodes)
+            self._add_to_indices(1, nodes)
+            return
 
         super(VelocityBCs, self)._apply_conditions_nodes(condition, nodes)
 
