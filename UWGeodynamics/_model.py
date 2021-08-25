@@ -585,8 +585,8 @@ class Model(Material):
         >>> u = GEO.u
         >>> Model = GEO.Model()
 
-        >>> Model.set_temperatureBCs(top=500. * u.degK, bottom=1600. * u.degK)
-        ...
+        >>> ign = Model.set_temperatureBCs(top=500. * u.degK, bottom=1600. * u.degK)
+
 
         You can of course define temperatures on the sidewalls:
 
@@ -594,35 +594,33 @@ class Model(Material):
         >>> u = GEO.u
         >>> Model = GEO.Model()
 
-        >>> Model.set_temperatureBCs(right=500. * u.degK, left=1600. * u.degK)
+        >>> ign = Model.set_temperatureBCs(right=500. * u.degK, left=1600. * u.degK)
         ...
 
         Fix the temperature of a Material
 
-        >>> import UWGeodynamics as GEO
+        >>> import UWGeodynamics as GEO #doctest: +ELLIPSIS
         >>> u = GEO.u
         >>> Model = GEO.Model()
-
-        >>> Model.set_temperatureBCs(top=500. * u.degK,
+        >>> air = Model.add_material(name="sky")
+        >>> ign = Model.set_temperatureBCs(top=500. * u.degK,
         ...                          bottom=-0.022 * u.milliwatt / u.metre**2,
-        ...                          bottom_material=Model,
-        ...                          materials=[(air, 273. * u.Kelvin)])
+        ...                          materials=[(air, 273.*u.degK)])
         ...
 
         Fix the temperature of internal nodes
 
         You can assign a temperature to a list of nodes by passing a list of node indices (global).
 
-        >>> import UWGeodynamics as GEO
+        >>> import UWGeodynamics as GEO #doctest: +ELLIPSIS
         >>> u = GEO.u
         >>> Model = GEO.Model()
-
         >>> nodes = [0, 1, 2]
-        >>> Model.set_temperatureBCs(top=500. * u.degK,
+        >>> ign = Model.set_temperatureBCs(top=500. * u.degK,
         ...                          bottom=-0.022 * u.milliwatt / u.metre**2,
-        ...                          bottom_material=Model,
-        ...                          nodeSets=[(273. * u.Kelvin, nodes)])
+        ...                          nodeSets=[(nodes, 273.*u.degK)])
         ...
+
 
         """
         if not self._temperature:
@@ -707,9 +705,11 @@ class Model(Material):
         >>> u = GEO.u
 
         >>> Model = GEO.Model()
-        >>> Material = Model.add_material(shape=GEO.Layer(top=Model.top,
-        ...                                               bottom=Model.bottom)
-        >>> Model.set_heatFlowBCs(bottom=(-0.22 * u.milliwatt / u.metre**2,
+        >>> Material = Model.add_material(shape=GEO.shapes.Layer(top=Model.top,
+        ...                                               bottom=Model.bottom))
+        >>> Material.capacity = 1e3 * u.joule / (u.degK * u.kg)
+        >>> Material.density  = 2e3 * u.kg * u.m**-3
+        >>> ign = Model.set_heatFlowBCs(bottom=(-0.22 * u.milliwatt / u.metre**2,
         ...                               Material))
         ...
         """
@@ -1518,6 +1518,8 @@ class Model(Material):
 
         >>> Model = GEO.Model()
         >>> Model.density = 2000. * u.kilogram / u.metre**3
+        >>> Model.diffusivity = 9e-7 * u.metre**2 / u.second 
+        >>> ign = Model.set_temperatureBCs(top=273.15 * u.degK, bottom=1603.15 * u.degK)
         >>> Model.init_model(temperature="steady-state", pressure="lithostatic")
         ...
 
@@ -1829,7 +1831,7 @@ class Model(Material):
         >>> coords = np.ndarray((npoints, 2))
         >>> coords[:, 0] = x
         >>> coords[:, 1] = y
-        >>> tracers = Model.add_passive_tracers(vertices=coords)
+        >>> tracers = Model.add_passive_tracers(name='test', vertices=coords)
 
         You can pass a list of centroids to the Model.add_passive_tracers method.
         In that case, the coordinates of the passive tracers are relative
@@ -1848,7 +1850,7 @@ class Model(Material):
         >>> coords = np.ndarray((cxpos.size, 2))
         >>> coords[:, 0] = cxpos.ravel()
         >>> coords[:, 1] = cypos.ravel()
-        >>> tracers = Model.add_passive_tracers(vertices=np.array([[0,0]]),
+        >>> tracers = Model.add_passive_tracers(name='test', vertices=np.array([[0,0]]),
         ...                                     centroids=coords)
 
 
@@ -1856,9 +1858,10 @@ class Model(Material):
 
         >>> import UWGeodynamics as GEO
 
-        >>> pts = GEO.circles_grid(radius = 2.0 * u.kilometer,
-        ...                 minCoord=[Model.minCoord[0], lowercrust.bottom],
-        ...                 maxCoord=[Model.maxCoord[0], 0.*u.kilometer])
+        >>> pts = GEO.circles_grid(radius = 2.0 * u.km,
+        ...                 minCoord=[0.*u.km, 0.*u.km],
+        ...                 maxCoord=[10.*u.km, 10.*u.km])
+        ...
 
         """
 
