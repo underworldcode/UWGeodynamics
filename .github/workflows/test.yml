@@ -6,7 +6,7 @@ jobs:
   test_in_UW_Container:
     runs-on: ubuntu-latest
     container:
-      image: underworldcode/underworld2:2.10.0b
+      image: underworldcode/underworld2:latest
       options: --user root
     steps:
       - name: Test in UW Container
