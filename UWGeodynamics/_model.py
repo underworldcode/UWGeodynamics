@@ -1503,7 +1503,7 @@ class Model(Material):
         self.mesh_variables["temperature"] = self._temperature
         self.restart_variables["temperature"] = self._temperature
 
-    def init_model(self, temperature=None, pressure=None,
+    def init_model(self, temperature="steady-state", pressure="lithostatic",
                    defaultStrainRate=1e-15 / u.second):
         """ Initialize the Temperature Field as steady state,
             Initialize the Pressure Field as Lithostatic
