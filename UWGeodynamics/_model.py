@@ -286,16 +286,21 @@ class Model(Material):
             maxSplits=rcParams["popcontrol.max.splits"],
             particlesPerCell=particlesPerCell)
 
-        # Add Common Swarm Variables
+        ## Add Common Swarm Variables
+        # time dependent vars
         self.add_swarm_variable("materialField", dataType="int", count=1,
                                 restart_variable=True, init_value=self.index)
         self.add_swarm_variable("plasticStrain", dataType="double", count=1,
                                 restart_variable=True)
-        self.add_swarm_variable("_viscosityField", dataType="double", count=1)
-        self.add_swarm_variable("_densityField", dataType="double", count=1)
-        self.add_swarm_variable("meltField", dataType="double", count=1)
+        self.add_swarm_variable("meltField", dataType="double", count=1, 
+                                restart_variable=True)
         self.add_swarm_variable("timeField", dataType="double", count=1,
                                 restart_variable=True)
+
+        # non t dependent vars
+        # ASSUMES density and viscosity are uw.fn dependent on other vars
+        self.add_swarm_variable("_viscosityField", dataType="double", count=1)
+        self.add_swarm_variable("_densityField", dataType="double", count=1)
         self.timeField.data[...] = 0.0
         self.materialField.data[...] = self.index
 
