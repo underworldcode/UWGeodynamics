@@ -1,3 +1,9 @@
+# Version 2.12
+
+- Change Passive Tracers Interface. The ``Model.add_passive_tracers`` method now return ``None``. Tracers can be accessed via the Model object.
+This is to avoid orphans and usage errors when doing a restart.
+
+
 # Version 2.11
 
 - Bug fixes

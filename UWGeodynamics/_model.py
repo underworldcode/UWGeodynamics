@@ -1836,7 +1836,7 @@ class Model(Material):
         >>> coords = np.ndarray((npoints, 2))
         >>> coords[:, 0] = x
         >>> coords[:, 1] = y
-        >>> tracers = Model.add_passive_tracers(name='test', vertices=coords)
+        >>> Model.add_passive_tracers(name='test', vertices=coords)
 
         You can pass a list of centroids to the Model.add_passive_tracers method.
         In that case, the coordinates of the passive tracers are relative
@@ -1855,8 +1855,7 @@ class Model(Material):
         >>> coords = np.ndarray((cxpos.size, 2))
         >>> coords[:, 0] = cxpos.ravel()
         >>> coords[:, 1] = cypos.ravel()
-        >>> tracers = Model.add_passive_tracers(name='test', vertices=np.array([[0,0]]),
-        ...                                     centroids=coords)
+        >>> Model.add_passive_tracers(name='test', vertices=np.array([[0,0]]), centroids=coords)
 
 
         We provide a function to create circles on a grid:
@@ -1904,8 +1903,8 @@ class Model(Material):
                 self.velocityField, tracers, order=2)
 
         self.passive_tracers[name] = tracers
-        setattr(self, name.lower() + "_tracers", tracers)
-        return tracers
+        setattr(self, name + "_tracers", tracers)
+        return
 
     def _get_melt_fraction(self):
         """ Melt Fraction function
