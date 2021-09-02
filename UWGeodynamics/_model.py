@@ -1537,10 +1537,8 @@ class Model(Material):
             import warnings
             warnings.warn("You have not passed anything to the pressure argument. The pressure field will not be initialised")
 
-        # Init Temperature Field
-        if temperature is not None:
-            if not self._temperature:
-                self._init_temperature_variables()
+        # Init Temperature Field only if DiffusivityFn is defined
+        if temperature is not None and self.DiffusivityFn is not None:
             if isinstance(temperature, fn.Function):
                 self._temperature.data[...] = temperature.evaluate(self.mesh)
             elif isinstance(temperature, str) and temperature.lower() == "steady-state": 
