@@ -1,21 +1,14 @@
-# Version 2.12
-
-- Change Passive Tracers Interface. The ``Model.add_passive_tracers`` method now return ``None``. Tracers can be accessed via the Model object.
-This is to avoid orphans and usage errors when doing a restart.
-
 
 # Version 2.11
 
-- Bug fixes
+- Change Passive Tracers Interface. The ``Model.add_passive_tracers`` method now return ``None``. Tracers can be accessed via the Model object. This is to avoid orphans and usage errors when doing a restart.
 - Add option to pass UW function (or mesh variable) to the density material properties.
-- Add option to initiliase temperature and pressure fields with an UW function or a mesh variable.
-
+- `Model.init_model()` excepts arguments to optional to initiliase temperature and pressure fields with an UW function or a mesh variable.
+- Various bug fixes.
 
 # Version 2.10
 
-
 - Layer2D which has now been deprecated for a while has been removed
-
 
 # Version 2.9
 
