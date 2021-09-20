@@ -1505,10 +1505,12 @@ class Model(Material):
 
     def init_model(self, temperature="steady-state", pressure="lithostatic",
                    defaultStrainRate=1e-15 / u.second):
-        """ Initialize the Temperature Field as steady state,
-            Initialize the Pressure Field as Lithostatic
-            Initialize the viscosity field based on default
+        """ Initialise the Temperature Field as steady state,
+            Initialise the Pressure Field as Lithostatic
+            Initialise the viscosity field based on default
             strain rate.
+
+            Will only initialise the temperature field if diffusivity is defined in the model.
 
         Parameters:
         -----------
@@ -1537,14 +1539,18 @@ class Model(Material):
             import warnings
             warnings.warn("You have not passed anything to the pressure argument. The pressure field will not be initialised")
 
-        # Init Temperature Field only if DiffusivityFn is defined
-        if temperature is not None and self.DiffusivityFn is not None:
+        # Init Temperature Field only if DiffusivityFn or deffusivity are defined
+        if temperature is not None:
+            if not self._temperature:
+                self._init_temperature_variables()
             if isinstance(temperature, fn.Function):
                 self._temperature.data[...] = temperature.evaluate(self.mesh)
             elif isinstance(temperature, str) and temperature.lower() == "steady-state": 
-                self.solve_temperature_steady_state()
-            else:
-                raise ValueError()
+                if not any(self.DiffusivityFn, self.diffusivity):
+                    import warnings
+                    warning.warn("Skipping the steady state calculation: No diffusivity variable defined on Model")
+                else:
+                    self.solve_temperature_steady_state()
 
         # Init pressureField Field
         if pressure is not None:
