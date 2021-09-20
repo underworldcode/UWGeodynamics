@@ -33,6 +33,10 @@ We provide a series of docs/tutorials as Jupyter notebook:
 
 6. `Tutorial 6 Simple Surface Processes`_
 
+6.1 `Tutorial 6.1 Surface Processes - Sedimentation & Erosion Rates`_
+
+6.2 `Tutorial 6.2 Surface Processes - Diffusive Surface`_
+
 7. `Tutorial 7 3D Rift`_
 
 8. `Tutorial 8 ViscoElasticity`_
@@ -61,6 +65,8 @@ We provide a series of docs/tutorials as Jupyter notebook:
 .. _Tutorial 4 Sandbox Compression: http://nbviewer.jupyter.org/github/underworldcode/UWGeodynamics/blob/master/docs/tutorials/Tutorial_4_NumericalSandboxCompression.ipynb
 .. _Tutorial 5 Simple Compression: http://nbviewer.jupyter.org/github/underworldcode/UWGeodynamics/blob/master/docs/tutorials/Tutorial_5_Convergence_Model.ipynb
 .. _Tutorial 6 Simple Surface Processes: http://nbviewer.jupyter.org/github/underworldcode/UWGeodynamics/blob/master/docs/tutorials/Tutorial_6_Simple_Surface_Processes.ipynb
+.. _Tutorial 6.1 Surface Processes - Sedimentation & Erosion Rates: http://nbviewer.jupyter.org/github/underworldcode/UWGeodynamics/blob/master/docs/tutorials/Tutorial_6.1_sedimentation&erosion_rates.ipynb
+.. _Tutorial 6.2 Surface Processes - Diffusive Surface: http://nbviewer.jupyter.org/github/underworldcode/UWGeodynamics/blob/master/docs/tutorials/Tutorial_6.2_diffusive_surface.ipynb
 .. _Tutorial 7 3D Rift: http://nbviewer.jupyter.org/github/underworldcode/UWGeodynamics/blob/master/docs/tutorials/Tutorial_7_3D_Lithospheric_Model.ipynb
 .. _Tutorial 8 ViscoElasticity: http://nbviewer.jupyter.org/github/underworldcode/UWGeodynamics/blob/master/docs/tutorials/Tutorial_8_Subduction_ViscoElastic.ipynb
 .. _Tutorial 9 Passive Margins: http://nbviewer.jupyter.org/github/underworldcode/UWGeodynamics/blob/master/docs/tutorials/Tutorial_9_passive_margins.ipynb

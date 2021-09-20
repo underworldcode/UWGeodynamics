@@ -1525,7 +1525,7 @@ We provide 2 access points for injection of custom functions.
        # do something
        print("Hello, I am running a pre-solve function")
        return
-   
+
    def my_functionB():
        # do something
        print("Hello, I am running a post-solve function")
@@ -1739,6 +1739,43 @@ Three simple function are available:
 1. Total Erosion Above Threshold (``ErosionThreshold``).
 2. Total Sedimentation Below Threshold (``SedimentationThreshold``)
 3. Combination of the 2 above. (``ErosionAndSedimentationThreshold``)
+
+Erosion and sedimentation rate
+~~~~~~~~~~~~~~~~~~~~~~
+Adds an erosion and sedimentation rate to the surface. A pre-defined vertical co-ordinate (surfaceElevation) needs to be defined to stop erodion below that level and sedimenation above it.
+
+Example:
+
+.. code:: python
+
+   >>> import UWGeodynamics as GEO
+   >>> u = GEO.u
+   >>> air = GEO.Material()
+   >>> sediment = GEO.Material()
+   >>> Model.surfaceProcesses = GEO.surfaceProcesses.velocitySurface_2D(
+   ...     airIndex=air.index, sedimentIndex=sediment.index,
+   ...     sedimentationRate= 2.*u.millimeter / u.year, erosionRate= 2.*u.millimeter / u.year,
+   ...     surfaceElevation=0.*u.kilometer,
+   ...     surfaceArray = coords)
+
+ Diffusive surface
+ ~~~~~~~~~~~~~~~~~~~~~~
+ Adds a linear diffusive surface to the model.
+
+ Example:
+
+ .. code:: python
+
+    >>> import UWGeodynamics as GEO
+    >>> u = GEO.u
+    >>> air = GEO.Material()
+    >>> sediment = GEO.Material()
+    >>> Model.surfaceProcesses = GEO.surfaceProcesses.diffusiveSurface_2D(
+    ...     airIndex=air.index, sedimentIndex=sediment.index,
+    ...     D= 1000.0*u.meter**2/u.year,
+    ...     surfaceArray = coords)
+
+
 
 Coupling with Badlands
 ~~~~~~~~~~~~~~~~~~~~~~
