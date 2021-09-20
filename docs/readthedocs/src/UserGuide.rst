@@ -1399,11 +1399,11 @@ Initialization of the pressure and temperature fields is done by using the
 
 ``Model.init_model`` method.
 
-The default behavior is to initialise the temperature field to a steady-state
-while the pressure field is initialized to the lithostatic pressure.
+The default behavior is to not initialise the pressure nor the temperature fields.
 
-You can deactivate pressure or temperature initialization by setting the
-corresponding argument to `False` (`Model.init_model(temperature=False)`)
+You can initialise the fields by passing an Underworld function or a Mesh variable.
+You can initialise the temperature field to steady-state using the "steady-state" value.
+Yuo can initialise the pressure field to be lithostatic using the "lithostatic" value.
 
 .. code:: python
 
@@ -1412,7 +1412,7 @@ corresponding argument to `False` (`Model.init_model(temperature=False)`)
 
    >>> Model = GEO.Model()
    >>> Model.density = 2000. * u.kilogram / u.metre**3
-   >>> Model.init_model(temperature=False, pressure=True)
+   >>> Model.init_model(temperature="steady-state", pressure="lithostatic")
    ...
 
 
@@ -1652,7 +1652,7 @@ Passive Tracers
    >>> coords = np.ndarray((npoints, 2))
    >>> coords[:, 0] = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), npoints)
    >>> coords[:, 1] = GEO.nd(32. * u.kilometre)
-   >>> tracers = Model.add_passive_tracers(vertices=coords)
+   >>> Model.add_passive_tracers(vertices=coords)
 
 You can pass a list of centroids to the `Model.add_passive_tracers` method.
 In that case, the coordinates of the passive tracers are relative to the
@@ -1673,8 +1673,7 @@ position of the centroids. The pattern is repeated around each centroid.
     >>> coords_centroid[:, 1] = cypos.ravel()
     >>>
     >>> coords = np.zeros((1, 2))
-    >>> tracers = Model.add_passive_tracers(vertices=coords,
-    ...                                     centroids=coords_centroid)
+    >>> Model.add_passive_tracers(vertices=coords, centroids=coords_centroid)
 
 
 We provide a function to create circles on a grid:
@@ -1705,16 +1704,16 @@ through time.
    >>> coords = np.ndarray((npoints, 2))
    >>> coords[:, 0] = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), npoints)
    >>> coords[:, 1] = GEO.nd(32. * u.kilometre)
-   >>> tracers = Model.add_passive_tracers(vertices=coords)
+   >>> Model.add_passive_tracers(name="p1", vertices=coords)
 
-   >>> tracers.add_tracked_field(Model.pressureField,
-                                 name="tracers_press",
-                                 units=u.megapascal,
-                                 dataType="float")
-   >>> tracers.add_tracked_field(Model.strainRateField,
-                                 name="tracers_strainRate",
-                                 units=1.0/u.second,
-                                 dataType="float")
+   >>> Model.p1_tracers.add_tracked_field(Model.pressureField,
+                                          name="tracers_press",
+                                          units=u.megapascal,
+                                          dataType="float")
+   >>> Model.p1_tracers.add_tracked_field(Model.strainRateField,
+                                          name="tracers_strainRate",
+                                          units=1.0/u.second,
+                                          dataType="float")
 
 Surface Processes
 -----------------

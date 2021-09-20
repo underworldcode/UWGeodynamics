@@ -1,11 +1,11 @@
 #!/bin/bash
 
 module purge
-module load openmpi/4.0.2 hdf5/1.10.5p python3/3.7.4 scons/3.1.1 petsc/3.12.2
+module load openmpi/4.0.2 hdf5/1.10.5p python3/3.8.5 scons/3.1.1
 
 export GROUP=q97
 export USER=
-export INSTALL_NAME=UWGeodynamics_2.9.6
+export INSTALL_NAME=UWGeodynamics_2.10.0
 
 export CODES_PATH=/scratch/$GROUP/$USER/codes
 export UW_OPT_DIR=$CODES_PATH/opt
@@ -18,7 +18,10 @@ export PATH=$SWIG_PATH/bin:$PATH
 export OMPI_MCA_io=ompio
 
 export CDIR=$PWD
-export LD_PRELOAD=/apps/openmpi-mofed4.7-pbs19.2/4.0.2/lib/libmpi_usempif08_GNU.so.40:/apps/openmpi-mofed4.7-pbs19.2/4.0.2/lib/libmpi_usempi_ignore_tkr_GNU.so.40:/apps/openmpi-mofed4.7-pbs19.2/4.0.2/lib/libmpi_cxx.so.40
+export LD_PRELOAD=$OPENMPI_ROOT/lib/libmpi_usempif08_GNU.so.40:$OPENMPI_ROOT/lib/libmpi_usempi_ignore_tkr_GNU.so.40:$OPENMPI_ROOT/lib/libmpi_cxx.so.40
+
+export UW_BRANCH=v2.10.0b
+export UWGEO_BRANCH=development
 
 install_swig() {
 	tmp_dir=$(mktemp -d -t ci-XXXXXXXXXX)
@@ -61,8 +64,11 @@ install_python_dependencies(){
 	source $INSTALL_PATH/bin/activate
 	pip3 install Cython
 	pip3 install mpi4py
+	unset HDF5_DIR
         export HDF5_VERSION=1.10.5
-        CC=h5pcc HDF5_MPI="ON" pip3 install --no-cache-dir --global-option=build_ext --global-option="-L/apps/hdf5/1.10.5p/lib/ompi3/" --no-binary=h5py h5py
+	export HDF5_LIBDIR=/apps/hdf5/1.10.5p/lib/ompi3
+	export HDF5_INCLUDEDIR=/apps/hdf5/1.10.5p/include
+        CC=mpicc HDF5_MPI="ON" pip3 install --no-cache-dir --no-binary=h5py h5py
 
 }
 
@@ -71,7 +77,7 @@ install_underworld(){
 	source $INSTALL_PATH/bin/activate
 	tmp_dir=$(mktemp -d -t ci-XXXXXXXXXX)
 	cd $tmp_dir
-        git clone --branch v2.9.4b https://github.com/underworldcode/underworld2.git $tmp_dir
+        git clone --branch $UW_BRANCH https://github.com/underworldcode/underworld2.git $tmp_dir
         pip3 install .
         rm -rf $tmp_dir	
 	cd $CDIR
@@ -81,9 +87,9 @@ install_uwgeodynamics(){
 	source $INSTALL_PATH/bin/activate
 	tmp_dir=$(mktemp -d -t ci-XXXXXXXXXX)
 	cd $tmp_dir
-        git clone https://github.com/underworldcode/uwgeodynamics.git $tmp_dir
-        pip3 install .
-        rm -rf $tmp_dir	
+    git clone --branch $UWGEO_BRANCH https://github.com/underworldcode/uwgeodynamics.git $tmp_dir
+    pip3 install .
+    rm -rf $tmp_dir	
 	cd $CDIR
 }
 

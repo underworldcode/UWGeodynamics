@@ -23,15 +23,16 @@ from ._boundary_conditions import TemperatureBCs, HeatFlowBCs
 from ._boundary_conditions import StressBCs, VelocityBCs
 from ._mesh_advector import Mesh_advector
 from ._frictional_boundary import FrictionBoundaries
-from .Underworld_extended import FeMesh_Cartesian
-from .Underworld_extended import Swarm
-from .Underworld_extended import MeshVariable
-from .Underworld_extended import SwarmVariable
-from .Underworld_extended._utils import _swarmvarschema
+from underworld.mesh import FeMesh_Cartesian
+from underworld.swarm import Swarm
+from underworld.mesh import MeshVariable
+from underworld.swarm import SwarmVariable
+from underworld.utils import _swarmvarschema
 from datetime import datetime
 from .version import full_version
 from ._freesurface import FreeSurfaceProcessor
 from ._remeshing import ReMesher
+from ._density import Density
 
 comm = _MPI.COMM_WORLD
 rank = comm.rank
@@ -169,7 +170,6 @@ class Model(Material):
         self.restart_variables = OrderedDict()
 
         # Add common mesh variables
-        self.temperature = False
         self.add_submesh_field("pressureField", nodeDofCount=1,
                                restart_variable=True)
         self.add_mesh_variable("velocityField", nodeDofCount=self.mesh.dim,
@@ -245,6 +245,7 @@ class Model(Material):
 
         # Initialise remaining attributes
         self.defaultStrainRate = 1e-15 / u.second
+        self.minStrainRate = 1e-20 / u.second
         self._solution_exist = fn.misc.constant(False)
         self._temperatureDot = None
         self._temperature = None
@@ -285,16 +286,21 @@ class Model(Material):
             maxSplits=rcParams["popcontrol.max.splits"],
             particlesPerCell=particlesPerCell)
 
-        # Add Common Swarm Variables
+        ## Add Common Swarm Variables
+        # time dependent vars
         self.add_swarm_variable("materialField", dataType="int", count=1,
                                 restart_variable=True, init_value=self.index)
         self.add_swarm_variable("plasticStrain", dataType="double", count=1,
                                 restart_variable=True)
-        self.add_swarm_variable("_viscosityField", dataType="double", count=1)
-        self.add_swarm_variable("_densityField", dataType="double", count=1)
-        self.add_swarm_variable("meltField", dataType="double", count=1)
+        self.add_swarm_variable("meltField", dataType="double", count=1, 
+                                restart_variable=True)
         self.add_swarm_variable("timeField", dataType="double", count=1,
                                 restart_variable=True)
+
+        # non t dependent vars
+        # ASSUMES density and viscosity are uw.fn dependent on other vars
+        self.add_swarm_variable("_viscosityField", dataType="double", count=1)
+        self.add_swarm_variable("_densityField", dataType="double", count=1)
         self.timeField.data[...] = 0.0
         self.materialField.data[...] = self.index
 
@@ -445,6 +451,11 @@ class Model(Material):
         condition = [(self._solution_exist, self._strainRate_2ndInvariant),
                      (True, fn.misc.constant(nd(self.defaultStrainRate)))]
         self._strainRate_2ndInvariant = fn.branching.conditional(condition)
+        
+        condition = [(self._strainRate_2ndInvariant<=nd(self.minStrainRate),nd(self.minStrainRate)),
+                     (True, self._strainRate_2ndInvariant)]
+        self._strainRate_2ndInvariant = fn.branching.conditional(condition)
+        
         return self._strainRate_2ndInvariant
 
     @property
@@ -579,8 +590,8 @@ class Model(Material):
         >>> u = GEO.u
         >>> Model = GEO.Model()
 
-        >>> Model.set_temperatureBCs(top=500. * u.degK, bottom=1600. * u.degK)
-        ...
+        >>> ign = Model.set_temperatureBCs(top=500. * u.degK, bottom=1600. * u.degK)
+
 
         You can of course define temperatures on the sidewalls:
 
@@ -588,40 +599,37 @@ class Model(Material):
         >>> u = GEO.u
         >>> Model = GEO.Model()
 
-        >>> Model.set_temperatureBCs(right=500. * u.degK, left=1600. * u.degK)
+        >>> ign = Model.set_temperatureBCs(right=500. * u.degK, left=1600. * u.degK)
         ...
 
         Fix the temperature of a Material
 
-        >>> import UWGeodynamics as GEO
+        >>> import UWGeodynamics as GEO #doctest: +ELLIPSIS
         >>> u = GEO.u
         >>> Model = GEO.Model()
-
-        >>> Model.set_temperatureBCs(top=500. * u.degK,
+        >>> air = Model.add_material(name="sky")
+        >>> ign = Model.set_temperatureBCs(top=500. * u.degK,
         ...                          bottom=-0.022 * u.milliwatt / u.metre**2,
-        ...                          bottom_material=Model,
-        ...                          materials=[(air, 273. * u.Kelvin)])
+        ...                          materials=[(air, 273.*u.degK)])
         ...
 
         Fix the temperature of internal nodes
 
         You can assign a temperature to a list of nodes by passing a list of node indices (global).
 
-        >>> import UWGeodynamics as GEO
+        >>> import UWGeodynamics as GEO #doctest: +ELLIPSIS
         >>> u = GEO.u
         >>> Model = GEO.Model()
-
         >>> nodes = [0, 1, 2]
-        >>> Model.set_temperatureBCs(top=500. * u.degK,
+        >>> ign = Model.set_temperatureBCs(top=500. * u.degK,
         ...                          bottom=-0.022 * u.milliwatt / u.metre**2,
-        ...                          bottom_material=Model,
-        ...                          nodeSets=[(273. * u.Kelvin, nodes)])
+        ...                          nodeSets=[(nodes, 273.*u.degK)])
         ...
 
-        """
 
-        if not self.temperature:
-            self.temperature = True
+        """
+        if not self._temperature:
+            self._init_temperature_variables()
 
         self._temperatureBCs = TemperatureBCs(self, left=left, right=right,
                                               top=top, bottom=bottom,
@@ -632,7 +640,7 @@ class Model(Material):
 
     def set_heatFlowBCs(self, left=None, right=None,
                         top=None, bottom=None,
-                        front=None, back=None):
+                        front=None, back=None,nodeSets=None, materials=None):
 
         """ Define heat flow boundaries condition
 
@@ -702,24 +710,28 @@ class Model(Material):
         >>> u = GEO.u
 
         >>> Model = GEO.Model()
-        >>> Material = Model.add_material(shape=GEO.Layer(top=Model.top,
-        ...                                               bottom=Model.bottom)
-        >>> Model.set_heatFlowBCs(bottom=(-0.22 * u.milliwatt / u.metre**2,
+        >>> Material = Model.add_material(shape=GEO.shapes.Layer(top=Model.top,
+        ...                                               bottom=Model.bottom))
+        >>> Material.capacity = 1e3 * u.joule / (u.degK * u.kg)
+        >>> Material.density  = 2e3 * u.kg * u.m**-3
+        >>> ign = Model.set_heatFlowBCs(bottom=(-0.22 * u.milliwatt / u.metre**2,
         ...                               Material))
         ...
         """
-
-        if not self.temperature:
-            self.temperature = True
-
+        if not self._temperature:
+            self._init_temperature_variables()
+        
         self._heatFlowBCs = HeatFlowBCs(self, left=left, right=right,
                                         top=top, bottom=bottom,
-                                        back=back, front=front)
+                                        back=back, front=front,nodeSets=nodeSets,materials=materials)
         return self._heatFlowBCs.get_conditions()
 
     @property
     def temperatureBCs(self):
-        return self._temperatureBCs.get_conditions()
+        if self._temperatureBCs:
+            return self._temperatureBCs.get_conditions()
+        else:
+            return self._temperatureBCs
 
     @temperatureBCs.setter
     def temperatureBCs(self, value):
@@ -771,22 +783,14 @@ class Model(Material):
     def temperature(self):
         """ Temperature Field """
         return self._temperature
-
+    
     @temperature.setter
     def temperature(self, value):
-        if value is True:
-            self._temperature = MeshVariable(mesh=self.mesh,
-                                             nodeDofCount=1)
-            self._temperatureDot = MeshVariable(mesh=self.mesh,
-                                                nodeDofCount=1)
-            self._heatFlux = MeshVariable(mesh=self.mesh,
-                                          nodeDofCount=1)
-            self._temperatureDot.data[...] = 0.
-            self._heatFlux.data[...] = 0.
-            self.mesh_variables["temperature"] = self._temperature
-            self.restart_variables["temperature"] = self._temperature
-        else:
-            self._temperature = False
+        """ Temperature Field """
+        if not self._temperature:
+            self._init_temperature_variables()
+        if isinstance(value, fn.Function):
+            self._temperature.data[...] = value.evaluate(self.mesh)
 
     @property
     def _advdiffSystem(self):
@@ -1227,14 +1231,13 @@ class Model(Material):
         densityMap = {}
         for material in self.materials:
 
-            if self.temperature:
-                dens_handler = material.density
-                dens_handler.temperatureField = self.temperature
-                dens_handler.pressureField = self.pressureField
-                densityMap[material.index] = dens_handler.effective_density()
+            density = material.density
+            if isinstance(material.density, Density):
+                density.temperatureField = self.temperature
+                density.pressureField = self.pressureField
+                densityMap[material.index] = density.effective_density()
             else:
-                dens_handler = material.density
-                densityMap[material.index] = nd(dens_handler.reference_density)
+                densityMap[material.index] = density
 
             if material.meltExpansion:
                 fact = material.meltExpansion * self.meltField
@@ -1488,17 +1491,31 @@ class Model(Material):
         if rcParams["rebuild.solver"]:
             self._solver = False
 
-    def init_model(self, temperature=True, pressureField=True,
+    def _init_temperature_variables(self):
+        self._temperature = MeshVariable(mesh=self.mesh,
+                                         nodeDofCount=1)
+        self._temperatureDot = MeshVariable(mesh=self.mesh,
+                                            nodeDofCount=1)
+        self._heatFlux = MeshVariable(mesh=self.mesh,
+                                      nodeDofCount=1)
+        self._temperatureDot.data[...] = 0.
+        self._heatFlux.data[...] = 0.
+        self.mesh_variables["temperature"] = self._temperature
+        self.restart_variables["temperature"] = self._temperature
+
+    def init_model(self, temperature="steady-state", pressure="lithostatic",
                    defaultStrainRate=1e-15 / u.second):
-        """ Initialize the Temperature Field as steady state,
-            Initialize the Pressure Field as Lithostatic
-            Initialize the viscosity field based on default
+        """ Initialise the Temperature Field as steady state,
+            Initialise the Pressure Field as Lithostatic
+            Initialise the viscosity field based on default
             strain rate.
+
+            Will only initialise the temperature field if diffusivity is defined in the model.
 
         Parameters:
         -----------
-            temperature: (bool) default to True
-            pressure: (bool) default to True
+            temperature: defaults to "steady-state", can be an Underworld function
+            pressure: defaults to "lithostatic", can be an Underworld function  
 
         example:
         --------
@@ -1508,18 +1525,40 @@ class Model(Material):
 
         >>> Model = GEO.Model()
         >>> Model.density = 2000. * u.kilogram / u.metre**3
-        >>> Model.init_model(temperature=False, pressure=True)
+        >>> Model.diffusivity = 9e-7 * u.metre**2 / u.second 
+        >>> ign = Model.set_temperatureBCs(top=273.15 * u.degK, bottom=1603.15 * u.degK)
+        >>> Model.init_model(temperature="steady-state", pressure="lithostatic")
         ...
 
         """
+        if temperature is None:
+            import warnings
+            warnings.warn("You have not passed anything to the temperature argument. The temperature field will not be initialised")
+        
+        if pressure is None:
+            import warnings
+            warnings.warn("You have not passed anything to the pressure argument. The pressure field will not be initialised")
 
-        # Init Temperature Field
-        if self.temperature and temperature:
-            self.solve_temperature_steady_state()
+        # Init Temperature Field only if DiffusivityFn or deffusivity are defined
+        if temperature is not None:
+            if not self._temperature:
+                self._init_temperature_variables()
+            if isinstance(temperature, fn.Function):
+                self._temperature.data[...] = temperature.evaluate(self.mesh)
+            elif isinstance(temperature, str) and temperature.lower() == "steady-state": 
+                if not (self.DiffusivityFn or self.diffusivity):
+                    import warnings
+                    warnings.warn("Skipping the steady state calculation: No diffusivity variable defined on Model")
+                else:
+                    self.solve_temperature_steady_state()
 
         # Init pressureField Field
-        if self.pressureField and pressureField:
-            self.initialize_pressure_to_lithostatic()
+        if pressure is not None:
+            if self.pressureField:
+                if isinstance(pressure, fn.Function):
+                    self.pressureField.data[...] = pressure.evaluate(self.mesh.subMesh)
+                elif isinstance(pressure, str) and pressure.lower() == "lithostatic":
+                    self.initialize_pressure_to_lithostatic()
 
         # Init ViscosityField
         if any([material.viscosity for material in self.materials]):
@@ -1602,7 +1641,7 @@ class Model(Material):
 
             self._dt = 2.0 * rcParams["CFL"] * self.swarm_advector.get_max_dt()
 
-            if self.temperature:
+            if self.temperatureBCs:
                 # Only get a condition if using SUPG
                 if rcParams["advection.diffusion.method"] == "SUPG":
                     supg_dt = self._advdiffSystem.get_max_dt()
@@ -1720,7 +1759,7 @@ class Model(Material):
             self.update_melt_fraction()
 
         # Solve for temperature
-        if self.temperature:
+        if self.temperatureBCs:
             self._advdiffSystem.integrate(dt)
 
         if self._advector:
@@ -1801,7 +1840,7 @@ class Model(Material):
         >>> coords = np.ndarray((npoints, 2))
         >>> coords[:, 0] = x
         >>> coords[:, 1] = y
-        >>> tracers = Model.add_passive_tracers(vertices=coords)
+        >>> Model.add_passive_tracers(name='test', vertices=coords)
 
         You can pass a list of centroids to the Model.add_passive_tracers method.
         In that case, the coordinates of the passive tracers are relative
@@ -1820,17 +1859,17 @@ class Model(Material):
         >>> coords = np.ndarray((cxpos.size, 2))
         >>> coords[:, 0] = cxpos.ravel()
         >>> coords[:, 1] = cypos.ravel()
-        >>> tracers = Model.add_passive_tracers(vertices=np.array([[0,0]]),
-        ...                                     centroids=coords)
+        >>> Model.add_passive_tracers(name='test', vertices=np.array([[0,0]]), centroids=coords)
 
 
         We provide a function to create circles on a grid:
 
         >>> import UWGeodynamics as GEO
 
-        >>> pts = GEO.circles_grid(radius = 2.0 * u.kilometer,
-        ...                 minCoord=[Model.minCoord[0], lowercrust.bottom],
-        ...                 maxCoord=[Model.maxCoord[0], 0.*u.kilometer])
+        >>> pts = GEO.circles_grid(radius = 2.0 * u.km,
+        ...                 minCoord=[0.*u.km, 0.*u.km],
+        ...                 maxCoord=[10.*u.km, 10.*u.km])
+        ...
 
         """
 
@@ -1868,8 +1907,8 @@ class Model(Material):
                 self.velocityField, tracers, order=2)
 
         self.passive_tracers[name] = tracers
-        setattr(self, name.lower() + "_tracers", tracers)
-        return tracers
+        setattr(self, name + "_tracers", tracers)
+        return
 
     def _get_melt_fraction(self):
         """ Melt Fraction function
@@ -2299,9 +2338,9 @@ class _CheckpointFunction(object):
 
         Model = self.Model
 
-        if (((self.step_type is "time") and
+        if (((self.step_type == "time") and
              (Model._ndtime == self.next_checkpoint)) or
-            ((self.step_type is "step") and
+            ((self.step_type == "step") and
              (Model.stepDone == self.next_checkpoint))):
 
             Model.checkpointID += 1
@@ -2326,7 +2365,7 @@ class _CheckpointFunction(object):
         dt1 = None
         dt2 = None
 
-        if self.step_type is "time":
+        if self.step_type == "time":
             dt1 = self.next_checkpoint - Model._ndtime
 
         if self.checkpoint_times:

@@ -95,8 +95,8 @@ class Lithostatic_pressure(fn.Function):
         Ipositions = node_gids - Jpositions * (ncol + 1)
 
         # Get local domain data
-        local_y[Jpositions, Ipositions] = self.mesh.data[:self.mesh.nodesLocal, 1][:, np.newaxis]
-        local_density[Jpositions, Ipositions] = self.DensityVar.data[:self.mesh.nodesLocal]
+        local_y[Jpositions, Ipositions] = self.mesh.data[:self.mesh.nodesLocal, 1]
+        local_density[Jpositions, Ipositions] = self.DensityVar.data[:self.mesh.nodesLocal, 0]
 
         comm.Allreduce(local_y, global_y)
         comm.Allreduce(local_density, global_density)
@@ -127,7 +127,7 @@ class Lithostatic_pressure(fn.Function):
 
         local_pressure = Tpressure.flatten()[all_nodes]
 
-        self.lithostatic_field.data[:] = local_pressure
+        self.lithostatic_field.data[:, 0] = local_pressure
         self.lithostatic_field.syncronise()
 
         self.Cell2Nodes.solve()
@@ -218,7 +218,7 @@ class Lithostatic_pressure(fn.Function):
 
         local_pressure = Tpressure.flatten()[all_nodes]
 
-        self.lithostatic_field.data[:] = local_pressure
+        self.lithostatic_field.data[:, 0] = local_pressure
         self.lithostatic_field.syncronise()
 
         self.Cell2Nodes.solve()

@@ -131,7 +131,7 @@ def test_passive_tracers():
     coords = np.ndarray((1000, 2))
     coords[:, 0] = np.linspace(GEO.nd(Model.minCoord[0]), GEO.nd(Model.maxCoord[0]), npoints)
     coords[:, 1] = GEO.nd(32. * u.kilometer)
-    P = Model.add_passive_tracers(name="Tracers", vertices=coords)
+    Model.add_passive_tracers(name="Tracers", vertices=coords)
 
 def test_set_velocity_boundary_conditions_in_3D():
     velocityBCs = Model3D.set_velocityBCs(
