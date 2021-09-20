@@ -1546,9 +1546,9 @@ class Model(Material):
             if isinstance(temperature, fn.Function):
                 self._temperature.data[...] = temperature.evaluate(self.mesh)
             elif isinstance(temperature, str) and temperature.lower() == "steady-state": 
-                if not any(self.DiffusivityFn, self.diffusivity):
+                if not (self.DiffusivityFn or self.diffusivity):
                     import warnings
-                    warning.warn("Skipping the steady state calculation: No diffusivity variable defined on Model")
+                    warnings.warn("Skipping the steady state calculation: No diffusivity variable defined on Model")
                 else:
                     self.solve_temperature_steady_state()
 
