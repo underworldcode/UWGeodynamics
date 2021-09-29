@@ -23,8 +23,8 @@ class FreeSurfaceProcessor(object):
         self.model = model
 
         # Create the tools
-        self.TField = self.model.mesh.add_variable(nodeDofCount=1)
-        self.TField.data[:, 0] = self.model.mesh.data[:, 1]
+        self.TField = self.model.init_mesh.add_variable(nodeDofCount=1)
+        self.TField.data[:, 0] = self.model.init_mesh.data[:, 1]
 
         self.top = self.model.top_wall
         self.bottom = self.model.bottom_wall
@@ -49,12 +49,12 @@ class FreeSurfaceProcessor(object):
 
         if self.top:
             # Extract top surface
-            x = self.model.mesh.data[self.top.data][:, 0]
-            y = self.model.mesh.data[self.top.data][:, 1]
+            x = self.model.mesh.data[self.top.data, 0]
+            y = self.model.mesh.data[self.top.data:, 1]
 
             # Extract velocities from top
-            vx = self.model.velocityField.data[self.top.data][:, 0]
-            vy = self.model.velocityField.data[self.top.data][:, 1]
+            vx = self.model.velocityField.data[self.top.data, 0]
+            vy = self.model.velocityField.data[self.top.data, 1]
 
             # Advect top surface
             x2 = x + vx * nd(dt)
