@@ -50,7 +50,7 @@ class FreeSurfaceProcessor(object):
         if self.top:
             # Extract top surface
             x = self.model.mesh.data[self.top.data, 0]
-            y = self.model.mesh.data[self.top.data:, 1]
+            y = self.model.mesh.data[self.top.data, 1]
 
             # Extract velocities from top
             vx = self.model.velocityField.data[self.top.data, 0]
