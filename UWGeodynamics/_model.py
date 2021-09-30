@@ -164,12 +164,6 @@ class Model(Material):
                                      minCoord=minCoord,
                                      maxCoord=maxCoord,
                                      periodic=self.periodic)
-                                     
-        self.init_mesh = FeMesh_Cartesian(elementType=self.elementType,
-                                     elementRes=self.elementRes,
-                                     minCoord=minCoord,
-                                     maxCoord=maxCoord,
-                                     periodic=self.periodic)
 
         self.mesh_variables = OrderedDict()
         self.swarm_variables = OrderedDict()
