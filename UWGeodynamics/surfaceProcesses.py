@@ -547,7 +547,6 @@ class diffusiveSurface_2D(SurfaceProcesses):
         # self.surfaceElevation = surfaceElevation.to(u.kilometer).magnitude
         self.D  = D.to(u.kilometer**2 / u.year).magnitude
         self.Model = Model
-        self.surfaceTracers = None
         self.surfaceArray = surfaceArray
         self.surface_dt_diffusion = None
         self.dx = None
@@ -557,7 +556,7 @@ class diffusiveSurface_2D(SurfaceProcesses):
 
     def _init_model(self):
 
-        self.surfaceTracers = self.Model.add_passive_tracers(name="surfaceTracers", vertices=self.surfaceArray, advect=False)
+        self.Model.add_passive_tracers(name="surface", vertices=self.surfaceArray, advect=False)
 
         self.dx = dimensionalise((self.surfaceArray[:,0][1] - self.surfaceArray[:,0][0]), u.kilometer).magnitude
 
@@ -721,7 +720,8 @@ class diffusiveSurface_2D(SurfaceProcesses):
         ### update the surface on individual nodes
         self.surface_data_local[:,1] = f1(self.surface_data_local[:,0])
         ### update the global surface tracers
-        self.surfaceTracers.data[:,1] = f1(self.surfaceTracers.data[:,0])
+        with self.Model.surface_tracers.deform_swarm():
+            self.Model.surface_tracers.data[:,1] = f1(self.Model.surface_tracers.data[:,0])
 
         '''Erode surface/deposit sed based on the surface'''
         ### update the material on each node according to the spline function for the surface
@@ -790,13 +790,12 @@ class velocitySurface_2D(SurfaceProcesses):
         self.erosionRate  = -1. * abs(erosionRate.to(u.kilometer / u.year).magnitude)
         self.Model = Model
         self.surfaceArray = surfaceArray
-        self.surfaceTracers = None
 
         self.surface_data_local = None
         self.original_surface = None
 
     def _init_model(self):
-        self.surfaceTracers = self.Model.add_passive_tracers(name="surfaceTracers", vertices=self.surfaceArray, advect=False)
+        self.Model.add_passive_tracers(name="surface", vertices=self.surfaceArray, advect=False)
 
         self.dx = dimensionalise((self.surfaceArray[:,0][1] - self.surfaceArray[:,0][0]), u.kilometer).magnitude
 
@@ -964,7 +963,8 @@ class velocitySurface_2D(SurfaceProcesses):
         ### update the surface on individual nodes
         self.surface_data_local[:,1] = f1(self.surface_data_local[:,0])
         ### update the global surface tracers
-        self.surfaceTracers.data[:,1] = f1(self.surfaceTracers.data[:,0])
+        with self.Model.surface_tracers.deform_swarm():
+            self.Model.surface_tracers.data[:,1] = f1(self.Model.surface_tracers.data[:,0])
 
         '''Erode surface/deposit sed based on the surface'''
         ### update the material on each node according to the spline function for the surface
