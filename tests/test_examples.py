@@ -49,7 +49,19 @@ def test_columns_traction_bottom_3D():
 
 
 def test_freesurface_simple():
-    _notebook_run("examples/1_23_FreeSurface_Simple_Example.ipynb")
+    _notebook_run("examples/1_23_01_FreeSurface_Simple_Example.ipynb")
+
+    
+def test_freesurface_Kaus2010_RT_instability():
+    _notebook_run("examples/1_23_02_FreeSurface_Kaus2010_Rayleigh-Taylor_Instability.ipynb")
+    
+    
+def test_freesurface_Crameri2012_Case1():
+    _notebook_run("examples/1_23_03_FreeSurface_Crameri2012Case1_Relaxation.ipynb")
+    
+    
+def test_freesurface_Crameri2012_Case1():
+    _notebook_run("examples/1_23_04_FreeSurface_Crameri2012Case2_Rising_Plume.ipynb")
 
 
 def test_define_3D_volume():
