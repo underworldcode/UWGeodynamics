@@ -1,0 +1,124 @@
+name: docker images build
+
+on:
+  push:
+  release:
+  workflow_dispatch:
+
+jobs:
+
+  build_uwgeo_image:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker Image
+        if: 
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          file: ./Dockerfile
+          platforms: linux/amd64
+          tags: underworldcode/uwgeodynamics:amd64
+      
+      - name: Update manifest
+        run: |
+          docker manifest create underworldcode/uwgeodynamics --amend underworldcode/uwgeodynamics:amd64 --amend underworldcode/uwgeodynamics:arm64
+          docker manifest push underworldcode/uwgeodynamics
+
+  test_in_UW_Container:
+     name: Test in UW Container
+     runs-on: ubuntu-latest
+     container:
+       image: underworldcode/underworld2:latest
+       options: --user root
+     steps:
+       - name: Checkout
+         uses: actions/checkout@v2
+       
+       - name: Test in UW Container
+         run: |
+           pip install -e .
+           pip install pytest
+           python -m pytest -vvv tests/test_simple.py
+
+  conda_build:
+      name: Conda Build (Python ${{matrix.python-version}} ${{ matrix.os }})
+      runs-on: ${{ matrix.os }}
+      strategy:
+        fail-fast: false
+        matrix:
+          os: ["ubuntu-latest", "macos-latest"]
+          python-version: ["3.7", "3.8", "3.9"]
+      steps:
+        - uses: actions/checkout@v2
+        - uses: conda-incubator/setup-miniconda@v2
+          with:
+            auto-update-conda: true
+            python-version: ${{ matrix.python-version }}
+        
+        - name: Config Conda
+          shell: bash -l {0}
+          run: |
+              conda install --channel conda-forge conda-build anaconda-client conda-verify
+              conda config --add channels conda-forge
+              conda config --add channels underworldcode
+              conda config --set anaconda_upload no
+  
+        - name: Config Conda For Upload
+          if: github.event_name == 'release'
+          shell: bash -l {0}
+          run: conda config --set anaconda_upload yes
+  
+        - name: Upload new Packages
+          if: github.event_name == 'release'
+          shell: bash -l {0}
+          run: |
+              anaconda login --hostname github-actions-${{ matrix.os  }}-$RANDOM --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
+              conda-build --channel conda-forge --user geo-down-under conda
+              anaconda logout
+
+  pypi:
+    runs-on: ${{ matrix.os }}
+    env:
+      TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+      TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: [3.7, 3.8, 3.9]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: build wheel
+        if: ${{ matrix.os }} == 'ubuntu-latest'
+        run: |
+          pip install wheel
+          python setup.py bdist_wheel --universal
+      - name: build wheel
+        if: ${{ matrix.os }} == 'macos-latest'
+        run: |
+          pip install wheel
+          python setup.py bdist_wheel     
+      - name: upload wheel
+        if: github.event_name == 'release'
+        run: |
+          pip install twine
+          python -m twine upload dist/*
