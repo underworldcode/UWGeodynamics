@@ -177,7 +177,7 @@
             }
         }
     },
-    "Watremez et al., 2013 (LithosphericMantle)": {
+    "Watremez et al., 2013 (AsthenosphericMantle)": {
         "citation": "Watremez, L., E.Burov, E.d'Acremont, S.Leroy, B.Huet, L.LePourhiet, and N.Bellahsen (2013), Buoyancy and localizing properties of continental mantle lithosphere: Insights from thermomechanical models of the eastern Gulf of Aden, Geochem. Geophys. Geosyst., 14, 2800-2817, doi: 10.1002/ggge.20179",
         "onlinePDF": "https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/ggge.20179",
         "coefficients": {
