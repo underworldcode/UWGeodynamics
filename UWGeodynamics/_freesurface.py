@@ -22,9 +22,19 @@ class FreeSurfaceProcessor(object):
         """
         self.model = model
 
+        minCoord = tuple([nd(val) for val in self.model.minCoord])
+        maxCoord = tuple([nd(val) for val in self.model.maxCoord])
+
+        # Initialize model mesh
+        self._init_mesh = uw.mesh.FeMesh_Cartesian(elementType=self.model.elementType,
+                                                   elementRes=self.model.elementRes,
+                                                   minCoord=minCoord,
+                                                   maxCoord=maxCoord,
+                                                   periodic=self.model.periodic)
+                                     
         # Create the tools
-        self.TField = self.model.mesh.add_variable(nodeDofCount=1)
-        self.TField.data[:, 0] = self.model.mesh.data[:, 1]
+        self.TField = self._init_mesh.add_variable(nodeDofCount=1)
+        self.TField.data[:, 0] = self._init_mesh.data[:, 1].copy()
 
         self.top = self.model.top_wall
         self.bottom = self.model.bottom_wall
@@ -71,7 +81,7 @@ class FreeSurfaceProcessor(object):
 
         with self.model.mesh.deform_mesh():
             # Last dimension is the vertical dimension
-            self.model.mesh.data[:, -1] = self.TField.data[:, 0]
+            self.model.mesh.data[:, -1] = self.TField.data[:, 0].copy()
 
     def solve(self, dtime):
         """ Advect free surface through dt and update the mesh """
