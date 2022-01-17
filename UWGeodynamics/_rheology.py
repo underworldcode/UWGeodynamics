@@ -317,12 +317,14 @@ class DruckerPrager(object):
         return self.yieldStress
 
     def _get_yieldStress3D(self):
+        ## Drucker-Prgaer is calibrated to coincide with the triaxial compression
+        ## Mohr Coulomb
         f = self._frictionFn()
         C = self._cohesionFn()
         P = self.pressureField
         self.yieldStress = 6.0 * C * fn.math.cos(f)
         self.yieldStress += 6.0 * fn.math.sin(f) * fn.misc.max(P, 0.0)
-        self.yieldStress /= (fn.math.sqrt(3.0) * (3.0 + fn.math.sin(f)))
+        self.yieldStress /= (fn.math.sqrt(3.0) * (3.0 - fn.math.sin(f)))
         return self.yieldStress
 
 
