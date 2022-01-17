@@ -1,6 +1,6 @@
-numpy==1.15.1
-scipy==1.1.0
-mpi4py==3.0.0
-h5py==2.8.0
-pandas==0.24.0
-pint==0.9
+numpy>=1.21
+scipy
+mpi4py
+h5py
+pandas
+pint

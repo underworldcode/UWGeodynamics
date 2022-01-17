@@ -1,3 +1,13 @@
+# Version 2.12
+
+- 2D surface processes implementation. Update to surface processes file to include erosion & sedimentation rate or diffusive surface in 2D.
+- Tutorials that outline how to use the different surface processes.
+- Free Surface examples.
+
+### Bug Fixes:
+- Drucker Prager Yield Criterion in 3D. A sign error resulted in a lower Yield Stress which resulted in more diffuse weakening when using plasticity with a DP criterion. This has likely impacted all 3D models since early versions of UWGeodynamics. We recommend updating asap.
+- Fix some typos in the Rheology references (Asthenospheric type rheology from Watremez et al was referred as Lithospheric)
+- Fix Free surface implementation.
 
 # Version 2.11
 
