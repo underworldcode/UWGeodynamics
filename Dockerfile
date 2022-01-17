@@ -1,7 +1,6 @@
-# Stage 1: Inherit from underworldcode/underworld2:2.10.0b and install dependency packages for Badlands
+# Stage 1: Inherit from underworldcode/underworld2 and install dependency packages for Badlands
 ##########
 FROM underworldcode/underworld2:latest as base_runtime
-MAINTAINER https://github.com/underworldcode/
 # install runtime requirements
 USER root
 RUN apt-get update -qq \
