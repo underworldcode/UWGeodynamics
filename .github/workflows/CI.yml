@@ -54,7 +54,7 @@ jobs:
          run: |
            pip install -e .
            pip install pytest
-           python -m pytest -vvv tests/test_simple.py
+           python -m pytest -vvv
 
   conda_build:
       name: Conda Build (Python ${{matrix.python-version}} ${{ matrix.os }})

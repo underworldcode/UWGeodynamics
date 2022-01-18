@@ -16,7 +16,7 @@ def _notebook_run(example):
     copyfile(path, outpath)
 
     s = open(outpath).read()
-    s = re.sub(r'Model\.run\_for\(.*\)', 'Model.run_for(nstep=1)', s)
+    s = re.sub(r'Model\.run\_for\(.*\)', '#Model.run_for(nstep=1)', s)
     f = open(outpath, 'w')
     f.write(s)
     f.close()
@@ -35,7 +35,7 @@ def _notebook_run_parallel(example):
     copyfile(path, outpath)
 
     s = open(outpath).read()
-    s = re.sub(r'Model\.run\_for\(.*\)', 'Model.run_for(nstep=2)', s)
+    s = re.sub(r'Model\.run\_for\(.*\)', '#Model.run_for(nstep=1)', s)
     f = open(outpath, 'w')
     f.write(s)
     f.close()
