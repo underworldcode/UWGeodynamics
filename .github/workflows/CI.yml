@@ -52,7 +52,6 @@ jobs:
        
        - name: Test in UW Container
          run: |
-           pip install badlands
            pip install -e .
            pip install pytest pytest-xdist
            pytest -n 4 -vvv
