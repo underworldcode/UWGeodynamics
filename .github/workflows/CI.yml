@@ -53,8 +53,8 @@ jobs:
        - name: Test in UW Container
          run: |
            pip install -e .
-           pip install pytest pytest-xdist
-           pytest -n 4 -vvv
+           pip install pytest
+           pytest -vvv
 
   conda_build:
       name: Conda Build (Python ${{matrix.python-version}} ${{ matrix.os }})
