@@ -252,6 +252,7 @@ class Model(Material):
         self.DiffusivityFn = None
         self.HeatProdFn = None
         self._freeSurface = False
+        self._fssa = None
         self._mesh_saved = False
         self._remesher = None
         self._initialize()
@@ -864,6 +865,7 @@ class Model(Material):
                 velocityField=self.velocityField,
                 pressureField=self.pressureField,
                 conditions=conditions,
+                _fn_fssa = self._fssa, 
                 fn_viscosity=self._viscosityFn,
                 fn_bodyforce=self._buoyancyFn,
                 fn_stresshistory=self._elastic_stressFn,
@@ -1982,6 +1984,14 @@ class Model(Material):
     def freeSurface(self, value):
         if value:
             self._freeSurface = FreeSurfaceProcessor(self)
+    
+    @property
+    def fssa(self):
+        return self._fssa
+
+    @fssa.setter
+    def fssa(self, value):
+        self._fssa = value 
 
     def add_visugrid(self, elementRes, minCoord=None, maxCoord=None):
         """ Add a tracking grid to the Model
