@@ -198,7 +198,7 @@ class Model(Material):
         self._ndtime = 0.0
         self.step = 0
         self.nlstep = 0
-        self._dt = None
+        self._dt = 0.
 
         self.materials = list(materials) if materials is not None else list()
         self.materials.append(self)
@@ -252,7 +252,7 @@ class Model(Material):
         self.DiffusivityFn = None
         self.HeatProdFn = None
         self._freeSurface = False
-        self._fssa = None
+        self._fssa_factor = None
         self._mesh_saved = False
         self._remesher = None
         self._initialize()
@@ -261,6 +261,18 @@ class Model(Material):
         self.callback_functions = OrderedDict()
         self.post_solve_functions = OrderedDict()
         self.pre_solve_functions = OrderedDict()
+
+    @property
+    def dt(self):
+        return self._dt
+
+    @dt.setter
+    def dt(self, value):
+        if not self._dt:
+            self._dt = fn.misc.constant(value)
+        else:
+            valFn = fn.Function.convert(value)
+            self._dt.value = valFn.evaluate()[0]
 
     def _initialize(self):
         """_initialize
@@ -861,11 +873,15 @@ class Model(Material):
             if self._stressBCs:
                 conditions.append(self.stressBCs)
 
+            fssa = None
+            if self._fssa_factor:
+                fssa = self._fssa
+
             self._stokes_SLE = uw.systems.Stokes(
                 velocityField=self.velocityField,
                 pressureField=self.pressureField,
                 conditions=conditions,
-                _fn_fssa = self._fssa, 
+                _fn_fssa = fssa, 
                 fn_viscosity=self._viscosityFn,
                 fn_bodyforce=self._buoyancyFn,
                 fn_stresshistory=self._elastic_stressFn,
@@ -1323,8 +1339,8 @@ class Model(Material):
         dt_e = np.array(dt_e).min()
         phi = dt / dt_e
         veStressFn_data = self._stressFn.evaluate(self.swarm)
-        self._previousStressField.data[:] *= (1. - phi)
-        self._previousStressField.data[:] += phi * veStressFn_data[:]
+        self._previousStressField.data[:] *= (1. - phi).evaluate(self.swarm)
+        self._previousStressField.data[:] += phi.evaluate(self.swarm) * veStressFn_data[:]
 
     def _phaseChangeFn(self):
         for material in self.materials:
@@ -1374,7 +1390,7 @@ class Model(Material):
                     HeatProdMap[material.index] = 0.
 
                 # Melt heating
-                if material.latentHeatFusion and self._dt:
+                if material.latentHeatFusion and self.dt.value[0]:
                     dynamicHeating = self._get_dynamic_heating(material)
                     HeatProdMap[material.index] += dynamicHeating
 
@@ -1641,24 +1657,24 @@ class Model(Material):
 
             self.solve()
 
-            self._dt = 2.0 * rcParams["CFL"] * self.swarm_advector.get_max_dt()
+            self.dt = 2.0 * rcParams["CFL"] * self.swarm_advector.get_max_dt()
 
             if self.temperatureBCs:
                 # Only get a condition if using SUPG
                 if rcParams["advection.diffusion.method"] == "SUPG":
                     supg_dt = self._advdiffSystem.get_max_dt()
                     supg_dt *= 2.0 * rcParams["CFL"]
-                    self._dt = min(self._dt, supg_dt)
+                    self.dt = fn.misc.min(self.dt, supg_dt)
 
             if duration:
-                self._dt = min(self._dt, ndduration - self._ndtime)
+                self.dt = fn.misc.min(self.dt, ndduration - self._ndtime)
 
             if user_dt:
-                self._dt = min(self._dt, user_dt)
+                self.dt = fn.misc.min(self.dt, user_dt)
 
             check_dt = checkpointer.get_next_checkpoint_time()
             if check_dt:
-                self._dt = min(self._dt, check_dt)
+                self.dt = fn.misc.min(self.dt, check_dt)
 
             dte = []
             for material in self.materials:
@@ -1668,23 +1684,25 @@ class Model(Material):
             if dte:
                 dte = np.array(dte).min()
                 # Cap dt for observation time, dte / 3.
-                if dte and self._dt > (dte / 3.):
-                    self._dt = dte / 3.
+                if dte and self.dt.value[0] > (dte / 3.):
+                    self.dt = dte / 3.
 
             comm.Barrier()
+
+
 
             self._update()
 
             self.step += 1
             self.stepDone += 1
-            self._ndtime += self._dt
+            self._ndtime += self.dt.value[0]
 
             checkpointer.checkpoint()
 
             if rank == 0:
                 string = """Step: {0:5d} Model Time: {1:6.1f} dt: {2:6.1f} ({3})\n""".format(
                     self.stepDone, _adjust_time_units(self.time),
-                    _adjust_time_units(self._dt),
+                    _adjust_time_units(self.dt.value[0]),
                     datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 sys.stdout.write(string)
                 sys.stdout.flush()
@@ -1747,13 +1765,12 @@ class Model(Material):
             HealingRateFn = fn.branching.map(fn_key=self.materialField,
                                              mapping=healingRates)
 
-            plasticStrainIncHealing = dt * HealingRateFn.evaluate(self.swarm)
-            self.plasticStrain.data[:] -= plasticStrainIncHealing
+            self.plasticStrain.data[:] -= (dt * HealingRateFn).evaluate(self.swarm)
             self.plasticStrain.data[self.plasticStrain.data < 0.] = 0.
 
         # Increment plastic strain
         _isYielding = self._viscosity_processor._isYielding
-        plasticStrainIncrement = dt * _isYielding.evaluate(self.swarm)
+        plasticStrainIncrement = (dt * _isYielding).evaluate(self.swarm)
         self.plasticStrain.data[:] += plasticStrainIncrement
 
         if any([material.melt for material in self.materials]):
@@ -1762,40 +1779,40 @@ class Model(Material):
 
         # Solve for temperature
         if self.temperatureBCs:
-            self._advdiffSystem.integrate(dt)
+            self._advdiffSystem.integrate(dt.value[0])
 
         if self._advector:
-            self.swarm_advector.integrate(dt)
-            self._advector.advect_mesh(dt)
+            self.swarm_advector.integrate(dt.value[0])
+            self._advector.advect_mesh(dt.value[0])
         elif self._freeSurface:
-            self.swarm_advector.integrate(dt, update_owners=False)
-            self._freeSurface.solve(dt)
+            self.swarm_advector.integrate(dt.value[0], update_owners=False)
+            self._freeSurface.solve(dt.value[0])
             self.swarm.update_particle_owners()
         else:
             # Integrate Swarms in time
-            self.swarm_advector.integrate(dt, update_owners=True)
+            self.swarm_advector.integrate(dt.value[0], update_owners=True)
 
         # Update stress
         if any([material.elasticity for material in self.materials]):
-            self._update_stress_history(dt)
+            self._update_stress_history(dt.value[0])
 
         if self.passive_tracers:
             for key, val in self.passive_tracers.items():
                 if val.advector:
-                    val.advector.integrate(dt)
+                    val.advector.integrate(dt.value[0])
 
         # Do pop control
         self.population_control.repopulate()
         self.swarm.update_particle_owners()
 
         if self.surfaceProcesses:
-            self.surfaceProcesses.solve(dt)
+            self.surfaceProcesses.solve(dt.value[0])
 
         # Update Time Field
-        self.timeField.data[...] += dt
+        self.timeField.data[...] += dt.value[0]
 
         if self._visugrid:
-            self._visugrid.advect(dt)
+            self._visugrid.advect(dt.value[0])
 
         self._phaseChangeFn()
 
@@ -1958,7 +1975,7 @@ class Model(Material):
                              Capacity (Material: """ + material.name)
         ratio = ratio.magnitude
 
-        dF = (self._get_melt_fraction() - self.meltField) / self._dt
+        dF = (self._get_melt_fraction() - self.meltField) / self.dt
         return (ratio * dF) * self.temperature
 
     @property
@@ -1986,12 +2003,16 @@ class Model(Material):
             self._freeSurface = FreeSurfaceProcessor(self)
     
     @property
-    def fssa(self):
-        return self._fssa
+    def fssa_factor(self):
+        return self._fssa_factor
 
-    @fssa.setter
-    def fssa(self, value):
-        self._fssa = value 
+    @fssa_factor.setter
+    def fssa_factor(self, value):
+        self._fssa_factor = float(value)
+
+    @property
+    def _fssa(self):
+        return self.fssa_factor * self._buoyancyFn * self.dt
 
     def add_visugrid(self, elementRes, minCoord=None, maxCoord=None):
         """ Add a tracking grid to the Model
