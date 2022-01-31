@@ -66,7 +66,7 @@ size = comm.size
 nProcs = size
 
 __author__ = "Romain Beucher"
-__copyright__ = "Copyright 2020, The Australian National University"
+__copyright__ = "Copyright 2022, The Australian National University"
 __credits__ = ["Romain Beucher",
                "Louis Moresi",
                "Julian Giordani",
