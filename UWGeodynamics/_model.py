@@ -198,7 +198,7 @@ class Model(Material):
         self._ndtime = 0.0
         self.step = 0
         self.nlstep = 0
-        self._dt = 0.
+        self._dt = fn.misc.constant(0.)
 
         self.materials = list(materials) if materials is not None else list()
         self.materials.append(self)
@@ -268,11 +268,8 @@ class Model(Material):
 
     @dt.setter
     def dt(self, value):
-        if not self._dt:
-            self._dt = fn.misc.constant(value)
-        else:
-            valFn = fn.Function.convert(value)
-            self._dt.value = valFn.evaluate()[0]
+        valFn = fn.Function.convert(value)
+        self._dt.value = valFn.evaluate()[0]
 
     def _initialize(self):
         """_initialize
@@ -2012,7 +2009,7 @@ class Model(Material):
 
     @property
     def _fssa(self):
-        return self.fssa_factor * self._buoyancyFn * self.dt
+        return self.fssa_factor * self._buoyancyFn * self.dt * -1.0
 
     def add_visugrid(self, elementRes, minCoord=None, maxCoord=None):
         """ Add a tracking grid to the Model
