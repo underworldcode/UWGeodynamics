@@ -49,6 +49,9 @@ class PressureSmoother(object):
 
         ## Handle Element Types
         mapping = {"DQ0": 1, "DPC1": 3, "DQ1": 4}
+        if self.mesh.dim >2:
+            mapping = {"DQ0": 1, "DPC1": 4, "DQ1": 8}
+
         self.nodesPerElement = mapping[mesh.subMesh.elementType]
 
     def smooth(self):
