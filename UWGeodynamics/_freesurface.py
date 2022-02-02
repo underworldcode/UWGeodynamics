@@ -1,5 +1,5 @@
 from __future__ import print_function, absolute_import
-from scipy.interpolate import interp1d, bisplrep
+from scipy.interpolate import interp1d, bisplrep, bisplev
 import underworld as uw
 from UWGeodynamics import nd
 from mpi4py import MPI as _MPI
@@ -95,8 +95,12 @@ class FreeSurfaceProcessor(object):
                 z2 = z + vz * nd(dt)
 
                 # Spline top surface
-                f = bisplrep(x2, y2, z2, s=0)
-                self.TField.data[self.top.data, 0] = bisplrep(x, y, f)
+                tck = bisplrep(x2, y2, z2, s=0, kx=3, ky=3, 
+                             xb=self.model.mesh.minCoord[0],
+                             xe=self.model.mesh.maxCoord[0],
+                             yb=self.model.mesh.minCoord[1],
+                             ye=self.model.mesh.maxCoord[1])
+                self.TField.data[self.top.data, 0] = bisplev(x, y, tck)
 
         comm.Barrier()
         self.TField.syncronise()
