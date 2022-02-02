@@ -3,18 +3,11 @@
 FROM underworldcode/underworld2:latest as base_runtime
 # install runtime requirements
 USER root
-RUN apt-get update -qq \
-&&  DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
-        libxml2 \
-        libpython3.7
-RUN PYTHONPATH= /usr/bin/pip3 install --no-cache-dir setuptools scons 
-# setup further virtualenv to avoid double copying back previous packages (h5py,mpi4py,etc)
 RUN /usr/bin/python3 -m virtualenv --python=/usr/bin/python3 ${VIRTUAL_ENV}
 
 # Stage 2: Build and install Badlands
 ##########
 FROM base_runtime AS build_base
-# install build requirements
 RUN apt-get update -qq 
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
         build-essential \
@@ -22,10 +15,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
         python3-dev \
         swig \
         libxml2-dev
-RUN PYTHONPATH= /usr/bin/pip3 install --no-cache-dir setuptools scons 
-# setup further virtualenv to avoid double copying back previous packages (h5py,mpi4py,etc)
 RUN /usr/bin/python3 -m virtualenv --python=/usr/bin/python3 ${VIRTUAL_ENV}
-# Compile and install the latest UWGeodynamics & Badlands
 WORKDIR /tmp
 COPY --chown=jovyan:users . /tmp/UWGeodynamics
 RUN pip3 install -vvv UWGeodynamics/ 
