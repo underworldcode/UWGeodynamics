@@ -1,5 +1,5 @@
 from __future__ import print_function, absolute_import
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d, bisplrep
 import underworld as uw
 from UWGeodynamics import nd
 from mpi4py import MPI as _MPI
@@ -58,22 +58,46 @@ class FreeSurfaceProcessor(object):
     def _advect_surface(self, dt):
 
         if self.top:
-            # Extract top surface
-            x = self.model.mesh.data[self.top.data][:, 0]
-            y = self.model.mesh.data[self.top.data][:, 1]
 
-            # Extract velocities from top
-            vx = self.model.velocityField.data[self.top.data][:, 0]
-            vy = self.model.velocityField.data[self.top.data][:, 1]
+            if self.mesh.dim == 2:
+                # Extract top surface
+                x = self.model.mesh.data[self.top.data][:, 0]
+                y = self.model.mesh.data[self.top.data][:, 1]
 
-            # Advect top surface
-            x2 = x + vx * nd(dt)
-            y2 = y + vy * nd(dt)
+                # Extract velocities from top
+                vx = self.model.velocityField.data[self.top.data][:, 0]
+                vy = self.model.velocityField.data[self.top.data][:, 1]
 
-            # Spline top surface
-            f = interp1d(x2, y2, kind='cubic', fill_value='extrapolate')
+                # Advect top surface
+                x2 = x + vx * nd(dt)
+                y2 = y + vy * nd(dt)
 
-            self.TField.data[self.top.data, 0] = f(x)
+                # Spline top surface
+                f = interp1d(x2, y2, kind='cubic', fill_value='extrapolate')
+
+                self.TField.data[self.top.data, 0] = f(x)
+
+            else:
+
+                # Extract top surface
+                x = self.model.mesh.data[self.top.data][:, 0]
+                y = self.model.mesh.data[self.top.data][:, 1]
+                z = self.model.mesh.data[self.top.data][:, 2]
+
+                # Extract velocities from top
+                vx = self.model.velocityField.data[self.top.data][:, 0]
+                vy = self.model.velocityField.data[self.top.data][:, 1]
+                vz = self.model.velocityField.data[self.top.data][:, 2]
+
+                # Advect top surface
+                x2 = x + vx * nd(dt)
+                y2 = y + vy * nd(dt)
+                z2 = z + vz * nd(dt)
+
+                # Spline top surface
+                f = bisplrep(x2, y2, z2, s=0)
+                self.TField.data[self.top.data, 0] = bisplrep(x, y, f)
+
         comm.Barrier()
         self.TField.syncronise()
 
