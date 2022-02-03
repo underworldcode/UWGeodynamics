@@ -104,7 +104,7 @@ resolution. 3D models can not be run in the binder.
 |-|-|
 | [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/underworldcode/UWGeodynamics/master) | master |
 | [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/underworldcode/UWGeodynamics/development) | development |
-| [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/underworldcode/UWGeodynamics/v2.10) | v2.10 |
+| [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/underworldcode/UWGeodynamics/v2.12) | v2.12 |
 
 
 ## Where to find documentation?

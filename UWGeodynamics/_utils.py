@@ -47,23 +47,39 @@ class PressureSmoother(object):
         else:
             self.array = np.zeros((self.mesh.elementRes[1], self.mesh.elementRes[0])).ravel()
 
-    def smooth(self):
-        self.array[self.mesh.data_elgId.ravel()] = self.pressureField.data[:,0]
+        ## Handle Element Types
+        mapping = {"DQ0": 1, "DPC1": 3, "DQ1": 4}
         if self.mesh.dim >2:
+            mapping = {"DQ0": 1, "DPC1": 4, "DQ1": 8}
+
+        self.nodesPerElement = mapping[mesh.subMesh.elementType]
+
+    def smooth(self):
+
+        self.array[self.mesh.data_elgId.ravel()] = np.mean(self.pressureField.data[:,0].reshape(-1, self.nodesPerElement), axis=1)
+
+        if self.mesh.dim >2:
+        
             array = self.array.reshape((self.mesh.elementRes[2], self.mesh.elementRes[1], self.mesh.elementRes[0])) 
             array = np.pad(array, pad_width=1, mode="edge")
             on_mesh = (array[:-1,:-1,:-1] + array[:-1,1:,:-1] + array[:-1,1:, 1:] + array[:-1,:-1,:-1]) 
             on_mesh += (array[1:,:-1,:-1] + array[1:,1:,:-1] + array[1:,1:, 1:] + array[1:,:-1,:-1])
             on_mesh /= 8
+
             on_cell = (on_mesh[:-1,:-1,:-1] + on_mesh[:-1,1:, :-1] + on_mesh[:-1,1:, 1:] + on_mesh[:-1,:-1,:-1])
             on_cell += (on_mesh[:-1,:-1,:-1] + on_mesh[:-1,1:, :-1] + on_mesh[:-1,1:, 1:] + on_mesh[:-1,:-1,:-1])
             on_cell /= 8
+
         else:
+
             array = self.array.reshape((self.mesh.elementRes[1], self.mesh.elementRes[0])) 
             array = np.pad(array, pad_width=1, mode="edge")
+            
             on_mesh = (array[:-1,:-1] + array[1:, :-1] + array[1:, 1:] + array[:-1,:-1]) / 4.0  
             on_cell = (on_mesh[:-1,:-1] + on_mesh[1:, :-1] + on_mesh[1:, 1:] + on_mesh[:-1,:-1]) / 4.0 
-        self.pressureField.data[:self.mesh.nodesLocal,0] = on_cell.ravel()[self.mesh.data_elgId.ravel()[:self.mesh.nodesLocal]]
+
+        on_cell = np.repeat(on_cell.ravel(), self.nodesPerElement)
+        self.pressureField.data[:self.mesh.nodesLocal,0] = on_cell[np.repeat(self.mesh.data_elgId.ravel()[:self.mesh.nodesLocal], self.nodesPerElement)]
         self.pressureField.syncronise()
 
 

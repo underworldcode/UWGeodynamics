@@ -10,7 +10,7 @@ size = comm.Get_size()
 rank = comm.Get_rank()
 
 supported_elem_mesh = ["Q1", "Q2"]
-supported_elem_subMesh = ["DQ1", "DQ0"]
+supported_elem_subMesh = ["DQ1", "DQ0", "DPC1"]
 
 
 class Lithostatic_pressure(fn.Function):

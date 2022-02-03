@@ -37,22 +37,21 @@ jobs:
           docker manifest create underworldcode/uwgeodynamics --amend underworldcode/uwgeodynamics:amd64 --amend underworldcode/uwgeodynamics:arm64
           docker manifest push underworldcode/uwgeodynamics
 
-  # test_in_UW_Container:
-  #   name: Test in UW Container
-  #   runs-on: ubuntu-latest
-  #   container:
-  #     image: underworldcode/underworld2:latest
-  #     options: --user root
-  #   steps:
-  #     - name: Test in UW Container
-  #       run: |
-  #         cd /home/jovyan/workspace
-  #         git clone -b ${GITHUB_REF##*/} https://github.com/underworldcode/UWGeodynamics.git UWGeodynamics
-  #         cd UWGeodynamics
-  #         # git checkout development
-  #         pip install -e .
-  #         pip install pytest
-  #         python -m pytest -vvv
+  test_in_UW_Container:
+     name: Test in UW Container
+     runs-on: ubuntu-latest
+     container:
+       image: underworldcode/underworld2:latest
+       options: --user root
+     steps:
+       - name: Checkout
+         uses: actions/checkout@v2
+       
+       - name: Test in UW Container
+         run: |
+           pip install -e .
+           pip install pytest
+           pytest -vvv
 
   conda_build:
       name: Conda Build (Python ${{matrix.python-version}} ${{ matrix.os }})
