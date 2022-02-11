@@ -10,8 +10,8 @@ MAJOR               = 2
 
 MINOR               = 13
 MICRO               = 0
-ISRELEASED          = False
 
+ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 here = path.abspath(path.dirname(__file__))

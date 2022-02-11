@@ -4,4 +4,3 @@ mpi4py
 h5py
 pandas
 pint
-six

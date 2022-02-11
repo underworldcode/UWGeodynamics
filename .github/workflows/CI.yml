@@ -2,7 +2,6 @@ name: docker images build
 
 on:
   push:
-  release:
   workflow_dispatch:
 
 jobs:
@@ -10,7 +9,6 @@ jobs:
   build_uwgeo_image:
     name: Build Docker image
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     steps:
 
       - name: Checkout
@@ -26,7 +24,6 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Docker Image
-        if: 
         uses: docker/build-push-action@v2
         with:
           context: .
