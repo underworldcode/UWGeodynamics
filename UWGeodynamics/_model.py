@@ -253,6 +253,7 @@ class Model(Material):
         self.HeatProdFn = None
         self._freeSurface = False
         self._fssa_factor = None
+        self._voronoi_swarm = None
         self._mesh_saved = False
         self._remesher = None
         self._initialize()
@@ -353,6 +354,16 @@ class Model(Material):
         For integration with Jupyter notebook.
         """
         return _model_html_repr(self)
+
+    @property
+    def voronoi_swarm(self):
+        return self._voronoi_swarm
+
+    @voronoi_swarm.setter
+    def voronoi_swarm(self, value):
+        if not isinstance(value, (uw.Swarm, None)):
+            raise ValueError("You must provide a swarm or None value")
+        self._voronoi_swarm = value
 
     @property
     def time(self):
@@ -878,7 +889,8 @@ class Model(Material):
                 velocityField=self.velocityField,
                 pressureField=self.pressureField,
                 conditions=conditions,
-                _fn_fssa = fssa, 
+                voronoi_swarm=self.voronoi_swarm,
+                _fn_fssa=fssa, 
                 fn_viscosity=self._viscosityFn,
                 fn_bodyforce=self._buoyancyFn,
                 fn_stresshistory=self._elastic_stressFn,
