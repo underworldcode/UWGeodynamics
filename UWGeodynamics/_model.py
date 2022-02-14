@@ -182,6 +182,7 @@ class Model(Material):
 
         # Create the material swarm
         self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
+        self.swarm.allow_parallel_nn = True
         if self.mesh.dim == 2:
             particlesPerCell = rcParams["swarm.particles.per.cell.2D"]
         else:
@@ -1634,8 +1635,12 @@ class Model(Material):
 
         if dt:
             user_dt = nd(dt)
+            self.dt = user_dt
         else:
             user_dt = None
+
+        if self.fssa_factor is not None and not user_dt:
+            raise RuntimeError("You have switched FSSA on and have not set a dt.")
 
         if rank == 0:
             print("""Running with UWGeodynamics version {0}""".format(full_version))
