@@ -12,6 +12,7 @@ tests/test_results/*
 tutorials/*.png
 examples/*.png
 tutorials/out*
+UWGeodynamics/version.py
 
 # due to using tox and pytest
 .tox
