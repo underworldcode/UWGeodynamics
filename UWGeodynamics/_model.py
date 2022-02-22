@@ -270,7 +270,7 @@ class Model(Material):
     @dt.setter
     def dt(self, value):
         valFn = fn.Function.convert(value)
-        self._dt.value = valFn.evaluate()[0]
+        self._dt.value = float(valFn.evaluate())
 
     def _initialize(self):
         """_initialize
@@ -1388,7 +1388,7 @@ class Model(Material):
                     HeatProdMap[material.index] = 0.
 
                 # Melt heating
-                if material.latentHeatFusion and self.dt.value[0]:
+                if material.latentHeatFusion and self.dt.value:
                     dynamicHeating = self._get_dynamic_heating(material)
                     HeatProdMap[material.index] += dynamicHeating
 
@@ -1686,7 +1686,7 @@ class Model(Material):
             if dte:
                 dte = np.array(dte).min()
                 # Cap dt for observation time, dte / 3.
-                if dte and self.dt.value[0] > (dte / 3.):
+                if dte and self.dt.value > (dte / 3.):
                     self.dt = dte / 3.
 
             comm.Barrier()
@@ -1697,14 +1697,14 @@ class Model(Material):
 
             self.step += 1
             self.stepDone += 1
-            self._ndtime += self.dt.value[0]
+            self._ndtime += self.dt.value
 
             checkpointer.checkpoint()
 
             if rank == 0:
                 string = """Step: {0:5d} Model Time: {1:6.1f} dt: {2:6.1f} ({3})\n""".format(
                     self.stepDone, _adjust_time_units(self.time),
-                    _adjust_time_units(self.dt.value[0]),
+                    _adjust_time_units(self.dt.value),
                     datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 sys.stdout.write(string)
                 sys.stdout.flush()
