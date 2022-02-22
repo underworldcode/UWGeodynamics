@@ -1757,7 +1757,8 @@ class Model(Material):
 
         """
 
-        dt = self._dt
+
+        dt = self.dt.value
 
         # Heal plastic strain
         if any([material.healingRate for material in self.materials]):
@@ -1781,40 +1782,40 @@ class Model(Material):
 
         # Solve for temperature
         if self.temperatureBCs:
-            self._advdiffSystem.integrate(dt.value[0])
+            self._advdiffSystem.integrate(dt)
 
         if self._advector:
-            self.swarm_advector.integrate(dt.value[0])
-            self._advector.advect_mesh(dt.value[0])
+            self.swarm_advector.integrate(dt)
+            self._advector.advect_mesh(dt)
         elif self._freeSurface:
-            self.swarm_advector.integrate(dt.value[0], update_owners=False)
-            self._freeSurface.solve(dt.value[0])
+            self.swarm_advector.integrate(dt, update_owners=False)
+            self._freeSurface.solve(dt)
             self.swarm.update_particle_owners()
         else:
             # Integrate Swarms in time
-            self.swarm_advector.integrate(dt.value[0], update_owners=True)
+            self.swarm_advector.integrate(dt, update_owners=True)
 
         # Update stress
         if any([material.elasticity for material in self.materials]):
-            self._update_stress_history(dt.value[0])
+            self._update_stress_history(dt)
 
         if self.passive_tracers:
             for key, val in self.passive_tracers.items():
                 if val.advector:
-                    val.advector.integrate(dt.value[0])
+                    val.advector.integrate(dt)
 
         # Do pop control
         self.population_control.repopulate()
         self.swarm.update_particle_owners()
 
         if self.surfaceProcesses:
-            self.surfaceProcesses.solve(dt.value[0])
+            self.surfaceProcesses.solve(dt)
 
         # Update Time Field
-        self.timeField.data[...] += dt.value[0]
+        self.timeField.data[...] += dt
 
         if self._visugrid:
-            self._visugrid.advect(dt.value[0])
+            self._visugrid.advect(dt)
 
         self._phaseChangeFn()
 
