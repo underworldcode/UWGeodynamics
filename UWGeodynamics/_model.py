@@ -305,14 +305,19 @@ class Model(Material):
                                 restart_variable=True)
         self.add_swarm_variable("meltField", dataType="double", count=1, 
                                 restart_variable=True)
-        self.add_swarm_variable("timeField", dataType="double", count=1,
-                                restart_variable=True)
 
         # non t dependent vars
         # ASSUMES density and viscosity are uw.fn dependent on other vars
         self.add_swarm_variable("_viscosityField", dataType="double", count=1)
         self.add_swarm_variable("_densityField", dataType="double", count=1)
-        self.timeField.data[...] = 0.0
+
+        # must initialise timeField property
+        # _ndtime could be populated for swarm restart
+        if hasattr(self, "_ndtime"):
+            self.timeField = self._ndtime  
+        else:
+            self.timeField = 0.
+        
         self.materialField.data[...] = self.index
 
         if self.mesh.dim == 3:
@@ -442,10 +447,16 @@ class Model(Material):
         return self._projPlasticStrain
 
     @property
-    def projTimeField(self):
-        """ Time Field projected on the mesh """
-        self._timeFieldProjector.solve()
-        return self._projTimeField
+    def timeField(self):
+        """ An Underworld fn.constant object for internal use """
+        return self._timeField
+
+    @timeField.setter
+    def timeField(self,value):
+        if hasattr(self, '_timeField'):
+            self._timeField.value = value
+        else:
+            self._timeField = fn.misc.constant(value)
 
     @property
     def projMeltField(self):
@@ -1812,7 +1823,7 @@ class Model(Material):
             self.surfaceProcesses.solve(dt)
 
         # Update Time Field
-        self.timeField.data[...] += dt
+        self.timeField = self._ndtime + dt
 
         if self._visugrid:
             self._visugrid.advect(dt)
@@ -2388,7 +2399,7 @@ class _CheckpointFunction(object):
 
             # if it's time to checkpoint the swarm, do so.
             if Model.checkpointID % self.restart_checkpoint == 0:
-                self.checkpoint_swarms(checkpointID=Model.checkpointID)
+                self.checkpoint_swarm(checkpointID=Model.checkpointID)
 
             comm.Barrier()
 
@@ -2446,7 +2457,7 @@ class _CheckpointFunction(object):
 
         """
         self.checkpoint_fields(variables, checkpointID, time, outputDir)
-        self.checkpoint_swarms(variables, checkpointID, time, outputDir)
+        self.checkpoint_swarm(variables, checkpointID, time, outputDir)
         self.checkpoint_tracers(tracers, checkpointID, time, outputDir)
         comm.Barrier()
 
@@ -2537,7 +2548,7 @@ class _CheckpointFunction(object):
                 xdmfFH.write(string)
         comm.Barrier()
 
-    def checkpoint_swarms(self, fields=None, checkpointID=None, time=None,
+    def checkpoint_swarm(self, fields=None, checkpointID=None, time=None,
                           outputDir=None):
         """ Save the swarm and the swarm variables to outputDir
 
@@ -2753,9 +2764,15 @@ class _RestartFunction(object):
 
     def reload_swarm(self, step):
 
+        # build a new swarm on the mesh
         Model = self.Model
         Model.swarm = Swarm(mesh=Model.mesh, particleEscape=True)
-        Model.swarm.load(os.path.join(self.restartDir, 'swarm-%s.h5' % step))
+        
+        # load the swarm, revisit to 
+        fname = os.path.join(self.restartDir, 'swarm-%s.h5' % step)
+        Model.swarm.load(fname)
+
+        Model.timeField = Model._ndtime
 
         if rank == 0:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -2803,7 +2820,7 @@ class _RestartFunction(object):
                 svar_fpath = os.path.join(self.restartDir, svar_fname)
                 field.load(svar_fpath)
 
-            attr_name = tracer.name.lower() + "_tracers"
+            attr_name = tracer.name + "_tracers"
             setattr(Model, attr_name, obj)
             Model.passive_tracers[key] = obj
 

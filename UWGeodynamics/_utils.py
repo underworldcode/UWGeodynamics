@@ -191,7 +191,11 @@ class PassiveTracers(Swarm):
             if not field["timeIntegration"]:
                 if not isinstance(field["value"], SwarmVariable):
                     obj.data[...] = field["value"].evaluate(self)
+                elif obj.swarm is self:
+                    # if the swarm variable belongs to the tracer swarm do nothing
+                    pass
                 else:
+                    # use nn map to get values to the tracers
                     obj.data[...] = field["value"].evaluate(self.data)
 
             handle = obj.save('%s.h5' % file_prefix, units=field["units"])

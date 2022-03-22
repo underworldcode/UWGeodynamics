@@ -21,7 +21,6 @@ rcParams =  {
                           "strainRateField",
                           "velocityField",
                           "projStressField",
-                          "projTimeField",
                           "projMaterialField",
                           "projViscosityField",
                           "projStressField",
@@ -50,7 +49,6 @@ rcParams =  {
     "strainRateField.SIunits" : [1.0 / u.second, validate_quantity],
     "projViscosityField.SIunits"  : [u.pascal * u.second, validate_quantity],
     "projDensityField.SIunits" : [u.kilogram / u.metre**3, validate_quantity],
-    "projTimeField.SIunits" : [u.megayears, validate_quantity],
 
     "shear.heating": [False, validate_bool],
     "surface.pressure.normalization": [True, validate_bool],
