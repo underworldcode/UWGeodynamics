@@ -7,11 +7,11 @@ from os import path
 import re
 
 MAJOR               = 2
+MINOR               = 13
+MICRO               = 0
 
-MINOR               = 12
-MICRO               = 4
-ISRELEASED          = True
 
+ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 here = path.abspath(path.dirname(__file__))
