@@ -182,6 +182,7 @@ class Model(Material):
 
         # Create the material swarm
         self.swarm = Swarm(mesh=self.mesh, particleEscape=True)
+        self.swarm.allow_parallel_nn = True
         if self.mesh.dim == 2:
             particlesPerCell = rcParams["swarm.particles.per.cell.2D"]
         else:
@@ -270,7 +271,7 @@ class Model(Material):
     @dt.setter
     def dt(self, value):
         valFn = fn.Function.convert(value)
-        self._dt.value = valFn.evaluate()[0]
+        self._dt.value = float(valFn.evaluate())
 
     def _initialize(self):
         """_initialize
@@ -1399,7 +1400,7 @@ class Model(Material):
                     HeatProdMap[material.index] = 0.
 
                 # Melt heating
-                if material.latentHeatFusion and self.dt.value[0]:
+                if material.latentHeatFusion and self.dt.value:
                     dynamicHeating = self._get_dynamic_heating(material)
                     HeatProdMap[material.index] += dynamicHeating
 
@@ -1646,8 +1647,12 @@ class Model(Material):
 
         if dt:
             user_dt = nd(dt)
+            self.dt = user_dt
         else:
             user_dt = None
+
+        if self.fssa_factor is not None and not user_dt:
+            raise RuntimeError("You have switched FSSA on and have not set a dt.")
 
         if rank == 0:
             print("""Running with UWGeodynamics version {0}""".format(full_version))
@@ -1693,7 +1698,7 @@ class Model(Material):
             if dte:
                 dte = np.array(dte).min()
                 # Cap dt for observation time, dte / 3.
-                if dte and self.dt.value[0] > (dte / 3.):
+                if dte and self.dt.value > (dte / 3.):
                     self.dt = dte / 3.
 
             comm.Barrier()
@@ -1704,14 +1709,14 @@ class Model(Material):
 
             self.step += 1
             self.stepDone += 1
-            self._ndtime += self.dt.value[0]
+            self._ndtime += self.dt.value
 
             checkpointer.checkpoint()
 
             if rank == 0:
                 string = """Step: {0:5d} Model Time: {1:6.1f} dt: {2:6.1f} ({3})\n""".format(
                     self.stepDone, _adjust_time_units(self.time),
-                    _adjust_time_units(self.dt.value[0]),
+                    _adjust_time_units(self.dt.value),
                     datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 sys.stdout.write(string)
                 sys.stdout.flush()
@@ -1764,7 +1769,8 @@ class Model(Material):
 
         """
 
-        dt = self._dt
+
+        dt = self.dt.value
 
         # Heal plastic strain
         if any([material.healingRate for material in self.materials]):
@@ -1788,40 +1794,40 @@ class Model(Material):
 
         # Solve for temperature
         if self.temperatureBCs:
-            self._advdiffSystem.integrate(dt.value[0])
+            self._advdiffSystem.integrate(dt)
 
         if self._advector:
-            self.swarm_advector.integrate(dt.value[0])
-            self._advector.advect_mesh(dt.value[0])
+            self.swarm_advector.integrate(dt)
+            self._advector.advect_mesh(dt)
         elif self._freeSurface:
-            self.swarm_advector.integrate(dt.value[0], update_owners=False)
-            self._freeSurface.solve(dt.value[0])
+            self.swarm_advector.integrate(dt, update_owners=False)
+            self._freeSurface.solve(dt)
             self.swarm.update_particle_owners()
         else:
             # Integrate Swarms in time
-            self.swarm_advector.integrate(dt.value[0], update_owners=True)
+            self.swarm_advector.integrate(dt, update_owners=True)
 
         # Update stress
         if any([material.elasticity for material in self.materials]):
-            self._update_stress_history(dt.value[0])
+            self._update_stress_history(dt)
 
         if self.passive_tracers:
             for key, val in self.passive_tracers.items():
                 if val.advector:
-                    val.advector.integrate(dt.value[0])
+                    val.advector.integrate(dt)
 
         # Do pop control
         self.population_control.repopulate()
         self.swarm.update_particle_owners()
 
         if self.surfaceProcesses:
-            self.surfaceProcesses.solve(dt.value[0])
+            self.surfaceProcesses.solve(dt)
 
         # Update Time Field
-        self.timeField.data[...] += dt.value[0]
+        self.timeField.data[...] += dt
 
         if self._visugrid:
-            self._visugrid.advect(dt.value[0])
+            self._visugrid.advect(dt)
 
         self._phaseChangeFn()
 
