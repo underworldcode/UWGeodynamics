@@ -306,6 +306,8 @@ class Model(Material):
                                 restart_variable=True)
         self.add_swarm_variable("meltField", dataType="double", count=1, 
                                 restart_variable=True)
+        # DEPRECATE - change name 'timeField' is a poor description. This is a per particle
+        # time variable.
         self.add_swarm_variable("timeField", dataType="double", count=1,
                                 restart_variable=True)
 
@@ -2400,7 +2402,7 @@ class _CheckpointFunction(object):
 
             # if it's time to checkpoint the swarm, do so.
             if Model.checkpointID % self.restart_checkpoint == 0:
-                self.checkpoint_swarms(checkpointID=Model.checkpointID)
+                self.checkpoint_swarm(checkpointID=Model.checkpointID)
 
             comm.Barrier()
 
@@ -2458,7 +2460,7 @@ class _CheckpointFunction(object):
 
         """
         self.checkpoint_fields(variables, checkpointID, time, outputDir)
-        self.checkpoint_swarms(variables, checkpointID, time, outputDir)
+        self.checkpoint_swarm(variables, checkpointID, time, outputDir)
         self.checkpoint_tracers(tracers, checkpointID, time, outputDir)
         comm.Barrier()
 
@@ -2549,7 +2551,7 @@ class _CheckpointFunction(object):
                 xdmfFH.write(string)
         comm.Barrier()
 
-    def checkpoint_swarms(self, fields=None, checkpointID=None, time=None,
+    def checkpoint_swarm(self, fields=None, checkpointID=None, time=None,
                           outputDir=None):
         """ Save the swarm and the swarm variables to outputDir
 
@@ -2714,11 +2716,65 @@ class _RestartFunction(object):
             sys.stdout.flush()
         comm.Barrier()
 
+
         self.reload_mesh(step)
         self.reload_swarm(step)
+    
+        '''
+        ##### Ugly workaround: Passive tracer tracking for restart #####
+        If there are passive tracers at reload we need a way to update 
+        tracked fields that will not be valid due to restarting.
+        This occurs because SwarmVariables are rebuilt at restart and the
+        tracked SwarmVariable of passive tracers becomes stale.
+
+        Way around:
+        1) Store the "names" of the swarm variables tracked by all tracers.
+        Names from the 'swarm_variables' ordered dictionary.
+        
+        2) Once the _initialize() function has been called then 
+        find the new SwarmVariables from the model that belong to
+        the names of the original SwarmVariables.
+        '''
+
+        # a 2D memory chunk. One axis for passive tracer swarm
+        # the 2nd for a dict of the variable 'names' that will
+        # be used to looks up the SwarmVariables after Model._initialize()
+
+        var_tracker = {} # 2D: {tracers:variable_dict}
+        for name, tracers in Model.passive_tracers.items():
+
+            vdict = {} # tracked var names, to Model attribute name
+            tracked_vars = tracers.tracked_fields
+            
+            # find the name the tracked var exists in Model.swarm_variables.
+            for tname, v in tracked_vars.items():
+                var = v['value']
+                
+                if isinstance( var, SwarmVariable ):
+                    for vname, svar in Model.swarm_variables.items():
+                        if var == svar:
+                           vdict[tname] = vname 
+
+            var_tracker[name] = vdict
+
         Model._initialize()
+
         self.reload_restart_variables(step)
         self.reload_passive_tracers(step)
+
+        '''
+        Overwrite the passive tracer tracked SwarmVariable with
+        the new Model.swarm_variables as per point 2) above
+        '''
+        for name,tracers in Model.passive_tracers.items():
+            vdict = var_tracker.get(name)
+            for tfield in vdict.keys():
+                vname = vdict[tfield]
+                # get the current version
+                obj = Model.swarm_variables[vname]
+                # overwrite the old version
+                tracers.tracked_fields[tfield].update({'value':obj})
+
 
         if Model._solver:
             solver_options = Model._solver.options
@@ -2765,6 +2821,7 @@ class _RestartFunction(object):
 
     def reload_swarm(self, step):
 
+        # build a new swarm on the mesh
         Model = self.Model
         Model.swarm = Swarm(mesh=Model.mesh, particleEscape=True)
         Model.swarm.load(os.path.join(self.restartDir, 'swarm-%s.h5' % step))
@@ -2815,7 +2872,7 @@ class _RestartFunction(object):
                 svar_fpath = os.path.join(self.restartDir, svar_fname)
                 field.load(svar_fpath)
 
-            attr_name = tracer.name.lower() + "_tracers"
+            attr_name = tracer.name + "_tracers"
             setattr(Model, attr_name, obj)
             Model.passive_tracers[key] = obj
 
