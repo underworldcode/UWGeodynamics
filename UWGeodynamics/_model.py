@@ -2824,6 +2824,7 @@ class _RestartFunction(object):
         # build a new swarm on the mesh
         Model = self.Model
         Model.swarm = Swarm(mesh=Model.mesh, particleEscape=True)
+        Model.swarm.allow_parallel_nn = True # always activate parallel_nn on swarm
         Model.swarm.load(os.path.join(self.restartDir, 'swarm-%s.h5' % step))
 
         if rank == 0:
