@@ -1690,7 +1690,9 @@ Tracking Values
 ~~~~~~~~~~~~~~~
 
 Passive tracers can be used to track values of fields at specific location
-through time.
+through time. Tracking projected fields (fields with the prefix ``proj``) is discouraged
+as these fields can't be restarted after checkpointing. Instead, one can track the 
+non projected field, i.e. `projViscosityField`, `viscosityField`)
 
 .. code:: python
 
