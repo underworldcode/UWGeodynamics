@@ -52,7 +52,7 @@ jobs:
          run: |
            pip install -e .
            pip install pytest
-           pytest -vvv
+           pytest -vvv --ignore=tests/test_benchmarks.py
 
   conda_build:
       name: Conda Build (Python ${{matrix.python-version}} ${{ matrix.os }})
