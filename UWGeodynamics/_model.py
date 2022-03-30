@@ -1351,8 +1351,11 @@ class Model(Material):
         dt_e = np.array(dt_e).min()
         phi = dt / dt_e
         veStressFn_data = self._stressFn.evaluate(self.swarm)
-        self._previousStressField.data[:] *= (1. - phi).evaluate(self.swarm)
-        self._previousStressField.data[:] += phi.evaluate(self.swarm) * veStressFn_data[:]
+
+        self._previousStressField.data[:] = (  
+                                        phi  * veStressFn_data[:]
+                                  + (1.-phi) * self._previousStressField.data[:]
+                                             )
 
     def _phaseChangeFn(self):
         for material in self.materials:
