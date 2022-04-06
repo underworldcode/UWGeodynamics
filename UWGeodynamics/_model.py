@@ -841,6 +841,11 @@ class Model(Material):
             else:
                 HeatProdMap[material.index] = 0.
 
+            # take melt heating cooling into account.
+            if material.latentHeatFusion and self.dt.value:
+                dynamicHeating = self._get_dynamic_heating(material)
+                HeatProdMap[material.index] += dynamicHeating
+
         self.HeatProdFn = fn.branching.map(fn_key=self.materialField,
                                            mapping=HeatProdMap)
 
