@@ -841,6 +841,10 @@ class Model(Material):
             else:
                 HeatProdMap[material.index] = 0.
 
+            if material.Wo:
+                heating = self._get_porous_melt_heating(material)
+                HeatProdMap[material.index] += heating
+
             # take melt heating cooling into account.
             if material.latentHeatFusion and self.dt.value:
                 dynamicHeating = self._get_dynamic_heating(material)
@@ -1983,6 +1987,27 @@ class Model(Material):
         """ Calculate New meltField """
         meltFraction = self._get_melt_fraction()
         self.meltField.data[:] = meltFraction.evaluate(self.swarm)
+
+    def _get_porous_melt_heating(self, material):
+        """ Calculate additional heating source due to porous melt flow
+        
+        See Depine et al. 2008 Near isotermal conditions in the middle and lower crust induced
+        by melt migration. Nature, 452-6.
+
+        W = Wo * dF_dt
+
+        where: Wo is a scalar value and dF_dt is the melt franction time derivative.
+
+
+        Returns:
+        --------
+            Underworld function
+
+        """
+
+        dT_dy = self.temperature.fn_gradient[1]
+        dF = (self._get_melt_fraction() - self.meltField) / self.dt
+        return dT_dy * material.Wo * dF
 
     def _get_dynamic_heating(self, material):
         """ Calculate additional heating source due to melt

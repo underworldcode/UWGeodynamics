@@ -36,7 +36,7 @@ class Material(object):
                  solidus=None, liquidus=None,
                  latentHeatFusion=0.0, meltExpansion=0.0, meltFraction=0.0,
                  meltFractionLimit=1.0, viscosityChangeX1=0.15,
-                 viscosityChangeX2=0.3, viscosityChange=1.0):
+                 viscosityChangeX2=0.3, viscosityChange=1.0, Wo=0.0):
         """Create a Material
 
         Parameters
@@ -61,6 +61,7 @@ class Material(object):
         solidus : UWGeodynamics.Solidus object defining a Solidus
         liquidus : UWGeodynamics.Liquidus object defining a Liquidus
         latentHeatFusion : Latent Heat of Fusion (enthalpie)
+        Wo : ?
         meltExpansion : Melt expansion
         meltFraction : Initial Fraction of Melt
         meltFractionLimit : Maximum Fraction of Melt (0-1)
@@ -111,6 +112,7 @@ class Material(object):
         self.solidus = solidus
         self.liquidus = liquidus
         self.latentHeatFusion = latentHeatFusion
+        self.Wo = Wo
         self.meltFraction = meltFraction
         self.meltFractionLimit = meltFractionLimit
         self.meltExpansion = meltExpansion
@@ -190,11 +192,13 @@ class Material(object):
                           meltFractionLimit=1.0,
                           viscosityChangeX1=0.15,
                           viscosityChangeX2=0.3,
-                          viscosityChange=1e3):
+                          viscosityChange=1e3,
+                          Wo=0.0):
 
         self.solidus = solidus
         self.liquidus = liquidus
         self.latentHeatFusion = latentHeatFusion
+        self.Wo = Wo
         self.meltFraction = meltFraction
         self.meltFractionLimit = meltFractionLimit
         self.meltExpansion = meltExpansion
