@@ -1,3 +1,11 @@
+
+> **WARNING**: This repository has been archived.
+> From **version 2.13**, `UWGeodynamics` now lives under `Underworld`
+> To import `UWGeodynamics`, use `from underworld import UWGeodynamics`
+> You can submit issues to the [Underworld repository](https://github.com/underworldcode/underworld2)
+> The current repository is read only.
+> Older versions will remain available on `Pypi`, `Conda` but users are encouraged to update.
+
 [![image](docs/readthedocs/src/img/logos.png)](https://www.earthbyte.org/the-basin-genesis-hub)
 
 # Underworld Geodynamics project
